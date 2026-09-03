@@ -1,0 +1,22 @@
+# Secrete și configurare locală
+.env
+.env.local
+*.env
+
+# Node
+node_modules/
+npm-debug.log*
+
+# Build
+dist/
+build/
+*.tsbuildinfo
+
+# Editor / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Loguri
+*.log
