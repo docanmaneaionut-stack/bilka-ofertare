@@ -1,0 +1,332 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider          = "postgresql"
+  url               = env("DATABASE_URL")
+  // baza "shadow" folosita de Prisma Migrate pentru a calcula migrarile;
+  // separata, ca rolul aplicatiei sa nu aiba nevoie de drept CREATEDB
+  shadowDatabaseUrl = env("SHADOW_DATABASE_URL")
+}
+
+// tabelul de sesiuni al connect-pg-simple (schema ceruta de acel pachet);
+// tinut in migrarea noastra, in loc sa fie creat ad-hoc la pornirea
+// serverului, ca sa ramana in istoricul de migrari din git
+model SesiuneExpres {
+  sid    String   @id @db.VarChar
+  sess   Json
+  expire DateTime @db.Timestamp(6)
+
+  @@index([expire], map: "IDX_session_expire")
+  @@map("session")
+}
+
+// ---------------------------------------------------------------------------
+// CON minim: firme, utilizatori, jurnal
+// ---------------------------------------------------------------------------
+
+enum RolUtilizator {
+  ADMIN_GENERAL
+  ADMINISTRATOR
+  AGENT
+  COLABORATOR
+  CONTABILITATE
+  GESTIUNE
+}
+
+enum RezultatAutentificare {
+  SUCCES
+  ESEC
+}
+
+model Firma {
+  id         String   @id @default(uuid())
+  denumire   String
+  cui        String
+  nrRegCom   String
+  adresa     String
+  telefon    String
+  email      String
+  contBancar String?
+  logo       String?
+  activ      Boolean  @default(true)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  utilizatori      Utilizator[]
+  utilizatorFirmas UtilizatorFirma[]
+
+  @@map("firma")
+}
+
+model Utilizator {
+  id         String        @id @default(uuid())
+  nume       String
+  telefon    String?
+  email      String        @unique
+  parolaHash String
+  rol        RolUtilizator
+
+  // firma e obligatorie pentru ADMINISTRATOR; AGENT/COLABORATOR o mostenesc de
+  // la administratorul lor; ADMIN_GENERAL, si CONTABILITATE/GESTIUNE cu acces
+  // general, nu au o firma fixa (vezi UtilizatorFirma si accesGeneralFirme).
+  firmaId String?
+  firma   Firma?  @relation(fields: [firmaId], references: [id])
+
+  // cine l-a creat / sub cine lucreaza (AGENT, COLABORATOR sub ADMINISTRATOR)
+  administratorId String?
+  administrator   Utilizator?  @relation("Subordonati", fields: [administratorId], references: [id])
+  subordonati     Utilizator[] @relation("Subordonati")
+
+  // 2-3 litere, unica, pentru numerotarea ofertelor (SERIE-NUMAR); doar la
+  // conturile care fac oferte (ADMINISTRATOR, AGENT, COLABORATOR)
+  serieOferta String? @unique
+
+  // adaosul % al contului la pretul de achizitie (fisa CONTURI §7); orice cont
+  // care face oferte are unul, modificabil cu istoric (JurnalIntrare)
+  adaosProcent Decimal? @db.Decimal(6, 3)
+
+  // relevant doar pentru CONTABILITATE / GESTIUNE: acces pe toate firmele
+  // (altfel accesul e dat de randurile din UtilizatorFirma)
+  accesGeneralFirme Boolean @default(false)
+
+  activ     Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  firmeAcces          UtilizatorFirma[]
+  listePretCreate     ListaPret[]
+  jurnalIntrari       JurnalIntrare[]
+  jurnalAutentificari JurnalAutentificare[]
+
+  @@map("utilizator")
+}
+
+// acces pe mai multe firme pentru Contabilitate / Gestiune, cand nu e acces
+// general si nu e o singura firma
+model UtilizatorFirma {
+  id           String     @id @default(uuid())
+  utilizatorId String
+  utilizator   Utilizator @relation(fields: [utilizatorId], references: [id])
+  firmaId      String
+  firma        Firma      @relation(fields: [firmaId], references: [id])
+  createdAt    DateTime   @default(now())
+
+  @@unique([utilizatorId, firmaId])
+  @@map("utilizator_firma")
+}
+
+// jurnalul general de modificari (cine, cand, ce): fisa CONTURI §5 - orice
+// suma modificata ulterior are istoric; numeUtilizatorLaMoment pastreaza
+// numele persoanei chiar daca contul e redenumit ulterior (predare de cont)
+model JurnalIntrare {
+  id                     String      @id @default(uuid())
+  utilizatorId           String?
+  utilizator             Utilizator? @relation(fields: [utilizatorId], references: [id])
+  numeUtilizatorLaMoment String
+  moment                 DateTime    @default(now())
+  entitate               String
+  entitateId             String
+  actiune                String
+  camp                   String?
+  valoareInainte         String?
+  valoareDupa            String?
+
+  @@index([entitate, entitateId])
+  @@map("jurnal_intrare")
+}
+
+// jurnalul de autentificari: fisa CONTURI §8.3 - ultimele conectari (cand, de
+// pe ce dispozitiv), separat de jurnalul general pentru ca are alta forma
+model JurnalAutentificare {
+  id            String                @id @default(uuid())
+  utilizatorId  String?
+  utilizator    Utilizator?           @relation(fields: [utilizatorId], references: [id])
+  emailIncercat String
+  moment        DateTime              @default(now())
+  rezultat      RezultatAutentificare
+  dispozitiv    String?
+  sursa         String?
+
+  @@map("jurnal_autentificare")
+}
+
+// ---------------------------------------------------------------------------
+// CAT / LP: compartimente, grupuri, familii, produse, liste de pret
+// ---------------------------------------------------------------------------
+
+enum TipCompartiment {
+  FURNIZOR
+  STOC_PROPRIU
+}
+
+enum ModPret {
+  LISTA_ACHIZITIE
+  CATALOG_DISCOUNT
+}
+
+enum StatusListaPret {
+  SCHITA
+  ACTIVA
+  ARHIVATA
+}
+
+model Compartiment {
+  id           String          @id @default(uuid())
+  denumire     String          @unique
+  tip          TipCompartiment
+  moneda       String
+  modPret      ModPret
+  // identificatorul adaptorului de import CSV (ex. "bilka-v1")
+  formatImport String?
+
+  contactFurnizorNume    String?
+  contactFurnizorTelefon String?
+  contactFurnizorEmail   String?
+  contactDirectorZonal   String?
+
+  activ     Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  grupuri   Grup[]
+  produse   Produs[]
+  listePret ListaPret[]
+
+  @@map("compartiment")
+}
+
+// rubricile de oferta, comune peste compartimente (fisa CATALOG §1)
+model CategorieOferta {
+  id       String @id @default(uuid())
+  denumire String @unique
+  zona     String // "A" sau "B"
+  ordine   Int    @default(0)
+
+  produse Produs[]
+
+  @@map("categorie_oferta")
+}
+
+model Grup {
+  id             String       @id @default(uuid())
+  compartimentId String
+  compartiment   Compartiment @relation(fields: [compartimentId], references: [id])
+  denumire       String
+  ordine         Int          @default(0)
+
+  familii Familie[]
+  produse Produs[]
+
+  @@unique([compartimentId, denumire])
+  @@map("grup")
+}
+
+model Familie {
+  id       String @id @default(uuid())
+  grupId   String
+  grup     Grup   @relation(fields: [grupId], references: [id])
+  denumire String
+  ordine   Int    @default(0)
+
+  produse Produs[]
+
+  @@unique([grupId, denumire])
+  @@map("familie")
+}
+
+// campurile acopera toate coloanele din CSV-urile Bilka (vezi
+// docs/import/Bilka/README.md "Coloanele CSV"), ca importul din S4 sa nu
+// piarda nimic; valorile raman text brut asa cum vin din sursa, fara
+// transformare la nivel de schema
+model Produs {
+  id             String       @id @default(uuid())
+  compartimentId String
+  compartiment   Compartiment @relation(fields: [compartimentId], references: [id])
+  grupId         String
+  grup           Grup         @relation(fields: [grupId], references: [id])
+  familieId      String?
+  familie        Familie?     @relation(fields: [familieId], references: [id])
+
+  // cod intern, al nostru, stabil - singurul cod unic in catalog
+  codIntern   String  @unique
+  // codul furnizorului NU e unic ("un cod, doua produse")
+  codFurnizor String?
+
+  varianta String?
+  finisaj  String?
+  grosime  String?
+  optiune  String?
+  denumire String
+  um       String
+
+  // moneda produsului (implicit cea a compartimentului, fisa CATALOG regula 8)
+  moneda String
+
+  categorieOfertaId String?
+  categorieOferta   CategorieOferta? @relation(fields: [categorieOfertaId], references: [id])
+  // doar lista 01, eticheta Bilka cross-lista
+  categorieBilka    String?
+
+  latimeTotalaM     Decimal? @db.Decimal(8, 4)
+  latimeTotalaMm    Decimal? @db.Decimal(8, 2)
+  // modulul (35 la tigla)
+  modulCm           Decimal? @db.Decimal(6, 2)
+  // sistemul pluvial (ex. "125 / 90")
+  sistem            String?
+  // treapta D01-D25 (accesorii speciale)
+  treapta           String?
+  // intervalul desfasuratei (ex. "0-50 mm")
+  desfasurata       String?
+  // exceptii de culoare per produs (text brut CSV)
+  culoriDisponibile String?
+
+  sursa      String?
+  observatii String?
+  activ      Boolean @default(true)
+  ordine     Int?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  preturi PretListaProdus[]
+
+  @@index([compartimentId])
+  @@index([codFurnizor])
+  @@map("produs")
+}
+
+// o versiune a listei de pret a unui compartiment (fisa CATALOG regula 6: o
+// singura versiune ACTIVA per compartiment la un moment dat - impusa printr-un
+// index unic partial adaugat manual in migrare, vezi migration.sql)
+model ListaPret {
+  id             String          @id @default(uuid())
+  compartimentId String
+  compartiment   Compartiment    @relation(fields: [compartimentId], references: [id])
+  denumire       String
+  valabilaDeLa   DateTime
+  sursa          String?
+  status         StatusListaPret @default(SCHITA)
+  creataDeId     String?
+  creataDe       Utilizator?     @relation(fields: [creataDeId], references: [id])
+  createdAt      DateTime        @default(now())
+
+  preturi PretListaProdus[]
+
+  @@map("lista_pret")
+}
+
+// Pretul de listă al unui produs intr-o versiune (ARH §4.1 "Pret de listă")
+model PretListaProdus {
+  id          String    @id @default(uuid())
+  listaPretId String
+  listaPret   ListaPret @relation(fields: [listaPretId], references: [id])
+  produsId    String
+  produs      Produs    @relation(fields: [produsId], references: [id])
+  pret        Decimal   @db.Decimal(12, 4)
+  observatie  String?
+
+  @@unique([listaPretId, produsId])
+  @@map("pret_lista_produs")
+}
