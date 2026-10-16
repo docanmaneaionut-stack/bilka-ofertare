@@ -1,6 +1,6 @@
 # ARH — Arhitectura softului de ofertare și gestiune
 
-Versiunea 0.1 · 2 septembrie 2026 · Proprietar: Ionuț · Redactat împreună cu Claude
+Versiunea 0.2 · 2 septembrie 2026 · Proprietar: Ionuț · Redactat împreună cu Claude
 
 ---
 
@@ -43,6 +43,9 @@ Versiunea 0.1 · 2 septembrie 2026 · Proprietar: Ionuț · Redactat împreună 
 | COM | Comenzi și încasări | comenzi către furnizor, avansuri, plăți |
 | STO | Stoc și livrări | stoc propriu per firmă, livrări |
 | NOT | Notițe | notițe text / voce, offline pe telefon |
+| SCH | Schiță | desenul 2D al acoperișului: contur, linii interioare, cote, marcarea fiecărei linii ca streașină / coamă / dolie / fronton / bordură la perete |
+| GEO | Geometrie | apele acoperișului derivate din schiță, direcția de curgere, pante, suprafețe și lungimi reale |
+| PAN | Panotaj | împărțirea fiecărei ape în coli pe modelul ales: lungimi, tăieturi, rupere, refolosire, listă de tăiere |
 | ADM | Zona tehnică | administrare catalog, liste, setări, import |
 | IMP | Import / Export | adaptoare pentru fișierele furnizorilor (intrare: liste de preț; ieșire: comenzi) |
 | ETALON | Teste | ofertele etalon și testele de reguli |
@@ -93,6 +96,8 @@ Principiu: entitățile de mai jos se proiectează acum pentru toate modulele, c
 
 - **Ofertă**: număr (serie firmă / an / secvență [DE CONFIRMAT]); firmă; agent; client; data; status (În lucru · Transmisă · De revizionat · Acceptată · Avans luat · De comandat); moneda documentului (lei / euro); **curs BNR înghețat pe ofertă** (plus marja); lista de preț folosită (versiunea); mod de prezentare (simplu · preț listă + un discount general la total · discount per linie, cu produse la preț fix și excepții per categorie); adaos țintă % / total țintă cu TVA; TVA afișat da / nu; ofertă părinte + eticheta variantei (pentru variante de preț); recomandare (sursă, nume, telefon, comision); note; blocată la (data acceptării); creată / modificată de.
 - **Secțiune de acoperiș**: ofertă; denumire; formă și dimensiuni; pantă; model / produs de bază; sursă (manual / import măsurători — punct de extensie pentru modulul cu dronă); rezultatul panelării (lungimi și număr de foi). Nicio secțiune nu e obligatorie.
+- **Schiță**: ofertă; versiune; conținut (noduri, linii cu tip și lungime, pante, unități); sursă (manual / import măsurători din dronă); creată / modificată de. Din schiță se derivează secțiunile de acoperiș (apele) — o secțiune poate avea sursa „schiță"; secțiunile manuale rămân posibile în paralel.
+- **Panotaj**: ofertă; schița (versiunea); model; parametrii folosiți; rezultat pe ape (coli cu lungimi, tăieturi, refolosiri); listă de tăiere (lungime × cantitate); snapshot la emiterea ofertei.
 - **Linie de ofertă**: ofertă; zonă (A / B); produs (referință) **+ snapshot complet** (cod, denumire, culoare, grosime, finisaj, unitate); cantitate; sursa cantității (auto / manual); preț listă; preț achiziție; preț țintă; preț prezentare; discount linie; preț fix (da / nu, valoare, monedă, cu / fără TVA); ordine. Snapshot-ul garantează că oferta rămâne identică oricâte liste de preț apar după ea.
 - **Document generat**: ofertă; tip (PDF ofertă / tabel factură); versiune; fișier; data.
 
@@ -143,6 +148,12 @@ Regulile de mai jos sunt cele validate în prototipul v4.1 pe oferte reale. Se t
 
 Culorile disponibile per model / grosime · adaosul țintă implicit per categorie · lămurirea 6,54 € vs 6,46 € la Clasic Mat 0,50 · pragurile de pantă pentru avertizări la îmbinări · lungimea maximă a foii · textul legal pentru zona B · stadiile comenzilor · schema de comision a agenților · listele predefinite pentru acoperiș plat (Retropanel / fălțuită).
 
+### Reguli de panotaj (PAN) — de completat de Ionuț înainte de Etapa 8
+
+Pentru fiecare model: modulul de lungime al țiglei; prelungirea la streașină; lungimea maximă și lungimea minimă utilă a unei coli; marginea de la care se pornește; dacă și cum se refolosesc piesele rămase din tăieturile oblice (schema „o coală, două ape"); orientarea profilului. Regulile vin din felul în care lucrează montatorii, nu din calcul.
+
+Gramatica acoperișurilor acceptate în v1: contur rectiliniu; o singură pantă pe apă; coame înclinate și dolii la orice unghi; fără lucarne (se desenează ca secțiune separată). Orice altceva merge pe fluxul manual existent.
+
 ---
 
 ## 6. Zona tehnică (ADM) și actualizarea prețurilor — PROPUS
@@ -165,6 +176,8 @@ Tot în ADM: catalogul (produse, categorii, tipuri de calcul, culori), profilul 
 - OFE folosește MOT; DOC folosește OFE; COM citește ofertele acceptate; STO citește comenzile și livrările; NOT e independent și se leagă opțional de client / ofertă.
 - Adăugarea unui modul = folder nou + tabele noi + migrare aditivă; nu modifică modulele existente.
 - Ordinea: **bază de date + CON minim + CAT / LP / ADM** (Ionuț devine independent la prețuri din prima zi) → **MOT + ETALON** (nu se merge mai departe până nu trec toate ofertele etalon) → **OFE + DOC** → **CON complet** → **COM** → **STO** → **NOT**.
+- **SCH / GEO / PAN** se construiesc după NOT, în cinci sub-etape, fiecare cu rezultat utilizabil: E1 schiță + marcare → suprafețe și lungimi pe tipuri, direct în ofertă · E2 ape, pante, dimensiuni reale · E3 panotaj v1 (tăieturi, rupere, rotunjire) → listă de tăiere + desen · E4 refolosire, optimizarea pierderilor, alegerea startului, reguli per model · E5 generare automată a coamelor și doliilor din contur; import din dronă.
+- Granițe: PAN produce liste de coli; MOT le prețuiește. GEO și PAN se construiesc ca biblioteci pure, testate pe acoperișuri reale, înaintea interfeței de desen. Interfața principală de introducere este „desen prin cote" (segmente cu lungime și direcție), desenul cu mouse-ul fiind pentru corecții.
 
 ---
 
@@ -175,6 +188,7 @@ Tot în ADM: catalogul (produse, categorii, tipuri de calcul, culori), profilul 
 - Testele rulează automat înainte de fiecare modificare; o modificare care schimbă un rezultat etalon nu ajunge la Ionuț.
 - **Lista ÎNGH** = tot ce are test. O secțiune trece în ÎNGHEȚAT când testele ei trec și Ionuț a verificat pe oferte reale.
 - Schimbarea unei reguli înghețate: cerere explicită de tip MODIFICARE → se actualizează întâi testul, apoi codul.
+- **Etalon PAN**: 10–15 acoperișuri reale, cu schița măsurată și lista de coli efectiv comandată și montată. Fără ele panotajul nu se poate îngheța.
 
 ---
 
@@ -242,3 +256,4 @@ Tot în ADM: catalogul (produse, categorii, tipuri de calcul, culori), profilul 
 ## 13. Istoric
 
 - v0.1 — 02.09.2026 — schiță completă a fundației; secțiunile 1, 2, 10 și 11 propuse spre aprobare imediată; §3–§9 se revizuiesc câte una pe sesiune.
+- v0.2 — 03.09.2026 — adăugate modulele SCH / GEO / PAN (glosar, entități, reguli de completat, ordinea construcției, etalon).

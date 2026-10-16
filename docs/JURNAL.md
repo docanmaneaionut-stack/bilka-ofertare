@@ -34,3 +34,16 @@ Fiecare intrare: data, obiectivul sesiunii, rezultatul, următorul pas propus.
 - Niciun fișier existent nu a fost modificat; nu există încă teste (folderul de teste e gol), deci nu a fost nimic de rulat.
 
 **Următorul pas propus:** confirmarea („ok") fișei CATALOG ȘI PREȚURI de către Ionuț, ca să treacă în stare închisă; apoi Faza 2 din ARH §10 — baza de date + CON minim + CAT / LP / ADM, folosind fișierele din `docs/import/Bilka/` ca prim set de date de import.
+
+---
+
+## 2026-10-16 — Fișa OFERTARE v1.0, fișa COMENZI v0.2, machete, PLAN, ARH v0.2
+
+**Obiectiv:** aplicarea deltei `docs/ARH-delta-v0.2.md` în `docs/ARH.md` și punerea în git a documentației de proces scrise între timp (fișele OFERTARE și COMENZI, machetele de documente și ecrane, PLAN), fără nicio altă modificare.
+
+**Rezultat:**
+- `docs/ARH.md` actualizat la v0.2: glosar (SCH / GEO / PAN), entitățile Schiță și Panotaj în §4.3, regulile de panotaj de completat în §5, ordinea de construcție SCH/GEO/PAN și granițele cu MOT în §7, Etalon PAN în §8, intrare nouă în §13 Istoric. Fișierul `docs/ARH-delta-v0.2.md` a fost șters după aplicare, conform instrucțiunii din el.
+- Adăugate în git: `docs/FISA-OFERTARE.md` (v1.0, închisă pentru oferta clasică), `docs/FISA-COMENZI.md` (v0.2, în lucru), `docs/PLAN.md` (v0.1, foaia de parcurs a construcției), `docs/design/` (machetele de documente și ecrane — oferte, tabel facturare, fișa șoferului, lista de oferte, tabelul de comenzi), modificările din `docs/FISA-CATALOG-PRETURI.md` și `docs/import/Bilka/garantii-finisaj-grosime.csv`, plus fișierul nou `docs/import/Bilka/liste-implicite-oferta.csv`.
+- Niciun cod de aplicație încă; nu există teste de rulat.
+
+**Următorul pas propus:** Ionuț confirmă fișa COMENZI (capitolele rămase PROPUS/de descris); apoi se poate trece la Faza 2 din ARH §10 / Etapa 1 din PLAN — sesiunea S2 (schelet aplicație + bază de date + autentificare).

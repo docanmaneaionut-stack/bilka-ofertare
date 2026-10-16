@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="ro"><head><meta charset="utf-8"><title>Tabelul de comenzi — machetă ecran (propunere)</title>
+<style>
+* { box-sizing: border-box; }
+body { margin: 0; background: #f3f4f5; font-family: Arial, Helvetica, "Liberation Sans", sans-serif; color: #1c1c1c; font-size: 14px; }
+.app { width: 1366px; margin: 0 auto; }
+.topbar { display: flex; align-items: center; gap: 24px; padding: 14px 28px; background: #fff; border-bottom: 1px solid #dcdcdc; }
+.brand { font-weight: 700; font-size: 15px; letter-spacing: .3px; }
+.nav { display: flex; gap: 6px; margin-left: 12px; }
+.nav a { padding: 8px 14px; border-radius: 6px; color: #333; text-decoration: none; font-size: 14px; }
+.nav a.on { background: #1c1c1c; color: #fff; font-weight: 600; }
+.user { margin-left: auto; color: #555; font-size: 13px; } .user b { color: #1c1c1c; }
+.page { padding: 22px 28px 30px; }
+.head { display: flex; align-items: center; gap: 14px; margin-bottom: 16px; }
+.head h1 { font-size: 24px; margin: 0; font-weight: 700; } .head .count { color: #666; font-size: 14px; margin-left: 4px; } .head .spacer { flex: 1; }
+.btn { border: 1px solid #1c1c1c; background: #1c1c1c; color: #fff; padding: 10px 16px; border-radius: 6px; font-size: 14px; font-weight: 600; white-space: nowrap; }
+.btn2 { border: 1px solid #1c1c1c; background: #fff; color: #1c1c1c; padding: 10px 14px; border-radius: 6px; font-size: 14px; font-weight: 600; white-space: nowrap; }
+.sel-cb { display: inline-block; width: 15px; height: 15px; border: 1px solid #9a9a9a; border-radius: 3px; background: #fff; vertical-align: middle; } .sel-cb.on { background: #1c1c1c; border-color: #1c1c1c; }
+.nei { display: inline-block; padding: 2px 7px; border-radius: 4px; background: #fdecec; color: #a12a2a; font-size: 11px; font-weight: 700; margin-left: 4px; vertical-align: middle; }
+.man { display: inline-block; padding: 2px 7px; border-radius: 4px; background: #efe9ff; color: #4b2fb3; font-size: 11px; font-weight: 700; margin-left: 4px; vertical-align: middle; }
+.search { display: flex; align-items: center; gap: 8px; border: 1px solid #c9c9c9; background: #fff; border-radius: 6px; padding: 9px 12px; width: 330px; color: #8a8a8a; }
+.filters { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 14px; }
+.chips { display: flex; gap: 6px; } .chip { padding: 7px 12px; border-radius: 999px; border: 1px solid #cfcfcf; background: #fff; font-size: 13px; color: #333; } .chip.on { background: #1c1c1c; color: #fff; border-color: #1c1c1c; }
+.sel { border: 1px solid #c9c9c9; background: #fff; border-radius: 6px; padding: 8px 12px; font-size: 13px; color: #333; display: flex; gap: 8px; align-items: center; } .sel .lbl { color: #8a8a8a; }
+.sel.warn { border-color: #e2b23a; background: #fff8e6; }
+.card { background: #fff; border: 1px solid #dcdcdc; border-radius: 8px; overflow: hidden; }
+table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+.box table { table-layout: auto; }
+th { text-align: left; font-size: 11.5px; text-transform: uppercase; letter-spacing: .5px; color: #555; font-weight: 600; padding: 12px 12px; background: #f7f7f7; border-bottom: 1px solid #dcdcdc; white-space: nowrap; }
+th.r, td.r { text-align: right; }
+td { padding: 11px 12px; border-bottom: 1px solid #ececec; vertical-align: top; font-size: 13.5px; }
+td.nr b { font-size: 14.5px; } td.nr .date { color: #777; font-size: 12.5px; display: block; margin-top: 2px; }
+td.client b { display: block; } td.client span { color: #666; font-size: 12.5px; }
+td.rez { color: #222; font-size: 13px; line-height: 1.4; }
+td.mont b { display: block; font-weight: 600; } td.mont span { color: #666; font-size: 12.5px; }
+td.tot b { font-size: 15.5px; display: block; } td.tot span { color: #777; font-size: 12.5px; display: block; margin-top: 2px; }
+td.inc b { display: block; font-size: 14px; } td.inc span { display: block; color: #666; font-size: 12.5px; margin-top: 2px; }
+.st { display: inline-block; padding: 5px 10px; border-radius: 999px; font-size: 12.5px; font-weight: 600; white-space: nowrap; }
+.st.com { background: #ececec; color: #444; } .st.rec { background: #e3eefc; color: #1d4e9e; } .st.recp { background: #fff1d6; color: #8a5a00; } .st.liv { background: #e2f3e6; color: #1e6b33; }
+.st.ne { background: #f1e4e4; color: #7a2e2e; } .st.part { background: #fff1d6; color: #8a5a00; } .st.inc { background: #e2f3e6; color: #1e6b33; }
+.ast { color: #d12e2e; font-weight: 700; margin-left: 2px; }
+td.liv { font-size: 13px; color: #333; line-height: 1.4; } td.liv .muted { color: #888; }
+td.act { white-space: nowrap; text-align: right; }
+.ico { display: inline-block; padding: 6px 8px; border: 1px solid #d5d5d5; border-radius: 6px; font-size: 12.5px; color: #333; background: #fff; margin-left: 4px; }
+tr.open td { background: #fbfbfb; border-bottom: none; }
+tr.det td { background: #fbfbfb; padding: 4px 12px 16px 12px; border-bottom: 2px solid #dcdcdc; }
+.detail { display: grid; grid-template-columns: 1.1fr 1fr 1fr 1.2fr; gap: 18px; width: 100%; }
+.box { background: #fff; border: 1px solid #e3e3e3; border-radius: 6px; padding: 10px 12px; font-size: 13px; line-height: 1.5; }
+.box h4 { margin: 0 0 6px; font-size: 11.5px; text-transform: uppercase; letter-spacing: .5px; color: #555; display: flex; justify-content: space-between; align-items: center; }
+.box h4 .btn { font-size: 12px; padding: 4px 9px; border: 1px solid #1c1c1c; background: #1c1c1c; color: #fff; border-radius: 5px; text-transform: none; letter-spacing: 0; font-weight: 600; }
+.box table { font-size: 12.5px; } .box td { padding: 3px 0; border-bottom: 1px dotted #e3e3e3; vertical-align: middle; } .box td.r { white-space: nowrap; }
+.box .rest { margin-top: 6px; font-weight: 700; font-size: 13.5px; }
+.cb { display: inline-block; width: 13px; height: 13px; border: 1px solid #9a9a9a; border-radius: 3px; vertical-align: middle; margin-right: 6px; background: #fff; } .cb.on { background: #1c1c1c; border-color: #1c1c1c; }
+.hist { color: #888; font-size: 11.5px; }
+.foot { display: flex; justify-content: space-between; align-items: center; padding: 12px 14px; color: #666; font-size: 13px; background: #fafafa; border-top: 1px solid #dcdcdc; }
+.legend { margin-top: 14px; color: #666; font-size: 12.5px; line-height: 1.7; } .legend b { color: #333; }
+</style></head><body><div class="app">
+<div class="topbar"><div class="brand">PROROOF · ofertare</div>
+  <div class="nav"><a>Oferte</a><a class="on">Comenzi</a><a>Vânzări</a><a>Clienți</a><a>Montatori</a></div>
+  <div class="user">Conectat: <b>Ionuț Bîrlădeanu</b> · Administrator · Proroof Comp SRL</div></div>
+<div class="page">
+  <div class="head"><h1>Comenzi</h1><span class="count">39 active · 5 de recepționat · 11 neîncasate complet · 3 comisioane neachitate · 1 neidentificată</span><div class="spacer"></div>
+    <div class="search">🔍 Caută după client, telefon, număr comandă, localitate, montator…</div><span class="btn2">🚚 Fișa șoferului (2)</span><span class="btn">+ Comandă manuală</span></div>
+  <div class="filters">
+    <div class="chips"><span class="chip on">Toate</span><span class="chip">Comandat</span><span class="chip">Recepționat</span><span class="chip">Recepționat parțial</span><span class="chip">Livrat</span></div>
+    <div class="sel"><span class="lbl">Încasare</span> Toate ▾</div>
+    <div class="sel"><span class="lbl">Perioadă</span> Ultimele 90 de zile ▾</div>
+    <div class="sel"><span class="lbl">Agent</span> Toți agenții firmei ▾</div>
+    <div class="sel warn">Comisioane neachitate (3)</div>
+    <div class="sel"><span class="lbl">Arată și</span> comenzile închise ▾</div>
+  </div>
+  <div class="card"><table>
+    <colgroup><col style="width:30px"><col style="width:130px"><col style="width:130px"><col style="width:200px"><col style="width:125px"><col style="width:105px"><col style="width:125px"><col style="width:145px"><col style="width:135px"><col style="width:185px"></colgroup>
+    <thead><tr><th></th><th>Nr. · responsabil</th><th>Client</th><th>Rezumat comandă</th><th>Montator</th><th class="r">Total</th><th>Încasat</th><th>Status</th><th>Livrare</th><th></th></tr></thead>
+    <tbody>
+      <tr class="open"><td><span class="sel-cb on"></span></td><td class="nr"><b>IB-0152</b><span class="date">18.09.2026</span><span class="date">trimisă de <b>Ionuț B.</b></span></td>
+        <td class="client"><b>Popescu Andrei</b><span>Câmpineanca</span><br><span>07xx xxx xxx</span></td>
+        <td class="rez">Hellenic 8019 Grande Mat 0,5 — 192,27 mp; sistem pluvial 8019 mat; accesorii tinichigerie + fixare 8019 Grande Mat</td>
+        <td class="mont"><b>Gheorghe V.</b><span>07xx xxx xxx</span><br><span>comision 800 lei · <span class="cb"></span>neachitat</span></td>
+        <td class="r tot"><b>21.799,54 lei</b><span>4.154,43 €</span></td>
+        <td class="inc"><b>12.000,00 lei</b><span>rest 9.799,54 lei</span><span class="st part">încasat parțial</span></td>
+        <td><span class="st rec">Recepționat</span></td>
+        <td class="liv">marți 20.10, după 14:00<br><span class="muted">mașina noastră · Câmpineanca</span></td>
+        <td class="act"><span class="ico">Închide ▴</span><span class="ico">Doc. ▾</span><span class="ico">⋯</span></td></tr>
+      <tr class="det"><td colspan="10"><div class="detail">
+        <div class="box"><h4>Încasări <span class="btn">+ Notează încasare</span></h4>
+          <table><tr><td>13.09.2026</td><td>avans, luat de agent la acceptare</td><td class="r"><b>2.000,00 lei</b></td></tr>
+                 <tr><td>20.09.2026</td><td>tranșa 2, numerar la birou</td><td class="r"><b>10.000,00 lei</b></td></tr></table>
+          <div class="rest">Rest de încasat: 9.799,54 lei</div><div class="hist">înregistrate de Ionuț B. (Administrator) · certifică doar Administratorul agentului</div></div>
+        <div class="box"><h4>Livrare și facturare</h4>
+          <b>Livrare:</b> marți 20.10.2026, după 14:00; sună înainte — <span class="hist">Gestiune (Maria P.), 14.10 09:20</span><br>
+          <b>Facturare:</b> ca în datele clientului<br><b>Formular Bilka:</b> 2 formulare, trimise 18.09 <span class="hist">(învelitoare + accesorii · pluvial)</span></div>
+        <div class="box"><h4>Statusuri</h4>
+          <b>Comandat</b> 18.09, 17:40 — Ionuț B.<br><b>Recepționat</b> 19.10, 11:05 — Gestiune (Maria P.)<br><span class="hist">livrat: —</span><br><br>
+          <b>Comision montator:</b> 800 lei <span class="hist">(pus 18.09, Ionuț B.)</span> · <span class="cb"></span>achitat</div>
+        <div class="box"><h4>Observații <span class="hist">cu istoric</span></h4>
+          „Clientul vrea ca jgheaburile să rămână pe paleți, le montează el." — <span class="hist">Ionuț B., 18.09 17:45</span><br>
+          „Confirmat telefonic livrarea; acces cu camionul pe strada din spate." — <span class="hist">Maria P. (Gestiune), 14.10 09:22</span><br>
+          <span class="hist">+ adaugă observație · Atașamente: panotaj.pdf, schita-acoperis.jpg · Locația pe WhatsApp</span></div>
+      </div></td></tr>
+      <tr><td><span class="sel-cb"></span></td><td class="nr"><b>AD-0086</b><span class="date">13.09.2026</span><span class="date">trimisă de <b>Adrian D.</b></span></td>
+        <td class="client"><b>Stan Vasile</b><span>Suraia</span><br><span>07xx xxx xxx</span></td>
+        <td class="rez">T8 3005 lucios 0,4 — 62,50 mp (pazie); accesorii speciale 3005 lucios</td>
+        <td class="mont"><b>—</b><span>montaj propriu</span></td>
+        <td class="r tot"><b>4.673,24 lei</b><span>890,60 €</span></td>
+        <td class="inc"><b>2.000,00 lei</b><span>rest 2.673,24 lei</span><span class="st part">încasat parțial</span></td>
+        <td><span class="st recp">Recepționat parțial<span class="ast">*</span></span><br><span class="hist">lipsă: 2 accesorii D10</span></td>
+        <td class="liv"><span class="muted">de programat</span></td>
+        <td class="act"><span class="ico">Deschide ▾</span><span class="ico">Doc. ▾</span><span class="ico">⋯</span></td></tr>
+      <tr><td><span class="sel-cb"></span></td><td class="nr"><b>CM-0032</b><span class="man">manuală</span><span class="date">13.10.2026</span><span class="date">adăugat de <b>Maria P.</b> pentru: <span class="nei">neidentificată</span></span></td>
+        <td class="client"><b>Toma Ionel</b><span>Odobești</span><br><span>07xx xxx xxx</span></td>
+        <td class="rez">T18 9005 mat 0,5 — 140,00 mp; coame 9005 mat — comandă venită direct la fabrică, fără anunț; de aflat al cui colaborator e</td>
+        <td class="mont"><b>—</b><span></span></td>
+        <td class="r tot"><b>14.120,00 lei</b><span>2.690,91 €</span></td>
+        <td class="inc"><b>0,00 lei</b><span>rest 14.120,00 lei</span><span class="st ne">neîncasat</span></td>
+        <td><span class="st com">Comandat</span></td>
+        <td class="liv"><span class="muted">de programat</span></td>
+        <td class="act"><span class="ico">Deschide ▾</span><span class="ico">Doc. ▾</span><span class="ico">⋯</span></td></tr>
+      <tr><td><span class="sel-cb"></span></td><td class="nr"><b>CM-0031</b><span class="man">manuală</span><span class="date">12.10.2026</span><span class="date">adăugat de <b>Maria P.</b> pentru: <b>Dănuț S.</b> (colaborator)</span></td>
+        <td class="client"><b>Dănuț S. — SC Acoperiș Expert SRL</b><span>Panciu</span><br><span>07xx xxx xxx</span></td>
+        <td class="rez">Clasic 8017 mat 0,45 — 86,20 mp; accesorii 8017 mat; holțșuruburi 8017 — necesar trimis pe WhatsApp, comandat din formular</td>
+        <td class="mont"><b>—</b><span>montează el</span></td>
+        <td class="r tot"><b>9.440,00 lei</b><span>1.799,02 €</span></td>
+        <td class="inc"><b>0,00 lei</b><span>rest 9.440,00 lei</span><span class="st ne">neîncasat</span></td>
+        <td><span class="st com">Comandat</span></td>
+        <td class="liv">ridică el de la depozit, vineri 17.10</td>
+        <td class="act"><span class="ico">Deschide ▾</span><span class="ico">Doc. ▾</span><span class="ico">⋯</span></td></tr>
+      <tr><td><span class="sel-cb on"></span></td><td class="nr"><b>IB-0149</b><span class="date">15.09.2026</span><span class="date">trimisă de <b>Ionuț B.</b></span></td>
+        <td class="client"><b>Asociația Cercul Unirea</b><span>Câmpineanca · completare la IB-0147</span><br><span>07xx xxx xxx</span></td>
+        <td class="rez">accesorii tinichigerie 8019 Grande Mat 0,5 (fără învelitoare)</td>
+        <td class="mont"><b>Gheorghe V.</b><span>07xx xxx xxx</span></td>
+        <td class="r tot"><b>862,13 lei</b><span>164,30 €</span></td>
+        <td class="inc"><b>0,00 lei</b><span>rest 862,13 lei</span><span class="st ne">neîncasat</span></td>
+        <td><span class="st com">Comandat</span></td>
+        <td class="liv">odată cu IB-0147, joi 16.10</td>
+        <td class="act"><span class="ico">Deschide ▾</span><span class="ico">Doc. ▾</span><span class="ico">⋯</span></td></tr>
+      <tr><td><span class="sel-cb"></span></td><td class="nr"><b>IB-0147</b><span class="date">11.09.2026</span><span class="date">trimisă de <b>Ionuț B.</b></span></td>
+        <td class="client"><b>Asociația Cercul Unirea</b><span>Câmpineanca</span><br><span>07xx xxx xxx</span></td>
+        <td class="rez">Hellenic 8019 Grande Mat 0,5 — 192,15 mp; sistem pluvial 8019 mat; accesorii tinichigerie + fixare 8019 Grande Mat</td>
+        <td class="mont"><b>Gheorghe V.</b><span>07xx xxx xxx</span><br><span>comision 1.200 lei · <span class="cb on"></span>achitat</span></td>
+        <td class="r tot"><b>15.900,00 lei<span class="ast">*</span></b><span>3.030,00 €</span></td>
+        <td class="inc"><b>15.900,00 lei</b><span class="st inc">încasat</span></td>
+        <td><span class="st rec">Recepționat</span></td>
+        <td class="liv">joi 16.10, dimineață<br><span class="muted">factura FGO emisă 12.10</span></td>
+        <td class="act"><span class="ico">Deschide ▾</span><span class="ico">Doc. ▾</span><span class="ico">⋯</span></td></tr>
+      <tr><td><span class="sel-cb"></span></td><td class="nr"><b>AD-0081</b><span class="date">02.09.2026</span><span class="date">trimisă de <b>Maria P.</b> (Gestiune)</span></td>
+        <td class="client"><b>Ionescu Mihai</b><span>Golești</span><br><span>07xx xxx xxx</span></td>
+        <td class="rez">Retro Plus Standard 7016 mat 0,5 — 96,40 mp; accesorii Retro 7016 mat</td>
+        <td class="mont"><b>Pavel C.</b><span>07xx xxx xxx</span><br><span>comision 600 lei · <span class="cb"></span>neachitat</span></td>
+        <td class="r tot"><b>12.125,45 lei</b><span>2.310,80 €</span></td>
+        <td class="inc"><b>12.125,45 lei</b><span class="st inc">încasat</span></td>
+        <td><span class="st liv">Livrat</span></td>
+        <td class="liv">livrat 09.10<br><span class="muted">retur: 4 coame — notă de retur 11.10</span></td>
+        <td class="act"><span class="ico">Deschide ▾</span><span class="ico">Doc. ▾</span><span class="ico">⋯</span></td></tr>
+    </tbody></table>
+    <div class="foot"><span>Ordinea: după data intrării în tabel, cele mai noi sus; comenzile <b>livrate și încasate</b> trec la sfârșitul listei, în aceeași ordine · apasă pe un cap de coloană ca să sortezi altfel</span><span>Arată 1–7 din 39</span></div>
+  </div>
+  <div class="legend">
+    <b>Deschide ▾</b> desfășoară rândul (ca primul): încasările cu „+ Notează încasare" (sumă · dată · ce reprezintă), livrarea și facturarea, statusurile cu istoric, comisionul montatorului cu bifa „achitat", observațiile cu istoric, atașamentele, locația pe WhatsApp. &nbsp; <b>Doc. ▾:</b> ofertă detaliată · tabel de facturare · formularele Bilka · aviz de marfă (viitor) · nota de retur. &nbsp; <b>⋯:</b> schimbă statusul · notează încasare · retur de marfă · trimite panotajul pe WhatsApp · istoric.<br>
+    <b>Responsabil:</b> contul care a trimis comanda la furnizor („trimisă de …"); la comenzile <span class="man">manuale</span> (introduse de Administratori sau Gestiune, fără ofertă): „adăugat de «cont» pentru: «contul alocat»" — alocarea o schimbă doar Administratorii; fără cont alocat = <span class="nei">neidentificată</span> până se află a cui e. &nbsp; <b>Fișa șoferului:</b> bifezi una sau mai multe comenzi → butonul „🚚 Fișa șoferului (n)" generează fișa (PDF, telefoane apelabile), cu avizele / tabelele de facturare de tipărit și trimiterea pe WhatsApp cu locațiile. &nbsp; <b>Cine vede / cine face:</b> Administratorul agentului — încasările și bifa „achitat" la comisioane; Administratorii și Gestiunea — statusurile logistice, livrarea, observațiile; Contabilitatea — doar vizualizare și documente; agentul — comenzile firmei, cu modificări doar pe detaliile comenzilor lui; colaboratorul — doar comenzile lui. <span class="ast">*</span> sumă sau recepție cu istoric / notă.
+  </div>
+</div></div></body></html>

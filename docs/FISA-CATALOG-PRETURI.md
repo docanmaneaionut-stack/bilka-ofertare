@@ -1,6 +1,6 @@
 # Fișa de modul — CATALOG ȘI PREȚURI (CAT / LP / ADM)
 
-Versiunea 1.0 · 10 septembrie 2026 · Status: PROPUSĂ SPRE ÎNCHIDERE (se închide la „ok")
+Versiunea 1.0 · 10 septembrie 2026 · Status: ÎNCHISĂ (aprobată de Ionuț 10.09.2026)
 Sursa: deciziile lui Ionuț din 04–10.09.2026, listă cu listă. Anexe: fișele listelor 01–09, ANALIZA-LISTE-BILKA, ANALIZA-FORMULAR-BILKA, VERIFICARE-PRETURI-BILKA, REGULI-CULORI-BILKA, fișierele din `docs/import/bilka/`.
 
 ---

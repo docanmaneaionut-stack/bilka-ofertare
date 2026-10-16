@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="ro"><head><meta charset="utf-8"><title>Lista de oferte — machetă ecran (propunere cap. 15)</title>
+<style>
+* { box-sizing: border-box; }
+body { margin: 0; background: #f3f4f5; font-family: Arial, Helvetica, "Liberation Sans", sans-serif; color: #1c1c1c; font-size: 14px; }
+.app { width: 1366px; margin: 0 auto; }
+.topbar { display: flex; align-items: center; gap: 24px; padding: 14px 28px; background: #fff; border-bottom: 1px solid #dcdcdc; }
+.brand { font-weight: 700; font-size: 15px; letter-spacing: .3px; }
+.nav { display: flex; gap: 6px; margin-left: 12px; }
+.nav a { padding: 8px 14px; border-radius: 6px; color: #333; text-decoration: none; font-size: 14px; }
+.nav a.on { background: #1c1c1c; color: #fff; font-weight: 600; }
+.user { margin-left: auto; color: #555; font-size: 13px; }
+.user b { color: #1c1c1c; }
+.page { padding: 22px 28px 30px; }
+.head { display: flex; align-items: center; gap: 14px; margin-bottom: 16px; }
+.head h1 { font-size: 24px; margin: 0; font-weight: 700; }
+.head .count { color: #666; font-size: 14px; margin-left: 4px; }
+.btn { border: 1px solid #c9c9c9; background: #fff; padding: 10px 16px; border-radius: 6px; font-size: 14px; color: #1c1c1c; }
+.btn.primary { background: #1c1c1c; color: #fff; border-color: #1c1c1c; font-weight: 600; }
+.head .btn { margin-left: 0; } .head .spacer { flex: 1; }
+.search { display: flex; align-items: center; gap: 8px; border: 1px solid #c9c9c9; background: #fff; border-radius: 6px; padding: 9px 12px; width: 360px; color: #8a8a8a; }
+.filters { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 14px; }
+.chips { display: flex; gap: 6px; }
+.chip { padding: 7px 12px; border-radius: 999px; border: 1px solid #cfcfcf; background: #fff; font-size: 13px; color: #333; }
+.chip.on { background: #1c1c1c; color: #fff; border-color: #1c1c1c; }
+.sel { border: 1px solid #c9c9c9; background: #fff; border-radius: 6px; padding: 8px 12px; font-size: 13px; color: #333; display: flex; gap: 8px; align-items: center; }
+.sel .lbl { color: #8a8a8a; }
+.sel.warn { border-color: #e2b23a; background: #fff8e6; }
+.card { background: #fff; border: 1px solid #dcdcdc; border-radius: 8px; overflow: hidden; }
+table { width: 100%; border-collapse: collapse; }
+th { text-align: left; font-size: 11.5px; text-transform: uppercase; letter-spacing: .5px; color: #555; font-weight: 600; padding: 12px 14px; background: #f7f7f7; border-bottom: 1px solid #dcdcdc; white-space: nowrap; }
+th.r, td.r { text-align: right; }
+th .sort { color: #999; margin-left: 4px; font-size: 10px; }
+td { padding: 12px 14px; border-bottom: 1px solid #ececec; vertical-align: middle; font-size: 14px; }
+tr:hover td { background: #fafafa; }
+td.nr b { font-size: 14.5px; } td.nr .date { color: #777; font-size: 12.5px; display: block; margin-top: 2px; }
+td.client b { display: block; } td.client span { color: #666; font-size: 12.5px; }
+td.inv { color: #333; font-size: 13.5px; } td.inv .mp { color: #777; font-size: 12.5px; display: block; margin-top: 2px; }
+td.tot b { font-size: 16.5px; } td.tot span { color: #777; font-size: 12.5px; display: block; margin-top: 2px; }
+.st { display: inline-block; padding: 5px 10px; border-radius: 999px; font-size: 12.5px; font-weight: 600; white-space: nowrap; }
+.st.lucru { background: #ececec; color: #444; } .st.trans { background: #e3eefc; color: #1d4e9e; } .st.reviz { background: #fff1d6; color: #8a5a00; }
+.st.accept { background: #e2f3e6; color: #1e6b33; } .st.neaccept { background: #f1e4e4; color: #7a2e2e; } .st.avans { background: #d4ecdb; color: #175a2a; } .st.decom { background: #dfeef0; color: #0f5d6b; } .st.comandat { background: #1c1c1c; color: #fff; }
+.warn { display: inline-flex; align-items: center; gap: 6px; margin-left: 8px; padding: 4px 9px; border-radius: 999px; background: #fff3cd; color: #7a5200; font-size: 12px; font-weight: 600; white-space: nowrap; }
+.warn u { text-decoration: underline; cursor: pointer; }
+.link { color: #777; font-size: 12.5px; }
+td.sub { padding-left: 34px; color: #333; } td.sub .arrow { color: #999; margin-right: 6px; }
+.ast { color: #d12e2e; font-weight: 700; margin-left: 2px; }
+.dot { display: inline-block; width: 9px; height: 9px; border-radius: 50%; background: #7b61ff; margin-right: 7px; vertical-align: middle; }
+td.act { white-space: nowrap; text-align: right; }
+.ico { display: inline-block; padding: 6px 9px; border: 1px solid #d5d5d5; border-radius: 6px; font-size: 12.5px; color: #333; background: #fff; margin-left: 4px; }
+tr.sep td { background: #f7f7f7; color: #555; font-size: 11.5px; text-transform: uppercase; letter-spacing: .5px; font-weight: 600; padding: 9px 14px; border-top: 1px solid #dcdcdc; }
+.foot { display: flex; justify-content: space-between; align-items: center; padding: 12px 14px; color: #666; font-size: 13px; background: #fafafa; border-top: 1px solid #dcdcdc; }
+.pages span { display: inline-block; padding: 5px 9px; border: 1px solid #d5d5d5; border-radius: 5px; margin-left: 4px; background: #fff; } .pages span.on { background: #1c1c1c; color: #fff; border-color: #1c1c1c; }
+.legend { margin-top: 14px; color: #666; font-size: 12.5px; line-height: 1.7; }
+.legend b { color: #333; }
+</style></head><body><div class="app">
+<div class="topbar"><div class="brand">PROROOF · ofertare</div>
+  <div class="nav"><a class="on">Oferte</a><a>Comenzi</a><a>Vânzări</a><a>Clienți</a><a>Montatori</a></div>
+  <div class="user">Conectat: <b>Ionuț Bîrlădeanu</b> · Administrator · Proroof Comp SRL</div></div>
+<div class="page">
+  <div class="head"><h1>Oferte</h1><span class="count">128 oferte · 14 în lucru · 6 de comandat · 71 comandate</span><div class="spacer"></div>
+    <div class="search">🔍 Caută după client, telefon, număr ofertă, localitate…</div>
+    <span class="btn">Află preț</span><span class="btn primary">+ Ofertă nouă</span></div>
+  <div class="filters">
+    <div class="chips"><span class="chip on">Toate</span><span class="chip">În lucru</span><span class="chip">Transmisă</span><span class="chip">De revizionat</span><span class="chip">Acceptată</span><span class="chip">Neacceptată</span><span class="chip">Avans luat</span><span class="chip">De comandat</span><span class="chip">Comandat</span></div>
+    <div class="sel"><span class="lbl">Perioadă</span> Ultimele 90 de zile ▾</div>
+    <div class="sel"><span class="lbl">Agent</span> Toți agenții firmei ▾</div>
+    <div class="sel warn">⚠ Prețuri vechi (3)</div>
+    <div class="sel"><span class="lbl">Client</span> Cu mai multe oferte ▾</div>
+  </div>
+  <div class="card"><table>
+    <thead><tr><th>Nr. · data <span class="sort">▼</span></th><th>Client</th><th>Învelitoare</th><th class="r">Total cu TVA</th><th>Status</th><th>Agent</th><th>Modificat</th><th></th></tr></thead>
+    <tbody><tr><td class="nr"><b>IB-0152</b><span class="date">18.09.2026</span></td><td class="client"><b>Popescu Andrei</b><span>Câmpineanca · 07xx xxx xxx</span></td><td class="inv">Hellenic · Grande Mat 0,50 · RAL 8019<span class="mp">192,269 mp · + pluvial</span></td><td class="r tot"><b>4.154,43 €</b><span>21.799,54 lei</span></td><td><span class="st decom">De comandat</span></td><td>Ionuț B.</td><td class="link">azi, 17:40</td><td class="act"><span class="ico">Deschide</span><span class="ico">PDF ▾</span><span class="ico">⋯</span></td></tr><tr><td class="nr"><b>IB-0151</b><span class="date">17.09.2026</span></td><td class="client"><b>Marica Bogdan</b><span>Suraia · 07xx xxx xxx</span></td><td class="inv">Clasic · Grande Mat 0,50 · RAL 7024<span class="mp">255,120 mp · + pluvial · + șipcă gard</span></td><td class="r tot"><b>5.023,02 €</b><span>26.357,32 lei</span></td><td><span class="st lucru">În lucru</span><span class="warn">⚠ prețuri vechi · <u>recalculează</u></span></td><td>Ionuț B.</td><td class="link">ieri, 09:12</td><td class="act"><span class="ico">Deschide</span><span class="ico">PDF ▾</span><span class="ico">⋯</span></td></tr><tr><td class="nr"><b>AD-0088</b><span class="date">16.09.2026</span></td><td class="client"><b><span class="dot"></span>Ionescu Mihai</b><span>Golești · 07xx xxx xxx</span></td><td class="inv">Retro Plus Standard · mat 0,50 · RAL 7016<span class="mp">96,400 mp</span></td><td class="r tot"><b>2.310,80 €<span class="ast">*</span></b><span>12.125,45 lei</span></td><td><span class="st accept">Acceptată</span></td><td>Adrian D.</td><td class="link">16.09, 18:05</td><td class="act"><span class="ico">Deschide</span><span class="ico">PDF ▾</span><span class="ico">⋯</span></td></tr><tr><td class="nr"><b>AD-0087</b><span class="date">16.09.2026</span></td><td class="client"><b><span class="dot"></span>Ionescu Mihai</b><span>Golești · 07xx xxx xxx</span></td><td class="inv">Retro Plus Standard · mat 0,50 · RAL 7016<span class="mp">64,900 mp · variantă: Grande Mat</span></td><td class="r tot"><b>1.598,40 €</b><span>8.387,00 lei</span></td><td><span class="st trans">Transmisă</span></td><td>Adrian D.</td><td class="link">16.09, 11:30</td><td class="act"><span class="ico">Deschide</span><span class="ico">PDF ▾</span><span class="ico">⋯</span></td></tr><tr><td class="nr"><b>IB-0146</b><span class="date">10.09.2026</span></td><td class="client"><b>Dumitru Elena</b><span>Vânători · 07xx xxx xxx</span></td><td class="inv">Dacic · mat 0,45 · RAL 8017<span class="mp">148,000 mp (suprafață directă)</span></td><td class="r tot"><b>2.760,10 €</b><span>14.483,22 lei</span></td><td><span class="st reviz">De revizionat</span></td><td>Ionuț B.</td><td class="link">14.09, 10:48</td><td class="act"><span class="ico">Deschide</span><span class="ico">PDF ▾</span><span class="ico">⋯</span></td></tr><tr><td class="nr"><b>AD-0086</b><span class="date">09.09.2026</span></td><td class="client"><b>Stan Vasile</b><span>Suraia · 07xx xxx xxx</span></td><td class="inv">T8 · lucios 0,40 · RAL 3005<span class="mp">62,500 mp · pazie</span></td><td class="r tot"><b>890,60 €</b><span>4.673,24 lei</span></td><td><span class="st avans">Avans luat · 2.000 lei</span></td><td>Adrian D.</td><td class="link">13.09, 08:55</td><td class="act"><span class="ico">Deschide</span><span class="ico">PDF ▾</span><span class="ico">⋯</span></td></tr><tr><td class="nr"><b>IB-0144</b><span class="date">05.09.2026</span></td><td class="client"><b>Radu Cristina</b><span>Focșani · 07xx xxx xxx</span></td><td class="inv">Clasic · lucios 0,45 · RAL 8017<span class="mp">118,300 mp · + pluvial</span></td><td class="r tot"><b>2.106,70 €</b><span>11.054,49 lei</span></td><td><span class="st neaccept">Neacceptată</span></td><td>Ionuț B.</td><td class="link">11.09, 12:10</td><td class="act"><span class="ico">Deschide</span><span class="ico">PDF ▾</span><span class="ico">⋯</span></td></tr><tr class="sep"><td colspan="8">Comandate — la sfârșitul listei, după data comenzii</td></tr><tr><td class="nr"><b>IB-0147</b><span class="date">11.09.2026</span></td><td class="client"><b>Asociația Cercul Unirea</b><span>Câmpineanca · 07xx xxx xxx</span></td><td class="inv">Hellenic · Grande Mat 0,50 · RAL 8019<span class="mp">192,150 mp · + pluvial</span></td><td class="r tot"><b>3.030,00 €</b><span>15.900,00 lei</span></td><td><span class="st comandat">Comandat</span></td><td>Ionuț B.</td><td class="link">12.09, 14:20</td><td class="act"><span class="ico">Deschide</span><span class="ico">PDF ▾</span><span class="ico">⋯</span></td></tr><tr><td class="nr sub"><span class="arrow">↳</span><b>IB-0149</b><span class="date">15.09.2026</span></td><td class="client"><b>Asociația Cercul Unirea</b><span class="link">completare la IB-0147 · clientul mai vrea</span></td><td class="inv">accesorii Grande Mat 0,50 · RAL 8019<span class="mp">fără învelitoare</span></td><td class="r tot"><b>164,30 €</b><span>862,13 lei</span></td><td><span class="st comandat">Comandat</span></td><td>Ionuț B.</td><td class="link">15.09, 16:02</td><td class="act"><span class="ico">Deschide</span><span class="ico">PDF ▾</span><span class="ico">⋯</span></td></tr></tbody></table>
+    <div class="foot"><span>Ordonate după dată, cele mai noi sus, indiferent de status; ofertele comandate trec la sfârșitul listei, după data comenzii · apasă pe un cap de coloană ca să sortezi altfel</span><span class="pages"><span class="on">1</span><span>2</span><span>3</span><span>…</span><span>13</span></span></div>
+  </div>
+  <div class="legend">
+    <b>Meniul ⋯ pe rând:</b> Copiază oferta · Creează variantă · Completare la această ofertă · Preia prețurile în altă ofertă · Istoric · Notițe și atașamente. &nbsp; <b>PDF ▾:</b> ofertă · rezumat · detaliată · tabel de facturare.<br>
+    <b>Marcaje:</b> <span class="warn">⚠ prețuri vechi</span> ofertă „În lucru" calculată pe o listă de prețuri expirată — recalculează la lista curentă; &nbsp; <span class="ast">*</span> sumă modificată, cu istoric; &nbsp; <span class="dot"></span> client cu mai multe oferte (același telefon) — vizibil doar pentru Admin general; &nbsp; ↳ completare, afișată sub oferta inițială.<br>
+    <b>Cine vede ce:</b> agentul și colaboratorul — doar ofertele lor (fără coloana Agent); Administratorul — toate ofertele firmei, cu filtrul Agent (unul, mai mulți sau toți); Admin general — toate firmele, cu filtrul Firmă.
+  </div>
+</div></div></body></html>

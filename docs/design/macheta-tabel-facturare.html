@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="ro"><head><meta charset="utf-8"><title>Tabel de facturare IB-0152 — machetă</title>
+<style>
+@page { size: A4 portrait; margin: 11mm 14mm 15mm 14mm; }
+* { box-sizing: border-box; }
+body { font-family: Arial, Helvetica, "Liberation Sans", sans-serif; color: #1c1c1c; font-size: 10pt; line-height: 1.2; margin: 0; background: #e9e9e9; }
+.sheet { width: 210mm; min-height: 297mm; margin: 10mm auto; background: #fff; padding: 12mm 14mm 12mm 14mm; }
+@media print { body { background: #fff; } .sheet { margin: 0; padding: 0; width: auto; min-height: auto; }  }
+thead { display: table-header-group; }              /* capul de tabel se repetă pe fiecare pagină */
+tr { page-break-inside: avoid; } tr.cat { page-break-after: avoid; }   /* banda de categorie rămâne cu prima ei linie */
+.bottom { page-break-inside: avoid; }               /* totalurile nu se rup între pagini */
+.head { display: flex; justify-content: space-between; align-items: flex-start; gap: 10mm; margin-top: -1mm; }
+.firm { font-size: 8.5pt; line-height: 1.3; } .firm b { font-size: 11.5pt; letter-spacing: .2px; }
+.logos { display: flex; flex-direction: column; align-items: flex-end; gap: 2mm; }
+.logo { border: 1px dashed #b9b9b9; color: #8a8a8a; font-size: 8pt; text-align: center; padding: 2mm 3mm; width: 40mm; }
+.logo.big { height: 9mm; display:flex; align-items:center; justify-content:center; }
+.suppliers { display: flex; gap: 2mm; } .suppliers .logo { width: 19mm; padding: 1.2mm 2mm; }
+.title { margin: 2.5mm 0 1.5mm; display: flex; justify-content: space-between; align-items: baseline; border-bottom: 2px solid #1c1c1c; padding-bottom: 1.5mm; }
+.title h1 { font-size: 17pt; margin: 0; font-weight: 700; letter-spacing: .3px; }
+.title .nr { font-size: 11pt; } .title .nr b { font-size: 13pt; }
+.parties { display: grid; grid-template-columns: 1fr 1fr; gap: 8mm; margin: 1.5mm 0 2mm; font-size: 9.2pt; line-height: 1.25; }
+.parties .box { padding: 1.5mm 0 0; border-top: 1px solid #d5d5d5; }
+.parties .lbl { font-size: 8.5pt; text-transform: uppercase; letter-spacing: .6px; color: #6a6a6a; margin-bottom: 1mm; }
+table.lines { width: 100%; border-collapse: collapse; font-size: 9.3pt; }
+table.lines th { text-align: left; font-weight: 600; font-size: 8pt; text-transform: uppercase; letter-spacing: .5px; color: #4a4a4a; background: #f4f4f4; padding: 1.6mm 1.5mm; border-bottom: 1px solid #c9c9c9; }
+table.lines td { padding: .75mm 1.5mm; border-bottom: 1px solid #e6e6e6; vertical-align: middle; }
+table.lines tr.cat td { background: #f4f4f4; font-weight: 700; font-size: 9.5pt; padding: 1.3mm 1.5mm; border-top: 1px solid #c9c9c9; } table.lines tr.cat td.subv { font-weight: 600; color: #444; font-size: 9pt; }
+td.n, th.n { width: 7mm; color: #8a8a8a; } td.c, th.c { text-align: center; width: 12mm; } td.r, th.r { text-align: right; white-space: nowrap; }
+th.q { width: 18mm; } th.p { width: 22mm; } th.v { width: 24mm; }
+.bottom { display: flex; justify-content: space-between; align-items: flex-start; gap: 8mm; margin-top: 2.5mm; } .totals { width: 78mm; flex: none; font-size: 10pt; }
+.totals div { display: flex; justify-content: space-between; padding: 1mm 0; border-bottom: 1px solid #e6e6e6; }
+.totals .big { font-size: 12.5pt; font-weight: 700; border-bottom: 2px solid #1c1c1c; border-top: 1px solid #1c1c1c; padding: 1.8mm 0; }
+.totals .lei { font-size: 12pt; font-weight: 700; border-bottom: none; }
+.supl { margin-top: 4mm; flex: 1; } .page2 { page-break-before: always; } .page2 .title { margin-top: 0; }   /* anexa începe mereu pe pagină nouă */ .supl h3 { font-size: 9pt; margin: 0 0 1mm; text-transform: uppercase; letter-spacing: .5px; color: #4a4a4a; }
+.supl table { width: 100%; border-collapse: collapse; font-size: 9.5pt; } .supl td { padding: 1.1mm 1.5mm; border-bottom: 1px solid #e6e6e6; }
+.supl .note { font-size: 8.5pt; color: #555; margin-top: .8mm; }
+.foot { margin-top: 1mm; font-size: 8pt; color: #333; line-height: 1.4; flex: 1; }
+.foot b { color: #1c1c1c; } .foot p { margin: 0 0 1.2mm; }
+.pagefoot { margin-top: 2.5mm; display: flex; justify-content: space-between; font-size: 8pt; color: #8a8a8a; border-top: 1px solid #d5d5d5; padding-top: 1.5mm; }
+/* rezumat: blocuri pe categorii (structura Novatik), în stilul benzilor din ofertă */
+.intro { font-size: 10pt; margin: 2.5mm 0 3mm; }
+.block { margin-bottom: 2.5mm; }
+.bh { background: #f4f4f4; border-top: 1px solid #c9c9c9; padding: 1.6mm 1.5mm; font-size: 9.5pt; display: flex; gap: 2mm; align-items: baseline; }
+.bh .bn { color: #8a8a8a; width: 6mm; flex: none; } .bh .bt { font-weight: 700; } .bh .bs { color: #333; }
+.bb { display: grid; grid-template-columns: 24mm 1fr; row-gap: 1.2mm; column-gap: 2mm; padding: 2mm 1.5mm 1.5mm 9.5mm; font-size: 9.8pt; line-height: 1.3; border-bottom: 1px solid #e6e6e6; }
+.bb .k { color: #6a6a6a; font-size: 8pt; text-transform: uppercase; letter-spacing: .5px; padding-top: .6mm; }
+.bb .v b { font-size: 10.5pt; }
+table.lines tr.pan td { background: #fbfbfb; font-size: 8.8pt; color: #333; padding: .6mm 1.5mm .6mm 9mm; border-bottom: 1px dotted #ddd; }
+table.lines tr.pan td.r { padding-right: 1.5mm; } table.lines tr.panh td { background: #fbfbfb; font-size: 7.8pt; color: #6a6a6a; text-transform: uppercase; letter-spacing: .5px; padding: 1mm 1.5mm .4mm 9mm; border-bottom: none; }
+.cb { display: inline-block; width: 3.4mm; height: 3.4mm; border: 1px solid #9a9a9a; vertical-align: middle; border-radius: .4mm; }
+th.k, td.k { width: 10mm; text-align: center; }
+.intern { font-size: 8.5pt; color: #6a6a6a; margin: -.5mm 0 2mm; }
+/* fișa șoferului: un bloc per livrare, telefoane apelabile, de încasat mare */
+.dl { border: 1px solid #c9c9c9; border-radius: 1.5mm; margin: 3mm 0 0; page-break-inside: avoid; }
+.dlh { display: flex; align-items: baseline; gap: 3mm; background: #f4f4f4; padding: 2mm 3mm; border-bottom: 1px solid #c9c9c9; font-size: 11pt; }
+.dlh .n { color: #8a8a8a; width: 5mm; } .dlh b { font-size: 12.5pt; } .dlh .nr { color: #555; font-size: 9.5pt; } .dlh .tel { margin-left: auto; }
+.dlb { display: grid; grid-template-columns: 22mm 1fr; row-gap: 1.6mm; column-gap: 2mm; padding: 2.5mm 3mm 2.5mm; font-size: 10pt; line-height: 1.35; }
+.dlb .k { color: #6a6a6a; font-size: 8pt; text-transform: uppercase; letter-spacing: .5px; padding-top: .6mm; }
+.dlb .sub { color: #555; font-size: 9pt; } .dlb .big { font-size: 14pt; font-weight: 700; }
+a.tel { color: #1c1c1c; text-decoration: none; font-weight: 700; white-space: nowrap; } a { color: #1c1c1c; }
+.cb { display: inline-block; width: 3.6mm; height: 3.6mm; border: 1px solid #9a9a9a; vertical-align: middle; border-radius: .4mm; }
+@media print { .pagefoot { display: none; } }   /* în PDF, subsolul paginii îl scrie motorul (număr de pagină corect pe orice lungime) */
+</style></head><body><div class="sheet">
+<div class="head">
+  <div class="firm"><b>SC ROOFSHOP DMI SRL</b><br>CUI RO45403526 · J39/1239/2021<br>Str. Mărășești nr. 37, Focșani, jud. Vrancea<br>Tel. 07xx xxx xxx · office@roofshop.ro</div>
+  <div class="logos"><div class="logo big">sigla firmei</div><div class="suppliers"><div class="logo">sigla Bilka</div><div class="logo">sigla Fakro</div></div></div>
+</div>
+<div class="title"><h1>TABEL DE FACTURARE</h1><div class="nr">pentru oferta <b>IB-0152</b> / 18.09.2026</div></div>
+<div class="parties">
+  <div class="box"><div class="lbl">Client</div><b>Popescu Andrei</b><br>Str. Florilor nr. 12, Câmpineanca, jud. Vrancea<br>Tel. 07xx xxx xxx</div>
+  <div class="box"><div class="lbl">Agent</div><b>Ionuț Bîrlădeanu</b><br>Tel. 07xx xxx xxx<br>ionut@roofshop.ro</div>
+</div>
+<div class="intern">Document intern, pentru contabilitate — cantitățile și prețurile de facturat, în lei, la cursul ofertei (5,2473). Date de facturare: cele ale clientului, dacă în comandă nu sunt altele.</div>
+<table class="lines">
+<thead><tr><th class="n">Nr.</th><th>Denumire</th><th class="c">UM</th><th class="r q">Cantitate</th><th class="r p">Preț unitar (lei)</th><th class="r v">Valoare (lei)</th><th class="r v">TVA 21 % (lei)</th></tr></thead>
+<tbody><tr><td class="n">1</td><td>Țiglă metalică Hellenic · Grande Mat · 0,50 mm · RAL 8019</td><td class="c">mp</td><td class="r">192,269</td><td class="r">58,7698</td><td class="r">11.299,61</td><td class="r">2.372,92</td></tr><tr><td class="n">2</td><td>Coamă mică</td><td class="c">buc</td><td class="r">8,000</td><td class="r">47,7504</td><td class="r">382,00</td><td class="r">80,22</td></tr><tr><td class="n">3</td><td>Bordură fronton 312 mm</td><td class="c">buc</td><td class="r">19,000</td><td class="r">47,7504</td><td class="r">907,26</td><td class="r">190,52</td></tr><tr><td class="n">4</td><td>Colector fronton 156 mm</td><td class="c">buc</td><td class="r">23,000</td><td class="r">23,8752</td><td class="r">549,13</td><td class="r">115,32</td></tr><tr><td class="n">5</td><td>Bordură streașină 208 mm</td><td class="c">buc</td><td class="r">15,000</td><td class="r">31,7462</td><td class="r">476,19</td><td class="r">100,00</td></tr><tr><td class="n">6</td><td>Bordură la perete 208 mm</td><td class="c">buc</td><td class="r">4,000</td><td class="r">31,7462</td><td class="r">126,98</td><td class="r">26,67</td></tr><tr><td class="n">7</td><td>Dolie 417 mm</td><td class="c">buc</td><td class="r">2,000</td><td class="r">63,4923</td><td class="r">126,98</td><td class="r">26,67</td></tr><tr><td class="n">8</td><td>Opritor zăpadă 2 m</td><td class="c">buc</td><td class="r">20,000</td><td class="r">31,7462</td><td class="r">634,92</td><td class="r">133,33</td></tr><tr><td class="n">9</td><td>Set coș fum (4 piese)</td><td class="c">buc</td><td class="r">1,000</td><td class="r">190,4770</td><td class="r">190,48</td><td class="r">40,00</td></tr><tr><td class="n">10</td><td>Holțșuruburi în culoare, lemn 4,8 × 35 mm (250 buc)</td><td class="c">cutie</td><td class="r">8,000</td><td class="r">46,1762</td><td class="r">369,41</td><td class="r">77,58</td></tr><tr><td class="n">11</td><td>Capac coamă Grande Mat</td><td class="c">buc</td><td class="r">2,000</td><td class="r">35,1569</td><td class="r">70,31</td><td class="r">14,77</td></tr><tr><td class="n">12</td><td>Bandă bituminoasă 15 cm × 10 m</td><td class="c">rolă</td><td class="r">2,000</td><td class="r">83,9568</td><td class="r">167,91</td><td class="r">35,26</td></tr><tr><td class="n">13</td><td>Mastic etanșare premium 300 ml</td><td class="c">buc</td><td class="r">1,000</td><td class="r">44,6020</td><td class="r">44,60</td><td class="r">9,37</td></tr><tr><td class="n">14</td><td>Folie anticondens 120 g · 75 mp</td><td class="c">rolă</td><td class="r">3,000</td><td class="r">267,6123</td><td class="r">802,84</td><td class="r">168,60</td></tr><tr><td class="n">15</td><td>Jgheab 125 · 4 m</td><td class="c">buc</td><td class="r">7,000</td><td class="r">64,0171</td><td class="r">448,12</td><td class="r">94,11</td></tr><tr><td class="n">16</td><td>Burlan 90 · 3 m</td><td class="c">buc</td><td class="r">5,000</td><td class="r">59,2945</td><td class="r">296,47</td><td class="r">62,26</td></tr><tr><td class="n">17</td><td>Cârlig jgheab 210 mm</td><td class="c">buc</td><td class="r">44,000</td><td class="r">10,7570</td><td class="r">473,31</td><td class="r">99,40</td></tr><tr><td class="n">18</td><td>Colier burlan 90</td><td class="c">buc</td><td class="r">10,000</td><td class="r">6,2968</td><td class="r">62,97</td><td class="r">13,22</td></tr><tr><td class="n">19</td><td>Capac jgheab 125</td><td class="c">buc</td><td class="r">8,000</td><td class="r">6,2968</td><td class="r">50,37</td><td class="r">10,58</td></tr><tr><td class="n">20</td><td>Element îmbinare jgheab 125</td><td class="c">buc</td><td class="r">6,000</td><td class="r">10,2322</td><td class="r">61,39</td><td class="r">12,89</td></tr><tr><td class="n">21</td><td>Racord jgheab – burlan 125 / 90</td><td class="c">buc</td><td class="r">6,000</td><td class="r">17,0537</td><td class="r">102,32</td><td class="r">21,49</td></tr><tr><td class="n">22</td><td>Cot 60° 90</td><td class="c">buc</td><td class="r">16,000</td><td class="r">17,0537</td><td class="r">272,86</td><td class="r">57,30</td></tr><tr><td class="n">23</td><td>Prelungitor intermediar 90 · 1 m</td><td class="c">buc</td><td class="r">5,000</td><td class="r">19,9397</td><td class="r">99,70</td><td class="r">20,94</td></tr></tbody></table>
+<div class="bottom"><div class="foot"></div>
+<div class="totals">
+  <div><span>Total fără TVA</span><span>18.016,13 lei</span></div>
+  <div><span>TVA 21 %</span><span>3.783,42 lei</span></div>
+  <div class="big"><span>Total de facturat</span><span>21.799,55 lei</span></div>
+</div></div>
+<div class="pagefoot"><span>SC ROOFSHOP DMI SRL · Tabel de facturare IB-0152 / 18.09.2026 · Popescu Andrei</span><span>Pagina 1 din 1</span></div>
+</div></body></html>
