@@ -9,7 +9,9 @@
 | `01-rezidential.csv` … `09-accesorii-speciale-ml.csv` (9 fișiere, inclusiv `04b-pluvial-aluzinc.csv`) | `docs\import\bilka\` | extrasele de import, un cod Bilka o singură dată în tot setul |
 | `variante-profil.csv` | `docs\import\bilka\` | variantele de profil per model, cu restricții |
 | `culori-finisaj-grosime.csv` | `docs\import\bilka\` | tabelul de culori (finisaj × grosime × culoare) |
-| `garantii-finisaj-grosime.csv` | `docs\import\bilka\` | garanții și straturi pe finisaj × grosime |
+| `garantii-finisaj-grosime.csv` | `docs\import\bilka\` | garanții și straturi pe finisaj × grosime (ani culoare / ani coroziune) |
+| `liste-implicite-oferta.csv` | `docs\import\bilka\` | ce produse apar direct în fiecare rubrică a ofertei, pe categorii de învelitoare |
+| `trepte-desfasurata.csv` | `docs\import\bilka\` | încadrarea desfășuratelor pe trepte D01–D25 (pop-up la accesoriile speciale) |
 | `README.md` (acest fișier) | `docs\import\bilka\` | indexul setului |
 | `FISA-CATALOG-PRETURI.md` | `docs\` | fișa modulului (regulile catalogului) |
 | `FISA-LISTA-01-REZIDENTIAL.md` … `FISA-LISTA-08-09-ACCESORII-SPECIALE.md` (7 fișe) | `docs\` | ce conține fiecare listă, regulile, deciziile |

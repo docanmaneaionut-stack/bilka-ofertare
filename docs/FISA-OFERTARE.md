@@ -178,7 +178,7 @@ Suprafața la **3 zecimale** (ca la facturarea Bilka și în formular); prețuri
 
 ## Capitolul 5 — Accesorii speciale — ÎNCHIS (14.09.2026)
 
-- **2 ML (la bucată)**: rubrica vine imediat sub tinichigeria standard și **preia caracteristicile învelitorii principale** (butonul pentru învelitoarea secundară, ca la standard). Apar implicit **6 rânduri** presetate pe **D01**; clic pe treaptă deschide lista cu toate treptele D01–D25 (pop-up-ul de încadrare a desfășuratelor pe tipuri de accesorii — lista lui Ionuț, când e gata). Peste 6 tipuri: **„+ Adaugă accesoriu special"**. Pe rând: treapta, cantitate în bucăți, schiță / poză atașabilă.
+- **2 ML (la bucată)**: rubrica vine imediat sub tinichigeria standard și **preia caracteristicile învelitorii principale** (butonul pentru învelitoarea secundară, ca la standard). Apar implicit **6 rânduri** presetate pe **D01**; clic pe treaptă deschide lista cu toate treptele D01–D25, fiecare cu intervalul ei de desfășurată (D01 1–50 mm · D02 51–100 mm · … · D25 1201–1250 mm, pas de 50 mm) — lista lui Ionuț din 16.10.2026, în `docs/import/bilka/trepte-desfasurata.csv`; agentul vede încadrarea și alege treapta. Peste 6 tipuri: **„+ Adaugă accesoriu special"**. Pe rând: treapta, cantitate în bucăți, schiță / poză atașabilă.
 - **La lungimi (la ml)**: rubrică independentă, fără rânduri presetate; pe fiecare rând se aleg manual **treapta D, finisajul, grosimea și culoarea**; cantitate = lungime × bucăți → ml; schiță / poză atașabilă.
 - Fără calcule automate în ambele rubrici.
 
