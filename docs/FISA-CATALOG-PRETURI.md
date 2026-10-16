@@ -1,6 +1,6 @@
 # Fișa de modul — CATALOG ȘI PREȚURI (CAT / LP / ADM)
 
-Versiunea 1.0 · 10 septembrie 2026 · Status: ÎNCHISĂ (aprobată de Ionuț 10.09.2026)
+Versiunea 1.1 · 16 octombrie 2026 · Status: ÎNCHISĂ (aprobată de Ionuț 10.09.2026; regula 12 adăugată 16.10.2026)
 Sursa: deciziile lui Ionuț din 04–10.09.2026, listă cu listă. Anexe: fișele listelor 01–09, ANALIZA-LISTE-BILKA, ANALIZA-FORMULAR-BILKA, VERIFICARE-PRETURI-BILKA, REGULI-CULORI-BILKA, fișierele din `docs/import/bilka/`.
 
 ---
@@ -35,6 +35,8 @@ Culorile: tabelul general finisaj × grosime (`culori-finisaj-grosime.csv`), cu 
 9. **Curs BNR + 1 %**: preluat automat zilnic, înghețat pe ofertă la creare, reîmprospătabil manual cât e „În lucru"; offline se folosește ultimul curs preluat.
 10. **TVA**: setare generală, aplicată la finalul ofertei; prețurile din catalog sunt mereu fără TVA.
 11. Dripstop la T18 / T35 / T45 sub 40 mp: avertizare. Fără date de ambalare în soft.
+
+12. **Contactul furnizorului** (adăugat 16.10.2026): fiecare compartiment are setările lui de contact pentru comenzi — la Bilka: agentul de vânzări alocat firmei (nume, telefon, e-mail) și directorul zonal; exportul formularelor pleacă pe e-mail către acest contact. Se modifică de Admin general când Bilka schimbă persoanele (cum s-a întâmplat în 10.2026), fără să atingă catalogul.
 
 ## 5. Catalogul Bilka la zi (septembrie 2026)
 
