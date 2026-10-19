@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState, type KeyboardEvent } from "react";
 import { useParams } from "react-router-dom";
 import { apiReferinte, type RandReferinta } from "../api";
-import { Mesaj, textEroare } from "../components/ui";
+import { Ajutor, Mesaj, textEroare } from "../components/ui";
 import { gasesteReferinta, type Coloana } from "../referinte";
 
 type Valori = Record<string, unknown>;
@@ -212,13 +212,7 @@ export function TabelReferinta() {
   return (
     <>
       <div className="antet-pagina">
-        <div>
-          <h1>{config.titlu}</h1>
-          <p className="text-secundar">{config.descriere}</p>
-          <p className="text-secundar mic">
-            Scrii direct în celule; <kbd>Tab</kbd> și săgețile te mută între căsuțe; „Salvează” se aprinde pe rândul modificat. Rândul gol de jos adaugă o intrare nouă.
-          </p>
-        </div>
+        <h1>{config.titlu}</h1>
         {areActiv && ascunse > 0 && (
           <button className="buton secundar" onClick={() => setArataInactive((v) => !v)}>
             {arataInactive ? "Ascunde inactivele" : `Arată și inactivele (${ascunse})`}
@@ -275,6 +269,19 @@ export function TabelReferinta() {
           </div>
         </>
       )}
+
+      <Ajutor>
+        <p>{config.descriere}</p>
+        <ul>
+          <li>Scrii direct în celule. Coloanele cu * sunt obligatorii.</li>
+          <li>
+            <strong>Tab</strong> trece la căsuța următoare; <strong>săgețile sus / jos</strong> merg pe aceeași coloană în rândul de deasupra / de dedesubt; <strong>stânga / dreapta</strong> trec în celula vecină când cursorul e la marginea textului.
+          </li>
+          <li>„Salvează” se aprinde doar pe rândul modificat (marcat cu o dungă în stânga). Rândul gol de jos adaugă o intrare nouă.</li>
+          <li>Nimic nu se șterge: o intrare greșită se dezactivează (bifa „Activ”), iese din cascadă și rămâne în istoric. Inactivele se văd cu „Arată și inactivele”.</li>
+          <li>Fiecare salvare scrie în jurnal câmpurile schimbate, cu valoarea dinainte și după.</li>
+        </ul>
+      </Ajutor>
     </>
   );
 }

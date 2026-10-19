@@ -10,6 +10,11 @@ import { env } from "./env.js";
 export function creeazaApp() {
   const app = express();
 
+  // in dezvoltare cererile vin prin proxy-ul Vite de pe aceeasi masina;
+  // cu trust proxy pe loopback, req.ip e adresa reala a dispozitivului
+  // (tableta din retea), nu 127.0.0.1 - conteaza pentru jurnalul de autentificari
+  app.set("trust proxy", "loopback");
+
   app.use(cors({ origin: env.frontendOrigin, credentials: true }));
   app.use(express.json());
   app.use(sessionMiddleware);

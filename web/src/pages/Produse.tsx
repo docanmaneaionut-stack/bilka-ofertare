@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { apiCompartimente, apiProduse, type Compartiment, type FiltreProduse, type Grup, type Produs } from "../api";
-import { Camp, Mesaj, textEroare } from "../components/ui";
+import { Ajutor, Camp, Mesaj, textEroare } from "../components/ui";
 
 const PAGE_SIZE = 50;
 
@@ -48,17 +48,14 @@ export function Produse() {
   return (
     <>
       <div className="antet-pagina">
-        <div>
-          <h1>Produse</h1>
-          <p className="text-secundar">Catalogul, pe compartimente. Importul listelor Bilka vine în sesiunea următoare; aici se adaugă și se corectează manual.</p>
-        </div>
+        <h1>Produse</h1>
         <Link className="buton" to="/zona-tehnica/produse/nou">
           Adaugă produs
         </Link>
       </div>
 
       <div className="rand-campuri" style={{ marginBottom: 24 }}>
-        <Camp eticheta="Caută" ajutor="cod sau denumire">
+        <Camp eticheta="Caută">
           <input type="search" value={filtre.q ?? ""} onChange={(e) => seteaza({ q: e.target.value })} />
         </Camp>
         <Camp eticheta="Compartiment">
@@ -164,6 +161,17 @@ export function Produse() {
           </div>
         </>
       )}
+
+      <Ajutor>
+        <ul>
+          <li>
+            <strong>Caută</strong> găsește după cod intern, cod furnizor sau denumire; filtrele se pot combina (grupul și familia se aleg după compartiment).
+          </li>
+          <li>Clic pe un rând (sau Enter) deschide produsul. „Adaugă produs” deschide formularul gol.</li>
+          <li>Importul listelor Bilka din fișierele CSV vine într-o sesiune separată; aici produsele se adaugă și se corectează manual.</li>
+          <li>Un produs inactiv rămâne în listă (gri) și în istoric, dar nu mai apare la ofertă.</li>
+        </ul>
+      </Ajutor>
     </>
   );
 }

@@ -9,7 +9,7 @@ import {
   type Grup,
   type Produs,
 } from "../api";
-import { Camp, Mesaj, textEroare } from "../components/ui";
+import { Ajutor, Camp, Mesaj, textEroare } from "../components/ui";
 
 const PRODUS_GOL = {
   compartimentId: "",
@@ -291,19 +291,19 @@ export function ProdusFormular() {
 
         <h2>Identificare</h2>
         <div className="rand-campuri">
-          <Camp eticheta="Denumire" obligatoriu ajutor="cum apare în soft">
+          <Camp eticheta="Denumire" obligatoriu>
             <input type="text" value={date.denumire} onChange={(e) => seteaza("denumire", e.target.value)} required />
           </Camp>
-          <Camp eticheta="Cod furnizor" ajutor="poate lipsi; poate să se repete (un cod, două produse)">
+          <Camp eticheta="Cod furnizor">
             <input type="text" value={date.codFurnizor} onChange={(e) => seteaza("codFurnizor", e.target.value)} onBlur={verificaDuplicatCod} />
           </Camp>
-          <Camp eticheta="Cod intern" ajutor={esteNou ? "gol = se generează automat din cod furnizor + denumire" : "stabil; se schimbă doar cu motiv"}>
+          <Camp eticheta="Cod intern">
             <input type="text" value={date.codIntern} onChange={(e) => seteaza("codIntern", e.target.value)} />
           </Camp>
-          <Camp eticheta="Unitate de măsură" obligatoriu ajutor="M2, BUC, ML, CUTIE, ROLA">
+          <Camp eticheta="Unitate de măsură" obligatoriu>
             <input type="text" value={date.um} onChange={(e) => seteaza("um", e.target.value.toUpperCase())} required />
           </Camp>
-          <Camp eticheta="Monedă" obligatoriu ajutor="implicit cea a compartimentului">
+          <Camp eticheta="Monedă" obligatoriu>
             <input type="text" value={date.moneda} onChange={(e) => seteaza("moneda", e.target.value.toUpperCase())} required />
           </Camp>
         </div>
@@ -324,47 +324,46 @@ export function ProdusFormular() {
           <Camp eticheta="Finisaj">
             <input type="text" value={date.finisaj} onChange={(e) => seteaza("finisaj", e.target.value)} />
           </Camp>
-          <Camp eticheta="Grosime" ajutor="ex. 0,50 mm">
+          <Camp eticheta="Grosime">
             <input type="text" value={date.grosime} onChange={(e) => seteaza("grosime", e.target.value)} />
           </Camp>
-          <Camp eticheta="Opțiune" ajutor="dripstop / soundcontrol">
+          <Camp eticheta="Opțiune">
             <input type="text" value={date.optiune} onChange={(e) => seteaza("optiune", e.target.value)} />
           </Camp>
-          <Camp eticheta="Categorie Bilka" ajutor="doar lista 01">
+          <Camp eticheta="Categorie Bilka">
             <input type="text" value={date.categorieBilka} onChange={(e) => seteaza("categorieBilka", e.target.value)} />
           </Camp>
         </div>
 
         <h2>Dimensiuni și sisteme</h2>
         <div className="rand-campuri">
-          <Camp eticheta="Lățime totală (m)" ajutor="învelitori">
+          <Camp eticheta="Lățime totală (m)">
             <input type="text" inputMode="decimal" value={date.latimeTotalaM} onChange={(e) => seteaza("latimeTotalaM", e.target.value)} />
           </Camp>
-          <Camp eticheta="Lățime totală (mm)" ajutor="șipcă gard">
+          <Camp eticheta="Lățime totală (mm)">
             <input type="text" inputMode="decimal" value={date.latimeTotalaMm} onChange={(e) => seteaza("latimeTotalaMm", e.target.value)} />
           </Camp>
-          <Camp eticheta="Modul (cm)" ajutor="țiglă: 35">
+          <Camp eticheta="Modul (cm)">
             <input type="text" inputMode="decimal" value={date.modulCm} onChange={(e) => seteaza("modulCm", e.target.value)} />
           </Camp>
-          <Camp eticheta="Sistem" ajutor="pluvial: 125 / 90 sau 150 / 100">
+          <Camp eticheta="Sistem">
             <input type="text" value={date.sistem} onChange={(e) => seteaza("sistem", e.target.value)} />
           </Camp>
-          <Camp eticheta="Treaptă" ajutor="accesorii speciale: D01…D25">
+          <Camp eticheta="Treaptă">
             <input type="text" value={date.treapta} onChange={(e) => seteaza("treapta", e.target.value)} />
           </Camp>
-          <Camp eticheta="Desfășurată" ajutor="ex. 0–50 mm">
+          <Camp eticheta="Desfășurată">
             <input type="text" value={date.desfasurata} onChange={(e) => seteaza("desfasurata", e.target.value)} />
           </Camp>
         </div>
 
         <h2>Culori</h2>
         <div className="rand-campuri">
-          <Camp eticheta="Culori disponibile — excepții pe produs" ajutor="doar la pluvial, holțșuruburi, calote…; despărțite prin virgulă; au prioritate față de tabelul general">
+          <Camp eticheta="Culori disponibile — excepții pe produs">
             <textarea value={date.culoriDisponibile} onChange={(e) => seteaza("culoriDisponibile", e.target.value)} />
           </Camp>
           <div className="camp">
             <span>Verificare: culorile care vor apărea la ofertă</span>
-            {!culori && <p className="text-secundar mic">Completează compartimentul, finisajul și grosimea ca să vezi lista.</p>}
             {culori && culori.culori.length === 0 && (
               <Mesaj tip="avertizare">
                 Nicio culoare în tabelul general pentru {date.finisaj} × {date.grosime}
@@ -388,7 +387,7 @@ export function ProdusFormular() {
 
         <h2>Altele</h2>
         <div className="rand-campuri">
-          <Camp eticheta="Sursa" ajutor="ex. PDF 01 + ListaPret">
+          <Camp eticheta="Sursa">
             <input type="text" value={date.sursa} onChange={(e) => seteaza("sursa", e.target.value)} />
           </Camp>
           <Camp eticheta="Ordine">
@@ -400,7 +399,7 @@ export function ProdusFormular() {
         </Camp>
         <label className="camp-bifa">
           <input type="checkbox" checked={date.activ} onChange={(e) => seteaza("activ", e.target.checked)} />
-          Activ (un produs inactiv nu apare la ofertă, dar rămâne în istoric)
+          Activ
         </label>
 
         {eroare && <Mesaj tip="eroare">{eroare}</Mesaj>}
@@ -415,6 +414,43 @@ export function ProdusFormular() {
           </Link>
         </div>
       </form>
+
+      <Ajutor>
+        <p>Câmpurile marcate cu * sunt obligatorii. Restul se completează doar unde au sens pentru produs.</p>
+        <ul>
+          <li>
+            <strong>Compartiment, grup, familie</strong>: unde stă produsul. Familia (modelul) e opțională — accesoriile speciale, de exemplu, nu au.
+          </li>
+          <li>
+            <strong>Categorie (rubrica) de ofertă</strong>: rubrica în care apare pe ofertă (Învelitori, Accesorii standard…). Se poate lăsa nestabilită și completa mai târziu.
+          </li>
+          <li>
+            <strong>Denumire</strong>: cum apare în soft și pe ofertă.
+          </li>
+          <li>
+            <strong>Cod furnizor</strong>: codul din listele furnizorului; poate lipsi (produse noi) și poate să se repete — „un cod, două produse” (ruperea pantei convexă / concavă, colțar exterior / interior, tabla plană la mp și la coală). Dacă există deja un produs cu același cod, apare o notă — nu e o eroare.
+          </li>
+          <li>
+            <strong>Cod intern</strong>: codul nostru, stabil. Lăsat gol la un produs nou, se generează automat din codul furnizorului și denumire (aceeași regulă ca la import). La un produs existent se schimbă doar cu motiv.
+          </li>
+          <li>
+            <strong>Unitate de măsură</strong>: M2, BUC, ML, CUTIE sau ROLA. <strong>Monedă</strong>: implicit cea a compartimentului.
+          </li>
+          <li>
+            <strong>Finisaj, grosime</strong> (ex. „lucios”, „0,50 mm”): intră în cascada de la ofertă și determină culorile. <strong>Opțiune</strong>: dripstop / soundcontrol. <strong>Categorie Bilka</strong>: eticheta din lista 01, doar informativ.
+          </li>
+          <li>
+            <strong>Lățime totală (m)</strong> la învelitori; <strong>(mm)</strong> la șipca de gard; <strong>Modul (cm)</strong>: 35 la țiglă; <strong>Sistem</strong>: la pluvial, 125 / 90 sau 150 / 100; <strong>Treaptă</strong> (D01…D25) și <strong>Desfășurată</strong> (ex. 0–50 mm) la accesoriile speciale.
+          </li>
+          <li>
+            <strong>Culori — excepții pe produs</strong>: doar la produsele cu culori proprii (pluvial, holțșuruburi, calote…), despărțite prin virgulă. Au prioritate față de tabelul general finisaj × grosime. Panoul de verificare arată exact culorile care vor apărea la ofertă; lista apare după ce sunt completate compartimentul, finisajul și grosimea.
+          </li>
+          <li>
+            <strong>Sursa</strong>: de unde vine rândul (ex. PDF 01 + ListaPret). <strong>Ordine</strong>: poziția în liste. <strong>Activ</strong>: un produs inactiv nu apare la ofertă, dar rămâne în istoric.
+          </li>
+          <li>Fiecare salvare scrie în jurnal câmpurile schimbate, cu valoarea dinainte și după.</li>
+        </ul>
+      </Ajutor>
     </>
   );
 }

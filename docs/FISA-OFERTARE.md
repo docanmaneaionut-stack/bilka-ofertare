@@ -56,6 +56,7 @@ Un capitol per mesaj: îmi descrii cum vrei să meargă (cum ai făcut la contur
 7. **Laptop / PC întâi** (decis 11.09.2026): softul se folosește mai ales de pe laptop și PC; telefonul rămâne pentru urgențe și comoditate, dar orice ecran trebuie să meargă și acolo.
 8. **Tastatura**: pe tot softul se trece dintr-o căsuță în alta cu **Tab** și cu **săgețile**; tabelele de cantități se completează fără mouse.
 9. Aspectul se validează pe ecrane reale: primul ecran construit de Code se ajustează cu tine, apoi devine tiparul tuturor.
+10. **Nicio explicație permanentă în pagină** (decis 19.10.2026, după primele ecrane reale): textele explicative — sub titluri, în formulare, lângă tabele, în etichetele câmpurilor — nu stau la vedere. Fiecare pagină are o singură secțiune **„Ajutor pentru această pagină”**, la final, pliată implicit, desfășurabilă la clic, cu tot conținutul explicativ. În pagină rămân vizibile doar mesajele de validare și avertizările (ex. cod furnizor repetat, „nicio culoare”).
 
 ## Capitolul 1 — Antetul ofertei — ÎNCHIS (11.09.2026)
 

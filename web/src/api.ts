@@ -1,4 +1,6 @@
-const BAZA_API = import.meta.env.VITE_API_URL ?? "http://localhost:4000";
+// gol = acelasi origin: in dezvoltare Vite face proxy /api -> serverul Express
+// (vite.config.ts), ca aplicatia sa mearga si de pe tableta / telefon din retea
+const BAZA_API = import.meta.env.VITE_API_URL ?? "";
 
 export type Utilizator = {
   id: string;

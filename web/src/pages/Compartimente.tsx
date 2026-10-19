@@ -1,7 +1,30 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { apiCompartimente, type Compartiment } from "../api";
-import { Camp, Mesaj, textEroare } from "../components/ui";
+import { Ajutor, Camp, Mesaj, textEroare } from "../components/ui";
+
+export function AjutorCampuriCompartiment() {
+  return (
+    <ul>
+      <li>
+        <strong>Compartiment</strong> = un furnizor (Bilka, Novatik, Fakro…) sau Stocul propriu, cu produsele, moneda și listele lui de preț.
+      </li>
+      <li>
+        <strong>Cod scurt</strong>: 2–6 litere / cifre (ex. BIL). E prefixul codurilor interne ale produselor; după ce există produse, nu se mai schimbă.
+      </li>
+      <li>
+        <strong>Mod de preț</strong>: „listă de achiziție” (Bilka, Novatik, Stoc — prețul de bază e achiziția) sau „catalog public cu discount” (Fakro, Velux).
+      </li>
+      <li>
+        <strong>Format import</strong>: identificatorul fișierului CSV al furnizorului (ex. bilka-v1); îl folosește importul listelor de preț.
+      </li>
+      <li>
+        <strong>Contactul furnizorului</strong>: agentul de vânzări și directorul zonal alocați; exportul formularelor de comandă pleacă pe e-mail către acest contact.
+      </li>
+      <li>Un compartiment inactiv rămâne în istoric, dar nu mai apare la ofertă.</li>
+    </ul>
+  );
+}
 
 export const COMPARTIMENT_GOL = {
   denumire: "",
@@ -59,7 +82,7 @@ export function FormularCompartiment({
         <Camp eticheta="Denumire" obligatoriu>
           <input type="text" value={date.denumire} onChange={(e) => seteaza("denumire", e.target.value)} required autoFocus />
         </Camp>
-        <Camp eticheta="Cod scurt" obligatoriu ajutor="2–6 litere/cifre, ex. BIL; prefixul codurilor interne">
+        <Camp eticheta="Cod scurt" obligatoriu>
           <input
             type="text"
             value={date.codScurt}
@@ -86,7 +109,7 @@ export function FormularCompartiment({
             <option value="CATALOG_DISCOUNT">Catalog public cu discount (Fakro, Velux)</option>
           </select>
         </Camp>
-        <Camp eticheta="Format import" ajutor="identificatorul fișierului CSV al furnizorului">
+        <Camp eticheta="Format import">
           <input type="text" value={date.formatImport} onChange={(e) => seteaza("formatImport", e.target.value)} />
         </Camp>
       </div>
@@ -150,10 +173,7 @@ export function Compartimente() {
   return (
     <>
       <div className="antet-pagina">
-        <div>
-          <h1>Compartimente</h1>
-          <p className="text-secundar">Un compartiment = un furnizor (sau Stocul propriu), cu produsele, moneda și listele lui de preț.</p>
-        </div>
+        <h1>Compartimente</h1>
         {!adauga && (
           <button className="buton" onClick={() => setAdauga(true)}>
             Adaugă compartiment
@@ -181,7 +201,7 @@ export function Compartimente() {
       {eroare && <Mesaj tip="eroare">{eroare}</Mesaj>}
 
       {compartimente && compartimente.length === 0 && !adauga && (
-        <Mesaj>Nu există încă niciun compartiment. Începe cu „Adaugă compartiment” (de regulă: Bilka).</Mesaj>
+        <Mesaj>Niciun compartiment încă.</Mesaj>
       )}
 
       {compartimente && compartimente.length > 0 && (
@@ -226,6 +246,11 @@ export function Compartimente() {
           </table>
         </div>
       )}
+
+      <Ajutor>
+        <p>Lista compartimentelor din catalog. „Deschide” duce la grupurile, familiile și datele compartimentului.</p>
+        <AjutorCampuriCompartiment />
+      </Ajutor>
     </>
   );
 }

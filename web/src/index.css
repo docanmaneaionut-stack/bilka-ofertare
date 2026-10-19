@@ -383,6 +383,51 @@ tr.modificat td:first-child {
   margin-top: 16px;
 }
 
+/* ajutorul paginii: o singura sectiune, la final, pliata implicit */
+
+.ajutor-pagina {
+  margin-top: 56px;
+  border-top: 2px solid var(--border);
+  padding-top: 12px;
+  font-size: 16px;
+  color: var(--text-secundar);
+}
+
+.ajutor-pagina summary {
+  cursor: pointer;
+  font-weight: 700;
+  font-size: 17px;
+  color: var(--text);
+  padding: 10px 0;
+  list-style-position: inside;
+}
+
+.ajutor-pagina summary:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 2px;
+}
+
+.ajutor-pagina > div {
+  padding: 4px 0 8px;
+}
+
+.ajutor-pagina p {
+  margin: 8px 0;
+}
+
+.ajutor-pagina ul {
+  margin: 8px 0;
+  padding-left: 22px;
+}
+
+.ajutor-pagina li {
+  margin-bottom: 6px;
+}
+
+.ajutor-pagina strong {
+  color: var(--text);
+}
+
 @media (max-width: 720px) {
   :root {
     font-size: 16px;

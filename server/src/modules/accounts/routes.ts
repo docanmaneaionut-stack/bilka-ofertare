@@ -26,7 +26,8 @@ accountsRouter.post("/login", async (req, res) => {
   const parola = typeof req.body?.parola === "string" ? req.body.parola : "";
 
   const dispozitiv = req.headers["user-agent"] ?? null;
-  const sursa = req.ip ?? null;
+  // Node scrie adresele IPv4 primite pe un socket IPv6 ca "::ffff:192.168.x.x"
+  const sursa = req.ip?.replace(/^::ffff:/, "") ?? null;
 
   const esecAutentificare = async (utilizatorId: string | null) => {
     await prisma.jurnalAutentificare.create({

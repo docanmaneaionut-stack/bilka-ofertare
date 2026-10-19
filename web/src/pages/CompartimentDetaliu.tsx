@@ -1,8 +1,8 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { Link, useParams } from "react-router-dom";
 import { apiCompartimente, type CompartimentDetaliu as TipDetaliu, type Familie, type Grup } from "../api";
-import { Mesaj, textEroare } from "../components/ui";
-import { FormularCompartiment, type DateCompartiment } from "./Compartimente";
+import { Ajutor, Mesaj, textEroare } from "../components/ui";
+import { AjutorCampuriCompartiment, FormularCompartiment, type DateCompartiment } from "./Compartimente";
 
 function spreFormular(c: TipDetaliu): DateCompartiment {
   return {
@@ -254,8 +254,6 @@ export function CompartimentDetaliu() {
           </button>
         )}
       </div>
-      <p className="text-secundar">Grup = ex. „Țiglă metalică”; familie = modelul (ex. „Dacic”). Produsele se leagă de grup și, opțional, de familie.</p>
-
       {adaugaGrup && (
         <div className="mesaj" style={{ marginBottom: 16 }}>
           <RandDenumireOrdine
@@ -279,6 +277,17 @@ export function CompartimentDetaliu() {
           <BlocGrup key={g.id} grup={g} onSchimbat={incarca} />
         ))}
       </div>
+
+      <Ajutor>
+        <ul>
+          <li>
+            <strong>Grup</strong> = categoria mare de produse a furnizorului (ex. „Țiglă metalică”, „Sistem pluvial”); <strong>familie</strong> = modelul (ex. „Dacic”, „Jgheab 125 / 4m”).
+          </li>
+          <li>Produsele se leagă de grup și, opțional, de familie. „Ordine” stabilește poziția în liste.</li>
+          <li>Orice modificare a compartimentului, a unui grup sau a unei familii se scrie în jurnal, cu valoarea dinainte și după.</li>
+        </ul>
+        <AjutorCampuriCompartiment />
+      </Ajutor>
     </>
   );
 }
