@@ -1,6 +1,6 @@
 # PLAN — foaia de parcurs a construcției
 
-Versiunea 0.1 · 3 septembrie 2026 · Se citește împreună cu `docs/ARH.md`.
+Versiunea 0.3 · 16 octombrie 2026 · Se citește împreună cu `docs/ARH.md` și cu fișele de specificație din `docs/` (FISA-CONTURI, FISA-CATALOG-PRETURI, FISA-OFERTARE, FISA-COMENZI). **Unde ARH și o fișă spun lucruri diferite, fișa are prioritate** (e mai nouă și e aprobată de Ionuț); diferența se notează în ARH §13 în aceeași sesiune.
 Claude Code actualizează statusul sesiunilor la finalul fiecărei sesiuni.
 
 ## Cum se folosește
@@ -17,15 +17,15 @@ Claude Code actualizează statusul sesiunilor la finalul fiecărei sesiuni.
 
 **Rezultat la final:** Ionuț intră în aplicație cu contul lui, catalogul Bilka e în baza de date, și poate face o listă de preț nouă din CSV, cu ecran de diferențe, în sub 10 minute, fără ajutor. Nicio ofertă încă.
 
-**Precondiții (de la Ionuț):** lista Bilka curentă (PDF / Excel) → transformată în CSV canonic în Chat · datele firmelor (denumire, CUI, adresă, cont, logo) · lista utilizatorilor cu rol.
+**Precondiții (de la Ionuț):** ✔ lista Bilka transformată în CSV (`docs/import/Bilka/`, 15 fișiere, README) · datele firmelor (denumire, CUI, J, adresă, telefon, e-mail, siglă) · lista utilizatorilor cu rol, firmă și serie de ofertă (2–3 litere) · Node.js și PostgreSQL instalate pe calculatorul de lucru.
 
 | Sesiune | Obiectiv | Rezultat vizibil | Teste | Status |
 |---|---|---|---|---|
-| S1 | Inițializare: structură, git, GitHub, JURNAL | depozit creat și publicat | — | GATA? |
-| S2 | Schelet aplicație + bază de date + autentificare: server, conexiune PostgreSQL, unealta de migrări, migrarea 1 (tabelele din ARH §4.1 și §4.2), cont administrator, pagină de login, pagina goală „Zona tehnică" | aplicația pornește local; Ionuț se loghează | migrare de la zero; login / logout | NEÎNCEPUT |
-| S3 | Catalog (CAT): ecrane pentru categorii, produse (tip de calcul + parametri), culori, profil furnizor; jurnal de modificări | Ionuț adaugă un produs manual și îl vede în jurnal | validări produs; jurnalizare | NEÎNCEPUT |
-| S4 | Liste de preț (LP) + import: versiuni; import CSV canonic cu ecran de diferențe (modificat / nou / dispărut); activare; editare manuală; copiere + ajustare % pe categorie | lista Bilka reală importată și activă | import; diferențe; o singură listă activă; versiunile arhivate nu se pot modifica | NEÎNCEPUT |
-| S5 | Firme și utilizatori (CON minim) + export: firme cu date, logo, serie de numerotare; utilizatori cu rol și firme; export „descarcă tot" | firmele și utilizatorii reali creați | agentul nu intră în ADM; exportul se poate reimporta | NEÎNCEPUT |
+| S1 | Inițializare: structură, git, GitHub, JURNAL | depozit creat și publicat | — | GATA (03.09) |
+| S2 | Schelet aplicație + bază de date + autentificare: server, conexiune PostgreSQL, unealta de migrări, migrarea 1 (tabelele pentru Etapa 1: compartimente, grupuri / familii, produse cu caracteristicile din FISA-CATALOG §3, versiuni de listă de preț, firme, utilizatori cu cele șase roluri din FISA-CONTURI, jurnal), cont Admin general, pagină de login, pagina goală „Zona tehnică" | aplicația pornește local; Ionuț se loghează | migrare de la zero; login / logout | GATA (16.10) — seed-ul conturilor se rulează după completarea `server/.env` |
+| S3 | Catalog (CAT): ecrane pentru compartimente, grupuri / familii, produse (cascada model → finisaj → grosime → culoare, variante de profil, „un cod, două produse"), tabelele de culori și garanții, listele implicite și treptele D; jurnal de modificări | Ionuț adaugă un produs manual și îl vede în jurnal | validări produs; jurnalizare | NEÎNCEPUT |
+| S4 | Liste de preț (LP) + import: versiuni cu dată de valabilitate; import din CSV-urile `docs/import/Bilka/` cu ecran de diferențe (preț modificat / produs nou / dispărut / culori); activare; prețuri Stoc introduse manual. **Identitatea produsului la import**: `codIntern` se generează determinist din (compartiment, cod furnizor, denumire) — nu aleator — ca un reimport să regăsească aceleași produse și ecranul de diferențe să compare corect; produsele fără cod furnizor se identifică prin denumire | catalogul Bilka real (3.399 de rânduri) importat și activ | import; diferențe; o singură listă activă; versiunile vechi nu se pot modifica | NEÎNCEPUT |
+| S5 | Firme și utilizatori (CON minim) + export: firme cu date și siglă; utilizatori cu rol, firmă, serie de ofertă, adaos % (FISA-CONTURI); export „descarcă tot" | firmele și utilizatorii reali creați | agentul nu intră în ADM și nu vede adaosul %; exportul se poate reimporta | NEÎNCEPUT |
 | S6 | Verificare și înghețare: lista de acceptare, teste verzi, backup local de probă + restaurare de probă, etichetă `v0.1-fundatie`; ARH §4.1, §4.2, §6 → ÎNGHEȚAT | eticheta în git; ARH actualizat | toate | NEÎNCEPUT |
 
 **Lista de acceptare Etapa 1**
@@ -52,9 +52,9 @@ Claude Code actualizează statusul sesiunilor la finalul fiecărei sesiuni.
 | Sesiune | Obiectiv | Status |
 |---|---|---|
 | S7 | Formatul ofertelor etalon; primele 3 oferte transcrise ca teste (încă roșii) | NEÎNCEPUT |
-| S8 | Panelare și cantități: lățimi, rupere cu suprapunere, ml → buc, șipcă gard | NEÎNCEPUT |
-| S9 | Cele trei straturi de preț: achiziție, țintă, prezentare (3 moduri), gardă absolută | NEÎNCEPUT |
-| S10 | Variante de preț, prețuri fixe, colaboratori, moneda documentului | NEÎNCEPUT |
+| S8 | Cantități: lungime × bucăți × lățime totală (3 zecimale), suprafață directă și combinată, ml → buc, cele două variante la șipcă (FISA-OFERTARE 3 și 8) | NEÎNCEPUT |
+| S9 | Cele trei straturi de preț: achiziție (cu grupă), țintă cu TVA, prezentare (3 moduri, calcul invers la leu), gardă absolută, varianta B de TVA (FISA-OFERTARE 11) | NEÎNCEPUT |
+| S10 | Variante (versiuni sub același număr), prețuri fixe, „preia prețuri din oferta…", completări sub achiziție, colaboratori | NEÎNCEPUT |
 | S11 | Toate ofertele etalon verzi; ARH §5 → ÎNGHEȚAT; etichetă `v0.2-motor` | NEÎNCEPUT |
 
 ---
@@ -65,19 +65,21 @@ Claude Code actualizează statusul sesiunilor la finalul fiecărei sesiuni.
 
 | Sesiune | Obiectiv | Status |
 |---|---|---|
-| S12 | Lista de oferte; creare / editare: client, secțiuni, cantități | NEÎNCEPUT |
+| S12 | Lista de oferte (machetă `docs/design/ecran-lista-oferte`); creare / editare: antet, client, învelitori și pachete, rubrici cu liste implicite | NEÎNCEPUT |
 | S13 | Prețuri în ofertă: moduri de prezentare, variante, prețuri fixe | NEÎNCEPUT |
-| S14 | Statusuri, recomandare, blocarea la acceptare | NEÎNCEPUT |
-| S15 | PDF ofertă și tabel factură (șabloane HTML) | NEÎNCEPUT |
+| S14 | Statusuri (8, cu istoric de la „Transmisă"), recomandare și montator, înghețarea la „Comandat", trecerea în comandă | NEÎNCEPUT |
+| S15 | Documentele: ofertă, rezumat, detaliată, tabel de facturare, formularele Bilka (export) — după machetele din `docs/design/` (CSS-ul din `macheta-generator.py` e referința) | NEÎNCEPUT |
 | S16 | Verificare pe oferte reale; înghețare; etichetă `v0.3-ofertare` | NEÎNCEPUT |
 
-**Faza 3 — Punere în funcțiune** vine imediat după Etapa 3: VPS, domeniu, backup automat, restaurare de probă, conturile reale. De aici înainte etapele următoare se livrează pe sistemul în funcțiune, prin migrări aditive.
+**Faza 3 — Punere în funcțiune** vine imediat după Etapa 3: VPS, domeniu, backup automat, restaurare de probă, conturile reale.
+Decizii (17.10.2026): **domeniul aplicației este `roofdata.ro`** — separat de site-ul firmei (roofshop.ro), ca nimic de la site să nu atingă aplicația și invers; verificat liber, înregistrat de Ionuț pe Roofshop DMI SRL (luni, 19.10). DNS-ul domeniului se administrează pe Cloudflare (gratuit): certificat HTTPS, protecție de bază, control independent de registrar. Aplicația va rula la `app.roofdata.ro` (sau direct `roofdata.ro`), iar notificările prin e-mail, când vor exista, de pe acest domeniu. De aici înainte etapele următoare se livrează pe sistemul în funcțiune, prin migrări aditive.
 
 ---
 
 ## Etapele următoare (schiță; se detaliază când le vine rândul)
 
-- **Etapa 4 — CON complet**: director zonal, colaboratori, permisiuni fine, jurnal complet.
+- **Etapa 4 — CON complet**: colaboratori, permisiuni fine, jurnal complet (rolul „director zonal" nu mai există — FISA-CONTURI).
+- **Ferestre (Fakro, Velux)** — al doilea și al treilea compartiment de catalog, pe modul „catalog public cu discount"; intră când Ionuț are listele complete cu discounturile (17.10.2026). **Pazie și gard** (tipuri de ofertă separate, cu calcul pe metraj) — amânate fără termen, la decizia lui Ionuț (17.10.2026).
 - **Etapa 5 — COM**: comenzi către furnizor, export în formatul Bilka (IMP), încasări, avansuri.
 - **Etapa 6 — STO**: stoc propriu per firmă, livrări.
 - **Etapa 7 — NOT**: notițe text / voce, offline pe telefon, sincronizare.

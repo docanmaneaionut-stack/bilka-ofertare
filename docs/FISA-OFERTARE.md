@@ -29,9 +29,9 @@ Fiecare capitol are statusul lui: **PROPUS** (schița mea din descrierea ta) →
 | 14 | **Statusuri, istoric, intervenții** | vezi capitolul scris mai jos | — | ÎNCHIS (13.10) |
 | 15 | **Lista de oferte** | propunerea lui Claude (acceptată 13.10) + ordinea decisă de Ionuț; macheta de ecran `docs/design/ecran-lista-oferte.png` | — | ÎNCHIS (13.10) |
 | 16 | **Trecerea în comandă** | vezi capitolul scris mai jos | — | ÎNCHIS (13.10) |
-| 17 | **Ferestre de mansardă** | compartimentele Fakro / Velux pe ofertă, discount pe linie (mod B) | listele Fakro / Velux, când le ai | mai târziu |
+| 17 | **Ferestre de mansardă** | compartimentele Fakro / Velux pe ofertă, discount pe linie (mod B) | Ionuț: lista de preț completă Fakro cu discounturile lor; Velux — de sunat, de văzut dacă și ce au (17.10) | următorul compartiment, după Bilka |
 | 18 | **Offline** | regulile deja decise (08.09) și ce înseamnă ele pe ecran | nimic acum | după punerea în funcțiune |
-| 20 | **Tipurile de ofertă** | clasică (acest document) · pazie / lambriu metalic · gard | pazie și gard se detaliază separat, după oferta clasică | SCHIȚĂ |
+| 20 | **Tipurile de ofertă** | clasică (acest document) · pazie / lambriu metalic · gard | pazie și gard: amânate fără termen (17.10) | AMÂNAT |
 | 21 | **Aflat preț** (consultare rapidă) | ecran separat: căutare produs → caracteristici → prețul contului cu TVA; fără istoric, fără adaos | — | ÎNCHIS (18.09) |
 | 22 | **Aviz de marfă** | buton „Generează aviz marfă" din comandă — documentul de livrare, pe modelul detaliatei cu coloana „Primit" | de discutat la final | SCHIȚĂ (13.10) |
 
@@ -164,8 +164,8 @@ Suprafața la **3 zecimale** (ca la facturarea Bilka și în formular); prețuri
 - Accesoriile legate de o învelitoare moștenesc **strict** cheia ei; pentru altă culoare se adaugă o secțiune de sine stătătoare cu cheia dorită.
 - La export, o secțiune de sine stătătoare devine un **formular fără învelitoare**, în care se selectează doar finisajul, grosimea și culoarea — exact cum se completează azi formularul pentru comenzi de accesorii. Regula de împachetare rămâne: un formular per cheie de culoare.
 
-## Ordinea rubricilor pe ofertă (decisă 14.09.2026)
-Învelitori → Accesorii de tinichigerie standard → Accesorii speciale → Fixare și etanșare → Sistem pluvial → (Șipcă gard, Zona B, Ferestre, Stoc — de confirmat la capitolele lor).
+## Ordinea rubricilor pe ofertă (decisă 14.09.2026, completată 19.10.2026)
+Învelitori → Accesorii standard (tinichigerie) → Accesorii speciale 2 ML → Fixare și etanșare → Sistem pluvial → Șipcă gard → Accesorii speciale la lungimi (ML) → Ferestre → Zona B. Aceeași ordine pe ecranul de ofertă, pe documente și în tabelul categoriilor de ofertă din catalog. (Produsele din Stoc intră în rubrica lor, nu au rubrică proprie.)
 
 ## Capitolul 4 — Accesorii standard — ÎNCHIS (listele lui Ionuț, 14.09.2026)
 
@@ -394,10 +394,10 @@ La statusul **Comandat**, oferta creează **rândul de comandă** (numărul come
 
 Tabelul de comenzi ca ecran (coloane, filtre, ce vede Gestiunea dintr-o privire, retururi, nota de retur, avizul, FGO) se detaliază în **fișa COMENZI**, cu machetă de ecran ca la lista de oferte.
 
-## Capitolul 22 — Aviz de marfă — SCHIȚĂ (13.10.2026, de discutat la final)
+## Capitolul 22 — Aviz de marfă — MUTAT în FISA-COMENZI cap. 9 (16.10.2026)
 Idee notată de Ionuț: un buton **„Generează aviz marfă"** (din comandă, pentru Gestiune) care produce documentul de livrare — pe modelul ofertei detaliate cu coloana „Primit" (cantități, panotaj, fără prețuri sau cu, de decis), cu datele de livrare. Se detaliază după capitolele de ofertare, odată cu fișa COMENZI.
 
-## Capitolul 20 — Tipurile de ofertă — SCHIȚĂ (11.09.2026)
+## Capitolul 20 — Tipurile de ofertă — SCHIȚĂ (11.09.2026) · AMÂNAT (17.10.2026: Ionuț renunță deocamdată la calculatoarele de pazie și gard; rămân ca idee, fără termen)
 
 - **Oferta clasică**: tot ce descrie acest document; singurul calcul bazat pe metraj este la **șipca metalică** (capitolul 8, cele două variante ale lui Ionuț); în rest nicio funcție de calcul — ele intră la pazie, gard sau în modulul de panotaj.
 - **Oferta pazie / lambriu metalic** (denumirea de stabilit): de regulă tablă cutată T8 de perete sau acoperiș, dar poate fi orice tablă cutată, plus accesorii speciale asemănătoare ca formă și diferite ca dimensiuni; cu funcții de calcul proprii. Se detaliază separat, după oferta clasică.

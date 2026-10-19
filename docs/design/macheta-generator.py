@@ -60,6 +60,7 @@ tr { page-break-inside: avoid; } tr.cat { page-break-after: avoid; }   /* banda 
 .logos { display: flex; flex-direction: column; align-items: flex-end; gap: 2mm; }
 .logo { border: 1px dashed #b9b9b9; color: #8a8a8a; font-size: 8pt; text-align: center; padding: 2mm 3mm; width: 40mm; }
 .logo.big { height: 9mm; display:flex; align-items:center; justify-content:center; }
+.logo-img { height: 11mm; width: auto; display: block; }
 .suppliers { display: flex; gap: 2mm; } .suppliers .logo { width: 19mm; padding: 1.2mm 2mm; }
 .title { margin: 2.5mm 0 1.5mm; display: flex; justify-content: space-between; align-items: baseline; border-bottom: 2px solid #1c1c1c; padding-bottom: 1.5mm; }
 .title h1 { font-size: 17pt; margin: 0; font-weight: 700; letter-spacing: .3px; }
@@ -105,18 +106,30 @@ th.k, td.k { width: 10mm; text-align: center; }
 .dlb .sub { color: #555; font-size: 9pt; } .dlb .big { font-size: 14pt; font-weight: 700; }
 a.tel { color: #1c1c1c; text-decoration: none; font-weight: 700; white-space: nowrap; } a { color: #1c1c1c; }
 .cb { display: inline-block; width: 3.6mm; height: 3.6mm; border: 1px solid #9a9a9a; vertical-align: middle; border-radius: .4mm; }
+/* aviz: rânduri mai strânse (fără coloane de valori, documentul e doar de bifat), total în cuvinte, blocul de semnături */
+.aviz table.lines td { padding: .4mm 1.5mm; font-size: 9pt; line-height: 1.15; }
+.aviz table.lines tr.cat td { padding: 1mm 1.5mm; font-size: 9pt; }
+.aviz table.lines tr.pan td, .aviz table.lines tr.panh td { padding: .3mm 1.5mm .3mm 9mm; font-size: 8.3pt; line-height: 1.15; }
+.aviz .semn { margin-top: 2.5mm; } .aviz .aviz-tot { margin-top: 1.5mm; }
+.page2 .head { margin-top: 0; }   /* antetul unei pagini noi nu se trage peste ruptura de pagină */
+.aviz .parties { margin: 1mm 0 1.5mm; } .aviz .intern { margin: -.5mm 0 1.5mm; }
+.aviz-tot { margin-top: 2mm; font-size: 9.5pt; }
+.semn { display: flex; gap: 8mm; margin-top: 3.5mm; page-break-inside: avoid; }
+.sbox { flex: 1; border: 1px solid #c9c9c9; border-radius: 1.5mm; padding: 2mm 3mm 2.5mm; font-size: 9.5pt; }
+.slbl { font-size: 8pt; text-transform: uppercase; letter-spacing: .6px; color: #6a6a6a; margin-bottom: 1mm; font-weight: 700; }
+.sline { margin-top: 2.6mm; color: #333; }
 @media print { .pagefoot { display: none; } }   /* în PDF, subsolul paginii îl scrie motorul (număr de pagină corect pe orice lungime) */
 '''
 
 def head(title, nr_label="Nr."):
     return f'''<div class="head">
-  <div class="firm"><b>SC ROOFSHOP DMI SRL</b><br>CUI RO45403526 · J39/1239/2021<br>Str. Mărășești nr. 37, Focșani, jud. Vrancea<br>Tel. 07xx xxx xxx · office@roofshop.ro</div>
-  <div class="logos"><div class="logo big">sigla firmei</div><div class="suppliers"><div class="logo">sigla Bilka</div><div class="logo">sigla Fakro</div></div></div>
+  <div class="firm"><b>ROOFSHOP DMI SRL</b><br>CUI RO45403526 · J39/1239/2021<br>Str. Trotuș nr. 46, ap. 13, Focșani, jud. Vrancea<br>Tel. 0765 654 733 · docan.manea.ionut@gmail.com</div>
+  <div class="logos"><img class="logo-img" src="sigle/roofshop-dmi.jpg" alt="RoofShop"><div class="suppliers"><div class="logo">sigla Bilka</div><div class="logo">sigla Fakro</div></div></div>
 </div>
 <div class="title"><h1>{title}</h1><div class="nr">{nr_label} <b>{NR}</b> / {DATA}</div></div>
 <div class="parties">
   <div class="box"><div class="lbl">Client</div><b>{CLIENT}</b><br>Str. Florilor nr. 12, Câmpineanca, jud. Vrancea<br>Tel. 07xx xxx xxx</div>
-  <div class="box"><div class="lbl">Agent</div><b>Ionuț Bîrlădeanu</b><br>Tel. 07xx xxx xxx<br>ionut@roofshop.ro</div>
+  <div class="box"><div class="lbl">Agent</div><b>Ionuț Docan-Manea</b><br>Tel. 0765 654 733<br>docan.manea.ionut@gmail.com</div>
 </div>'''
 
 def totals():
@@ -128,13 +141,13 @@ def totals():
 </div>'''
 
 def pagefoot(doc, i, n):   # doar pentru previzualizarea HTML; în PDF subsolul îl pune motorul (vezi FOOTER)
-    return f'<div class="pagefoot"><span>SC ROOFSHOP DMI SRL · {doc} {NR} / {DATA} · {CLIENT}</span><span>Pagina {i} din {n}</span></div>'
+    return f'<div class="pagefoot"><span>ROOFSHOP DMI SRL · {doc} {NR} / {DATA} · {CLIENT}</span><span>Pagina {i} din {n}</span></div>'
 
 def footer_template(doc, mid=None):
     mid = mid if mid is not None else f"{NR} / {DATA} · {CLIENT}"
     return (f'<div style="width:100%;font-family:Arial,Helvetica,sans-serif;font-size:8px;color:#8a8a8a;padding:0 53px;'
             f'display:flex;justify-content:space-between;border-top:1px solid #d5d5d5;padding-top:4px;">'
-            f'<span>SC ROOFSHOP DMI SRL · {doc} {mid}</span>'
+            f'<span>ROOFSHOP DMI SRL · {doc} {mid}</span>'
             f'<span>Pagina <span class="pageNumber"></span> din <span class="totalPages"></span></span></div>')
 
 def page2(doc):
@@ -286,19 +299,51 @@ for i, d in enumerate(DELIV, 1):
 </div>''')
 fisa_sof = f'''<div class="sheet">
 <div class="head">
-  <div class="firm"><b>SC ROOFSHOP DMI SRL</b><br>Depozit: Str. Mărășești nr. 37, Focșani<br>Gestiune: Maria P. · <a class="tel" href="tel:0755000444">📞 0755 000 444</a></div>
-  <div class="logos"><div class="logo big">sigla firmei</div></div>
+  <div class="firm"><b>ROOFSHOP DMI SRL</b><br>Depozit: Str. Trotuș nr. 46, Focșani<br>Gestiune: Maria P. · <a class="tel" href="tel:0755000444">📞 0755 000 444</a></div>
+  <div class="logos"><img class="logo-img" src="sigle/roofshop-dmi.jpg" alt="RoofShop"></div>
 </div>
 <div class="title"><h1>FIȘA ȘOFERULUI</h1><div class="nr">joi, <b>16.10.2026</b> · {len(DELIV)} livrări · mașina noastră</div></div>
 <div class="intern">Document intern, pentru încărcare și livrare. Telefoanele se pot apela direct din PDF. Ordinea de mai jos e ordinea propusă a traseului.</div>
 {"".join(blocks)}
 <div class="foot"><p><b>Documente anexate:</b> aviz de marfă IB-0152 · aviz de marfă IB-0149 (tipărite din același ecran). &nbsp; <b>La întoarcere:</b> fișa semnată și banii la Gestiune.</p></div>
-<div class="pagefoot"><span>SC ROOFSHOP DMI SRL · Fișa șoferului · 16.10.2026 · 2 livrări</span><span>Pagina 1 din 1</span></div>
+<div class="pagefoot"><span>ROOFSHOP DMI SRL · Fișa șoferului · 16.10.2026 · 2 livrări</span><span>Pagina 1 din 1</span></div>
 </div>'''
+
+
+# ---- AVIZ DE ÎNSOȚIRE A MĂRFII (din comandă; datele detaliatei fără valori; căsuță pe rând; semnătura de recepție; dublu exemplar) ----
+rows = []; n = 0
+for cat, spec, _, lines in CATS:
+    label = cat if not spec or cat == "Învelitori" else f"{cat} · {spec}"
+    rows.append(f'<tr class="cat"><td colspan="5">{html.escape(label)}</td></tr>')
+    for name, fam, um, q, p in lines:
+        n += 1; qs = ro(q, 3) if um == "mp" else ro(q, 0)
+        rows.append(f'<tr><td class="n">{n}</td><td>{html.escape(name)}</td><td class="c">{um}</td><td class="r">{qs}</td><td class="k"><span class="cb"></span></td></tr>')
+        if um == "mp":
+            rows.append('<tr class="panh"><td colspan="2">Panotaj — lungime coală × bucăți</td><td></td><td class="r">mp</td><td></td></tr>')
+            for l, b in PANOTAJ:
+                rows.append(f'<tr class="pan"><td colspan="2">{ro(l, 2)} m × {b} buc</td><td></td><td class="r">{ro(l*b*LATIME, 3)}</td><td class="k"><span class="cb"></span></td></tr>')
+            rows.append(f'<tr class="pan"><td colspan="2"><b>{COLI} coli · lățime totală {ro(LATIME, 2)} m</b></td><td></td><td class="r"><b>{ro(MP, 3)}</b></td><td></td></tr>')
+piese = sum(q for _, _, _, lines in CATS for _, _, um, q, _ in lines if um != "mp")
+def aviz_page(exemplar):
+    return f'''<div class="sheet aviz{" page2" if exemplar == 2 else ""}">
+{head("AVIZ DE ÎNSOȚIRE A MĂRFII", "Comanda")}
+<div class="intern">Exemplarul {exemplar} din 2 — {"furnizor" if exemplar == 1 else "client"} · livrare din {DATA_LIVRARE} · cantități fără valori</div>
+<table class="lines">
+<thead><tr><th class="n">Nr.</th><th>Produs</th><th class="c">UM</th><th class="r q">Cantitate</th><th class="k">Primit</th></tr></thead>
+<tbody>{"".join(rows)}</tbody></table>
+<div class="aviz-tot">Total: <b>{COLI} coli</b> de învelitoare ({ro(MP, 3)} mp) · <b>{ro(piese, 0)} piese</b> accesorii, fixare și pluvial</div>
+<div class="semn">
+  <div class="sbox"><div class="slbl">Predat</div><div class="sline">Numele: ______________________________</div><div class="sline">Semnătura: ___________________________</div><div class="sline">Data: ____ / ____ / ________</div></div>
+  <div class="sbox"><div class="slbl">Am recepționat marfa</div><div class="sline">Numele: ______________________________</div><div class="sline">Semnătura: ___________________________</div><div class="sline">Data: ____ / ____ / ________</div></div>
+</div>
+<div class="pagefoot"><span>ROOFSHOP DMI SRL · Aviz de însoțire a mărfii · comanda {NR} · {CLIENT}</span><span>Exemplarul {exemplar} din 2</span></div>
+</div>'''
+DATA_LIVRARE = "16.10.2026"
+aviz = aviz_page(1) + aviz_page(2)
 
 for name, title, body in (("macheta-oferta", "Deviz ofertă", oferta), ("macheta-rezumat", "Rezumat ofertă", rezumat),
                           ("macheta-oferta-detaliata", "Deviz ofertă detaliat", detaliata), ("macheta-tabel-facturare", "Tabel de facturare", facturare),
-                          ("macheta-fisa-soferului", "Fișa șoferului", fisa_sof)):
+                          ("macheta-fisa-soferului", "Fișa șoferului", fisa_sof), ("macheta-aviz", "Aviz de însoțire a mărfii", aviz)):
     open(os.path.join(HERE, name + ".html"), "w", encoding="utf-8").write(doc(title, body))
 print("html ok · total", ro(total), "· tva", ro(tva), "· cu TVA", ro(cu), "· lei", ro(lei))
 
@@ -308,11 +353,11 @@ try:
         b = p.chromium.launch(); pg = b.new_page()
         for name, label in (("macheta-oferta", "Deviz ofertă"), ("macheta-rezumat", "Rezumat ofertă"),
                             ("macheta-oferta-detaliata", "Deviz ofertă detaliat"), ("macheta-tabel-facturare", "Tabel de facturare"),
-                            ("macheta-fisa-soferului", "Fișa șoferului")):
+                            ("macheta-fisa-soferului", "Fișa șoferului"), ("macheta-aviz", "Aviz de însoțire a mărfii")):
             pg.goto("file://" + os.path.join(HERE, name + ".html")); pg.emulate_media(media="print")
             pg.pdf(path=os.path.join(HERE, name + ".pdf"), format="A4", print_background=True, prefer_css_page_size=True,
                    display_header_footer=True, header_template="<span></span>",
-                   footer_template=footer_template(label, "· 16.10.2026 · 2 livrări" if name == "macheta-fisa-soferului" else None))
+                   footer_template=footer_template(label, "· 16.10.2026 · 2 livrări" if name == "macheta-fisa-soferului" else (f"· comanda {NR} · {CLIENT} · dublu exemplar" if name == "macheta-aviz" else None)))
         b.close()
     print("pdf ok")
 except Exception as e:

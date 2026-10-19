@@ -14,6 +14,7 @@ tr { page-break-inside: avoid; } tr.cat { page-break-after: avoid; }   /* banda 
 .logos { display: flex; flex-direction: column; align-items: flex-end; gap: 2mm; }
 .logo { border: 1px dashed #b9b9b9; color: #8a8a8a; font-size: 8pt; text-align: center; padding: 2mm 3mm; width: 40mm; }
 .logo.big { height: 9mm; display:flex; align-items:center; justify-content:center; }
+.logo-img { height: 11mm; width: auto; display: block; }
 .suppliers { display: flex; gap: 2mm; } .suppliers .logo { width: 19mm; padding: 1.2mm 2mm; }
 .title { margin: 2.5mm 0 1.5mm; display: flex; justify-content: space-between; align-items: baseline; border-bottom: 2px solid #1c1c1c; padding-bottom: 1.5mm; }
 .title h1 { font-size: 17pt; margin: 0; font-weight: 700; letter-spacing: .3px; }
@@ -59,16 +60,28 @@ th.k, td.k { width: 10mm; text-align: center; }
 .dlb .sub { color: #555; font-size: 9pt; } .dlb .big { font-size: 14pt; font-weight: 700; }
 a.tel { color: #1c1c1c; text-decoration: none; font-weight: 700; white-space: nowrap; } a { color: #1c1c1c; }
 .cb { display: inline-block; width: 3.6mm; height: 3.6mm; border: 1px solid #9a9a9a; vertical-align: middle; border-radius: .4mm; }
+/* aviz: rânduri mai strânse (fără coloane de valori, documentul e doar de bifat), total în cuvinte, blocul de semnături */
+.aviz table.lines td { padding: .4mm 1.5mm; font-size: 9pt; line-height: 1.15; }
+.aviz table.lines tr.cat td { padding: 1mm 1.5mm; font-size: 9pt; }
+.aviz table.lines tr.pan td, .aviz table.lines tr.panh td { padding: .3mm 1.5mm .3mm 9mm; font-size: 8.3pt; line-height: 1.15; }
+.aviz .semn { margin-top: 2.5mm; } .aviz .aviz-tot { margin-top: 1.5mm; }
+.page2 .head { margin-top: 0; }   /* antetul unei pagini noi nu se trage peste ruptura de pagină */
+.aviz .parties { margin: 1mm 0 1.5mm; } .aviz .intern { margin: -.5mm 0 1.5mm; }
+.aviz-tot { margin-top: 2mm; font-size: 9.5pt; }
+.semn { display: flex; gap: 8mm; margin-top: 3.5mm; page-break-inside: avoid; }
+.sbox { flex: 1; border: 1px solid #c9c9c9; border-radius: 1.5mm; padding: 2mm 3mm 2.5mm; font-size: 9.5pt; }
+.slbl { font-size: 8pt; text-transform: uppercase; letter-spacing: .6px; color: #6a6a6a; margin-bottom: 1mm; font-weight: 700; }
+.sline { margin-top: 2.6mm; color: #333; }
 @media print { .pagefoot { display: none; } }   /* în PDF, subsolul paginii îl scrie motorul (număr de pagină corect pe orice lungime) */
 </style></head><body><div class="sheet">
 <div class="head">
-  <div class="firm"><b>SC ROOFSHOP DMI SRL</b><br>CUI RO45403526 · J39/1239/2021<br>Str. Mărășești nr. 37, Focșani, jud. Vrancea<br>Tel. 07xx xxx xxx · office@roofshop.ro</div>
-  <div class="logos"><div class="logo big">sigla firmei</div><div class="suppliers"><div class="logo">sigla Bilka</div><div class="logo">sigla Fakro</div></div></div>
+  <div class="firm"><b>ROOFSHOP DMI SRL</b><br>CUI RO45403526 · J39/1239/2021<br>Str. Trotuș nr. 46, ap. 13, Focșani, jud. Vrancea<br>Tel. 0765 654 733 · docan.manea.ionut@gmail.com</div>
+  <div class="logos"><img class="logo-img" src="sigle/roofshop-dmi.jpg" alt="RoofShop"><div class="suppliers"><div class="logo">sigla Bilka</div><div class="logo">sigla Fakro</div></div></div>
 </div>
 <div class="title"><h1>DEVIZ OFERTĂ — DETALIAT</h1><div class="nr">Nr. <b>IB-0152</b> / 18.09.2026</div></div>
 <div class="parties">
   <div class="box"><div class="lbl">Client</div><b>Popescu Andrei</b><br>Str. Florilor nr. 12, Câmpineanca, jud. Vrancea<br>Tel. 07xx xxx xxx</div>
-  <div class="box"><div class="lbl">Agent</div><b>Ionuț Bîrlădeanu</b><br>Tel. 07xx xxx xxx<br>ionut@roofshop.ro</div>
+  <div class="box"><div class="lbl">Agent</div><b>Ionuț Docan-Manea</b><br>Tel. 0765 654 733<br>docan.manea.ionut@gmail.com</div>
 </div>
 <table class="lines">
 <thead><tr><th class="n">Nr.</th><th>Produs</th><th class="c">UM</th><th class="r q">Cantitate</th><th class="r p">Preț unitar (€)</th><th class="r v">Valoare (€)</th><th class="k">Primit</th></tr></thead>
@@ -86,10 +99,10 @@ a.tel { color: #1c1c1c; text-decoration: none; font-weight: 700; white-space: no
   <div class="lei"><span>Total în lei</span><span>21.799,54 lei</span></div>
 </div>
 </div>
-<div class="pagefoot"><span>SC ROOFSHOP DMI SRL · Deviz ofertă IB-0152 / 18.09.2026 · Popescu Andrei</span><span>Pagina 1 din 2</span></div>
+<div class="pagefoot"><span>ROOFSHOP DMI SRL · Deviz ofertă IB-0152 / 18.09.2026 · Popescu Andrei</span><span>Pagina 1 din 2</span></div>
 </div>
 <div class="sheet page2">
 <div class="title"><h1>SUPLIMENT LA OFERTĂ</h1><div class="nr">la deviz ofertă <b>IB-0152</b> / 18.09.2026 · Popescu Andrei</div></div>
 <div class="supl"><table><tr><td>Manoperă montaj — prin terț colaborator (nu se facturează de noi)</td><td class="r">12.500 lei</td></tr><tr><td>Șipcă lemn 3 × 5 cm, montaj</td><td class="r">3.200 lei</td></tr></table><div class="note">Conținutul și mențiunile acestei pagini se stabilesc după consultarea expertului fiscal.</div></div>
-<div class="pagefoot"><span>SC ROOFSHOP DMI SRL · Deviz ofertă IB-0152 / 18.09.2026 · Popescu Andrei</span><span>Pagina 2 din 2</span></div>
+<div class="pagefoot"><span>ROOFSHOP DMI SRL · Deviz ofertă IB-0152 / 18.09.2026 · Popescu Andrei</span><span>Pagina 2 din 2</span></div>
 </div></body></html>

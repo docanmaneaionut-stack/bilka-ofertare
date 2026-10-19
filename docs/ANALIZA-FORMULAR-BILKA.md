@@ -98,3 +98,7 @@ Cele 23 de categorii: 1 țiglă metalică, tablă cutată până la T45, Retropa
 4. Finisajele SPX / MPX — semnificație?
 5. Aluzinc și profilele zincate — se vând?
 6. „Suma" din ListaPret = prețul de achiziție de la Bilka, înainte de +1 %?
+
+## Verificare 16.10.2026 — formularul „FORMULAR_PROROOF_COMP.XLSM"
+
+Comparat celulă cu celulă cu formularul de referință (v10, 03.06.2026): **toate foile de date sunt identice** — ListaPret (7.580 de coduri, aceleași prețuri și descrieri), Preturi, Preturi Adaos, MATRICE, COMBCUL, Fakro, Velux, sistem pluvial Magnelis. Nu există cod nou, cod dispărut sau preț schimbat. Diferă doar: persoanele de contact Bilka din copertă (agentul de vânzări și directorul zonal alocați firmei), cursul euro din antetul formularului (5,41 față de 5,10 — câmp de lucru, nu de listă), data, și conținutul unei comenzi completate (Iberic Grande Mat 0,50 RAL 8019 + pluvial), plus jurnalul SAP al acelei comenzi. Câteva foi ascunse (ListaPret, Preturi, COMBCUL, SetariOferta, Portal) sunt vizibile în această copie. **Concluzie:** aceeași versiune de prețuri; catalogul și fișierele de import rămân cele actuale, nimic de reimportat. Scriptul `docs/tools/compara_pdf_listapret.py` rămâne verificarea de rulat la o listă nouă.

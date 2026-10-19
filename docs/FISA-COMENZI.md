@@ -1,6 +1,6 @@
 # Fișa de modul — COMENZI (COM: comenzi, livrări, încasări, retururi)
 
-Versiunea 1.0 · 16 octombrie 2026 · Status: ÎNCHISĂ (capitolele 1–7; un singur punct deschis, la cap. 3, nu blochează). Se reia doar printr-o cerere explicită de MODIFICARE.
+Versiunea 1.2 · 16 octombrie 2026 · Status: ÎNCHISĂ (capitolele 1–9; un singur punct deschis, la cap. 3, nu blochează). Se reia doar printr-o cerere explicită de MODIFICARE.
 Se sprijină pe: FISA-CONTURI (cine ce poate), FISA-OFERTARE cap. 16 (ce intră automat în comandă), cap. 2b (lucrări și completări), cap. 19 (tabelul de vânzări), cap. 13 (documentele).
 Machetă de ecran: `docs/design/ecran-tabel-comenzi.png` (+ `.pdf`, `.html`).
 
@@ -15,6 +15,8 @@ Machetă de ecran: `docs/design/ecran-tabel-comenzi.png` (+ `.pdf`, `.html`).
 | 5 | Retururi și nota de retur | calcul la prețurile din ofertă, rând legat în vânzări, nota pentru client | ÎNCHIS (16.10) |
 | 6 | Documentele comenzii | formularele Bilka (export), ofertă detaliată, tabel de facturare, FGO, aviz de marfă | ÎNCHIS (consolidare, nimic nou de decis) |
 | 7 | Tabelul de vânzări | implementarea cap. 19 din OFERTARE | închis acolo |
+| 8 | Evidența paleților | „Notă palet" pe comandă, care alimentează rubrica „Evidența paleților" cu statusul recuperat / nerecuperat | ÎNCHIS (16.10) |
+| 9 | Avizul de însoțire a mărfii | documentul de livrare: detaliata fără valori, căsuță pe rând, semnătura de recepție, dublu exemplar; machetă `docs/design/macheta-aviz.pdf` | ÎNCHIS (16.10, machetă aprobată) |
 
 ---
 
@@ -73,3 +75,23 @@ Din comandă (meniul „Doc. ▾") se generează sau se deschid: **formularele B
 
 ## Capitolul 7 — Tabelul de vânzări
 Închis în OFERTARE cap. 19; completări din această fișă: comenzile manuale intră fără sume, completate de Administratorul contului alocat (cap. 4b); retururile recalculează adaosul lucrării (cap. 5).
+
+## Capitolul 8 — Evidența paleților — ÎNCHIS (16.10.2026)
+
+**Situația:** Bilka facturează paleții. Marfa vine la depozit, se livrează clientului, paletul se întoarce la noi și îl returnăm la Bilka, care face storno. Două cazuri de urmărit: (1) clientul descarcă mecanizat și **paletul rămâne la el** până îl eliberează, iar noi îl recuperăm ulterior; (2) Bilka **livrează direct la clientul final**, cu șoferul lor — noi nu vedem marfa, dar răspundem ca paletul să ajungă înapoi și storno-ul să se facă. Tipurile de paleți sunt mai multe și valoarea lor nu contează pentru soft: nu se țin tipuri sau prețuri, doar text și stare.
+
+**Mecanismul (același pentru toate situațiile):**
+- Pe orice comandă din tabelul de comenzi, butonul **„Notă palet"**: text liber — ce tip de palet a rămas și câți (ex. „2 paleți lungi de tablă, rămași la client — descărcare mecanizată"; „1 palet accesorii, livrare directă Bilka — de verificat storno-ul"). O completează **Gestiunea** (inclusiv șoferii, care au cont de Gestiune) sau **Administratorul**; se poate completa și modifica ulterior, cu istoric (cine, când).
+- Comenzile care au notă de palet populează automat rubrica **„Evidența paleților"** (ecran propriu în zona de comenzi): o linie per comandă — numărul comenzii, clientul, localitatea, nota, cine și când a notat, **statusul: nerecuperat / recuperat**, data schimbării statusului. Statusul îl schimbă **doar Administratorul**, cu istoric. „Recuperat" = paletul s-a întors la noi / storno-ul Bilka e confirmat.
+- Implicit lista arată paleții **nerecuperați**, cei mai vechi sus; filtru pentru recuperați și pe client. În capul tabelului de comenzi: „n paleți nerecuperați" (ca la comisioanele neachitate).
+
+## Capitolul 9 — Avizul de însoțire a mărfii — ÎNCHIS (16.10.2026; machetă aprobată: `docs/design/macheta-aviz.pdf`; preia OFERTARE cap. 22)
+
+Documentul care însoțește marfa la livrare, generat din comandă (meniul „Doc. ▾", și din ecranul fișei șoferului), de Gestiune sau Contabilitate.
+- **Titlul:** „Aviz de însoțire a mărfii". **Antetul** ca la ofertă: firma emitentă (denumire, CUI, J, adresă, telefon, e-mail, siglă), clientul, agentul; numărul comenzii și data; o linie „Exemplarul 1 din 2 — furnizor / 2 din 2 — client · livrare din data · cantități fără valori".
+- **Conținutul:** datele **ofertei detaliate, fără valori** — categoriile în ordinea clasică, pe fiecare linie produsul, UM și **cantitatea**; sub învelitoare **panotajul** (lungime × bucăți, mp, total coli); **o căsuță de bifat pe fiecare rând** (și pe fiecare lungime), pentru recepția la fața locului; la final totalul în cuvinte („35 coli de învelitoare · 215 piese").
+- **Semnături:** două casete — „Predat" (numele, semnătura, data) și **„Am recepționat marfa"** (numele celui care recepționează, semnătura, data).
+- **Dublu exemplar:** PDF-ul conține ambele exemplare, fiecare pe pagina lui (sau pe mai multe, dacă marfa e multă); același șablon grafic ca oferta.
+- **Reguli:** un aviz per livrare (o comandă poate avea mai multe, la livrări parțiale — cantitățile se pot ajusta înainte de generare); avizul generat rămâne în istoricul comenzii; **nu e un document fiscal** (fără serie legală, fără prețuri) — factura se emite separat (tabel de facturare / FGO).
+
+**Decis (16.10.2026):** fără datele șoferului / mașinii — caseta „Predat" cu nume și semnătură e suficientă; **identificarea avizului = numărul comenzii**, fără număr de aviz propriu (la livrări parțiale, avizele aceleiași comenzi se deosebesc prin data livrării din antet).

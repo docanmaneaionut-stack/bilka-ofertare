@@ -14,6 +14,7 @@ tr { page-break-inside: avoid; } tr.cat { page-break-after: avoid; }   /* banda 
 .logos { display: flex; flex-direction: column; align-items: flex-end; gap: 2mm; }
 .logo { border: 1px dashed #b9b9b9; color: #8a8a8a; font-size: 8pt; text-align: center; padding: 2mm 3mm; width: 40mm; }
 .logo.big { height: 9mm; display:flex; align-items:center; justify-content:center; }
+.logo-img { height: 11mm; width: auto; display: block; }
 .suppliers { display: flex; gap: 2mm; } .suppliers .logo { width: 19mm; padding: 1.2mm 2mm; }
 .title { margin: 2.5mm 0 1.5mm; display: flex; justify-content: space-between; align-items: baseline; border-bottom: 2px solid #1c1c1c; padding-bottom: 1.5mm; }
 .title h1 { font-size: 17pt; margin: 0; font-weight: 700; letter-spacing: .3px; }
@@ -59,11 +60,23 @@ th.k, td.k { width: 10mm; text-align: center; }
 .dlb .sub { color: #555; font-size: 9pt; } .dlb .big { font-size: 14pt; font-weight: 700; }
 a.tel { color: #1c1c1c; text-decoration: none; font-weight: 700; white-space: nowrap; } a { color: #1c1c1c; }
 .cb { display: inline-block; width: 3.6mm; height: 3.6mm; border: 1px solid #9a9a9a; vertical-align: middle; border-radius: .4mm; }
+/* aviz: rânduri mai strânse (fără coloane de valori, documentul e doar de bifat), total în cuvinte, blocul de semnături */
+.aviz table.lines td { padding: .4mm 1.5mm; font-size: 9pt; line-height: 1.15; }
+.aviz table.lines tr.cat td { padding: 1mm 1.5mm; font-size: 9pt; }
+.aviz table.lines tr.pan td, .aviz table.lines tr.panh td { padding: .3mm 1.5mm .3mm 9mm; font-size: 8.3pt; line-height: 1.15; }
+.aviz .semn { margin-top: 2.5mm; } .aviz .aviz-tot { margin-top: 1.5mm; }
+.page2 .head { margin-top: 0; }   /* antetul unei pagini noi nu se trage peste ruptura de pagină */
+.aviz .parties { margin: 1mm 0 1.5mm; } .aviz .intern { margin: -.5mm 0 1.5mm; }
+.aviz-tot { margin-top: 2mm; font-size: 9.5pt; }
+.semn { display: flex; gap: 8mm; margin-top: 3.5mm; page-break-inside: avoid; }
+.sbox { flex: 1; border: 1px solid #c9c9c9; border-radius: 1.5mm; padding: 2mm 3mm 2.5mm; font-size: 9.5pt; }
+.slbl { font-size: 8pt; text-transform: uppercase; letter-spacing: .6px; color: #6a6a6a; margin-bottom: 1mm; font-weight: 700; }
+.sline { margin-top: 2.6mm; color: #333; }
 @media print { .pagefoot { display: none; } }   /* în PDF, subsolul paginii îl scrie motorul (număr de pagină corect pe orice lungime) */
 </style></head><body><div class="sheet">
 <div class="head">
-  <div class="firm"><b>SC ROOFSHOP DMI SRL</b><br>Depozit: Str. Mărășești nr. 37, Focșani<br>Gestiune: Maria P. · <a class="tel" href="tel:0755000444">📞 0755 000 444</a></div>
-  <div class="logos"><div class="logo big">sigla firmei</div></div>
+  <div class="firm"><b>ROOFSHOP DMI SRL</b><br>Depozit: Str. Trotuș nr. 46, Focșani<br>Gestiune: Maria P. · <a class="tel" href="tel:0755000444">📞 0755 000 444</a></div>
+  <div class="logos"><img class="logo-img" src="sigle/roofshop-dmi.jpg" alt="RoofShop"></div>
 </div>
 <div class="title"><h1>FIȘA ȘOFERULUI</h1><div class="nr">joi, <b>16.10.2026</b> · 2 livrări · mașina noastră</div></div>
 <div class="intern">Document intern, pentru încărcare și livrare. Telefoanele se pot apela direct din PDF. Ordinea de mai jos e ordinea propusă a traseului.</div>
@@ -89,5 +102,5 @@ a.tel { color: #1c1c1c; text-decoration: none; font-weight: 700; white-space: no
   </div>
 </div>
 <div class="foot"><p><b>Documente anexate:</b> aviz de marfă IB-0152 · aviz de marfă IB-0149 (tipărite din același ecran). &nbsp; <b>La întoarcere:</b> fișa semnată și banii la Gestiune.</p></div>
-<div class="pagefoot"><span>SC ROOFSHOP DMI SRL · Fișa șoferului · 16.10.2026 · 2 livrări</span><span>Pagina 1 din 1</span></div>
+<div class="pagefoot"><span>ROOFSHOP DMI SRL · Fișa șoferului · 16.10.2026 · 2 livrări</span><span>Pagina 1 din 1</span></div>
 </div></body></html>

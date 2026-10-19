@@ -9,7 +9,7 @@ Sursa: deciziile lui Ionuț din 04–10.09.2026, listă cu listă. Anexe: fișel
 
 - **Un catalog, în compartimente pe furnizor**: Bilka (acum), Novatik, Metigla și alții (când vin), Fakro, Velux (ferestre), **Stoc** (produsele proprii). Fiecare compartiment are produsele lui, versiunile lui de listă de preț, moneda, modul de preț și formatul lui de import. O actualizare într-un compartiment nu atinge celelalte; un furnizor nou = un compartiment nou, nu o modificare a softului.
 - **Rubricile ofertei** (comune tuturor compartimentelor; un produs din Stoc sau Novatik intră în aceeași rubrică, fără ca rubrica să apară de două ori):
-  Învelitori (țiglă metalică, învelitori plate — inclusiv tabla plană la mp —, tablă cutată) · Accesorii standard (tinichigerie, coame, tabla plană la coală) · Accesorii speciale (2 ML) · Accesorii speciale la lungimi (ML) · Sistem pluvial · Fixare și etanșare (inclusiv folii, ventilare, coș de ventilare) · **Șipcă gard** (rubrică proprie) · Zona B (lemn, feronerie, manoperă — ca până acum, cu preluare în factură) · Ferestre (compartimentele Fakro / Velux, cu discount pe linie).
+  în ordinea decisă (19.10.2026): Învelitori (țiglă metalică, învelitori plate — inclusiv tabla plană la mp —, tablă cutată) · Accesorii standard (tinichigerie, coame, tabla plană la coală) · Accesorii speciale 2 ML · Fixare și etanșare (inclusiv folii, ventilare, coș de ventilare) · Sistem pluvial · **Șipcă gard** (rubrică proprie) · Accesorii speciale la lungimi (ML) · Ferestre (compartimentele Fakro / Velux, cu discount pe linie) · Zona B (lemn, feronerie, manoperă — cu preluare în factură).
 
 ## 2. Modurile de preț
 
