@@ -188,3 +188,120 @@ export const apiReferinte = {
       body: JSON.stringify(curata(date)),
     }),
 };
+
+// --- Liste de pret si import ---
+
+export type StatusLista = "SCHITA" | "ACTIVA" | "ARHIVATA" | "ANULATA";
+
+export type FisierStocat = { nume: string; tip: string; randuri: number; coduriDistincte: number | null; faraCod: number | null };
+
+export type RaportImport = {
+  fisiere: { nume: string; tip: string; randuri: number; coduriDistincte: number | null; faraCod: number | null; anterior: { randuri: number; coduriDistincte: number | null; faraCod: number | null } | null; avertizari: string[] }[];
+  totaluri: Record<string, number>;
+  primulImport: boolean;
+};
+
+export type ListaPret = {
+  id: string;
+  compartimentId: string;
+  denumire: string;
+  valabilaDeLa: string;
+  sursa: string | null;
+  status: StatusLista;
+  createdAt: string;
+  activataLa: string | null;
+  arhivataLa: string | null;
+  anulataLa: string | null;
+  fisiere: FisierStocat[] | null;
+  raport: RaportImport | null;
+  creataDe?: { nume: string } | null;
+  compartiment?: { id: string; denumire: string };
+  propuneri?: { id: string }[];
+  _count?: { preturi: number };
+};
+
+export type Problema = { nivel: "eroare" | "avertizare"; fisier?: string; rand?: number; mesaj: string };
+export type SchimbareCamp = { camp: string; inainte: string | null; dupa: string | null };
+
+export type Diferente = {
+  produse: {
+    noi: { codIntern: string; codFurnizor: string | null; denumire: string; categorieOferta: string; um: string; pret: number; fisier: string }[];
+    modificate: { produsId: string; codIntern: string; denumire: string; campuri: SchimbareCamp[] }[];
+    preturiModificate: { produsId: string; codIntern: string; denumire: string; vechi: number; nou: number; diferenta: number; procent: number }[];
+    preturiNoi: number;
+    disparute: { produsId: string; codIntern: string; codFurnizor: string | null; denumire: string }[];
+    redenumiri: { produsId: string; codFurnizor: string | null; codInternVechi: string; codInternNou: string; denumireVeche: string; denumireNoua: string; campuri: SchimbareCamp[] }[];
+    reaparute: { produsId: string; codIntern: string; denumire: string }[];
+    neschimbate: number;
+  };
+  grupuriNoi: string[];
+  familiiNoi: { grup: string; familie: string }[];
+  referinte: Record<
+    string,
+    {
+      aparute: { cheie: string; valori: Record<string, string | number | null> }[];
+      disparute: { id: string; cheie: string }[];
+      modificate: { id: string; cheie: string; campuri: SchimbareCamp[] }[];
+      reaparute: { id: string; cheie: string }[];
+      neschimbate: number;
+    }
+  >;
+};
+
+export type ImportPropunere = {
+  id: string;
+  compartimentId: string;
+  status: "PROPUSA" | "CONFIRMATA" | "ANULATA";
+  areProduse: boolean;
+  areReferinte: boolean;
+  fisiere: FisierStocat[];
+  diferente: Diferente;
+  raport: RaportImport;
+  erori: Problema[];
+  avertizari: Problema[];
+  listaPretId: string | null;
+  confirmataLa: string | null;
+  createdAt: string;
+  compartiment?: { id: string; denumire: string };
+  creatDe?: { nume: string } | null;
+  listaPret?: { id: string; denumire: string; status: StatusLista } | null;
+};
+
+export type IstoricPret = { listaPretId: string; lista: string; status: StatusLista; valabilaDeLa: string; pret: number; observatie: string | null };
+
+const BAZA_LP = "/api/adm/lp";
+const BAZA_IMP = "/api/adm/imp";
+
+export const apiListe = {
+  peCompartiment: (compartimentId: string) => cerere<{ liste: ListaPret[] }>(`${BAZA_LP}/compartimente/${compartimentId}/liste`),
+  detaliu: (id: string) => cerere<{ lista: ListaPret }>(`${BAZA_LP}/liste/${id}`),
+  activeaza: (id: string) => cerere<{ noua: ListaPret; arhivata: ListaPret | null }>(`${BAZA_LP}/liste/${id}/activeaza`, { method: "POST" }),
+  anuleaza: (id: string) => cerere<{ lista: ListaPret }>(`${BAZA_LP}/liste/${id}/anuleaza`, { method: "POST" }),
+  istoricPreturi: (produsId: string) => cerere<{ istoric: IstoricPret[] }>(`${BAZA_LP}/produse/${produsId}/preturi`),
+  pretManual: (produsId: string, pret: number) =>
+    cerere<{ lista: ListaPret }>(`${BAZA_LP}/produse/${produsId}/pret-manual`, { method: "PUT", body: JSON.stringify({ pret }) }),
+};
+
+async function cerereFormular<T>(cale: string, formular: FormData): Promise<T> {
+  const raspuns = await fetch(`${BAZA_API}${cale}`, { method: "POST", credentials: "include", body: formular });
+  if (!raspuns.ok) {
+    const corp = await raspuns.json().catch(() => ({}));
+    throw new Error(corp.eroare ?? `Cerere esuata (${raspuns.status})`);
+  }
+  return raspuns.json() as Promise<T>;
+}
+
+export const apiImport = {
+  analiza: (compartimentId: string, fisiere: File[]) => {
+    const formular = new FormData();
+    formular.set("compartimentId", compartimentId);
+    for (const f of fisiere) formular.append("fisiere", f, f.name);
+    return cerereFormular<{ propunere: ImportPropunere }>(`${BAZA_IMP}/analiza`, formular);
+  },
+  propuneri: (compartimentId?: string) =>
+    cerere<{ propuneri: ImportPropunere[] }>(`${BAZA_IMP}/propuneri${compartimentId ? `?compartimentId=${compartimentId}` : ""}`),
+  detaliu: (id: string) => cerere<{ propunere: ImportPropunere }>(`${BAZA_IMP}/propuneri/${id}`),
+  confirma: (id: string, date: { denumire?: string; valabilaDeLa?: string }) =>
+    cerere<{ propunere: ImportPropunere }>(`${BAZA_IMP}/propuneri/${id}/confirma`, { method: "POST", body: JSON.stringify(date) }),
+  anuleaza: (id: string) => cerere<{ propunere: ImportPropunere }>(`${BAZA_IMP}/propuneri/${id}/anuleaza`, { method: "POST" }),
+};

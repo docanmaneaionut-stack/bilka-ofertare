@@ -50,8 +50,9 @@ export const garantiiFinisajGrosimeRouter = creeazaRuterReferinta({
   schema: z.object({
     furnizor: z.string().trim().min(1),
     finisaj: z.string().trim().min(1),
-    grosime: z.string().trim().min(1),
-    garantieCuloareAni: z.number().int().min(0),
+    // pluvialul nu are grosime; lipsa garantiei la culoare = fara garantie, nu zero
+    grosime: textOptional,
+    garantieCuloareAni: z.number().int().min(0).nullish(),
     garantieCoroziuneAni: z.number().int().min(0),
     stratZincGMp: z.number().nullish(),
     stratVopseaUmExtInt: textOptional,

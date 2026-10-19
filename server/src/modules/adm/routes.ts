@@ -1,6 +1,8 @@
 import { Router } from "express";
 import { cereRol } from "../accounts/middleware.js";
 import { catRouter } from "../cat/index.js";
+import { lpRouter } from "../lp/routes.js";
+import { impRouter } from "../imp/routes.js";
 
 export const admRouter = Router();
 
@@ -11,3 +13,5 @@ admRouter.get("/", cereRol("ADMIN_GENERAL"), (_req, res) => {
 });
 
 admRouter.use("/cat", catRouter);
+admRouter.use("/lp", lpRouter);
+admRouter.use("/imp", impRouter);

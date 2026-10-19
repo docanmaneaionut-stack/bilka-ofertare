@@ -16,6 +16,12 @@ export function ZonaTehnica({ utilizator, onLogout }: { utilizator: Utilizator; 
           <NavLink to="/zona-tehnica/produse" className={clasa}>
             Produse
           </NavLink>
+          <NavLink to="/zona-tehnica/liste" className={clasa}>
+            Liste de preț
+          </NavLink>
+          <NavLink to="/zona-tehnica/import" className={clasa}>
+            Import
+          </NavLink>
           {REFERINTE.map((r) => (
             <NavLink key={r.cheie} to={`/zona-tehnica/referinte/${r.cheie}`} className={clasa}>
               {r.titluScurt}

@@ -2,11 +2,13 @@ import { useEffect, useState, type FormEvent } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import {
   apiCompartimente,
+  apiListe,
   apiProduse,
   apiReferinte,
   type CategorieOferta,
   type Compartiment,
   type Grup,
+  type IstoricPret,
   type Produs,
 } from "../api";
 import { Ajutor, Camp, Mesaj, textEroare } from "../components/ui";
@@ -102,6 +104,36 @@ export function ProdusFormular() {
   const [eroare, setEroare] = useState<string | null>(null);
   const [salvat, setSalvat] = useState(false);
   const [seSalveaza, setSeSalveaza] = useState(false);
+  const [istoricPret, setIstoricPret] = useState<IstoricPret[]>([]);
+  const [pretNou, setPretNou] = useState("");
+  const [mesajPret, setMesajPret] = useState<string | null>(null);
+
+  async function incarcaIstoricPret(produsId: string) {
+    try {
+      const { istoric } = await apiListe.istoricPreturi(produsId);
+      setIstoricPret(istoric);
+    } catch {
+      setIstoricPret([]);
+    }
+  }
+
+  async function salveazaPretManual() {
+    if (!id) return;
+    const valoare = Number(pretNou.replace(",", "."));
+    if (!Number.isFinite(valoare) || valoare < 0) {
+      setMesajPret("Prețul trebuie să fie un număr pozitiv.");
+      return;
+    }
+    setMesajPret(null);
+    try {
+      const { lista } = await apiListe.pretManual(id, valoare);
+      setMesajPret(`Preț salvat în versiunea „${lista.denumire}”, cu istoric în jurnal.`);
+      setPretNou("");
+      await incarcaIstoricPret(id);
+    } catch (e) {
+      setMesajPret(textEroare(e));
+    }
+  }
 
   function seteaza<K extends keyof Date>(cheie: K, valoare: Date[K]) {
     setDate((d) => ({ ...d, [cheie]: valoare }));
@@ -130,7 +162,10 @@ export function ProdusFormular() {
         setDate(dinProdus(produs));
       })
       .catch((e) => setEroare(textEroare(e)));
+    void incarcaIstoricPret(id);
   }, [id]);
+
+  const pretActiv = istoricPret.find((i) => i.status === "ACTIVA") ?? null;
 
   const compartiment = compartimente.find((c) => c.id === date.compartimentId);
 
@@ -316,6 +351,63 @@ export function ProdusFormular() {
           </Mesaj>
         )}
 
+        {!esteNou && (
+          <>
+            <h2>Preț de bază</h2>
+            <div className="rand-campuri">
+              <div className="camp">
+                <span>Prețul din versiunea activă</span>
+                <span className="numar-mare">
+                  {pretActiv ? `${pretActiv.pret.toLocaleString("ro-RO", { minimumFractionDigits: 2, maximumFractionDigits: 4 })} ${date.moneda}` : "—"}
+                </span>
+                {pretActiv && (
+                  <span className="text-secundar mic">
+                    {pretActiv.lista} · valabilă de la {new Date(pretActiv.valabilaDeLa).toLocaleDateString("ro-RO")}
+                  </span>
+                )}
+              </div>
+              <Camp eticheta="Preț de bază nou (manual)">
+                <div className="actiuni">
+                  <input type="text" inputMode="decimal" value={pretNou} onChange={(e) => setPretNou(e.target.value)} style={{ maxWidth: 200 }} />
+                  <button type="button" className="buton secundar" onClick={salveazaPretManual} disabled={pretNou.trim() === ""}>
+                    Salvează prețul
+                  </button>
+                </div>
+              </Camp>
+            </div>
+            {mesajPret && <Mesaj tip={mesajPret.startsWith("Preț salvat") ? "ok" : "eroare"}>{mesajPret}</Mesaj>}
+            {istoricPret.length > 0 && (
+              <div className="tabel-invelis" style={{ maxWidth: 720 }}>
+                <table className="tabel">
+                  <thead>
+                    <tr>
+                      <th>Versiune</th>
+                      <th>Stare</th>
+                      <th>Valabilă de la</th>
+                      <th>Preț</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {istoricPret.map((i) => (
+                      <tr key={i.listaPretId} className={i.status === "ACTIVA" ? undefined : "inactiv"}>
+                        <td>{i.lista}</td>
+                        <td>
+                          <span className={`eticheta ${i.status === "ACTIVA" ? "" : "inactiv"}`}>{i.status.toLowerCase()}</span>
+                        </td>
+                        <td>{new Date(i.valabilaDeLa).toLocaleDateString("ro-RO")}</td>
+                        <td>
+                          <strong>{i.pret.toLocaleString("ro-RO", { minimumFractionDigits: 2, maximumFractionDigits: 4 })}</strong>
+                          {i.observatie === "manual" && <span className="text-secundar mic"> manual</span>}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </>
+        )}
+
         <h2>Caracteristici</h2>
         <div className="rand-campuri">
           <Camp eticheta="Variantă">
@@ -447,6 +539,9 @@ export function ProdusFormular() {
           </li>
           <li>
             <strong>Sursa</strong>: de unde vine rândul (ex. PDF 01 + ListaPret). <strong>Ordine</strong>: poziția în liste. <strong>Activ</strong>: un produs inactiv nu apare la ofertă, dar rămâne în istoric.
+          </li>
+          <li>
+            <strong>Preț de bază</strong>: prețul fără TVA din versiunea activă de prețuri a compartimentului. „Salvează prețul” îl scrie manual în versiunea activă (la Stoc, prima introducere creează automat versiunea „Prețuri manuale”), cu istoric în jurnal. Versiunile arhivate nu se modifică.
           </li>
           <li>Fiecare salvare scrie în jurnal câmpurile schimbate, cu valoarea dinainte și după.</li>
         </ul>

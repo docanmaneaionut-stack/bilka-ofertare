@@ -383,6 +383,53 @@ tr.modificat td:first-child {
   margin-top: 16px;
 }
 
+/* sectiunile ecranului de diferente: pliate implicit, numaratoarea in titlu */
+
+.sectiune-diferente {
+  border: 2px solid var(--border);
+  border-radius: 6px;
+  padding: 10px 16px;
+  margin-bottom: 12px;
+}
+
+.sectiune-diferente summary {
+  cursor: pointer;
+  font-weight: 700;
+  font-size: 18px;
+  padding: 6px 0;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.sectiune-diferente summary:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 2px;
+}
+
+.numar-mare {
+  font-size: 28px;
+  font-weight: 700;
+  line-height: 1.1;
+}
+
+.grila-totaluri {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 12px;
+  margin: 16px 0 24px;
+}
+
+.grila-totaluri > div {
+  border: 2px solid var(--border);
+  border-radius: 6px;
+  padding: 12px 14px;
+}
+
+.grila-totaluri .mic {
+  display: block;
+}
+
 /* ajutorul paginii: o singura sectiune, la final, pliata implicit */
 
 .ajutor-pagina {

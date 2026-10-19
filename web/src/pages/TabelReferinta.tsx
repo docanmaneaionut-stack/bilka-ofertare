@@ -101,6 +101,7 @@ function Celula({
     <input
       type="text"
       inputMode={coloana.tip === "numar" ? "decimal" : undefined}
+      placeholder={coloana.obligatoriu ? undefined : "—"}
       value={String(valoare ?? "")}
       onChange={(e) => onChange(e.target.value)}
       required={coloana.obligatoriu}

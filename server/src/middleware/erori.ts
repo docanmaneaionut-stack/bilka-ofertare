@@ -1,10 +1,19 @@
 import type { ErrorRequestHandler } from "express";
 import { ZodError } from "zod";
 import { Prisma } from "@prisma/client";
+import { EroareImport } from "../modules/imp/analiza.js";
+
+// textul ridicat de trigger-ul de imutabilitate din baza (migrarea 3)
+const MESAJ_ARHIVATA = "arhivata nu se modifica";
 
 export const gestioneazaErori: ErrorRequestHandler = (err, _req, res, _next) => {
   if (err instanceof ZodError) {
     res.status(400).json({ eroare: "Date invalide", detalii: err.issues });
+    return;
+  }
+
+  if (err instanceof EroareImport) {
+    res.status(err.status).json({ eroare: err.message });
     return;
   }
 
@@ -18,6 +27,11 @@ export const gestioneazaErori: ErrorRequestHandler = (err, _req, res, _next) => 
       res.status(404).json({ eroare: "Nu exista" });
       return;
     }
+  }
+
+  if (err instanceof Error && err.message.includes(MESAJ_ARHIVATA)) {
+    res.status(409).json({ eroare: "Lista de preț arhivată nu se modifică; revenirea la ea = reimportul fișierelor ca versiune nouă" });
+    return;
   }
 
   console.error(err);

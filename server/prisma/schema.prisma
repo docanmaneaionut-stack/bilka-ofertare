@@ -99,6 +99,7 @@ model Utilizator {
   listePretCreate     ListaPret[]
   jurnalIntrari       JurnalIntrare[]
   jurnalAutentificari JurnalAutentificare[]
+  importPropuneres    ImportPropunere[]
 
   @@map("utilizator")
 }
@@ -170,6 +171,14 @@ enum StatusListaPret {
   SCHITA
   ACTIVA
   ARHIVATA
+  // schita neactivata, renuntata; nu se sterge
+  ANULATA
+}
+
+enum StatusImport {
+  PROPUSA
+  CONFIRMATA
+  ANULATA
 }
 
 model Compartiment {
@@ -194,9 +203,10 @@ model Compartiment {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  grupuri   Grup[]
-  produse   Produs[]
-  listePret ListaPret[]
+  grupuri          Grup[]
+  produse          Produs[]
+  listePret        ListaPret[]
+  importPropuneres ImportPropunere[]
 
   @@map("compartiment")
 }
@@ -316,7 +326,20 @@ model ListaPret {
   creataDe       Utilizator?     @relation(fields: [creataDeId], references: [id])
   createdAt      DateTime        @default(now())
 
-  preturi PretListaProdus[]
+  // istoric liniar: schita -> activa -> arhivata (sau schita -> anulata);
+  // o lista arhivata nu redevine niciodata activa (revenirea = reimport ca
+  // versiune noua). Imutabilitatea arhivatelor e impusa de un trigger in baza.
+  activataLa DateTime?
+  arhivataLa DateTime?
+  anulataLa  DateTime?
+
+  // fisierele sursa, pastrate pe disc la versiune (nume, cale, numaratori)
+  fisiere Json?
+  // raportul de import (pe fisier + totaluri + avertizari)
+  raport  Json?
+
+  preturi   PretListaProdus[]
+  propuneri ImportPropunere[]
 
   @@map("lista_pret")
 }
@@ -333,6 +356,40 @@ model PretListaProdus {
 
   @@unique([listaPretId, produsId])
   @@map("pret_lista_produs")
+}
+
+// analiza unui import, intre "am incarcat fisierele" si "confirm": nimic nu
+// se scrie in catalog pana la confirmare; ramane ca istoric al importurilor
+model ImportPropunere {
+  id             String       @id @default(uuid())
+  compartimentId String
+  compartiment   Compartiment @relation(fields: [compartimentId], references: [id])
+  creatDeId      String?
+  creatDe        Utilizator?  @relation(fields: [creatDeId], references: [id])
+  status         StatusImport @default(PROPUSA)
+
+  areProduse   Boolean @default(false)
+  areReferinte Boolean @default(false)
+
+  // fisierele incarcate: nume, cale pe disc, tip recunoscut, randuri
+  fisiere    Json
+  // diferentele calculate fata de catalog si lista activa
+  diferente  Json
+  // raportul pe fisier + totaluri
+  raport     Json
+  erori      Json
+  avertizari Json
+  // randurile de produse normalizate (sursa confirmarii, fara reincarcare)
+  randuri    Json
+
+  listaPretId  String?
+  listaPret    ListaPret? @relation(fields: [listaPretId], references: [id])
+  confirmataLa DateTime?
+  anulataLa    DateTime?
+  createdAt    DateTime   @default(now())
+
+  @@index([compartimentId, createdAt])
+  @@map("import_propunere")
 }
 
 // ---------------------------------------------------------------------------
@@ -379,8 +436,8 @@ model GarantieFinisajGrosime {
   id                   String   @id @default(uuid())
   furnizor             String
   finisaj              String
-  grosime              String
-  garantieCuloareAni   Int
+  grosime              String?
+  garantieCuloareAni   Int?
   garantieCoroziuneAni Int
   stratZincGMp         Decimal? @db.Decimal(8, 2)
   // text brut, ex. "25 / 7" (exterior / interior) - nu e un numar simplu

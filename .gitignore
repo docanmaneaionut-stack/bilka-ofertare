@@ -3,6 +3,10 @@
 .env.local
 *.env
 
+# Fisierele incarcate la import (pastrate pe disc, la versiune) - date, nu cod
+server/data/
+server/data-test/
+
 # Node
 node_modules/
 npm-debug.log*

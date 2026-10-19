@@ -47,12 +47,13 @@ export const REFERINTE: ConfigReferinta[] = [
     cale: "garantii-finisaj-grosime",
     titlu: "Garanții și straturi pe finisaj × grosime",
     titluScurt: "Garanții",
-    descriere: "Ani de garanție culoare / coroziune, strat de zinc (g/mp) și strat de vopsea (µm exterior / interior).",
+    descriere:
+      "Ani de garanție culoare / coroziune, strat de zinc (g/mp) și strat de vopsea (µm exterior / interior). Rândurile de pluvial nu au grosime — se potrivesc doar pe finisaj (grosimea lipsă apare „—”). Garanția la culoare lipsă (Magnelis, Aluzinc) înseamnă „fără garanție la culoare”, nu zero ani.",
     coloane: [
       FURNIZOR,
       { cheie: "finisaj", eticheta: "Finisaj", tip: "text", obligatoriu: true },
-      { cheie: "grosime", eticheta: "Grosime", tip: "text", obligatoriu: true },
-      { cheie: "garantieCuloareAni", eticheta: "Garanție culoare (ani)", tip: "numar", obligatoriu: true, latime: "140px" },
+      { cheie: "grosime", eticheta: "Grosime", tip: "text" },
+      { cheie: "garantieCuloareAni", eticheta: "Garanție culoare (ani)", tip: "numar", latime: "140px" },
       { cheie: "garantieCoroziuneAni", eticheta: "Garanție coroziune (ani)", tip: "numar", obligatoriu: true, latime: "140px" },
       { cheie: "stratZincGMp", eticheta: "Zinc (g/mp)", tip: "numar", latime: "120px" },
       { cheie: "stratVopseaUmExtInt", eticheta: "Vopsea (µm ext / int)", tip: "text", latime: "150px" },

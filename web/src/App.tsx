@@ -8,6 +8,10 @@ import { CompartimentDetaliu } from "./pages/CompartimentDetaliu";
 import { Produse } from "./pages/Produse";
 import { ProdusFormular } from "./pages/ProdusFormular";
 import { TabelReferinta } from "./pages/TabelReferinta";
+import { ListePret } from "./pages/ListePret";
+import { ListaDetaliu } from "./pages/ListaDetaliu";
+import { Import } from "./pages/Import";
+import { ImportPropunere } from "./pages/ImportPropunere";
 
 export default function App() {
   const [utilizator, setUtilizator] = useState<Utilizator | null>(null);
@@ -56,6 +60,10 @@ export default function App() {
           <Route path="produse/nou" element={<ProdusFormular />} />
           <Route path="produse/:id" element={<ProdusFormular />} />
           <Route path="referinte/:cheie" element={<TabelReferinta />} />
+          <Route path="liste" element={<ListePret />} />
+          <Route path="liste/:id" element={<ListaDetaliu />} />
+          <Route path="import" element={<Import />} />
+          <Route path="import/:id" element={<ImportPropunere />} />
         </Route>
         <Route path="*" element={<Navigate to="/zona-tehnica" replace />} />
       </Routes>

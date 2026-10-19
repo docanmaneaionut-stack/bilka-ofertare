@@ -1,4 +1,5 @@
 import "dotenv/config";
+import path from "node:path";
 
 function required(name: string): string {
   const value = process.env[name];
@@ -13,4 +14,6 @@ export const env = {
   sessionSecret: required("SESSION_SECRET"),
   port: Number(process.env.PORT ?? 4000),
   frontendOrigin: process.env.FRONTEND_ORIGIN ?? "http://localhost:5173",
+  // folderul de date al serverului (fisierele brute ale importurilor); nu e in git
+  dateDir: process.env.DATE_DIR ?? path.resolve(process.cwd(), "data"),
 };
