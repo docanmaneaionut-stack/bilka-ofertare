@@ -1,7 +1,13 @@
 import { useEffect, useState } from "react";
+import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import { logout, obtineUtilizatorCurent, type Utilizator } from "./api";
 import { Login } from "./pages/Login";
 import { ZonaTehnica } from "./pages/ZonaTehnica";
+import { Compartimente } from "./pages/Compartimente";
+import { CompartimentDetaliu } from "./pages/CompartimentDetaliu";
+import { Produse } from "./pages/Produse";
+import { ProdusFormular } from "./pages/ProdusFormular";
+import { TabelReferinta } from "./pages/TabelReferinta";
 
 export default function App() {
   const [utilizator, setUtilizator] = useState<Utilizator | null>(null);
@@ -27,15 +33,32 @@ export default function App() {
     return <Login onLogin={setUtilizator} />;
   }
 
-  if (utilizator.rol === "ADMIN_GENERAL") {
-    return <ZonaTehnica utilizator={utilizator} onLogout={iesiDinCont} />;
+  if (utilizator.rol !== "ADMIN_GENERAL") {
+    return (
+      <main className="pagina-ingusta">
+        <h1>Bine ai venit, {utilizator.nume}</h1>
+        <p>Contul tău ({utilizator.rol}) nu are încă niciun ecran construit.</p>
+        <button className="buton" onClick={iesiDinCont}>
+          Ieși din cont
+        </button>
+      </main>
+    );
   }
 
   return (
-    <main style={{ maxWidth: 640, margin: "80px auto", fontFamily: "sans-serif" }}>
-      <h1>Bine ai venit, {utilizator.nume}</h1>
-      <p>Contul tau ({utilizator.rol}) nu are inca niciun ecran construit.</p>
-      <button onClick={iesiDinCont}>Iesi din cont</button>
-    </main>
+    <BrowserRouter>
+      <Routes>
+        <Route path="/zona-tehnica" element={<ZonaTehnica utilizator={utilizator} onLogout={iesiDinCont} />}>
+          <Route index element={<Navigate to="compartimente" replace />} />
+          <Route path="compartimente" element={<Compartimente />} />
+          <Route path="compartimente/:id" element={<CompartimentDetaliu />} />
+          <Route path="produse" element={<Produse />} />
+          <Route path="produse/nou" element={<ProdusFormular />} />
+          <Route path="produse/:id" element={<ProdusFormular />} />
+          <Route path="referinte/:cheie" element={<TabelReferinta />} />
+        </Route>
+        <Route path="*" element={<Navigate to="/zona-tehnica" replace />} />
+      </Routes>
+    </BrowserRouter>
   );
 }

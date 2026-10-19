@@ -1,8 +1,396 @@
+/* Capitolul 0 (FISA-OFERTARE): aerisit, contrast puternic, litera mare,
+   laptop intai, culoarea doar cand inseamna ceva. Acesta e tiparul tuturor
+   ecranelor - fara cosmetizare peste el. */
+
 :root {
-  color-scheme: light dark;
-  font: 16px/150% system-ui, "Segoe UI", Roboto, sans-serif;
+  color-scheme: light;
+  --bg: #ffffff;
+  --bg-secundar: #f4f4f2;
+  --text: #121212;
+  --text-secundar: #4a4a4a;
+  --border: #c9c9c6;
+  --focus: #1a4fd6; /* o singura culoare de accent: focus si actiunea principala */
+  --avertizare-bg: #fff4d6; /* galben: avertizari */
+  --avertizare-text: #6b4e00;
+  --eroare: #b00020; /* rosu: erori, asterisc la modificat */
+  --ok: #1f6f3a;
+
+  font: 18px/1.5 system-ui, "Segoe UI", Roboto, sans-serif;
+  color: var(--text);
+  background: var(--bg);
+}
+
+* {
+  box-sizing: border-box;
 }
 
 body {
   margin: 0;
+  background: var(--bg);
+}
+
+h1 {
+  font-size: 32px;
+  line-height: 1.2;
+  margin: 0 0 24px;
+}
+
+h2 {
+  font-size: 24px;
+  line-height: 1.25;
+  margin: 32px 0 16px;
+}
+
+h3 {
+  font-size: 20px;
+  margin: 24px 0 12px;
+}
+
+p {
+  margin: 0 0 12px;
+}
+
+a {
+  color: var(--text);
+  text-decoration-thickness: 2px;
+  text-underline-offset: 3px;
+}
+
+/* --- aspect general --- */
+
+.pagina {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 32px 24px 64px;
+}
+
+.pagina-ingusta {
+  max-width: 480px;
+  margin: 96px auto;
+  padding: 0 24px;
+}
+
+.antet-pagina {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 24px;
+  flex-wrap: wrap;
+  margin-bottom: 24px;
+}
+
+.antet-pagina h1 {
+  margin: 0;
+}
+
+.bara-sus {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 24px;
+  padding: 16px 24px;
+  border-bottom: 2px solid var(--text);
+}
+
+.bara-sus .titlu {
+  font-weight: 700;
+  font-size: 20px;
+}
+
+.meniu {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.meniu a {
+  display: inline-block;
+  padding: 10px 16px;
+  text-decoration: none;
+  border: 2px solid transparent;
+  border-radius: 6px;
+  font-weight: 600;
+}
+
+.meniu a.activ {
+  border-color: var(--text);
+}
+
+.meniu a:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 2px;
+}
+
+.text-secundar {
+  color: var(--text-secundar);
+}
+
+.mic {
+  font-size: 16px;
+}
+
+/* --- formulare --- */
+
+.formular {
+  display: grid;
+  gap: 20px;
+}
+
+.rand-campuri {
+  display: grid;
+  gap: 20px;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+}
+
+.camp {
+  display: grid;
+  gap: 6px;
+}
+
+.camp > span {
+  font-weight: 600;
+}
+
+.camp .ajutor {
+  font-weight: 400;
+  font-size: 16px;
+  color: var(--text-secundar);
+}
+
+input,
+select,
+textarea,
+button {
+  font: inherit;
+  color: inherit;
+}
+
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="number"],
+input[type="search"],
+select,
+textarea {
+  width: 100%;
+  min-height: 48px;
+  padding: 10px 12px;
+  border: 2px solid var(--border);
+  border-radius: 6px;
+  background: var(--bg);
+}
+
+textarea {
+  min-height: 96px;
+  resize: vertical;
+}
+
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 1px;
+  border-color: var(--focus);
+}
+
+input[type="checkbox"] {
+  width: 24px;
+  height: 24px;
+  accent-color: var(--text);
+}
+
+.camp-bifa {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-weight: 600;
+  min-height: 48px;
+}
+
+/* --- butoane --- */
+
+.buton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 48px;
+  padding: 10px 20px;
+  border-radius: 6px;
+  border: 2px solid var(--text);
+  background: var(--text);
+  color: #fff;
+  font-weight: 700;
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.buton.secundar {
+  background: var(--bg);
+  color: var(--text);
+}
+
+.buton.mic {
+  min-height: 40px;
+  padding: 6px 14px;
+  font-size: 16px;
+}
+
+.buton:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.buton:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 2px;
+}
+
+.actiuni {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+/* --- mesaje in pagina (nu ferestre mici care se inchid) --- */
+
+.mesaj {
+  padding: 14px 16px;
+  border-radius: 6px;
+  border: 2px solid var(--border);
+  background: var(--bg-secundar);
+}
+
+.mesaj.avertizare {
+  background: var(--avertizare-bg);
+  border-color: var(--avertizare-text);
+  color: var(--avertizare-text);
+}
+
+.mesaj.eroare {
+  border-color: var(--eroare);
+  color: var(--eroare);
+  background: #fff;
+}
+
+.mesaj.ok {
+  border-color: var(--ok);
+  color: var(--ok);
+  background: #fff;
+}
+
+/* --- tabele --- */
+
+.tabel-invelis {
+  overflow-x: auto;
+  border: 2px solid var(--border);
+  border-radius: 6px;
+}
+
+table.tabel {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 17px;
+}
+
+table.tabel th,
+table.tabel td {
+  padding: 12px 14px;
+  text-align: left;
+  border-bottom: 1px solid var(--border);
+  vertical-align: middle;
+}
+
+table.tabel th {
+  background: var(--bg-secundar);
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+table.tabel tr:last-child td {
+  border-bottom: none;
+}
+
+table.tabel tr.inactiv td {
+  color: var(--text-secundar);
+}
+
+table.tabel tr.selectabil {
+  cursor: pointer;
+}
+
+table.tabel tr.selectabil:hover td {
+  background: var(--bg-secundar);
+}
+
+/* tabelele de referinta: celule editabile, navigabile cu Tab si sageti */
+
+table.tabel.editabil td {
+  padding: 6px 8px;
+}
+
+table.tabel.editabil input,
+table.tabel.editabil select {
+  min-height: 44px;
+  padding: 8px 10px;
+}
+
+table.tabel.editabil input[type="checkbox"] {
+  margin: 0 auto;
+  display: block;
+}
+
+tr.modificat td:first-child {
+  box-shadow: inset 4px 0 0 var(--focus);
+}
+
+.eticheta {
+  display: inline-block;
+  padding: 2px 10px;
+  border-radius: 999px;
+  border: 2px solid var(--border);
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.eticheta.inactiv {
+  color: var(--text-secundar);
+}
+
+.lista-culori {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.lista-culori span {
+  padding: 6px 12px;
+  border: 2px solid var(--border);
+  border-radius: 6px;
+  font-weight: 600;
+}
+
+.separator {
+  border: none;
+  border-top: 2px solid var(--border);
+  margin: 32px 0;
+}
+
+.paginare {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-top: 16px;
+}
+
+@media (max-width: 720px) {
+  :root {
+    font-size: 16px;
+  }
+  .pagina {
+    padding: 20px 16px 48px;
+  }
+  h1 {
+    font-size: 26px;
+  }
 }

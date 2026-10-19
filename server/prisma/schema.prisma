@@ -175,6 +175,10 @@ enum StatusListaPret {
 model Compartiment {
   id           String          @id @default(uuid())
   denumire     String          @unique
+  // identificator scurt si stabil (2-6 litere/cifre, ex. "BIL"), folosit ca
+  // prefix la generarea codului intern al produselor - spre deosebire de
+  // denumire, nu ar trebui schimbat dupa ce exista produse pe compartiment
+  codScurt     String          @unique
   tip          TipCompartiment
   moneda       String
   modPret      ModPret
@@ -329,4 +333,94 @@ model PretListaProdus {
 
   @@unique([listaPretId, produsId])
   @@map("pret_lista_produs")
+}
+
+// ---------------------------------------------------------------------------
+// CAT: tabele de referinta (cele cinci CSV-uri auxiliare, plus categoriile
+// de oferta) - scheletul lor acum, fara import (S4); coloanele copiaza exact
+// coloanele CSV. "activ" e pe fiecare, ca o intrare gresita sa poata iesi
+// din cascada fara sa dispara din istoric (nimic nu se sterge).
+// ---------------------------------------------------------------------------
+
+// variante-profil.csv: furnizor;model;varianta_profil;restrictii;lista_sursa
+model VariantaProfil {
+  id             String   @id @default(uuid())
+  furnizor       String
+  model          String
+  variantaProfil String
+  restrictii     String?
+  listaSursa     String?
+  activ          Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@map("varianta_profil")
+}
+
+// culori-finisaj-grosime.csv: furnizor;finisaj;grosime;culoare
+model CuloareFinisajGrosime {
+  id        String   @id @default(uuid())
+  furnizor  String
+  finisaj   String
+  grosime   String
+  culoare   String
+  activ     Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([furnizor, finisaj, grosime, culoare])
+  @@index([furnizor, finisaj, grosime])
+  @@map("culoare_finisaj_grosime")
+}
+
+// garantii-finisaj-grosime.csv: furnizor;finisaj;grosime;garantie_culoare_ani;
+// garantie_coroziune_ani;strat_zinc_g_mp;strat_vopsea_um_ext_int
+model GarantieFinisajGrosime {
+  id                   String   @id @default(uuid())
+  furnizor             String
+  finisaj              String
+  grosime              String
+  garantieCuloareAni   Int
+  garantieCoroziuneAni Int
+  stratZincGMp         Decimal? @db.Decimal(8, 2)
+  // text brut, ex. "25 / 7" (exterior / interior) - nu e un numar simplu
+  stratVopseaUmExtInt  String?
+  activ                Boolean  @default(true)
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+
+  @@unique([furnizor, finisaj, grosime])
+  @@map("garantie_finisaj_grosime")
+}
+
+// liste-implicite-oferta.csv: furnizor;rubrica;categorie_invelitoare;ordine;produs
+model ListaImplicitaOferta {
+  id                   String   @id @default(uuid())
+  furnizor             String
+  rubrica              String
+  categorieInvelitoare String
+  ordine               Int
+  produs               String
+  activ                Boolean  @default(true)
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+
+  @@index([furnizor, categorieInvelitoare])
+  @@map("lista_implicita_oferta")
+}
+
+// trepte-desfasurata.csv: furnizor;treapta;de_la_mm;pana_la_mm;denumire_bilka
+model TreaptaDesfasurata {
+  id            String   @id @default(uuid())
+  furnizor      String
+  treapta       String
+  deLaMm        Int
+  panaLaMm      Int
+  denumireBilka String
+  activ         Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@unique([furnizor, treapta])
+  @@map("treapta_desfasurata")
 }

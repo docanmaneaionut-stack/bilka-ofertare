@@ -4,6 +4,7 @@ import { sessionMiddleware } from "./modules/accounts/session.js";
 import { incarcaUtilizator } from "./modules/accounts/middleware.js";
 import { accountsRouter } from "./modules/accounts/routes.js";
 import { admRouter } from "./modules/adm/routes.js";
+import { gestioneazaErori } from "./middleware/erori.js";
 import { env } from "./env.js";
 
 export function creeazaApp() {
@@ -20,6 +21,8 @@ export function creeazaApp() {
 
   app.use("/api/auth", accountsRouter);
   app.use("/api/adm", admRouter);
+
+  app.use(gestioneazaErori);
 
   return app;
 }
