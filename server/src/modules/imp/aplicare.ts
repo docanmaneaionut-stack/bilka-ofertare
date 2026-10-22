@@ -64,7 +64,8 @@ export async function confirmaImport(params: { propunereId: string; denumire: st
 
   const diferente = propunere.diferente as unknown as Diferente;
   const raport = propunere.raport as unknown as Raport;
-  const randuri = propunere.randuri as unknown as { produse: ProdusImport[]; referinte: { tip: TipReferinta; randuri: RandReferintaImport[] }[] };
+  const randuri = propunere.randuri as unknown as { produse: ProdusImport[]; referinte: { tip: TipReferinta; randuri: RandReferintaImport[] }[]; restaurat?: boolean };
+  if (randuri.restaurat) throw new EroareImport("Propunerea provine dintr-o restaurare și nu mai are rândurile citite; reîncarcă fișierele și analizează din nou", 409);
   const compartimentId = propunere.compartimentId;
   const furnizor = propunere.compartiment.denumire;
 

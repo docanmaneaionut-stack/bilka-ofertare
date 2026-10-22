@@ -127,6 +127,13 @@ export async function restaureaza(prisma: PrismaClient, caleZip: string, dateDir
           continue;
         }
 
+        if (model === "ImportPropunere") {
+          // randurile brute nu se exporta (sunt mari; fisierele sunt pe disc), dar
+          // coloana e obligatorie: propunerea restaurata e marcata si nu se mai
+          // poate confirma - se reincarca fisierele
+          randuri = randuri.map((r) => (r.randuri === undefined ? { ...r, randuri: { produse: [], referinte: [], restaurat: true } } : r));
+        }
+
         for (const lot of loturi(randuri)) await t[cheie].createMany({ data: lot });
 
         if (model === "PretListaProdus") {

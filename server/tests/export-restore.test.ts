@@ -32,7 +32,15 @@ beforeAll(async () => {
   if ((await prisma.firma.count()) === 0) {
     await prisma.firma.create({ data: { denumire: "Firma Export", cui: "RO9", nrRegCom: "J9", adresa: "E", telefon: "9", email: "export@exemplu.local" } });
   }
-  await creeazaUtilizatorTest(EMAIL_EXPORT_ADMIN, "ADMIN_GENERAL");
+  const adminExport = await creeazaUtilizatorTest(EMAIL_EXPORT_ADMIN, "ADMIN_GENERAL");
+  // o propunere de import exista mereu, ca restaurarea sa acopere si tabelul ei
+  // (coloana `randuri` nu se exporta, dar e obligatorie - BUG gasit la E2)
+  if ((await prisma.importPropunere.count()) === 0) {
+    const compartiment = (await prisma.compartiment.findFirst()) ?? (await prisma.compartiment.create({ data: { denumire: "Export Test Comp", codScurt: "EXT", tip: "FURNIZOR", moneda: "EUR", modPret: "LISTA_ACHIZITIE" } }));
+    await prisma.importPropunere.create({
+      data: { compartimentId: compartiment.id, creatDeId: adminExport.id, status: "ANULATA", areReferinte: true, fisiere: [], diferente: { produse: {}, referinte: {} }, raport: { fisiere: [], totaluri: {}, primulImport: true }, erori: [], avertizari: [], randuri: { produse: [], referinte: [] } },
+    });
+  }
   await mkdir(path.join(env.dateDir, "sigle"), { recursive: true });
   await writeFile(path.join(env.dateDir, "sigle", "test-export.png"), Buffer.from([0x89, 0x50, 0x4e, 0x47]));
 

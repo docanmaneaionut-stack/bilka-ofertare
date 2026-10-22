@@ -184,6 +184,26 @@ describe("Adaos, dezactivare, blocare, rezerva", () => {
       .expect(400);
   });
 
+  it("sigla se incarca din ecran (JPG real), ajunge pe disc sub id-ul firmei si in jurnal; alt tip de fisier e refuzat", async () => {
+    const { readFileSync, existsSync } = await import("node:fs");
+    const path = await import("node:path");
+    const { env } = await import("../src/env.js");
+    const adminGeneral = await autentificaAgent(app, EMAIL.adminGeneral);
+    const sigla = readFileSync(path.resolve(path.dirname(new URL(import.meta.url).pathname.replace(/^\/([A-Za-z]:)/, "$1")), "../../docs/design/sigle/roofshop-dmi.jpg"));
+    expect(sigla.length).toBeGreaterThan(1000);
+
+    const r = await adminGeneral.post(`/api/adm/con/firme/${firma1}/sigla`).attach("sigla", sigla, { filename: "Roofshop DMI – siglă.jpg", contentType: "image/jpeg" }).expect(200);
+    expect(r.body.firma.logo).toBe(`sigle/${firma1}.jpg`);
+    expect(existsSync(path.join(env.dateDir, "sigle", `${firma1}.jpg`))).toBe(true);
+    expect(await prisma.jurnalIntrare.count({ where: { entitate: "Firma", entitateId: firma1, camp: "logo" } })).toBe(1);
+    const imagine = await adminGeneral.get(`/api/adm/con/firme/${firma1}/sigla`).expect(200);
+    expect(imagine.headers["content-type"]).toContain("image/jpeg");
+
+    await adminGeneral.post(`/api/adm/con/firme/${firma1}/sigla`).attach("sigla", Buffer.from("nu e imagine"), { filename: "x.txt", contentType: "text/plain" }).expect(400);
+    const admin = await autentificaAgent(app, EMAIL.admin1);
+    await admin.post(`/api/adm/con/firme/${firma1}/sigla`).attach("sigla", sigla, { filename: "a.jpg", contentType: "image/jpeg" }).expect(403);
+  });
+
   it("Admin general creeaza Contabilitate cu acces pe doua firme si o firma noua cu toate campurile", async () => {
     const adminGeneral = await autentificaAgent(app, EMAIL.adminGeneral);
     const r = await adminGeneral
