@@ -1,4 +1,5 @@
-import { mkdir, rm } from "node:fs/promises";
+import { mkdtemp, rm } from "node:fs/promises";
+import os from "node:os";
 import path from "node:path";
 import { Router } from "express";
 import { cereRol } from "../accounts/middleware.js";
@@ -29,10 +30,11 @@ admRouter.use("/con/utilizatori", utilizatoriRouter);
 // exportul pentru Administratori vine odata cu ofertele (Etapa 3)
 admRouter.get("/export", cereRol("ADMIN_GENERAL"), async (req, res) => {
   const acum = new Date();
-  const marcaj = acum.toISOString().slice(0, 16).replace(/[-:T]/g, "").replace(/(\d{8})(\d{4})/, "$1-$2");
-  const numeZip = `ofertare-export-${marcaj}.zip`;
-  const folderTemp = path.join(env.dateDir, "_temp");
-  await mkdir(folderTemp, { recursive: true });
+  const zi = `${acum.getFullYear()}-${String(acum.getMonth() + 1).padStart(2, "0")}-${String(acum.getDate()).padStart(2, "0")}`;
+  const numeZip = `export-${zi}.zip`;
+  // ZIP-ul se scrie in folderul temporar al sistemului, NU in folderul de date:
+  // exportul arhiveaza tot folderul de date si s-ar citi pe sine la nesfarsit
+  const folderTemp = await mkdtemp(path.join(os.tmpdir(), "ofertare-export-"));
   const caleZip = path.join(folderTemp, numeZip);
   try {
     const { numaratori, fisiere } = await scrieExport(caleZip);
@@ -48,6 +50,6 @@ admRouter.get("/export", cereRol("ADMIN_GENERAL"), async (req, res) => {
     });
     await new Promise<void>((resolve, reject) => res.download(caleZip, numeZip, (e) => (e ? reject(e) : resolve())));
   } finally {
-    await rm(caleZip, { force: true });
+    await rm(folderTemp, { recursive: true, force: true });
   }
 });

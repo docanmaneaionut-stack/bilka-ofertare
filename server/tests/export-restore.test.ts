@@ -6,11 +6,16 @@ import AdmZip from "adm-zip";
 import pg from "pg";
 import { PrismaClient } from "@prisma/client";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import request from "supertest";
+import { creeazaApp } from "../src/app.js";
 import { prisma } from "../src/db/prisma.js";
 import { env } from "../src/env.js";
 import { MODELE_EXPORT, numeTabel, scrieExport } from "../src/modules/adm/exportDate.js";
 import { EroareRestaurare, restaureaza } from "../src/modules/adm/restaurare.js";
-import { creeazaUtilizatorTest } from "./helpers.js";
+import { autentificaAgent, creeazaUtilizatorTest } from "./helpers.js";
+
+const app = creeazaApp();
+const EMAIL_EXPORT_ADMIN = "export-http-admin@exemplu.local";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const delegat = (client: PrismaClient, model: string) => (client as any)[model.charAt(0).toLowerCase() + model.slice(1)];
@@ -27,7 +32,7 @@ beforeAll(async () => {
   if ((await prisma.firma.count()) === 0) {
     await prisma.firma.create({ data: { denumire: "Firma Export", cui: "RO9", nrRegCom: "J9", adresa: "E", telefon: "9", email: "export@exemplu.local" } });
   }
-  if ((await prisma.utilizator.count()) === 0) await creeazaUtilizatorTest("export-admin@exemplu.local", "ADMIN_GENERAL");
+  await creeazaUtilizatorTest(EMAIL_EXPORT_ADMIN, "ADMIN_GENERAL");
   await mkdir(path.join(env.dateDir, "sigle"), { recursive: true });
   await writeFile(path.join(env.dateDir, "sigle", "test-export.png"), Buffer.from([0x89, 0x50, 0x4e, 0x47]));
 
@@ -120,5 +125,41 @@ describe("Export 'descarca tot' si restaurare", () => {
     } finally {
       await prismaGol.$disconnect();
     }
+  });
+
+  // ultimul: descarcarea prin HTTP scrie in jurnal, deci nu poate sta intre
+  // ZIP-ul de proba si restaurarea lui (comparatia cu baza n-ar mai bate)
+  it("ZIP-ul se descarca prin HTTP, cu antetele de descarcare si continutul complet", { timeout: 120_000 }, async () => {
+    const admin = await autentificaAgent(app, EMAIL_EXPORT_ADMIN);
+    const raspuns = await admin
+      .get("/api/adm/export")
+      .buffer(true)
+      .parse((res, cb) => {
+        const bucati: Buffer[] = [];
+        res.on("data", (b: Buffer) => bucati.push(b));
+        res.on("end", () => cb(null, Buffer.concat(bucati)));
+      })
+      .expect(200);
+    expect(raspuns.headers["content-type"]).toContain("zip");
+    expect(raspuns.headers["content-disposition"]).toMatch(/^attachment; filename="?export-\d{4}-\d{2}-\d{2}\.zip"?$/);
+    const corp = raspuns.body as Buffer;
+    expect(Number(raspuns.headers["content-length"])).toBe(corp.length);
+    expect(corp.length).toBeGreaterThan(1000);
+
+    const zip = new AdmZip(corp);
+    const intrari = zip.getEntries().map((e) => e.entryName);
+    expect(intrari).toContain("README.md");
+    expect(intrari).toContain("_sistem/parole.csv");
+    for (const model of MODELE_EXPORT) expect(intrari).toContain(`date/${numeTabel(model)}.csv`);
+    const utilizatori = zip.getEntry("date/utilizator.csv")!.getData().toString("utf8");
+    expect(utilizatori.split("\r\n").filter((l) => l !== "").length - 1).toBe(await prisma.utilizator.count());
+    // exportul nu se arhiveaza pe sine si nu lasa fisiere de lucru in folderul de date
+    expect(intrari.some((i) => i.endsWith(".zip"))).toBe(false);
+    expect(await prisma.jurnalIntrare.count({ where: { actiune: "export_descarca_tot" } })).toBeGreaterThanOrEqual(1);
+
+    // un agent nu poate descarca
+    await creeazaUtilizatorTest("export-http-agent@exemplu.local", "AGENT", { serieOferta: "EXA" });
+    const agent = await autentificaAgent(app, "export-http-agent@exemplu.local");
+    await agent.get("/api/adm/export").expect(403);
   });
 });

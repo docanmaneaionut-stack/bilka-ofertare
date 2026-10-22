@@ -141,3 +141,11 @@ Fiecare intrare: data, obiectivul sesiunii, rezultatul, următorul pas propus.
 - ARH §13: conturile și securitatea, sigla pe id, exportul / restaurarea (Administratorii — Etapa 3, fără parole), pornirea cu dublu-clic. PLAN v0.5 (scris de Claude chat) inclus în commit.
 
 **Următorul pas propus:** Ionuț încearcă `pornire.cmd`, își creează din ecran cele două firme (cu sigla Roofshop) și conturile reale; apoi Etapa 1, sesiunea S6 — verificare și înghețare: lista de acceptare, backup local de probă + restaurare de probă (cu `npm run restore`), eticheta `v0.1-fundatie`, ARH §4.1 / §4.2 / §6 → ÎNGHEȚAT.
+
+---
+
+## 2026-10-22 — BUG · ADM · „Descarcă tot” nu se termina
+
+**Acum:** butonul rămânea pe „se încarcă”; în `server/data/_temp/` s-a găsit un ZIP de 2,96 GB încă în creștere.
+**Cauza:** ZIP-ul temporar se scria în folderul de date, iar exportul arhivează tot folderul de date — se citea pe sine la nesfârșit. În teste nu s-a văzut pentru că acolo ZIP-ul se scria în folderul temporar al sistemului.
+**Reparat:** ZIP-ul se scrie în folderul temporar al sistemului și se șterge după descărcare; `_temp` e exclus oricum din export; numele fișierului e `export-AAAA-LL-ZZ.zip`. Verificat cu client real (curl), direct pe 4000 și prin proxy-ul interfeței: 752 KB în sub o secundă, `Content-Disposition: attachment; filename=export-2026-10-22.zip`, `Content-Type: application/zip`, `Content-Length` egal cu dimensiunea, ZIP valid (48 de intrări, fără ZIP în ZIP), nimic rămas în folderul de date. Test nou care descarcă ZIP-ul prin HTTP și îi verifică antetele și conținutul (și 403 pentru agent); pus ultimul în fișier, pentru că descărcarea scrie în jurnal și ar strica comparația restaurării. 55 de teste verzi.

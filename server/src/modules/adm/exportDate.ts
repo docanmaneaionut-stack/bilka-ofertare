@@ -95,6 +95,8 @@ async function fisiereDin(folder: string, baza = folder): Promise<string[]> {
   }
   const rezultat: string[] = [];
   for (const i of intrari) {
+    // fisierele de lucru (ex. un export in curs) nu fac parte din date
+    if (i.startsWith("_temp")) continue;
     const cale = path.join(folder, i);
     const s = await stat(cale);
     if (s.isDirectory()) rezultat.push(...(await fisiereDin(cale, baza)));
