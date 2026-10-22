@@ -16,4 +16,7 @@ export const env = {
   frontendOrigin: process.env.FRONTEND_ORIGIN ?? "http://localhost:5173",
   // folderul de date al serverului (fisierele brute ale importurilor); nu e in git
   dateDir: process.env.DATE_DIR ?? path.resolve(process.cwd(), "data"),
+  // contul de rezerva al Admin general (fisa CONTURI §8.1): apare marcat in
+  // lista si nu se modifica din ecran
+  adminRezervaEmail: process.env.ADMIN_REZERVA_EMAIL?.trim().toLowerCase() ?? null,
 };

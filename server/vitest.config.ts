@@ -22,7 +22,7 @@ export default defineConfig({
     environment: "node",
     include: ["tests/**/*.test.ts"],
     globalSetup: ["tests/globalSetup.ts"],
-    env: { DATABASE_URL: urlTest, DATE_DIR: "data-test" },
+    env: { DATABASE_URL: urlTest, DATE_DIR: "data-test", ADMIN_REZERVA_EMAIL: "rezerva-test@exemplu.local" },
     testTimeout: 30_000,
     hookTimeout: 120_000,
     // testele impart aceeasi baza; se ruleaza secvential ca sa nu se calce

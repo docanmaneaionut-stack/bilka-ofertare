@@ -38,21 +38,27 @@ enum RolUtilizator {
 enum RezultatAutentificare {
   SUCCES
   ESEC
+  BLOCAT
 }
 
 model Firma {
-  id         String   @id @default(uuid())
-  denumire   String
-  cui        String
-  nrRegCom   String
-  adresa     String
-  telefon    String
-  email      String
-  contBancar String?
-  logo       String?
-  activ      Boolean  @default(true)
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  id          String   @id @default(uuid())
+  denumire    String
+  cui         String
+  nrRegCom    String
+  adresa      String
+  telefon     String
+  email       String
+  contBancar  String?
+  banca       String?
+  platitorTva Boolean  @default(true)
+  localitate  String?
+  judet       String?
+  observatii  String?
+  logo        String?
+  activ       Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
   utilizatori      Utilizator[]
   utilizatorFirmas UtilizatorFirma[]
@@ -90,6 +96,12 @@ model Utilizator {
   // relevant doar pentru CONTABILITATE / GESTIUNE: acces pe toate firmele
   // (altfel accesul e dat de randurile din UtilizatorFirma)
   accesGeneralFirme Boolean @default(false)
+
+  // securitate (fisa CONTURI §8): parola pusa de altcineva se schimba la prima
+  // conectare; blocare temporara dupa incercari gresite repetate
+  parolaTrebuieSchimbata Boolean   @default(false)
+  incercariEsuate        Int       @default(0)
+  blocatPanaLa           DateTime?
 
   activ     Boolean  @default(true)
   createdAt DateTime @default(now())

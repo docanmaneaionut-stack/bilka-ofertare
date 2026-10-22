@@ -12,7 +12,8 @@
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
     "prisma:migrate:create": "prisma migrate dev --create-only",
-    "prisma:seed": "tsx prisma/seed.ts"
+    "prisma:seed": "tsx prisma/seed.ts",
+    "restore": "tsx scripts/restore.ts"
   },
   "keywords": [],
   "author": "",
@@ -22,6 +23,8 @@
   },
   "dependencies": {
     "@prisma/client": "^6.19.3",
+    "adm-zip": "^0.6.1",
+    "archiver": "^7.0.1",
     "bcryptjs": "^3.0.3",
     "connect-pg-simple": "^10.0.0",
     "cors": "^2.8.6",
@@ -34,6 +37,8 @@
     "zod": "^4.6.7"
   },
   "devDependencies": {
+    "@types/adm-zip": "^0.5.8",
+    "@types/archiver": "^6.0.4",
     "@types/bcryptjs": "^2.4.6",
     "@types/connect-pg-simple": "^7.0.3",
     "@types/cors": "^2.8.19",

@@ -6,8 +6,10 @@ export type Utilizator = {
   id: string;
   nume: string;
   email: string;
+  telefon?: string | null;
   rol: string;
   firmaId: string | null;
+  parolaTrebuieSchimbata?: boolean;
 };
 
 async function cerere<T>(cale: string, optiuni?: RequestInit): Promise<T> {
@@ -305,3 +307,82 @@ export const apiImport = {
     cerere<{ propunere: ImportPropunere }>(`${BAZA_IMP}/propuneri/${id}/confirma`, { method: "POST", body: JSON.stringify(date) }),
   anuleaza: (id: string) => cerere<{ propunere: ImportPropunere }>(`${BAZA_IMP}/propuneri/${id}/anuleaza`, { method: "POST" }),
 };
+
+// --- Conturi (CON): contul propriu, firme, utilizatori, export ---
+
+export type Conectare = { moment: string; rezultat: "SUCCES" | "ESEC" | "BLOCAT"; dispozitiv: string | null; sursa: string | null };
+
+export const apiCont = {
+  detaliu: () => cerere<{ utilizator: Utilizator; firma: { id: string; denumire: string } | null; conectari: Conectare[] }>("/api/cont"),
+  schimbaParola: (parolaVeche: string, parolaNoua: string) =>
+    cerere<{ ok: true }>("/api/cont/parola", { method: "PUT", body: JSON.stringify({ parolaVeche, parolaNoua }) }),
+};
+
+export type Firma = {
+  id: string;
+  denumire: string;
+  cui: string;
+  platitorTva: boolean;
+  nrRegCom: string;
+  adresa: string;
+  localitate: string | null;
+  judet: string | null;
+  telefon: string;
+  email: string;
+  contBancar: string | null;
+  banca: string | null;
+  logo: string | null;
+  observatii: string | null;
+  activ: boolean;
+  _count?: { utilizatori: number };
+};
+
+const BAZA_CON = "/api/adm/con";
+
+export const apiFirme = {
+  lista: () => cerere<{ firme: Firma[] }>(`${BAZA_CON}/firme`),
+  detaliu: (id: string) => cerere<{ firma: Firma }>(`${BAZA_CON}/firme/${id}`),
+  creeaza: (date: Record<string, unknown>) => cerere<{ firma: Firma }>(`${BAZA_CON}/firme`, { method: "POST", body: JSON.stringify(curata(date)) }),
+  actualizeaza: (id: string, date: Record<string, unknown>) =>
+    cerere<{ firma: Firma }>(`${BAZA_CON}/firme/${id}`, { method: "PUT", body: JSON.stringify(curata(date)) }),
+  incarcaSigla: (id: string, fisier: File) => {
+    const formular = new FormData();
+    formular.append("sigla", fisier, fisier.name);
+    return cerereFormular<{ firma: Firma }>(`${BAZA_CON}/firme/${id}/sigla`, formular);
+  },
+  urlSigla: (id: string) => `${BAZA_API}${BAZA_CON}/firme/${id}/sigla`,
+};
+
+export type RolCont = "ADMIN_GENERAL" | "ADMINISTRATOR" | "AGENT" | "COLABORATOR" | "CONTABILITATE" | "GESTIUNE";
+
+export type UtilizatorAdmin = {
+  id: string;
+  nume: string;
+  telefon: string | null;
+  email: string;
+  rol: RolCont;
+  firmaId: string | null;
+  firma: string | null;
+  administratorId: string | null;
+  serieOferta: string | null;
+  adaosProcent: number | null;
+  accesGeneralFirme: boolean;
+  firmeAcces: string[];
+  activ: boolean;
+  parolaTrebuieSchimbata: boolean;
+  blocatPanaLa: string | null;
+  esteRezerva: boolean;
+  createdAt: string;
+};
+
+export const apiUtilizatori = {
+  lista: () => cerere<{ utilizatori: UtilizatorAdmin[] }>(`${BAZA_CON}/utilizatori`),
+  creeaza: (date: Record<string, unknown>) =>
+    cerere<{ utilizator: UtilizatorAdmin }>(`${BAZA_CON}/utilizatori`, { method: "POST", body: JSON.stringify(curata(date)) }),
+  actualizeaza: (id: string, date: Record<string, unknown>) =>
+    cerere<{ utilizator: UtilizatorAdmin }>(`${BAZA_CON}/utilizatori/${id}`, { method: "PUT", body: JSON.stringify(curata(date)) }),
+  reseteazaParola: (id: string, parolaNoua: string) =>
+    cerere<{ ok: true }>(`${BAZA_CON}/utilizatori/${id}/parola`, { method: "POST", body: JSON.stringify({ parolaNoua }) }),
+};
+
+export const URL_EXPORT = `${BAZA_API}/api/adm/export`;
