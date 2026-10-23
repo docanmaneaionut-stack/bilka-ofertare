@@ -168,3 +168,14 @@ Fiecare intrare: data, obiectivul sesiunii, rezultatul, următorul pas propus.
 - Rămâne deschis (nu blochează): căile absolute din `fisiere` la propuneri și versiuni (informative) — de trecut pe căi relative înainte de VPS; rândurile „Ionuț” rămase ○ în lista de acceptare (A1 la rece, B5, C4, D5, D9 conectări, E1, E4) se bifează de el.
 
 **Următorul pas propus:** Etapa 2 — Motorul de calcul (MOT + ETALON), sesiunea S7: formatul ofertelor etalon și primele 3 oferte transcrise ca teste. Precondiții de la Ionuț: ofertele etalon (document v4.1 + intrări), adaosurile țintă implicite pe categorie, formula de achiziție confirmată.
+
+---
+
+## 2026-10-23 — Verificare: baza de date = CSV-urile Bilka = facturile (doar citire)
+
+**Obiectiv:** aceeași verificare pe care Claude chat a făcut-o pe CSV-uri (`docs/VERIFICARE-FACTURI-BILKA.md`), repetată pe baza de date reală, ca să fim siguri că baza e exact CSV-ul. Nimic modificat în bază, fără migrări, fără schimbări în aplicație.
+
+**Rezultat:** script reutilizabil `server/scripts/verifica-catalog.ts` (`npm run verifica:catalog`), doar SELECT pe baza de dezvoltare. Valorile (preț, denumire, UM, activ) se compară din textul brut al CSV-urilor, citit separat; din cititorul de import se folosesc doar regulile structurale (rubrica, codul intern, derivarea coalei) — ca o eventuală greșeală a cititorului să fie vizibilă, nu ascunsă în ambele părți.
+- **Catalog ↔ bază:** 3.399 rânduri CSV → 3.399 produse găsite după codul intern + 26 de produse-coală (Accesorii standard, BUC, 2,5 × preț/mp) = 3.425, exact câte sunt în bază, fără produse în plus; denumire, UM, rubrică, activ și prețul din versiunea activă „Bilka v10 — septembrie 2026” (3.425 prețuri) identice pe toate; cele 5 tabele de referință rând cu rând (13 + 118 + 22 + 86 + 25 = 264) identice. **Zero diferențe.**
+- **Facturi ↔ bază:** 259 de rânduri din 21 de facturi (246 produse + 13 ambalaj); produsul găsit după cod furnizor + denumire (la `multiplicator = 2.5`, produsul-coală); preț așteptat = preț activ × cursul facturii, rotunjit la ban. **237 identice · 2 la 1 ban (coala, rotunjirea Bilka) · 7 diferite, toate pe factura 9002504593 (eroarea Bilka la accesoriile 8019 mat) · 0 negăsite** — exact raportul lui Claude chat. Rezultatul rând cu rând, cu codul intern, prețul din bază în EUR și lei, diferența și verdictul: `docs/verificari/facturi-bilka-2026-10-verificare-baza.csv`.
+- Concluzie: baza de date reproduce CSV-urile la literă, iar prețurile din bază înmulțite cu cursul facturii dau prețul plătit — baza de achiziție pentru Etapa 2 e certă. Scriptul se reia la fiecare listă nouă, cu facturi proaspete. Testele existente: 56 verzi.
