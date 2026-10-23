@@ -1,6 +1,6 @@
 # PLAN — foaia de parcurs a construcției
 
-Versiunea 0.6 · 22 octombrie 2026 · Se citește împreună cu `docs/ARH.md` și cu fișele de specificație din `docs/` (FISA-CONTURI, FISA-CATALOG-PRETURI, FISA-OFERTARE, FISA-COMENZI). **Unde ARH și o fișă spun lucruri diferite, fișa are prioritate** (e mai nouă și e aprobată de Ionuț); diferența se notează în ARH §13 în aceeași sesiune.
+Versiunea 0.7 · 23 octombrie 2026 · Se citește împreună cu `docs/ARH.md` și cu fișele de specificație din `docs/` (FISA-CONTURI, FISA-CATALOG-PRETURI, FISA-OFERTARE, FISA-COMENZI). **Unde ARH și o fișă spun lucruri diferite, fișa are prioritate** (e mai nouă și e aprobată de Ionuț); diferența se notează în ARH §13 în aceeași sesiune.
 Claude Code actualizează statusul sesiunilor la finalul fiecărei sesiuni.
 
 ## Cum se folosește
@@ -47,13 +47,13 @@ Claude Code actualizează statusul sesiunilor la finalul fiecărei sesiuni.
 
 **Rezultat:** motorul reproduce la leu ofertele reale, rulat din teste, fără interfață.
 
-**Precondiții:** 10–20 oferte etalon (pentru fiecare: documentul generat de v4.1 + intrările folosite) · adaosurile țintă implicite pe categorie · formula de achiziție confirmată · culorile per model / grosime.
+**Precondiții (redefinite 23.10.2026 — Ionuț nu are oferte scrise către clienți; ofertele se comunicau verbal, de aici a pornit softul):** (a) **verificarea achiziției pe facturi Bilka reale** (5–10 facturi recente, de după 14.07.2026 — prețurile curente): fiecare rând de factură se potrivește pe codul Bilka cu catalogul, iar preț catalog EUR × cursul de pe factură (BNR + 1 % din ziua facturării, aceeași regulă ca a softului) trebuie să dea prețul facturat în lei; raportul în `docs/VERIFICARE-FACTURI-BILKA.md` (Claude chat, fără Code); diferențele sistematice schimbă regula de achiziție înainte de orice cod · (b) **ofertele-model (etalon)**: 10–15 exemple scrise de Claude chat pe produse reale din catalog, cu intrările și calculul pas cu pas după FISA-OFERTARE cap. 11, fiecare aprobat de Ionuț („asta i-aș spune clientului") în `docs/ETALON.md` + `docs/etalon/*.json`; abia apoi devin teste · (c) adaosurile țintă implicite pe categorie (le decide Ionuț în timpul exemplelor) · (d) culorile per model / grosime sunt deja în catalog (S4).
 
 | Sesiune | Obiectiv | Status |
 |---|---|---|
-| S7 | Formatul ofertelor etalon; primele 3 oferte transcrise ca teste (încă roșii) | NEÎNCEPUT |
+| S7 | Formatul fișierelor etalon (`docs/etalon/*.json`, scrise de Claude chat, aprobate de Ionuț); primele 3 oferte-model transcrise ca teste (încă roșii); nicio logică de calcul încă | NEÎNCEPUT |
 | S8 | Cantități: lungime × bucăți × lățime totală (3 zecimale), suprafață directă și combinată, ml → buc, cele două variante la șipcă (FISA-OFERTARE 3 și 8) | NEÎNCEPUT |
-| S9 | Cele trei straturi de preț: achiziție (cu grupă), țintă cu TVA, prezentare (3 moduri, calcul invers la leu), gardă absolută, varianta B de TVA (FISA-OFERTARE 11) | NEÎNCEPUT |
+| S9 | Cele trei straturi de preț: achiziție (cu grupă), țintă cu TVA, prezentare (3 moduri, calcul invers la leu), gardă absolută, varianta B de TVA (FISA-OFERTARE 11); **plus un ecran tehnic „Calcul de probă"** în Zona tehnică (Admin general alege produse, cantități, adaos, țintă și vede rezultatul motorului pe loc) — ca Ionuț să poată verifica manual înainte de Etapa 3 | NEÎNCEPUT |
 | S10 | Variante (versiuni sub același număr), prețuri fixe, „preia prețuri din oferta…", completări sub achiziție, colaboratori | NEÎNCEPUT |
 | S11 | Toate ofertele etalon verzi; ARH §5 → ÎNGHEȚAT; etichetă `v0.2-motor` | NEÎNCEPUT |
 
@@ -94,7 +94,8 @@ Decizii (17.10.2026): **domeniul aplicației este `roofdata.ro`** — separat de
 | Lista Bilka curentă (PDF / Excel) | Etapa 1, S4 | ✔ primită (CSV în `docs/import/Bilka/`, importată 19.10) |
 | Datele firmelor emitente (denumire, CUI, adresă, cont, logo, serie) | Etapa 1, S5 | ✔ `docs/import/firme.csv` + sigla Roofshop DMI; lipsesc sigla Proroof Comp și conturile bancare (se completează din ecran) |
 | Lista utilizatorilor cu rol și firmă | Etapa 1, S5 | Ionuț le creează din contul de Admin general, din ecran (decis 16.10) |
-| 10–20 oferte etalon (document v4.1 + intrări) | Etapa 2, S7 | de pregătit |
+| Facturi Bilka recente (5–10, de după 14.07.2026), pentru verificarea achiziției | Etapa 2, înainte de S7 | de atașat în chat (decis 23.10) |
+| Oferte-model (etalon) scrise de Claude chat, aprobate de Ionuț | Etapa 2, S7 | în lucru (23.10) — înlocuiesc ofertele v4.1, care nu există ca documente |
 | Adaosuri țintă implicite pe categorie | Etapa 2, S9 | de pregătit |
 | Culorile disponibile per model / grosime | Etapa 2 | de pregătit |
 | Textul legal pentru zona B | Etapa 3, S15 | de pregătit |

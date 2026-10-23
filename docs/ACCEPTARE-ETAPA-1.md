@@ -9,7 +9,7 @@ Legendă status: ✔ verificat (de cine, când) · ○ de verificat (de cine) ·
 
 | Nr | Ce trebuie să fie adevărat | Cum se verifică | Status |
 |---|---|---|---|
-| A1 | `pornire.cmd` pornește totul de la zero (servere oprite → două ferestre + browserul pe login) | Ionuț, la următoarea repornire a calculatorului | ○ Ionuț · varianta „rulează deja" ✔ Ionuț 22.10 |
+| A1 | `pornire.cmd` pornește totul de la zero (servere oprite → două ferestre + browserul pe login) | Ionuț, la următoarea repornire a calculatorului | ✔ Ionuț 22.10 — pornire la rece (totul oprit → două ferestre + browser) și variantele „rulează deja" (doar serverul / doar browserul) |
 | A2 | Aplicația merge de pe tabletă, în rețeaua biroului (`http://192.168.8.163:5173`) | Ionuț, pe Surface | ✔ Ionuț 19.10 |
 | A3 | Niciun secret în cod sau în git: parole, chei, date de conectare doar în `server/.env` (ignorat de git); `server/data/` ignorat | Code (S6): căutare în tot depozitul și în istoricul git | ✔ Code 22.10 — niciun `.env` comis vreodată; nicio parolă, cheie sau adresă de conectare cu parolă în fișierele curente sau în istoric (singurele potriviri: `server/.env.example`, cu `PAROLA` ca substituent); `server/data/` și `server/data-test/` ignorate |
 | A4 | Migrările 1–5 se aplică de la zero pe o bază goală, fără intervenție manuală | test automat (fiecare rulare a testelor pornește de la zero pe schema de test) | ✔ test automat (S4, S5) |
@@ -41,7 +41,7 @@ Legendă status: ✔ verificat (de cine, când) · ○ de verificat (de cine) ·
 
 | Nr | Ce trebuie să fie adevărat | Cum se verifică | Status |
 |---|---|---|---|
-| D1 | Firmele reale create din ecran, cu toate câmpurile și sigla încărcată din ecran | Ionuț | ✔ Ionuț 22.10 (Roofshop DMI cu siglă, Proroof Comp fără siglă) |
+| D1 | Firmele reale create din ecran, cu toate câmpurile și sigla încărcată din ecran | Ionuț | ✔ Ionuț 22.10 — firmele (Roofshop DMI cu siglă, Proroof Comp fără siglă); la prima încercare sigla n-a ajuns pe server (nu se apăsase „Salvează" — constatat la E2), reîncărcată și salvată |
 | D2 | Conturi create din ecran pe roluri; serie 2–3 litere unică; e-mail unic; parolă de minim 10 caractere | Ionuț + test automat | ✔ Ionuț 22.10 (Administrator + Agent) · ✔ test automat |
 | D3 | La prima conectare cu parolă pusă de altcineva, softul cere parola proprie | Ionuț | ✔ Ionuț 22.10 |
 | D4 | Parolă greșită → mesaj neutru (nu spune dacă e-mailul există); după 5 încercări, blocare 15 minute, scrisă în jurnal | Ionuț (mesajul) + test automat (blocarea) | ✔ Ionuț 22.10 · ✔ test automat |
@@ -55,7 +55,7 @@ Legendă status: ✔ verificat (de cine, când) · ○ de verificat (de cine) ·
 
 | Nr | Ce trebuie să fie adevărat | Cum se verifică | Status |
 |---|---|---|---|
-| E1 | „Descarcă tot" din ecran produce un ZIP cu toate tabelele, folderul de date și README cu numărători | Ionuț descarcă ZIP-ul în `D:\SOFT-BACKUP\` | ○ Ionuț (S6) |
+| E1 | „Descarcă tot" din ecran produce un ZIP cu toate tabelele, folderul de date și README cu numărători | Ionuț descarcă ZIP-ul în `D:\SOFT-BACKUP\` | ✔ Ionuț 22.10 — `export-2026-10-22.zip` (752 KB) în `D:\SOFT-BACKUP\`, după repararea butonului (BUG 22.10, commit 010db8d) |
 | E2 | Restaurarea ZIP-ului **real** pe o bază goală dă aceleași numărători și valori ca baza de dezvoltare (produse, prețuri, firme, conturi, jurnal) | Code (S6): `npm run restore` pe schema de test cu ZIP-ul lui Ionuț, apoi comparație tabel cu tabel | ✔ Code 22.10 — `export-2026-10-22.zip` (752 KB) restaurat pe schema goală `test_restore_real`: 17 din 18 tabele identice ca numărători (3.425 produse, 3.425 prețuri, 2 firme, 5 conturi, 27 grupuri, 279 familii, 118 / 22 / 13 / 86 / 25 referințe, 2 propuneri, 16 autentificări, 28 fișiere); 20 de produse cu prețul activ, firmele cu toate câmpurile, utilizatorii fără parole, hash-urile, versiunea (activă) și suma prețurilor — identice; jurnal 4.011 față de 4.012 = rândul pe care exportul îl scrie despre sine după ce ZIP-ul e gata (așteptat). **BUG găsit și reparat** (propunerile de import nu se restaurau — coloana `randuri` lipsea din export, dar e obligatorie), cu test. Observație pentru D1: nici baza, nici exportul nu conțin o siglă (`logo` gol la ambele firme, fără `data/sigle/`, fără rând de jurnal) — încărcarea siglei Roofshop nu a ajuns pe server; ruta e verificată separat prin test automat cu sigla reală. Schema și folderul temporar șterse după raport. |
 | E3 | Restaurarea cu date de test (export → bază goală → restore) | test automat | ✔ test automat (S5) |
 | E4 | ZIP-ul real e păstrat într-un al doilea loc (stick sau cloud), nu doar pe calculator | Ionuț | ○ Ionuț |
