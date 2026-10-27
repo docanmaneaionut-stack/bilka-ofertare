@@ -275,8 +275,10 @@
   "invelitori": [
    {
     "cod_bilka": "TMIBEMAT050",
+    "denumire": "Țiglă metalică Iberic – mat – 0,50 mm",
     "culoare": "RAL 3005",
     "latime_totala_m": "1.18",
+    "mod_cantitate": "panotaj",
     "panotaj": [
      {
       "lungime_m": "4.20",
@@ -299,8 +301,10 @@
    },
    {
     "cod_bilka": "TCT08MAT050",
+    "denumire": "Tablă cutată T8 (perete) – mat – 0,50 mm",
     "culoare": "RAL 3005",
     "latime_totala_m": "1.20",
+    "mod_cantitate": "panotaj",
     "panotaj": [
      {
       "lungime_m": "2.50",

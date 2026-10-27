@@ -1,6 +1,6 @@
 # PLAN — foaia de parcurs a construcției
 
-Versiunea 0.8 · 27 octombrie 2026 · Se citește împreună cu `docs/ARH.md` și cu fișele de specificație din `docs/` (FISA-CONTURI, FISA-CATALOG-PRETURI, FISA-OFERTARE, FISA-COMENZI). **Unde ARH și o fișă spun lucruri diferite, fișa are prioritate** (e mai nouă și e aprobată de Ionuț); diferența se notează în ARH §13 în aceeași sesiune.
+Versiunea 0.9 · 27 octombrie 2026 · Se citește împreună cu `docs/ARH.md` și cu fișele de specificație din `docs/` (FISA-CONTURI, FISA-CATALOG-PRETURI, FISA-OFERTARE, FISA-COMENZI). **Unde ARH și o fișă spun lucruri diferite, fișa are prioritate** (e mai nouă și e aprobată de Ionuț); diferența se notează în ARH §13 în aceeași sesiune.
 Claude Code actualizează statusul sesiunilor la finalul fiecărei sesiuni.
 
 ## Cum se folosește
@@ -52,9 +52,9 @@ Claude Code actualizează statusul sesiunilor la finalul fiecărei sesiuni.
 | Sesiune | Obiectiv | Status |
 |---|---|---|
 | S7 | Formatul fișierelor etalon (`docs/etalon/*.json`, scrise de Claude chat, aprobate de Ionuț); ofertele-model transcrise ca teste (încă roșii); nicio logică de calcul încă | GATA (27.10, commit 00f34f4) — MOT ca funcții pure (`server/src/modules/mot/`, decimal.js, half-up), încărcătorul etalon ia prețurile și lățimile din CSV-urile Bilka; `npm test` 92 verzi, `npm run test:etalon` 11 roșii (diferențe la start: E01 128 · E02 126 · E03 65 · E04 128 · E05 127 · E06 29 · E07 138 · E08 181 · E09 126 · E10 18 · E11 144) |
-| S8 | Cantități: lungime × bucăți × lățime totală (3 zecimale), suprafață directă și combinată, ml → buc, cele două variante la șipcă (FISA-OFERTARE 3 și 8) | NEÎNCEPUT |
-| S9 | Cele trei straturi de preț: achiziție (cu grupă), țintă cu TVA, prezentare (3 moduri, calcul invers la leu), gardă absolută, varianta B de TVA (FISA-OFERTARE 11); **plus un ecran tehnic „Calcul de probă"** în Zona tehnică (Admin general alege produse, cantități, adaos, țintă și vede rezultatul motorului pe loc) — ca Ionuț să poată verifica manual înainte de Etapa 3 | NEÎNCEPUT |
-| S10 | Variante (versiuni sub același număr), prețuri fixe, „preia prețuri din oferta…", completări sub achiziție, colaboratori | NEÎNCEPUT |
+| S8 | Cantități: lungime × bucăți × lățime totală (3 zecimale), suprafață directă și combinată, cele două variante la șipcă (FISA-OFERTARE 3 și 8); pachetele și formularele Bilka (3.4–3.5) | GATA (27.10, commit f504ef9) — `cantitati.ts`, `pachete.ts`, comandabil cu motive, dripstop, validare; ml → buc abandonat (decizia din 04.09); `npm test` 127 verzi; etalon: diferențe rămase numai de preț — E01 126 · E02 126 · E03 62 · E04 128 · E05 127 · E06 23 · E07 138 · E08 181 · E09 126 · E10 18 · E11 106 |
+| S9 | Cele trei straturi de preț: achiziție (cu grupă), țintă în lei (sumă sau adaos %), prezentare (3 moduri, calcul invers, restul de rotunjire R5 și abaterea, totalul în lei R6), prețurile fixe (sumă și „achiziție + x %"), gardă absolută, varianta B de TVA, blocul de vânzări pentru conturile de Agent / Administrator (FISA-OFERTARE 11, ETALON R1–R7); **plus ecranul tehnic „Calcul de probă"** în Zona tehnică (Admin general alege produse din catalogul real, cantități, cont, grupă, țintă, mod de prezentare, prețuri fixe; buton „Încarcă etalonul E0x"; vede rezultatul motorului pe loc). Așteptat verzi după S9: E01, E02, E04, E05, E06, E08, E11 | NEÎNCEPUT |
+| S10 | Variante cu adaosul păstrat (E09), completări sub achiziție și lucrarea recalculată (E10), colaboratori — blocul de vânzări al Administratorului (E03), zona B — supliment și tabel de facturare (E07), „preia prețuri din oferta…" (fără etalon, test propriu) | NEÎNCEPUT |
 | S11 | Toate ofertele etalon verzi; ARH §5 → ÎNGHEȚAT; etichetă `v0.2-motor` | NEÎNCEPUT |
 
 ---

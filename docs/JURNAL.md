@@ -205,3 +205,16 @@ Fiecare intrare: data, obiectivul sesiunii, rezultatul, următorul pas propus.
 - ARH §13: intrarea S8. În commit: PLAN v0.8, ETALON.md v1.1, etalon/E01–E11 v1.2 (Claude chat, neatinse). Fără migrări, fără schimbări în catalog, prețuri sau conturi; serverele oprite.
 
 **Următorul pas propus:** S9 — cele trei straturi de preț (achiziția contului cu grupa, ținta în lei, prezentarea în cele trei moduri cu calculul invers la leu, restul de rotunjire și abaterea, garda) și ecranul tehnic „Calcul de probă”; numărătorile de mai sus trebuie să ajungă la zero pe E01, E04, E05, E08, E11 (fără preț fix, variantă, completare sau colaborator).
+
+## 2026-10-27 — S9: cele trei straturi de preț în MOT și ecranul „Calcul de probă”
+
+**Obiectiv:** S9 din PLAN v0.9 — achiziția contului cu grupa, ținta în lei, documentul în euro, prezentarea în cele trei moduri cu prețuri fixe, restul de rotunjire și abaterea, totalul în lei, garda, vânzările; plus ecranul tehnic „Calcul de probă” pe catalogul real.
+
+**Rezultat:**
+- Înainte de cod, regulile au fost verificate numeric pe toate etaloanele; au ieșit două precizări acceptate de Ionuț și scrise de Claude chat în ETALON R2 / R4 (rotunjirea o singură dată la achiziția în lei cu TVA; documentul în euro derivat din lei-ul fără TVA), plus corectarea E09 (adaosul păstrat ca procent cu 4 zecimale pe lanțul rotunjit: țintă 20.972,64).
+- `server/src/modules/mot/preturi.ts` (achiziție, totaluri pe linie, țintă, document, total în lei, gardă, vânzări), `prezentare.ts` (trei moduri, prețuri fixe, repartizarea restului, abaterea), `etalon.ts` (maparea etalon → intrare, comună testelor și ecranului), `routes.ts` (`/api/mot`, doar Admin general), `calcul.ts` leagă tot lanțul.
+- Ecranul `web/src/pages/CalculProba.tsx` (Zona tehnică → „Calcul de probă”): curs BNR manual, cont, grupă, mod de prezentare, țintă, produse căutate în catalogul activ cu cantități (panotaj sau mp direct, buc, ml), învelitoarea de care aparțin, RAL, preț fix, discount pe linie; „Încarcă etalonul E0x” umple formularul din fișier cu prețurile din bază; rezultatul pe loc (linii, totaluri, marjă, abatere, gardă, pachete, textul formularelor). Nimic nu se salvează.
+- Teste: `npm test` — **168 verzi** (127 + 17 prețuri + 13 prezentare + 11 API; testul E01 prin API dă 17.000,00 lei când catalogul Bilka e în baza de test). `npm run test:etalon` — **8 la zero** (E01, E02, E04, E05, E06, E08, E09, E11); rămân E03 4 (vânzările colaboratorului) · E07 11 (zona B în factură) · E10 4 (lucrarea recalculată) — toate pe partea de S10.
+- ARH §13: intrarea S9. În commit: PLAN v0.9, ETALON.md v1.2, etaloanele rescrise (Claude chat, neatinse). Fără migrări, fără schimbări în catalog, prețuri sau conturi. Serverele pornite la final (`pornire.cmd` / preview).
+
+**Următorul pas propus:** S10 — vânzările colaboratorului (cap. 19), zona B în tabelul de facturare și suplimentul (cap. 9), lucrarea cu completări (cap. 2b), variantele și „preia prețuri din oferta …” (11.7, 11.11); E03, E07, E10 la zero.

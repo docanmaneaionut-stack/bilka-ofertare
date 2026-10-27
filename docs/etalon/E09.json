@@ -1,7 +1,7 @@
 {
  "id": "E09",
  "titlu": "Varianta 2 a ofertei E01 — Iberic Grande Mat 0,50 în loc de mat (accesoriile urmează), adaosul variantei de bază (18,568 %) aplicat pe noile achiziții",
- "status": "aprobat (Ionuț, 27.10.2026)",
+ "status": "aprobat (Ionuț, 27.10.2026; recalculat 27.10 cu adaosul păstrat ca procent cu 4 zecimale)",
  "intrari": {
   "curs_bnr": "5.3485",
   "tva_pct": 21,
@@ -276,8 +276,10 @@
   "invelitori": [
    {
     "cod_bilka": "TMIBEGDM050",
+    "denumire": "Țiglă metalică Iberic – Grande Mat – 0,50 mm",
     "culoare": "RAL 3005",
     "latime_totala_m": "1.18",
+    "mod_cantitate": "panotaj",
     "panotaj": [
      {
       "lungime_m": "4.20",
@@ -296,21 +298,21 @@
       "bucati": 5
      }
     ],
-    "mp": "180.481",
-    "denumire": "Țiglă metalică Iberic – Grande Mat – 0,50 mm"
+    "mp": "180.481"
    },
    {
     "cod_bilka": "TCT08GDM050",
+    "denumire": "Tablă cutată T8 (perete) – Grande Mat – 0,50 mm",
     "culoare": "RAL 3005",
     "latime_totala_m": "1.20",
+    "mod_cantitate": "panotaj",
     "panotaj": [
      {
       "lungime_m": "2.50",
       "bucati": 2
      }
     ],
-    "mp": "6.000",
-    "denumire": "Tablă cutată T8 (perete) – Grande Mat – 0,50 mm"
+    "mp": "6.000"
    }
   ]
  },
@@ -574,9 +576,9 @@
    "achizitie_cont_eur_fara_tva": "2706.11",
    "achizitie_cont_lei_fara_tva": "14618.41",
    "achizitie_cont_lei_cu_tva": "17688.28",
-   "tinta_lei_cu_tva": "20972.63",
+   "tinta_lei_cu_tva": "20972.64",
    "adaos_real_pct": "18.57",
-   "marja_lei": "3284.35",
+   "marja_lei": "3284.36",
    "document_fara_tva_eur": "3240.68",
    "tva_eur": "680.54",
    "document_cu_tva_eur": "3921.22",

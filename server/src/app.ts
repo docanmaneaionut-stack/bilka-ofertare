@@ -5,6 +5,7 @@ import { incarcaUtilizator } from "./modules/accounts/middleware.js";
 import { accountsRouter } from "./modules/accounts/routes.js";
 import { contRouter } from "./modules/accounts/cont.js";
 import { admRouter } from "./modules/adm/routes.js";
+import { motRouter } from "./modules/mot/routes.js";
 import { gestioneazaErori } from "./middleware/erori.js";
 import { env } from "./env.js";
 
@@ -28,6 +29,7 @@ export function creeazaApp() {
   app.use("/api/auth", accountsRouter);
   app.use("/api/cont", contRouter);
   app.use("/api/adm", admRouter);
+  app.use("/api/mot", motRouter);
 
   app.use(gestioneazaErori);
 

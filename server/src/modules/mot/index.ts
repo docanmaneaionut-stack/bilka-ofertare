@@ -14,6 +14,21 @@ export {
 } from "./cantitati.js";
 export { impacheteaza, numeModel, numarRal, finisajScurt, cheieInvelitoare, aceeasiCheie } from "./pachete.js";
 export {
+  achizitieLinie,
+  totaluriAchizitie,
+  calculeazaTinta,
+  documentDinTinta,
+  tvaDinNet,
+  totalLeiDocument,
+  achizitieRealaLaCursulDocumentului,
+  verificaGarda,
+  randVanzari,
+  procentCaFactor,
+} from "./preturi.js";
+export { prezinta, pretFixNormalizat, gasesteTotalLista, repartizeazaRest } from "./prezentare.js";
+export { construiesteIntrare, coduriEtalon, latimeTotalaDinCatalog } from "./etalon.js";
+export type { CatalogPentruEtalon, FisierEtalon, ProdusCatalogEtalon, IntrariEtalon, LinieEtalon, InvelitoareEtalon } from "./etalon.js";
+export {
   Zecimal,
   z,
   rotunjeste,

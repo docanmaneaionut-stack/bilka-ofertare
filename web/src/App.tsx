@@ -15,6 +15,7 @@ import { ImportPropunere } from "./pages/ImportPropunere";
 import { Firme } from "./pages/Firme";
 import { Utilizatori } from "./pages/Utilizatori";
 import { Export } from "./pages/Export";
+import { CalculProba } from "./pages/CalculProba";
 import { ContulMeu, ETICHETA_ROL, SchimbaParolaObligatoriu } from "./pages/ContulMeu";
 import { UtilizatorContext } from "./contextUtilizator";
 
@@ -70,6 +71,7 @@ export default function App() {
                 <Route path="import" element={<Import />} />
                 <Route path="import/:id" element={<ImportPropunere />} />
                 <Route path="export" element={<Export />} />
+                <Route path="calcul-proba" element={<CalculProba />} />
               </>
             )}
             <Route path="firme" element={<Firme />} />

@@ -386,3 +386,128 @@ export const apiUtilizatori = {
 };
 
 export const URL_EXPORT = `${BAZA_API}/api/adm/export`;
+
+// --- Calcul de proba (MOT, Zona tehnica, doar Admin general) ---
+
+const BAZA_MOT = "/api/mot";
+
+export type ProdusProba = {
+  produsId: string;
+  codIntern: string;
+  cod: string;
+  denumire: string;
+  um: string;
+  pretEur: string;
+  rubrica: string | null;
+  moneda: string;
+  compartiment: string;
+  grup?: string;
+  familie?: string;
+  finisaj?: string;
+  grosime?: string;
+  varianta?: string;
+  optiune?: string;
+  latimeTotalaM?: string;
+  latimeTotalaMm?: string;
+  tablaPlana?: "mp" | "coala";
+};
+
+export type PozitieLungime = { lungimeM: string; bucati: number };
+export type CheieCuloare = { ral: string; finisaj: string; grosime?: string };
+export type PretFix = { tip: "eur_fara_tva" | "achizitie_plus_pct"; valoare: string };
+
+export type ProdusOferta = {
+  cod: string;
+  denumire: string;
+  um: string;
+  pretBazaEur: string;
+  finisaj?: string;
+  grosime?: string;
+  grup?: string;
+  familie?: string;
+  optiune?: string;
+};
+
+export type InvelitoareIntrare = {
+  id: string;
+  produs: ProdusOferta;
+  rol: "principala" | "secundara";
+  culoare?: string;
+  latimeTotalaM: string;
+  panotaj: PozitieLungime[];
+  mpDirect?: string;
+  variantaProfil?: string;
+};
+
+export type LinieIntrare = {
+  id: string;
+  rubrica: string;
+  produs: ProdusOferta;
+  cantitate: string;
+  pozitii?: PozitieLungime[];
+  invelitoare?: string;
+  culoare?: CheieCuloare;
+  pretFix?: PretFix;
+  discountPct?: string;
+};
+
+export type IntrareProba = {
+  cursBnr: string;
+  tvaPct: number;
+  cont: { tip: string; adaosPct: string };
+  grupaPct: string;
+  tinta: { tip: "total_cu_tva_lei" | "adaos_pct" | "adaos_pct_pastrat"; valoare: string };
+  modPrezentare: "simplu" | "lista_discount_general" | "discount_per_linie";
+  discountGeneralPct?: string;
+  discountImplicitPct?: string;
+  completare: boolean;
+  invelitori: InvelitoareIntrare[];
+  sipca?: unknown;
+  linii: LinieIntrare[];
+  zonaB: unknown[];
+};
+
+export type LinieRezultat = {
+  id: string;
+  cod: string;
+  rubrica: string;
+  um: string;
+  cantitate: string;
+  bazaEur: string;
+  achizitieContEur: string;
+  achizitieRealaEur: string;
+  achizitieContLeiCuTva: string;
+  pretDocumentEur: string;
+  valoareEur: string;
+  pretListaEur?: string;
+  discountPct?: string;
+  pretNetEur?: string;
+  pretFix: boolean;
+  achizitieRealaDocEur: string;
+  subAchizitie: boolean;
+  invelitoare?: string;
+  pachet?: string;
+};
+
+export type RezultatProba = {
+  cursBnr: string;
+  cursAchizitie: string;
+  cantitati: { invelitori: { id: string; mp: string; coli: number; integralPanotata: boolean }[]; accesoriiMl: { linieId: string; ml: string }[]; sipca?: { bucatiTotal: number; mlTotal: string } };
+  comandabil: { da: boolean; motive: string[] };
+  linii: LinieRezultat[];
+  totaluri: Record<string, string | undefined>;
+  vanzari: { pretVanzareLei: string; costAchizitieLei: string; adaosNetLei: string; adaosBrutLei: string };
+  abatereEur: string;
+  garda: { respectata: boolean; liniiSubAchizitie: string[]; aplicata: boolean };
+  pachete: { id: string; nume: string; tip: string; linii: string[]; achizitieEur: string }[];
+  formulareBilka: { nr: number; pachete: string[]; continut: string }[];
+  textFormulare: string;
+  avertizari: string[];
+};
+
+export const apiMot = {
+  produse: (q: string) => cerere<{ produse: ProdusProba[] }>(`${BAZA_MOT}/produse?q=${encodeURIComponent(q)}`),
+  etaloane: () => cerere<{ etaloane: { id: string; titlu: string; status: string }[] }>(`${BAZA_MOT}/etaloane`),
+  etalon: (id: string) => cerere<{ etalon: { id: string; titlu: string }; intrare: IntrareProba; asteptat: Record<string, unknown> }>(`${BAZA_MOT}/etaloane/${id}`),
+  proba: (intrare: IntrareProba) => cerere<{ rezultat: RezultatProba }>(`${BAZA_MOT}/proba`, { method: "POST", body: JSON.stringify(intrare) }),
+};

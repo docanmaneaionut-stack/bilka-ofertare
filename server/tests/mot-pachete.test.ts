@@ -158,7 +158,8 @@ describe("calculeazaOferta leaga pachetele de linii", () => {
     );
     const r = calculeazaOferta(o);
     expect(r.linii.map((l) => l.pachet)).toEqual(["P1 — Clasic 8017 mat", "P2 — Retro Plus 7016 mat", "P2 — Retro Plus 7016 mat", "Pluvial A — mat 8017"]);
-    expect(r.pachete.map((p) => p.achizitieEur)).toEqual(["0.00", "0.00", "0.00"]); // preturile vin la S9
+    // achizitia pe pachet = suma valorilor de achizitie ale liniilor (1,00 x 1,01 = 1,01 EUR pe unitate)
+    expect(r.pachete.map((p) => p.achizitieEur)).toEqual(["48.48", "53.53", "4.04"]); // 48 mp, 48 mp + 5 buc, 4 buc
     expect(r.formulareBilka.map((f) => f.nr)).toEqual([1, 2, 3]);
     expect(r.textFormulare).toMatch(/^Se vor genera 3 formulare Bilka: 1\) Clasic 8017 mat 0,50 ca învelitoare principală/);
   });

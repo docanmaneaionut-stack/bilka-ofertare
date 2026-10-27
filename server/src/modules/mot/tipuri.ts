@@ -157,6 +157,9 @@ export interface LinieCalculata {
   discountPct?: Suma;
   pretNetEur?: Suma;
   pretFix: boolean;
+  // R7: achizitia reala (fara grupa) adusa la cursul documentului - pragul gardei
+  achizitieRealaDocEur: Suma;
+  subAchizitie: boolean;
   invelitoare?: string;
   pachet?: string;
 }
