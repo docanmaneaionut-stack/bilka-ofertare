@@ -272,6 +272,46 @@
      "finisaj": "pluvial colorat (lucios)"
     }
    }
+  ],
+  "invelitori": [
+   {
+    "cod_bilka": "TMIBEGDM050",
+    "culoare": "RAL 3005",
+    "latime_totala_m": "1.18",
+    "panotaj": [
+     {
+      "lungime_m": "4.20",
+      "bucati": 15
+     },
+     {
+      "lungime_m": "3.10",
+      "bucati": 20
+     },
+     {
+      "lungime_m": "2.75",
+      "bucati": 8
+     },
+     {
+      "lungime_m": "1.19",
+      "bucati": 5
+     }
+    ],
+    "mp": "180.481",
+    "denumire": "Țiglă metalică Iberic – Grande Mat – 0,50 mm"
+   },
+   {
+    "cod_bilka": "TCT08GDM050",
+    "culoare": "RAL 3005",
+    "latime_totala_m": "1.20",
+    "panotaj": [
+     {
+      "lungime_m": "2.50",
+      "bucati": 2
+     }
+    ],
+    "mp": "6.000",
+    "denumire": "Tablă cutată T8 (perete) – Grande Mat – 0,50 mm"
+   }
   ]
  },
  "asteptat": {
@@ -547,8 +587,13 @@
     "adaos_net_lei": "3284.37",
     "adaos_brut_lei": "2714.36"
    }
-  }
+  },
+  "mp_invelitori": {
+   "TMIBEGDM050": "180.481",
+   "TCT08GDM050": "6.000"
+  },
+  "comandabil": true
  },
  "reguli": "ETALON.md §0 (R1–R7)",
- "format": "v1.1 (27.10.2026): pe liniile legate câmpul `invelitoare` = codul învelitorii de care aparțin; pe liniile independente / de sine stătătoare câmpul `culoare` {ral, finisaj[, grosime]}; prețul fix structurat în `pret_fix` {tip, valoare, normalizat_eur_fara_tva}"
+ "format": "v1.1 (27.10.2026): pe liniile legate câmpul `invelitoare` = codul învelitorii de care aparțin; pe liniile independente / de sine stătătoare câmpul `culoare` {ral, finisaj[, grosime]}; prețul fix structurat în `pret_fix` {tip, valoare, normalizat_eur_fara_tva} · v1.2 (27.10.2026): `invelitori` cu panotaj peste tot unde există învelitori; `asteptat.comandabil`"
 }

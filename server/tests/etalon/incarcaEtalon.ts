@@ -139,7 +139,21 @@ function produsDinCatalog(p: ProdusCatalog, umEtalon?: string) {
   };
   if (p.finisaj) produs.finisaj = p.finisaj;
   if (p.grosime) produs.grosime = p.grosime;
+  if (p.grup) produs.grup = p.grup;
+  if (p.familie) produs.familie = p.familie;
+  if (p.optiune) produs.optiune = p.optiune;
   return produs;
+}
+
+// tabla plana la mp nu are latime in CSV: FISA-OFERTARE 3.2 spune 1,25 m, iar
+// catalogul o poarta in varianta ("1,25 × 2,00 m") - de acolo o ia apelantul
+export function latimeTotalaDinCatalog(p: ProdusCatalog): string | undefined {
+  if (p.latimeTotalaM) return p.latimeTotalaM;
+  if (p.tablaPlana === "mp" && p.varianta) {
+    const m = /^\s*(\d+(?:[.,]\d+)?)/.exec(p.varianta);
+    if (m) return m[1];
+  }
+  return undefined;
 }
 
 // "1,2" din CSV si "1.20" din etalon sunt aceeasi latime; textul difera
@@ -203,7 +217,7 @@ export function construiesteIntrare(etalon: FisierEtalon): IntrareOferta {
       const linie = i.linii.find((l) => l.cod_bilka === inv.cod_bilka && l.rubrica === "Învelitori");
       if (!linie) throw new Error(`${ctx}: invelitoarea ${inv.cod_bilka} nu are linie in rubrica Invelitori`);
       const p = catalog.gaseste(inv.cod_bilka, linie.denumire);
-      const latime = verificaEgalNumeric("latimea totala", inv.latime_totala_m, p.latimeTotalaM, `${ctx} ${inv.cod_bilka}`);
+      const latime = verificaEgalNumeric("latimea totala", inv.latime_totala_m, latimeTotalaDinCatalog(p), `${ctx} ${inv.cod_bilka}`);
       const rezultat: Invelitoare = {
         id: inv.cod_bilka,
         produs: produsDinCatalog(p, linie.um),
@@ -221,12 +235,13 @@ export function construiesteIntrare(etalon: FisierEtalon): IntrareOferta {
       .filter((l) => l.rubrica === "Învelitori")
       .map((l, idx) => {
         const p = catalog.gaseste(l.cod_bilka, l.denumire);
-        if (!p.latimeTotalaM) throw new Error(`${ctx} ${l.cod_bilka}: latimea totala lipseste din CSV`);
+        const latime = latimeTotalaDinCatalog(p);
+        if (!latime) throw new Error(`${ctx} ${l.cod_bilka}: latimea totala lipseste din CSV`);
         return {
           id: l.cod_bilka,
           produs: produsDinCatalog(p, l.um),
           rol: idx === 0 ? "principala" : "secundara",
-          latimeTotalaM: z(p.latimeTotalaM).toString(),
+          latimeTotalaM: z(latime).toString(),
           panotaj: [],
           mpDirect: l.cantitate,
         } satisfies Invelitoare;
@@ -331,6 +346,8 @@ export function spreAsteptat(rezultat: RezultatOferta, intrare: IntrareOferta): 
       achizitie_reala_lei_cu_tva: t.achizitieRealaLeiCuTva,
     }),
     abatere_eur: rezultat.abatereEur,
+    comandabil: rezultat.comandabil.da,
+    mp_invelitori: Object.fromEntries(rezultat.cantitati.invelitori.map((i) => [i.id, i.mp])),
     pachete: rezultat.pachete.map((p) => ({ pachet: p.nume, linii: p.linii.length, achizitie_eur: p.achizitieEur })),
     formulare_bilka: rezultat.formulareBilka.map((f) => ({ nr: f.nr })),
   };
@@ -407,7 +424,7 @@ export interface Diferenta {
 }
 
 // chei cu text liber (explicatii), care nu se compara cifra cu cifra
-const CHEI_NOTE = new Set(["nota", "nota_total_lei", "garda", "continut", "regula", "format", "titlu", "status"]);
+const CHEI_NOTE = new Set(["nota", "nota_total_lei", "nota_comandabil", "garda", "continut", "regula", "format", "titlu", "status"]);
 
 function caText(v: unknown): string {
   if (v === undefined) return "(lipsa)";

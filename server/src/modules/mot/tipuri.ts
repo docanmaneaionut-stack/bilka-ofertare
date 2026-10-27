@@ -3,8 +3,8 @@ import type { Suma } from "./zecimal.js";
 
 // Tipurile motorului de calcul (MOT): oferta ca date la intrare, oferta
 // calculata la iesire. Fara baza de date, fara HTTP, fara interfata.
-// Structura urmeaza fisierele etalon (docs/etalon/E*.json, format v1.1) si
-// FISA-OFERTARE v1.1 cap. 3, 8, 9, 11, 13.2, 19, 2b.
+// Structura urmeaza fisierele etalon (docs/etalon/E*.json, format v1.2) si
+// FISA-OFERTARE v1.1 cap. 3, 5, 8, 9, 11, 13.2, 19, 2b.
 
 export type TipCont = "ADMIN_GENERAL" | "ADMINISTRATOR" | "AGENT" | "COLABORATOR" | "CONTABILITATE" | "GESTIUNE";
 
@@ -28,7 +28,8 @@ export interface CheieCuloare {
   grosime?: string;
 }
 
-// produsul asa cum vine din catalog (pretul de baza e cel din lista activa)
+// produsul asa cum vine din catalog (pretul de baza e cel din lista activa);
+// grup / familie / optiune servesc la numele pachetelor si la avertizari
 export interface ProdusOferta {
   cod: string;
   denumire: string;
@@ -36,9 +37,12 @@ export interface ProdusOferta {
   pretBazaEur: Suma;
   finisaj?: string;
   grosime?: string;
+  grup?: string;
+  familie?: string;
+  optiune?: string;
 }
 
-// o pozitie de panotaj: lungime x bucati (FISA-OFERTARE 3.2)
+// o pozitie: lungime x bucati (FISA-OFERTARE 3.2, 5, 8)
 export interface PozitieLungime {
   lungimeM: Suma;
   bucati: number;
@@ -49,6 +53,8 @@ export interface Invelitoare {
   produs: ProdusOferta;
   rol: "principala" | "secundara";
   culoare?: string;
+  // latimea totala in metri; vine din catalog, iar la tabla plana la mp o da
+  // apelantul (FISA-OFERTARE 3.2: 1,25 m)
   latimeTotalaM: Suma;
   panotaj: PozitieLungime[];
   // suprafata directa (mp, 3 zecimale) sau partea in mp a modului combinat
@@ -67,10 +73,10 @@ export interface LinieOferta {
   id: string;
   rubrica: string;
   produs: ProdusOferta;
-  // cantitatea declarata (la invelitori / accesorii ML se poate deriva din
-  // panotaj / pozitii - S8)
+  // cantitatea declarata; la linia unei invelitori, la accesoriile cu pozitii
+  // si la sipca motorul o inlocuieste cu cea calculata
   cantitate: Suma;
-  // lungime x bucati pentru accesoriile la metru liniar
+  // lungime x bucati pentru accesoriile la metru liniar (FISA-OFERTARE cap. 5)
   pozitii?: PozitieLungime[];
   // linie legata de o invelitoare (mosteneste cheia ei) ...
   invelitoare?: string;
@@ -133,6 +139,7 @@ export interface IntrareOferta {
 export interface LinieCalculata {
   id: string;
   cod: string;
+  rubrica: string;
   um: string;
   cantitate: Suma;
   bazaEur: Suma;
@@ -203,9 +210,17 @@ export interface ZonaBCalculata {
   tabelFacturare: { faraTvaEur: Suma; tvaEur: Suma; cuTvaEur: Suma; totalLei: Suma };
 }
 
-// FISA-OFERTARE 3.4-3.5
+// FISA-OFERTARE 3.4-3.5: un pachet = o invelitoare + sectiunile ei; pluvialul
+// se grupeaza pe finisaj + culoare; sectiunile de sine statatoare pe cheie
+export type TipPachet = "invelitoare" | "pluvial" | "de_sine_statatoare";
+
 export interface Pachet {
+  id: string;
   nume: string;
+  tip: TipPachet;
+  cheie: CheieCuloare;
+  invelitoarePrincipala?: string;
+  invelitoriSecundare: string[];
   linii: string[];
   achizitieEur: Suma;
 }
@@ -216,17 +231,39 @@ export interface FormularBilka {
   continut: string;
 }
 
-// cantitatile derivate din panotaj / tronsoane / pozitii (S8)
+// cantitatile derivate din panotaj / tronsoane / pozitii (FISA-OFERTARE 3.2, 5, 8)
+export interface InvelitoareCalculata {
+  id: string;
+  mp: Suma;
+  mpPanotaj: Suma;
+  mpDirect: Suma;
+  coli: number;
+  // integral in lungimi x bucati (conditia de comanda, FISA-OFERTARE 3.2)
+  integralPanotata: boolean;
+}
+
+export interface SipcaCalculata {
+  tronsoane: { bucati: number; ml: Suma }[];
+  bucatiTotal: number;
+  mlTotal: Suma;
+}
+
 export interface CantitatiCalculate {
-  invelitori: { id: string; mp: Suma; coli: number }[];
+  invelitori: InvelitoareCalculata[];
   accesoriiMl: { linieId: string; ml: Suma }[];
-  sipca?: { tronsoane: { bucati: number; ml: Suma }[]; bucatiTotal: number; mlTotal: Suma };
+  sipca?: SipcaCalculata;
+}
+
+export interface Comandabil {
+  da: boolean;
+  motive: string[];
 }
 
 export interface RezultatOferta {
   cursBnr: Suma;
   cursAchizitie: Suma;
   cantitati: CantitatiCalculate;
+  comandabil: Comandabil;
   linii: LinieCalculata[];
   totaluri: TotaluriOferta;
   vanzari: RandVanzari;
@@ -236,6 +273,8 @@ export interface RezultatOferta {
   zonaB?: ZonaBCalculata;
   pachete: Pachet[];
   formulareBilka: FormularBilka[];
+  // ce vede agentul: "Se vor genera 4 formulare Bilka: 1) ...; 2) ..."
+  textFormulare: string;
   avertizari: string[];
 }
 
@@ -243,20 +282,27 @@ export interface RezultatOferta {
 
 const suma = zod.string().regex(/^-?\d+([.,]\d+)?$/, "suma zecimala ca text, ex. \"6.86\"");
 const procent = suma;
+const caNumar = (s: string) => Number(s.replace(",", "."));
+// cantitati, lungimi, latimi: strict pozitive; distante: nenegative
+const sumaPozitiva = suma.refine((s) => caNumar(s) > 0, "trebuie sa fie mai mare decat 0");
+const sumaNenegativa = suma.refine((s) => caNumar(s) >= 0, "nu poate fi negativa");
 
 const schemaProdus = zod.object({
   cod: zod.string().min(1),
   denumire: zod.string().min(1),
   um: zod.string().min(1),
-  pretBazaEur: suma,
+  pretBazaEur: sumaNenegativa,
   finisaj: zod.string().optional(),
   grosime: zod.string().optional(),
+  grup: zod.string().optional(),
+  familie: zod.string().optional(),
+  optiune: zod.string().optional(),
 });
 
-const schemaPozitie = zod.object({ lungimeM: suma, bucati: zod.number().int().nonnegative() });
+const schemaPozitie = zod.object({ lungimeM: sumaPozitiva, bucati: zod.number().int().min(1) });
 
 export const schemaIntrareOferta = zod.object({
-  cursBnr: suma,
+  cursBnr: sumaPozitiva,
   tvaPct: zod.number().nonnegative(),
   cont: zod.object({
     tip: zod.enum(["ADMIN_GENERAL", "ADMINISTRATOR", "AGENT", "COLABORATOR", "CONTABILITATE", "GESTIUNE"]),
@@ -269,16 +315,20 @@ export const schemaIntrareOferta = zod.object({
   discountImplicitPct: procent.optional(),
   completare: zod.boolean(),
   invelitori: zod.array(
-    zod.object({
-      id: zod.string().min(1),
-      produs: schemaProdus,
-      rol: zod.enum(["principala", "secundara"]),
-      culoare: zod.string().optional(),
-      latimeTotalaM: suma,
-      panotaj: zod.array(schemaPozitie),
-      mpDirect: suma.optional(),
-      variantaProfil: zod.string().optional(),
-    }),
+    zod
+      .object({
+        id: zod.string().min(1),
+        produs: schemaProdus,
+        rol: zod.enum(["principala", "secundara"]),
+        culoare: zod.string().optional(),
+        latimeTotalaM: sumaPozitiva,
+        panotaj: zod.array(schemaPozitie),
+        mpDirect: sumaPozitiva.optional(),
+        variantaProfil: zod.string().optional(),
+      })
+      .refine((i) => i.panotaj.length > 0 || i.mpDirect !== undefined, {
+        message: "o invelitoare are fie panotaj (lungimi x bucati), fie suprafata directa (mp), fie amandoua",
+      }),
   ),
   sipca: zod
     .object({
@@ -286,10 +336,13 @@ export const schemaIntrareOferta = zod.object({
       produsCod: zod.string().min(1),
       model: zod.string(),
       culoare: zod.string().optional(),
-      latimeSipcaMm: suma,
+      latimeSipcaMm: sumaPozitiva,
       varianta: zod.enum(["comanda", "calcul"]),
       pozitii: zod.array(schemaPozitie).optional(),
-      tronsoane: zod.array(zod.object({ lungimeSipcaM: suma, lungimeTronsonM: suma, distantaMm: suma })).optional(),
+      tronsoane: zod.array(zod.object({ lungimeSipcaM: sumaPozitiva, lungimeTronsonM: sumaPozitiva, distantaMm: sumaNenegativa })).optional(),
+    })
+    .refine((s) => (s.varianta === "calcul" ? (s.tronsoane?.length ?? 0) > 0 : (s.pozitii?.length ?? 0) > 0), {
+      message: "sipca in varianta Calcul are tronsoane; in varianta Comanda are pozitii (lungime x bucati)",
     })
     .optional(),
   linii: zod.array(
@@ -297,11 +350,11 @@ export const schemaIntrareOferta = zod.object({
       id: zod.string().min(1),
       rubrica: zod.string().min(1),
       produs: schemaProdus,
-      cantitate: suma,
+      cantitate: sumaPozitiva,
       pozitii: zod.array(schemaPozitie).optional(),
       invelitoare: zod.string().optional(),
       culoare: zod.object({ ral: zod.string(), finisaj: zod.string(), grosime: zod.string().optional() }).optional(),
-      pretFix: zod.object({ tip: zod.enum(["eur_fara_tva", "achizitie_plus_pct"]), valoare: suma }).optional(),
+      pretFix: zod.object({ tip: zod.enum(["eur_fara_tva", "achizitie_plus_pct"]), valoare: sumaNenegativa }).optional(),
       discountPct: procent.optional(),
     }),
   ),
@@ -309,8 +362,8 @@ export const schemaIntrareOferta = zod.object({
     zod.object({
       denumire: zod.string().min(1),
       um: zod.string(),
-      cantitate: suma,
-      sumaLei: suma,
+      cantitate: sumaPozitiva,
+      sumaLei: sumaNenegativa,
       contineTva: zod.boolean(),
       preiaInFactura: zod.boolean(),
     }),

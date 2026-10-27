@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { calculeazaOferta } from "../src/modules/mot/calcul.js";
 import { la2, z } from "../src/modules/mot/zecimal.js";
 import { catalogCsv, SUFIX_COALA } from "./etalon/catalogCsv.js";
-import { citesteEtalon, compara, incarcaEtalon, listeazaEtaloane } from "./etalon/incarcaEtalon.js";
+import { citesteEtalon, compara, incarcaEtalon, latimeTotalaDinCatalog, listeazaEtaloane } from "./etalon/incarcaEtalon.js";
 
 // Incarcatorul ofertelor-model: fisierele se citesc, fiecare linie e gasita in
 // CSV-urile Bilka pe cod + denumire, iar pretul de baza din CSV e exact cel din
@@ -40,6 +40,13 @@ describe("catalogul din CSV-urile Bilka", () => {
     expect(catalog.gaseste("TCT35MAT050", "Tablă cutată T35 (acoperiș / perete) – mat – 0,50 mm").latimeTotalaM).toBe("1,085");
     expect(catalog.gaseste("SIPCAMAT050", "Șipcă Oslo – mat – 0,50 mm").latimeTotalaMm).toBe("92,9");
   });
+
+  it("tabla plana la mp: latimea 1,25 vine din varianta (FISA-OFERTARE 3.2), nu e in coloana de latime", () => {
+    const laMp = catalog.variante("TPLANLUC070").find((p) => p.tablaPlana === "mp")!;
+    expect(laMp.latimeTotalaM).toBeUndefined();
+    expect(latimeTotalaDinCatalog(laMp)).toBe("1,25");
+    expect(catalog.gaseste("TMCLSMAT050", "Țiglă metalică Clasic – mat – 0,50 mm")).toMatchObject({ grup: "Țiglă metalică", familie: "Țiglă metalică Clasic", finisaj: "mat", grosime: "0,50 mm" });
+  });
 });
 
 describe("incarcarea ofertelor-model", () => {
@@ -58,6 +65,7 @@ describe("incarcarea ofertelor-model", () => {
         const asteptat = etalon.asteptat.linii[idx] as { cod_bilka: string; baza_eur: string };
         expect(linie.produs.cod, `${id} linia ${idx + 1}`).toBe(asteptat.cod_bilka);
         expect(linie.produs.pretBazaEur, `${id} linia ${idx + 1} (${linie.produs.cod})`).toBe(asteptat.baza_eur);
+        expect(linie.produs.grup, `${id} linia ${idx + 1}: grupul din catalog`).toBeTruthy();
       });
       expect(intrare.invelitori.length).toBeGreaterThanOrEqual(0);
     });
@@ -75,7 +83,7 @@ describe("incarcarea ofertelor-model", () => {
     const e02 = incarcaEtalon("E02").intrare;
     expect(e02.linii[0].pretFix).toEqual({ tip: "achizitie_plus_pct", valoare: "5" });
     expect(e02.tinta).toEqual({ tip: "adaos_pct", valoare: "20" });
-    expect(e02.invelitori.map((i) => i.mpDirect)).toEqual(["180.481", "6.000"]); // fara bloc de panotaj
+    expect(e02.invelitori.map((i) => [i.panotaj.length, i.mpDirect])).toEqual([[4, undefined], [1, undefined]]); // v1.2: panotajul din E01
 
     const e03 = incarcaEtalon("E03").intrare;
     expect(e03.cont).toEqual({ tip: "COLABORATOR", adaosPct: "5.00" });

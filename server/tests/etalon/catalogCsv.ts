@@ -27,6 +27,10 @@ export interface ProdusCatalog {
   categorieOferta: string;
   finisaj?: string;
   grosime?: string;
+  grup?: string;
+  familie?: string;
+  varianta?: string;
+  optiune?: string;
   latimeTotalaM?: string;
   latimeTotalaMm?: string;
   tablaPlana?: "mp" | "coala";
@@ -58,6 +62,10 @@ export class CatalogCsv {
         };
         if (r.finisaj) baza.finisaj = r.finisaj.trim();
         if (r.grosime) baza.grosime = r.grosime.trim();
+        if (r.grup) baza.grup = r.grup.trim();
+        if (r.familie) baza.familie = r.familie.trim();
+        if (r.varianta) baza.varianta = r.varianta.trim();
+        if (r.optiune) baza.optiune = r.optiune.trim();
         if (r.latime_totala_m) baza.latimeTotalaM = r.latime_totala_m.trim();
         if (r.latime_totala_mm) baza.latimeTotalaMm = r.latime_totala_mm.trim();
         const esteTablaPlana = /coal/i.test(baza.categorieOferta);

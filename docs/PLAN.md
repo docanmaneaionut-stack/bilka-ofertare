@@ -1,6 +1,6 @@
 # PLAN — foaia de parcurs a construcției
 
-Versiunea 0.7 · 23 octombrie 2026 · Se citește împreună cu `docs/ARH.md` și cu fișele de specificație din `docs/` (FISA-CONTURI, FISA-CATALOG-PRETURI, FISA-OFERTARE, FISA-COMENZI). **Unde ARH și o fișă spun lucruri diferite, fișa are prioritate** (e mai nouă și e aprobată de Ionuț); diferența se notează în ARH §13 în aceeași sesiune.
+Versiunea 0.8 · 27 octombrie 2026 · Se citește împreună cu `docs/ARH.md` și cu fișele de specificație din `docs/` (FISA-CONTURI, FISA-CATALOG-PRETURI, FISA-OFERTARE, FISA-COMENZI). **Unde ARH și o fișă spun lucruri diferite, fișa are prioritate** (e mai nouă și e aprobată de Ionuț); diferența se notează în ARH §13 în aceeași sesiune.
 Claude Code actualizează statusul sesiunilor la finalul fiecărei sesiuni.
 
 ## Cum se folosește
@@ -51,7 +51,7 @@ Claude Code actualizează statusul sesiunilor la finalul fiecărei sesiuni.
 
 | Sesiune | Obiectiv | Status |
 |---|---|---|
-| S7 | Formatul fișierelor etalon (`docs/etalon/*.json`, scrise de Claude chat, aprobate de Ionuț); primele 3 oferte-model transcrise ca teste (încă roșii); nicio logică de calcul încă | NEÎNCEPUT |
+| S7 | Formatul fișierelor etalon (`docs/etalon/*.json`, scrise de Claude chat, aprobate de Ionuț); ofertele-model transcrise ca teste (încă roșii); nicio logică de calcul încă | GATA (27.10, commit 00f34f4) — MOT ca funcții pure (`server/src/modules/mot/`, decimal.js, half-up), încărcătorul etalon ia prețurile și lățimile din CSV-urile Bilka; `npm test` 92 verzi, `npm run test:etalon` 11 roșii (diferențe la start: E01 128 · E02 126 · E03 65 · E04 128 · E05 127 · E06 29 · E07 138 · E08 181 · E09 126 · E10 18 · E11 144) |
 | S8 | Cantități: lungime × bucăți × lățime totală (3 zecimale), suprafață directă și combinată, ml → buc, cele două variante la șipcă (FISA-OFERTARE 3 și 8) | NEÎNCEPUT |
 | S9 | Cele trei straturi de preț: achiziție (cu grupă), țintă cu TVA, prezentare (3 moduri, calcul invers la leu), gardă absolută, varianta B de TVA (FISA-OFERTARE 11); **plus un ecran tehnic „Calcul de probă"** în Zona tehnică (Admin general alege produse, cantități, adaos, țintă și vede rezultatul motorului pe loc) — ca Ionuț să poată verifica manual înainte de Etapa 3 | NEÎNCEPUT |
 | S10 | Variante (versiuni sub același număr), prețuri fixe, „preia prețuri din oferta…", completări sub achiziție, colaboratori | NEÎNCEPUT |
@@ -94,9 +94,9 @@ Decizii (17.10.2026): **domeniul aplicației este `roofdata.ro`** — separat de
 | Lista Bilka curentă (PDF / Excel) | Etapa 1, S4 | ✔ primită (CSV în `docs/import/Bilka/`, importată 19.10) |
 | Datele firmelor emitente (denumire, CUI, adresă, cont, logo, serie) | Etapa 1, S5 | ✔ `docs/import/firme.csv` + sigla Roofshop DMI; lipsesc sigla Proroof Comp și conturile bancare (se completează din ecran) |
 | Lista utilizatorilor cu rol și firmă | Etapa 1, S5 | Ionuț le creează din contul de Admin general, din ecran (decis 16.10) |
-| Facturi Bilka recente (5–10, de după 14.07.2026), pentru verificarea achiziției | Etapa 2, înainte de S7 | de atașat în chat (decis 23.10) |
-| Oferte-model (etalon) scrise de Claude chat, aprobate de Ionuț | Etapa 2, S7 | în lucru (23.10) — înlocuiesc ofertele v4.1, care nu există ca documente |
-| Adaosuri țintă implicite pe categorie | Etapa 2, S9 | de pregătit |
+| Facturi Bilka recente (5–10, de după 14.07.2026), pentru verificarea achiziției | Etapa 2, înainte de S7 | ✔ 21 de facturi verificate (23.10): catalog = facturi, `docs/VERIFICARE-FACTURI-BILKA.md` |
+| Oferte-model (etalon) scrise de Claude chat, aprobate de Ionuț | Etapa 2, S7 | ✔ E01–E11 aprobate (23 și 27.10), `docs/ETALON.md` v1.0 + `docs/etalon/` format v1.1 |
+| Adaosuri țintă implicite pe categorie | Etapa 2, S9 | decis 23.10: adaos țintă implicit 20 % (uzual 20–25 %), fără plafon pe categorii; țigla se fixează la „achiziție + x %” când clientul compară lei / mp; discount afișat uzual 25–30 % |
 | Culorile disponibile per model / grosime | Etapa 2 | de pregătit |
 | Textul legal pentru zona B | Etapa 3, S15 | de pregătit |
 | Stadiile comenzilor; schema de comision a agenților | Etapa 5 | mai târziu |

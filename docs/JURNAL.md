@@ -192,3 +192,16 @@ Fiecare intrare: data, obiectivul sesiunii, rezultatul, următorul pas propus.
 - În commit intră și `docs/ETALON.md`, `docs/etalon/E01–E11.json` (v1.1) și `docs/FISA-OFERTARE.md` v1.1, scrise de Claude chat, neatinse.
 
 **Următorul pas propus:** S8 — cantitățile: mp din panotaj (Σ lungime × bucăți × lățime totală, 3 zecimale), suprafață directă și combinată, ml din lungime × bucăți, șipca în ambele variante (Comandă / Calcul); primele diferențe din raportul etalon („intrari.*”) trebuie să dispară.
+
+## 2026-10-27 — S8: cantitățile și structura ofertei în MOT
+
+**Obiectiv:** S8 din PLAN v0.8 — cantitățile (învelitori, accesorii la lungimi, șipcă), comandabil, dripstop, UM normalizată, validarea intrărilor, pachetele și formularele Bilka. Nicio regulă de preț (S9–S10).
+
+**Rezultat:**
+- `server/src/modules/mot/cantitati.ts`: mp din panotaj (Σ lungime × bucăți × lățime, 3 zecimale half-up, o singură rotunjire), coli, suprafață directă și combinată, ml din poziții, șipca în ambele variante (Calcul: 11.000 ÷ 117,9 = 93,3 → 94; 0,70 m → 6; E06: 100 buc, 120,000 ml), comandabil cu motive, avertizarea dripstop (T18 / T35 / T45 sub 40 mp, pe câmpul `optiune`), UM normalizată. Lățimea tablei plane (1,25) o dă apelantul, din varianta din catalog.
+- `server/src/modules/mot/pachete.ts`: cele trei reguli de împachetare, pluvialul per finisaj + culoare, secțiunile de sine stătătoare, formularele cu textul pentru agent; numele pachetelor derivate din catalog („P2 — Retro Plus 7016 mat”, cum s-a decis). `tipuri.ts`: validare zod cu intrări imposibile refuzate; `calcul.ts` leagă cantități → pachete.
+- Etaloanele v1.2 (panotajul din E01 și în E02 / E04 / E05 / E07 / E08 / E09, `asteptat.comandabil`, `mp_invelitori`) se citesc; încărcătorul dă motorului grup / familie / opțiune din CSV.
+- Teste: `npm test` — **127 verzi** (92 + 24 cantități + 11 pachete; încărcarea etalonului actualizată la v1.2). `npm run test:etalon` — 11 roșii, **numai diferențe de preț** (cantitățile, mp-ul învelitorilor, șipca, comandabil, pachetul fiecărei linii, pachetele și formularele din E11 coincid): E01 126 · E02 126 · E03 62 · E04 128 · E05 127 · E06 23 · E07 138 · E08 181 · E09 126 · E10 18 · E11 106.
+- ARH §13: intrarea S8. În commit: PLAN v0.8, ETALON.md v1.1, etalon/E01–E11 v1.2 (Claude chat, neatinse). Fără migrări, fără schimbări în catalog, prețuri sau conturi; serverele oprite.
+
+**Următorul pas propus:** S9 — cele trei straturi de preț (achiziția contului cu grupa, ținta în lei, prezentarea în cele trei moduri cu calculul invers la leu, restul de rotunjire și abaterea, garda) și ecranul tehnic „Calcul de probă”; numărătorile de mai sus trebuie să ajungă la zero pe E01, E04, E05, E08, E11 (fără preț fix, variantă, completare sau colaborator).

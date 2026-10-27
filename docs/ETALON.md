@@ -1,6 +1,6 @@
 # ETALON — ofertele-model ale motorului de calcul
 
-Versiunea 1.0 · 27 octombrie 2026 (E01–E11 aprobate de Ionuț — setul complet pentru S7) · Scris de Claude (chat) · Precondiția (b) a Etapei 2 din PLAN.
+Versiunea 1.1 · 27 octombrie 2026 (E01–E11 aprobate; fișiere format v1.2: panotajul din E01 și în E02/E04/E05/E07/E08/E09, `comandabil` așteptat, numele pachetului „Retro Plus” derivat din catalog) · Scris de Claude (chat) · Precondiția (b) a Etapei 2 din PLAN.
 Fiecare ofertă-model are: intrările (produse reale din catalog, cantități, cont, client, țintă, mod de prezentare, curs), calculul pas cu pas după FISA-OFERTARE cap. 11 (v1.1) și rezultatul așteptat, cifră cu cifră. Când Ionuț o aprobă („așa aș vinde"), devine test pentru Code (`docs/etalon/E0x.json`). Statusuri: PROPUS → APROBAT (data) · corecturile schimbă întâi fișa, apoi exemplul. Calculul de referință e făcut de mână (Python, Decimal), independent de codul softului.
 
 ## 0. Regulile comune (toate exemplele) — deciziile lui Ionuț din 23.10.2026 sunt incluse
@@ -405,7 +405,7 @@ Scopul: FISA-OFERTARE 3.3–3.5 — a doua învelitoare cu altă cheie **și** c
 
 ### Rezultat
 - Prețuri: achiziție **2.236,81 EUR = 14.620,73 lei cu TVA** → țintă 20 % = 17.544,88 → document 2.711,02 + TVA 569,31 = 3.280,33 EUR → **17.544,85 lei**; rest 0,51 → +0,01 pe bordură streașină (23), cot (21), burlan (7).
-- **Pachete** (decise de soft): **P1** Clasic 8017 + accesoriile și fixarea lui (7 linii, 1.525,35 EUR achiziție) · **P2** Retro 7016 + accesoriile proprii (4 linii, 315,66 EUR) · **Pluvial A** 8017 (6 linii, 313,59 EUR) · **Pluvial B** 7016 (5 linii, 82,21 EUR).
+- **Pachete** (decise de soft): **P1** Clasic 8017 + accesoriile și fixarea lui (7 linii, 1.525,35 EUR achiziție) · **P2** Retro Plus 7016 + accesoriile proprii (4 linii, 315,66 EUR) · **Pluvial A** 8017 (6 linii, 313,59 EUR) · **Pluvial B** 7016 (5 linii, 82,21 EUR).
 - **Formulare Bilka la export**: 1) Clasic 8017 mat ca principală + P1; 2) Retro Plus Standard 7016 mat ca principală + accesoriile Retro — pachet separat (altă cheie **și** accesorii proprii); 3) pluvial mat 8017; 4) pluvial mat 7016. Dacă Retro ar fi fost tot 8017 mat, sau 7016 fără accesorii proprii, ar fi intrat ca secundară pe formularul 1 → 3 formulare.
 
 | Nr | Rubrica | Produs | UM | Cant. | Bază EUR | Achiziție cont EUR | Achiziție lei cu TVA (ecran) | Preț document EUR | Valoare EUR |

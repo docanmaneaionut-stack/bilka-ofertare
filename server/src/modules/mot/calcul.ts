@@ -1,58 +1,67 @@
-import { cursAchizitie, formateazaCantitate, la2, la3 } from "./zecimal.js";
+import { calculeazaCantitati, normalizeazaUm } from "./cantitati.js";
+import { impacheteaza } from "./pachete.js";
 import { schemaIntrareOferta, type IntrareOferta, type LinieCalculata, type RezultatOferta } from "./tipuri.js";
+import { cursAchizitie, formateazaCantitate, la2 } from "./zecimal.js";
 
 // Motorul de calcul (MOT) - functie pura: oferta ca date -> oferta calculata.
 //
-// S7 (fundatia): se valideaza intrarea, se deriva cursul de achizitie (R1) si
-// se intorc liniile cu cantitatile declarate si pretul de baza din catalog;
-// toate campurile de pret sunt "0.00". Pasii de calcul se adauga pe rand:
-//   S8  cantitati (panotaj, suprafata directa / combinata, ml, sipca)
+// Pasii construiti pana acum:
+//   S7  validarea intrarii, cursul de achizitie (R1), aritmetica zecimala
+//   S8  cantitatile (panotaj, suprafata directa / combinata, ml, sipca),
+//       comandabil, dripstop, UM normalizata, pachetele si formularele Bilka
+// Urmeaza:
 //   S9  achizitia contului cu grupa, tinta in lei, prezentarea (3 moduri),
 //       restul de rotunjire si abaterea, garda, varianta B de TVA
 //   S10 variante, preturi fixe, preluare preturi, completari, colaboratori
 //   S11 toate ofertele etalon verzi; ARH §5 -> INGHETAT
-// Regulile: docs/ETALON.md §0 (R1-R8) si FISA-OFERTARE v1.1 cap. 3, 8, 9, 11, 19, 2b.
+// Toate campurile de pret sunt "0.00" pana la S9.
+// Regulile: docs/ETALON.md §0 (R1-R8) si FISA-OFERTARE v1.1 cap. 3, 5, 8, 9, 11, 19, 2b.
 
 const ZERO2 = "0.00";
-const ZERO3 = "0.000";
 
 export function calculeazaOferta(intrareBruta: IntrareOferta): RezultatOferta {
   const intrare = schemaIntrareOferta.parse(intrareBruta) as IntrareOferta;
   const curs = cursAchizitie(intrare.cursBnr);
+  const cantitati = calculeazaCantitati(intrare);
+  const impachetare = impacheteaza(intrare);
 
-  const linii: LinieCalculata[] = intrare.linii.map((l) => ({
-    id: l.id,
-    cod: l.produs.cod,
-    um: l.produs.um,
-    cantitate: formateazaCantitate(l.cantitate, l.produs.um),
-    bazaEur: la2(l.produs.pretBazaEur),
-    achizitieContEur: ZERO2,
-    achizitieRealaEur: ZERO2,
-    achizitieContLeiCuTva: ZERO2,
-    pretDocumentEur: ZERO2,
-    valoareEur: ZERO2,
-    ...(intrare.modPrezentare === "lista_discount_general" ? { pretListaEur: ZERO2 } : {}),
-    ...(intrare.modPrezentare === "discount_per_linie" ? { pretListaEur: ZERO2, discountPct: "0", pretNetEur: ZERO2 } : {}),
-    pretFix: l.pretFix !== undefined,
-    ...(l.invelitoare !== undefined ? { invelitoare: l.invelitoare } : {}),
-  }));
+  const linii: LinieCalculata[] = intrare.linii.map((l) => {
+    const um = normalizeazaUm(l.produs.um);
+    const linie: LinieCalculata = {
+      id: l.id,
+      cod: l.produs.cod,
+      rubrica: l.rubrica,
+      um,
+      cantitate: formateazaCantitate(cantitati.peLinie.get(l.id) ?? l.cantitate, um),
+      bazaEur: la2(l.produs.pretBazaEur),
+      achizitieContEur: ZERO2,
+      achizitieRealaEur: ZERO2,
+      achizitieContLeiCuTva: ZERO2,
+      pretDocumentEur: ZERO2,
+      valoareEur: ZERO2,
+      pretFix: l.pretFix !== undefined,
+    };
+    if (intrare.modPrezentare === "lista_discount_general") linie.pretListaEur = ZERO2;
+    if (intrare.modPrezentare === "discount_per_linie") {
+      linie.pretListaEur = ZERO2;
+      linie.discountPct = "0";
+      linie.pretNetEur = ZERO2;
+    }
+    if (l.invelitoare !== undefined) linie.invelitoare = l.invelitoare;
+    const pachet = impachetare.pachetPeLinie.get(l.id);
+    if (pachet !== undefined) linie.pachet = pachet;
+    return linie;
+  });
 
-  return {
+  const rezultat: RezultatOferta = {
     cursBnr: intrare.cursBnr,
     cursAchizitie: curs,
     cantitati: {
-      invelitori: intrare.invelitori.map((i) => ({ id: i.id, mp: ZERO3, coli: 0 })),
-      accesoriiMl: intrare.linii.filter((l) => l.pozitii !== undefined).map((l) => ({ linieId: l.id, ml: ZERO3 })),
-      ...(intrare.sipca
-        ? {
-            sipca: {
-              tronsoane: (intrare.sipca.tronsoane ?? []).map(() => ({ bucati: 0, ml: ZERO3 })),
-              bucatiTotal: 0,
-              mlTotal: la3(ZERO3),
-            },
-          }
-        : {}),
+      invelitori: cantitati.invelitori,
+      accesoriiMl: cantitati.accesoriiMl,
+      ...(cantitati.sipca ? { sipca: cantitati.sipca } : {}),
     },
+    comandabil: cantitati.comandabil,
     linii,
     totaluri: {
       achizitieContEurFaraTva: ZERO2,
@@ -72,18 +81,22 @@ export function calculeazaOferta(intrareBruta: IntrareOferta): RezultatOferta {
     vanzari: { pretVanzareLei: ZERO2, costAchizitieLei: ZERO2, adaosNetLei: ZERO2, adaosBrutLei: ZERO2 },
     abatereEur: ZERO2,
     garda: { respectata: true, liniiSubAchizitie: [], aplicata: !intrare.completare },
-    ...(intrare.zonaB.length > 0
-      ? {
-          zonaB: {
-            supliment: intrare.zonaB.map((l) => ({ denumire: l.denumire, sumaLei: la2(l.sumaLei) })),
-            suplimentTotalLei: ZERO2,
-            inFactura: [],
-            tabelFacturare: { faraTvaEur: ZERO2, tvaEur: ZERO2, cuTvaEur: ZERO2, totalLei: ZERO2 },
-          },
-        }
-      : {}),
-    pachete: [],
-    formulareBilka: [],
-    avertizari: ["Motorul de calcul este in constructie (S7): preturile nu sunt inca calculate."],
+    pachete: impachetare.pachete,
+    formulareBilka: impachetare.formulare,
+    textFormulare: impachetare.text,
+    avertizari: [
+      ...cantitati.avertizari,
+      ...impachetare.avertizari,
+      "Motorul de calcul este in constructie (S8): preturile nu sunt inca calculate.",
+    ],
   };
+  if (intrare.zonaB.length > 0) {
+    rezultat.zonaB = {
+      supliment: intrare.zonaB.map((l) => ({ denumire: l.denumire, sumaLei: la2(l.sumaLei) })),
+      suplimentTotalLei: ZERO2,
+      inFactura: [],
+      tabelFacturare: { faraTvaEur: ZERO2, tvaEur: ZERO2, cuTvaEur: ZERO2, totalLei: ZERO2 },
+    };
+  }
+  return rezultat;
 }

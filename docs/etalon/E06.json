@@ -108,8 +108,10 @@
    }
   },
   "abatere_eur": "−0.01 (restul nu se poate repartiza în cenți întregi; vezi ETALON R5)",
-  "nota_total_lei": "ținta 1.000,00 nu se poate atinge exact (abatere 1 cent pe linii) → totalul afișat e cel calculat: 187,62 EUR × 5,3297 = 999,96 lei (R6)"
+  "nota_total_lei": "ținta 1.000,00 nu se poate atinge exact (abatere 1 cent pe linii) → totalul afișat e cel calculat: 187,62 EUR × 5,3297 = 999,96 lei (R6)",
+  "comandabil": true,
+  "nota_comandabil": "fără învelitori — nimic nu blochează comanda"
  },
  "reguli": "ETALON.md §0 (R1–R7)",
- "format": "v1.1 (27.10.2026): pe liniile legate câmpul `invelitoare` = codul învelitorii de care aparțin; pe liniile independente / de sine stătătoare câmpul `culoare` {ral, finisaj[, grosime]}; prețul fix structurat în `pret_fix` {tip, valoare, normalizat_eur_fara_tva}"
+ "format": "v1.1 (27.10.2026): pe liniile legate câmpul `invelitoare` = codul învelitorii de care aparțin; pe liniile independente / de sine stătătoare câmpul `culoare` {ral, finisaj[, grosime]}; prețul fix structurat în `pret_fix` {tip, valoare, normalizat_eur_fara_tva} · v1.2 (27.10.2026): `invelitori` cu panotaj peste tot unde există învelitori; `asteptat.comandabil`"
 }

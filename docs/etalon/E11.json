@@ -68,7 +68,7 @@
     "denumire": "Retro Plus (Standard, Micro-Ribs, Flat, Double Line) – mat – 0,50 mm",
     "um": "mp",
     "cantitate": "30.406",
-    "pachet": "P2 — Retro 7016 mat",
+    "pachet": "P2 — Retro Plus 7016 mat",
     "cheie_culoare": "RAL 7016 mat 0,50"
    },
    {
@@ -117,7 +117,7 @@
     "denumire": "Coamă Retro – 417 mm / 2 m – mat – 0,50 mm",
     "um": "buc",
     "cantitate": "4",
-    "pachet": "P2 — Retro 7016 mat",
+    "pachet": "P2 — Retro Plus 7016 mat",
     "cheie_culoare": "RAL 7016 mat 0,50 (moștenit)",
     "invelitoare": "REPROMAT050"
    },
@@ -127,7 +127,7 @@
     "denumire": "Bordură streașină Retro – 312 mm / 2 m – mat – 0,50 mm",
     "um": "buc",
     "cantitate": "6",
-    "pachet": "P2 — Retro 7016 mat",
+    "pachet": "P2 — Retro Plus 7016 mat",
     "cheie_culoare": "RAL 7016 mat 0,50 (moștenit)",
     "invelitoare": "REPROMAT050"
    },
@@ -157,7 +157,7 @@
     "denumire": "Holțșuruburi în culoare, lemn – 4,8 × 35 mm",
     "um": "cutie",
     "cantitate": "2",
-    "pachet": "P2 — Retro 7016 mat",
+    "pachet": "P2 — Retro Plus 7016 mat",
     "cheie_culoare": "RAL 7016 (moștenit)",
     "invelitoare": "REPROMAT050"
    },
@@ -533,7 +533,7 @@
     "achizitie_eur": "1525.35"
    },
    {
-    "pachet": "P2 — Retro 7016 mat",
+    "pachet": "P2 — Retro Plus 7016 mat",
     "linii": 4,
     "achizitie_eur": "315.66"
    },
@@ -566,8 +566,9 @@
     "continut": "Pluvial mat RAL 7016 (sistemul B) — un formular per finisaj + culoare"
    }
   ],
-  "nota": "împachetarea o decide softul (FISA-OFERTARE 3.4–3.5); agentul vede doar „se vor genera 4 formulare” și de ce"
+  "nota": "împachetarea o decide softul (FISA-OFERTARE 3.4–3.5); agentul vede doar „se vor genera 4 formulare” și de ce",
+  "comandabil": true
  },
  "reguli": "ETALON.md §0 (R1–R7)",
- "format": "v1.1 (27.10.2026): pe liniile legate câmpul `invelitoare` = codul învelitorii de care aparțin; pe liniile independente / de sine stătătoare câmpul `culoare` {ral, finisaj[, grosime]}; prețul fix structurat în `pret_fix` {tip, valoare, normalizat_eur_fara_tva}"
+ "format": "v1.1 (27.10.2026): pe liniile legate câmpul `invelitoare` = codul învelitorii de care aparțin; pe liniile independente / de sine stătătoare câmpul `culoare` {ral, finisaj[, grosime]}; prețul fix structurat în `pret_fix` {tip, valoare, normalizat_eur_fara_tva} · v1.2 (27.10.2026): `invelitori` cu panotaj peste tot unde există învelitori; `asteptat.comandabil`"
 }
