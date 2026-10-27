@@ -1,0 +1,300 @@
+{
+ "id": "E03",
+ "titlu": "Colaborator (adaos cont 5 %) — T35 mat 0,50 RAL 9005 cu accesorii, pluvial și accesorii speciale la lungimi; țintă adaos 12 %, prezentare simplă",
+ "status": "aprobat (Ionuț, 23.10.2026)",
+ "intrari": {
+  "curs_bnr": "5.3285",
+  "tva_pct": 21,
+  "adaos_cont_pct": "5.00",
+  "grupa_pct": "0",
+  "data_ofertei": "2026-10-20",
+  "cont": "Colaborator",
+  "client": "client al colaboratorului (persoană fizică)",
+  "mod_prezentare": "simplu",
+  "tinta": {
+   "tip": "adaos_pct",
+   "valoare": "12"
+  },
+  "invelitori": [
+   {
+    "cod_bilka": "TCT35MAT050",
+    "culoare": "RAL 9005",
+    "latime_totala_m": "1.085",
+    "panotaj": [
+     {
+      "lungime_m": "5.70",
+      "bucati": 6
+     }
+    ],
+    "mp": "37.107"
+   }
+  ],
+  "accesorii_ml": [
+   {
+    "cod_bilka": "AML11LUC050",
+    "culoare": "RAL 9002",
+    "lungime_m": "3.00",
+    "bucati": 4,
+    "ml": "12.000"
+   },
+   {
+    "cod_bilka": "AML08LUC050",
+    "culoare": "RAL 9002",
+    "lungime_m": "2.00",
+    "bucati": 4,
+    "ml": "8.000"
+   }
+  ],
+  "linii": [
+   {
+    "rubrica": "Învelitori",
+    "cod_bilka": "TCT35MAT050",
+    "denumire": "Tablă cutată T35 (acoperiș / perete) – mat – 0,50 mm",
+    "um": "mp",
+    "cantitate": "37.107"
+   },
+   {
+    "rubrica": "Accesorii standard",
+    "cod_bilka": "ABF31MAT050",
+    "denumire": "Bordură fronton – 312 mm / 2 m – mat – 0,50 mm",
+    "um": "buc",
+    "cantitate": "4",
+    "invelitoare": "TCT35MAT050"
+   },
+   {
+    "rubrica": "Accesorii speciale 2 ML",
+    "cod_bilka": "ASP08MAT050",
+    "denumire": "Accesoriu special 2 ML – D08 (351–400 mm) – mat – 0,50 mm",
+    "um": "buc",
+    "cantitate": "5",
+    "invelitoare": "TCT35MAT050"
+   },
+   {
+    "rubrica": "Accesorii speciale 2 ML",
+    "cod_bilka": "ASP09MAT050",
+    "denumire": "Accesoriu special 2 ML – D09 (401–450 mm) – mat – 0,50 mm",
+    "um": "buc",
+    "cantitate": "5",
+    "invelitoare": "TCT35MAT050"
+   },
+   {
+    "rubrica": "Fixare și etanșare",
+    "cod_bilka": "SUCLE408035",
+    "denumire": "Holțșuruburi în culoare, lemn – 4,8 × 35 mm",
+    "um": "cutie",
+    "cantitate": "1",
+    "invelitoare": "TCT35MAT050"
+   },
+   {
+    "rubrica": "Fixare și etanșare",
+    "cod_bilka": "BANDAETAT35",
+    "denumire": "Bandă etanșare profilată T35 – coamă",
+    "um": "buc",
+    "cantitate": "10",
+    "invelitoare": "TCT35MAT050"
+   },
+   {
+    "rubrica": "Sistem pluvial",
+    "cod_bilka": "SPBUR0903ML",
+    "denumire": "Burlan 90 / 3m – pluvial colorat (lucios)",
+    "um": "buc",
+    "cantitate": "6",
+    "culoare": {
+     "ral": "RAL 9005",
+     "finisaj": "pluvial colorat (lucios)"
+    }
+   },
+   {
+    "rubrica": "Sistem pluvial",
+    "cod_bilka": "SPCOL090000",
+    "denumire": "Colier burlan 90 – pluvial colorat (lucios)",
+    "um": "buc",
+    "cantitate": "12",
+    "culoare": {
+     "ral": "RAL 9005",
+     "finisaj": "pluvial colorat (lucios)"
+    }
+   },
+   {
+    "rubrica": "Sistem pluvial",
+    "cod_bilka": "SPCOT090000",
+    "denumire": "Cot de 60 grade 90 – pluvial colorat (lucios)",
+    "um": "buc",
+    "cantitate": "6",
+    "culoare": {
+     "ral": "RAL 9005",
+     "finisaj": "pluvial colorat (lucios)"
+    }
+   },
+   {
+    "rubrica": "Sistem pluvial",
+    "cod_bilka": "SPPRE09010M",
+    "denumire": "Prelungitor intermediar 90 / 1 m – pluvial colorat (lucios)",
+    "um": "buc",
+    "cantitate": "3",
+    "culoare": {
+     "ral": "RAL 9005",
+     "finisaj": "pluvial colorat (lucios)"
+    }
+   },
+   {
+    "rubrica": "Accesorii speciale la lungimi (ML)",
+    "cod_bilka": "AML11LUC050",
+    "denumire": "Accesoriu special la metru liniar – D11 (501–550 mm) – lucios – 0,50 mm",
+    "um": "ml",
+    "cantitate": "12.000",
+    "culoare": {
+     "ral": "RAL 9002",
+     "finisaj": "lucios",
+     "grosime": "0,50 mm"
+    }
+   },
+   {
+    "rubrica": "Accesorii speciale la lungimi (ML)",
+    "cod_bilka": "AML08LUC050",
+    "denumire": "Accesoriu special la metru liniar – D08 (351–400 mm) – lucios – 0,50 mm",
+    "um": "ml",
+    "cantitate": "8.000",
+    "culoare": {
+     "ral": "RAL 9002",
+     "finisaj": "lucios",
+     "grosime": "0,50 mm"
+    }
+   }
+  ]
+ },
+ "asteptat": {
+  "curs_achizitie": "5.3818",
+  "linii": [
+   {
+    "cod_bilka": "TCT35MAT050",
+    "cantitate": "37.107",
+    "baza_eur": "6.94",
+    "achizitie_cont_eur": "7.29",
+    "achizitie_cont_lei_cu_tva": "47.47",
+    "pret_document_eur": "8.25",
+    "valoare_eur": "306.13"
+   },
+   {
+    "cod_bilka": "ABF31MAT050",
+    "cantitate": "4",
+    "baza_eur": "4.90",
+    "achizitie_cont_eur": "5.15",
+    "achizitie_cont_lei_cu_tva": "33.54",
+    "pret_document_eur": "5.83",
+    "valoare_eur": "23.32"
+   },
+   {
+    "cod_bilka": "ASP08MAT050",
+    "cantitate": "5",
+    "baza_eur": "7.06",
+    "achizitie_cont_eur": "7.41",
+    "achizitie_cont_lei_cu_tva": "48.25",
+    "pret_document_eur": "8.38",
+    "valoare_eur": "41.90"
+   },
+   {
+    "cod_bilka": "ASP09MAT050",
+    "cantitate": "5",
+    "baza_eur": "7.94",
+    "achizitie_cont_eur": "8.34",
+    "achizitie_cont_lei_cu_tva": "54.31",
+    "pret_document_eur": "9.43",
+    "valoare_eur": "47.15"
+   },
+   {
+    "cod_bilka": "SUCLE408035",
+    "cantitate": "1",
+    "baza_eur": "6.25",
+    "achizitie_cont_eur": "6.56",
+    "achizitie_cont_lei_cu_tva": "42.72",
+    "pret_document_eur": "7.42",
+    "valoare_eur": "7.42"
+   },
+   {
+    "cod_bilka": "BANDAETAT35",
+    "cantitate": "10",
+    "baza_eur": "1.10",
+    "achizitie_cont_eur": "1.16",
+    "achizitie_cont_lei_cu_tva": "7.55",
+    "pret_document_eur": "1.31",
+    "valoare_eur": "13.10"
+   },
+   {
+    "cod_bilka": "SPBUR0903ML",
+    "cantitate": "6",
+    "baza_eur": "8.07",
+    "achizitie_cont_eur": "8.47",
+    "achizitie_cont_lei_cu_tva": "55.16",
+    "pret_document_eur": "9.57",
+    "valoare_eur": "57.42"
+   },
+   {
+    "cod_bilka": "SPCOL090000",
+    "cantitate": "12",
+    "baza_eur": "0.86",
+    "achizitie_cont_eur": "0.90",
+    "achizitie_cont_lei_cu_tva": "5.86",
+    "pret_document_eur": "1.02",
+    "valoare_eur": "12.24"
+   },
+   {
+    "cod_bilka": "SPCOT090000",
+    "cantitate": "6",
+    "baza_eur": "2.31",
+    "achizitie_cont_eur": "2.43",
+    "achizitie_cont_lei_cu_tva": "15.82",
+    "pret_document_eur": "2.75",
+    "valoare_eur": "16.50"
+   },
+   {
+    "cod_bilka": "SPPRE09010M",
+    "cantitate": "3",
+    "baza_eur": "2.69",
+    "achizitie_cont_eur": "2.82",
+    "achizitie_cont_lei_cu_tva": "18.36",
+    "pret_document_eur": "3.19",
+    "valoare_eur": "9.57"
+   },
+   {
+    "cod_bilka": "AML11LUC050",
+    "cantitate": "12.000",
+    "baza_eur": "5.53",
+    "achizitie_cont_eur": "5.81",
+    "achizitie_cont_lei_cu_tva": "37.83",
+    "pret_document_eur": "6.57",
+    "valoare_eur": "78.84"
+   },
+   {
+    "cod_bilka": "AML08LUC050",
+    "cantitate": "8.000",
+    "baza_eur": "4.02",
+    "achizitie_cont_eur": "4.22",
+    "achizitie_cont_lei_cu_tva": "27.48",
+    "pret_document_eur": "4.77",
+    "valoare_eur": "38.16"
+   }
+  ],
+  "totaluri": {
+   "achizitie_cont_eur_fara_tva": "576.16",
+   "achizitie_cont_lei_fara_tva": "3100.78",
+   "achizitie_cont_lei_cu_tva": "3751.94",
+   "tinta_lei_cu_tva": "4202.17",
+   "adaos_real_pct": "12.00",
+   "marja_lei": "450.23",
+   "document_fara_tva_eur": "651.75",
+   "tva_eur": "136.87",
+   "document_cu_tva_eur": "788.62",
+   "document_total_lei": "4202.16",
+   "vanzari": {
+    "nota": "rândul din tabelul Administratorului (FISA-OFERTARE cap. 19, 23.10.2026): vânzare = achiziția colaboratorului, cost = baza",
+    "pret_vanzare_lei": "3751.94",
+    "cost_achizitie_lei": "3572.21",
+    "adaos_net_lei": "179.73",
+    "adaos_brut_lei": "148.54"
+   }
+  }
+ },
+ "reguli": "ETALON.md §0 (R1–R7)",
+ "format": "v1.1 (27.10.2026): pe liniile legate câmpul `invelitoare` = codul învelitorii de care aparțin; pe liniile independente / de sine stătătoare câmpul `culoare` {ral, finisaj[, grosime]}; prețul fix structurat în `pret_fix` {tip, valoare, normalizat_eur_fara_tva}"
+}

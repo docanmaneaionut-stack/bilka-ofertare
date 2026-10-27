@@ -1,4 +1,4 @@
-import { defineConfig } from "vitest/config";
+import { configDefaults, defineConfig } from "vitest/config";
 import { config as incarcaEnv } from "dotenv";
 
 incarcaEnv();
@@ -21,6 +21,8 @@ export default defineConfig({
   test: {
     environment: "node",
     include: ["tests/**/*.test.ts"],
+    // ofertele-model (etalon) au comanda lor, fara baza de date: npm run test:etalon
+    exclude: [...configDefaults.exclude, "tests/etalon/**"],
     globalSetup: ["tests/globalSetup.ts"],
     env: { DATABASE_URL: urlTest, DATE_DIR: "data-test", ADMIN_REZERVA_EMAIL: "rezerva-test@exemplu.local" },
     testTimeout: 30_000,

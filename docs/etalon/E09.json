@@ -1,0 +1,554 @@
+{
+ "id": "E09",
+ "titlu": "Varianta 2 a ofertei E01 — Iberic Grande Mat 0,50 în loc de mat (accesoriile urmează), adaosul variantei de bază (18,568 %) aplicat pe noile achiziții",
+ "status": "aprobat (Ionuț, 27.10.2026)",
+ "intrari": {
+  "curs_bnr": "5.3485",
+  "tva_pct": 21,
+  "adaos_cont_pct": "1.00",
+  "grupa_pct": "0",
+  "data_ofertei": "2026-10-22",
+  "cont": "Agent",
+  "client": "persoană fizică",
+  "mod_prezentare": "simplu",
+  "varianta_a": "E01",
+  "tinta": {
+   "tip": "adaos_pct_pastrat_din_varianta_de_baza",
+   "valoare": "18.5680"
+  },
+  "linii": [
+   {
+    "rubrica": "Învelitori",
+    "cod_bilka": "TMIBEGDM050",
+    "denumire": "Țiglă metalică Iberic – Grande Mat – 0,50 mm",
+    "um": "mp",
+    "cantitate": "180.481"
+   },
+   {
+    "rubrica": "Învelitori",
+    "cod_bilka": "TCT08GDM050",
+    "denumire": "Tablă cutată T8 (perete) – Grande Mat – 0,50 mm",
+    "um": "mp",
+    "cantitate": "6.000"
+   },
+   {
+    "rubrica": "Accesorii standard",
+    "cod_bilka": "ACMICGDM050",
+    "denumire": "Coamă mică – Grande Mat – 0,50 mm",
+    "um": "buc",
+    "cantitate": "13",
+    "invelitoare": "TMIBEGDM050"
+   },
+   {
+    "rubrica": "Accesorii standard",
+    "cod_bilka": "ABF36GDM050",
+    "denumire": "Bordură fronton – 360 mm / 2 m – Grande Mat – 0,50 mm",
+    "um": "buc",
+    "cantitate": "17",
+    "invelitoare": "TMIBEGDM050"
+   },
+   {
+    "rubrica": "Accesorii standard",
+    "cod_bilka": "ACF15GDM050",
+    "denumire": "Colector fronton – 156 mm / 2 m – Grande Mat – 0,50 mm",
+    "um": "buc",
+    "cantitate": "16",
+    "invelitoare": "TMIBEGDM050"
+   },
+   {
+    "rubrica": "Accesorii standard",
+    "cod_bilka": "AST20GDM050",
+    "denumire": "Bordură streașină – 208 mm / 2 m – Grande Mat – 0,50 mm",
+    "um": "buc",
+    "cantitate": "21",
+    "invelitoare": "TMIBEGDM050"
+   },
+   {
+    "rubrica": "Accesorii standard",
+    "cod_bilka": "AFP25GDM050",
+    "denumire": "Fixarea plăcilor pe zid – 250 mm / 2 m – Grande Mat – 0,50 mm",
+    "um": "buc",
+    "cantitate": "7",
+    "invelitoare": "TMIBEGDM050"
+   },
+   {
+    "rubrica": "Accesorii standard",
+    "cod_bilka": "ADO41GDM050",
+    "denumire": "Dolie – 417 mm / 2 m – Grande Mat – 0,50 mm",
+    "um": "buc",
+    "cantitate": "4",
+    "invelitoare": "TMIBEGDM050"
+   },
+   {
+    "rubrica": "Accesorii standard",
+    "cod_bilka": "AOZ20GDM050",
+    "denumire": "Opritor zăpadă – 208 mm / 2 m – Grande Mat – 0,50 mm",
+    "um": "buc",
+    "cantitate": "12",
+    "invelitoare": "TMIBEGDM050"
+   },
+   {
+    "rubrica": "Accesorii standard",
+    "cod_bilka": "ASCF4GDM050",
+    "denumire": "Set coș fum (4 piese × 1,25 m) – 4 piese × 1,25 m – Grande Mat – 0,50 mm",
+    "um": "buc",
+    "cantitate": "1",
+    "invelitoare": "TMIBEGDM050"
+   },
+   {
+    "rubrica": "Accesorii speciale 2 ML",
+    "cod_bilka": "ASP05GDM050",
+    "denumire": "Accesoriu special 2 ML – D05 (201–250 mm) – Grande Mat – 0,50 mm",
+    "um": "buc",
+    "cantitate": "2",
+    "invelitoare": "TMIBEGDM050"
+   },
+   {
+    "rubrica": "Fixare și etanșare",
+    "cod_bilka": "SUCLE408035",
+    "denumire": "Holțșuruburi în culoare, lemn – 4,8 × 35 mm",
+    "um": "cutie",
+    "cantitate": "9",
+    "invelitoare": "TMIBEGDM050"
+   },
+   {
+    "rubrica": "Fixare și etanșare",
+    "cod_bilka": "SUCLE408020",
+    "denumire": "Holțșuruburi în culoare, lemn – 4,8 × 20 mm",
+    "um": "cutie",
+    "cantitate": "1",
+    "invelitoare": "TMIBEGDM050"
+   },
+   {
+    "rubrica": "Fixare și etanșare",
+    "cod_bilka": "AXSPRMAT400",
+    "denumire": "Spray corector 400 ml – mat",
+    "um": "buc",
+    "cantitate": "3",
+    "invelitoare": "TMIBEGDM050"
+   },
+   {
+    "rubrica": "Fixare și etanșare",
+    "cod_bilka": "AXCAPGDM000",
+    "denumire": "Capac coamă – Grande Mat",
+    "um": "buc",
+    "cantitate": "4",
+    "invelitoare": "TMIBEGDM050"
+   },
+   {
+    "rubrica": "Fixare și etanșare",
+    "cod_bilka": "BANDABIT150",
+    "denumire": "Bandă bituminoasă – 15 cm × 10 m",
+    "um": "rolă",
+    "cantitate": "3",
+    "invelitoare": "TMIBEGDM050"
+   },
+   {
+    "rubrica": "Fixare și etanșare",
+    "cod_bilka": "AXMAS300PRE",
+    "denumire": "Mastic etanșare premium Bilka – 300 ml",
+    "um": "buc",
+    "cantitate": "3",
+    "invelitoare": "TMIBEGDM050"
+   },
+   {
+    "rubrica": "Sistem pluvial",
+    "cod_bilka": "SPJGH1254ML",
+    "denumire": "Jgheab 125 / 4m – pluvial colorat (lucios)",
+    "um": "buc",
+    "cantitate": "10",
+    "culoare": {
+     "ral": "RAL 3005",
+     "finisaj": "pluvial colorat (lucios)"
+    }
+   },
+   {
+    "rubrica": "Sistem pluvial",
+    "cod_bilka": "SPJGH1252ML",
+    "denumire": "Jgheab 125 / 2m – pluvial colorat (lucios)",
+    "um": "buc",
+    "cantitate": "1",
+    "culoare": {
+     "ral": "RAL 3005",
+     "finisaj": "pluvial colorat (lucios)"
+    }
+   },
+   {
+    "rubrica": "Sistem pluvial",
+    "cod_bilka": "SPBUR0903ML",
+    "denumire": "Burlan 90 / 3m – pluvial colorat (lucios)",
+    "um": "buc",
+    "cantitate": "6",
+    "culoare": {
+     "ral": "RAL 3005",
+     "finisaj": "pluvial colorat (lucios)"
+    }
+   },
+   {
+    "rubrica": "Sistem pluvial",
+    "cod_bilka": "SPC21125000",
+    "denumire": "Cârlig jgheab 125 / 210 mm – pluvial colorat (lucios)",
+    "um": "buc",
+    "cantitate": "56",
+    "culoare": {
+     "ral": "RAL 3005",
+     "finisaj": "pluvial colorat (lucios)"
+    }
+   },
+   {
+    "rubrica": "Sistem pluvial",
+    "cod_bilka": "SPBRIDA0000",
+    "denumire": "Brida jgheab – pluvial colorat (lucios)",
+    "um": "buc",
+    "cantitate": "50",
+    "culoare": {
+     "ral": "RAL 3005",
+     "finisaj": "pluvial colorat (lucios)"
+    }
+   },
+   {
+    "rubrica": "Sistem pluvial",
+    "cod_bilka": "SPCOL090000",
+    "denumire": "Colier burlan 90 – pluvial colorat (lucios)",
+    "um": "buc",
+    "cantitate": "12",
+    "culoare": {
+     "ral": "RAL 3005",
+     "finisaj": "pluvial colorat (lucios)"
+    }
+   },
+   {
+    "rubrica": "Sistem pluvial",
+    "cod_bilka": "SPCAP125000",
+    "denumire": "Capac jgheab 125 – pluvial colorat (lucios)",
+    "um": "buc",
+    "cantitate": "12",
+    "culoare": {
+     "ral": "RAL 3005",
+     "finisaj": "pluvial colorat (lucios)"
+    }
+   },
+   {
+    "rubrica": "Sistem pluvial",
+    "cod_bilka": "SPELI125000",
+    "denumire": "Element îmbinare jgheab 125 – pluvial colorat (lucios)",
+    "um": "buc",
+    "cantitate": "8",
+    "culoare": {
+     "ral": "RAL 3005",
+     "finisaj": "pluvial colorat (lucios)"
+    }
+   },
+   {
+    "rubrica": "Sistem pluvial",
+    "cod_bilka": "SPRAC125000",
+    "denumire": "Racord jgheab – burlan 125 / 90 – pluvial colorat (lucios)",
+    "um": "buc",
+    "cantitate": "6",
+    "culoare": {
+     "ral": "RAL 3005",
+     "finisaj": "pluvial colorat (lucios)"
+    }
+   },
+   {
+    "rubrica": "Sistem pluvial",
+    "cod_bilka": "SPCOT090000",
+    "denumire": "Cot de 60 grade 90 – pluvial colorat (lucios)",
+    "um": "buc",
+    "cantitate": "18",
+    "culoare": {
+     "ral": "RAL 3005",
+     "finisaj": "pluvial colorat (lucios)"
+    }
+   },
+   {
+    "rubrica": "Sistem pluvial",
+    "cod_bilka": "SPPRE09010M",
+    "denumire": "Prelungitor intermediar 90 / 1 m – pluvial colorat (lucios)",
+    "um": "buc",
+    "cantitate": "6",
+    "culoare": {
+     "ral": "RAL 3005",
+     "finisaj": "pluvial colorat (lucios)"
+    }
+   }
+  ]
+ },
+ "asteptat": {
+  "curs_achizitie": "5.4020",
+  "linii": [
+   {
+    "cod_bilka": "TMIBEGDM050",
+    "cantitate": "180.481",
+    "baza_eur": "8.82",
+    "achizitie_cont_eur": "8.91",
+    "achizitie_cont_lei_cu_tva": "58.24",
+    "pret_document_eur": "10.67",
+    "valoare_eur": "1925.73"
+   },
+   {
+    "cod_bilka": "TCT08GDM050",
+    "cantitate": "6.000",
+    "baza_eur": "8.57",
+    "achizitie_cont_eur": "8.66",
+    "achizitie_cont_lei_cu_tva": "56.61",
+    "pret_document_eur": "10.37",
+    "valoare_eur": "62.22"
+   },
+   {
+    "cod_bilka": "ACMICGDM050",
+    "cantitate": "13",
+    "baza_eur": "6.43",
+    "achizitie_cont_eur": "6.49",
+    "achizitie_cont_lei_cu_tva": "42.42",
+    "pret_document_eur": "7.77",
+    "valoare_eur": "101.01"
+   },
+   {
+    "cod_bilka": "ABF36GDM050",
+    "cantitate": "17",
+    "baza_eur": "8.57",
+    "achizitie_cont_eur": "8.66",
+    "achizitie_cont_lei_cu_tva": "56.61",
+    "pret_document_eur": "10.37",
+    "valoare_eur": "176.29"
+   },
+   {
+    "cod_bilka": "ACF15GDM050",
+    "cantitate": "16",
+    "baza_eur": "3.21",
+    "achizitie_cont_eur": "3.24",
+    "achizitie_cont_lei_cu_tva": "21.18",
+    "pret_document_eur": "3.88",
+    "valoare_eur": "62.08"
+   },
+   {
+    "cod_bilka": "AST20GDM050",
+    "cantitate": "21",
+    "baza_eur": "4.29",
+    "achizitie_cont_eur": "4.33",
+    "achizitie_cont_lei_cu_tva": "28.30",
+    "pret_document_eur": "5.18",
+    "valoare_eur": "108.78"
+   },
+   {
+    "cod_bilka": "AFP25GDM050",
+    "cantitate": "7",
+    "baza_eur": "5.14",
+    "achizitie_cont_eur": "5.19",
+    "achizitie_cont_lei_cu_tva": "33.92",
+    "pret_document_eur": "6.22",
+    "valoare_eur": "43.54"
+   },
+   {
+    "cod_bilka": "ADO41GDM050",
+    "cantitate": "4",
+    "baza_eur": "8.57",
+    "achizitie_cont_eur": "8.66",
+    "achizitie_cont_lei_cu_tva": "56.61",
+    "pret_document_eur": "10.36",
+    "valoare_eur": "41.44"
+   },
+   {
+    "cod_bilka": "AOZ20GDM050",
+    "cantitate": "12",
+    "baza_eur": "4.29",
+    "achizitie_cont_eur": "4.33",
+    "achizitie_cont_lei_cu_tva": "28.30",
+    "pret_document_eur": "5.19",
+    "valoare_eur": "62.28"
+   },
+   {
+    "cod_bilka": "ASCF4GDM050",
+    "cantitate": "1",
+    "baza_eur": "25.71",
+    "achizitie_cont_eur": "25.97",
+    "achizitie_cont_lei_cu_tva": "169.75",
+    "pret_document_eur": "31.09",
+    "valoare_eur": "31.09"
+   },
+   {
+    "cod_bilka": "ASP05GDM050",
+    "cantitate": "2",
+    "baza_eur": "5.79",
+    "achizitie_cont_eur": "5.85",
+    "achizitie_cont_lei_cu_tva": "38.24",
+    "pret_document_eur": "7.01",
+    "valoare_eur": "14.02"
+   },
+   {
+    "cod_bilka": "SUCLE408035",
+    "cantitate": "9",
+    "baza_eur": "6.25",
+    "achizitie_cont_eur": "6.31",
+    "achizitie_cont_lei_cu_tva": "41.24",
+    "pret_document_eur": "7.56",
+    "valoare_eur": "68.04"
+   },
+   {
+    "cod_bilka": "SUCLE408020",
+    "cantitate": "1",
+    "baza_eur": "6.25",
+    "achizitie_cont_eur": "6.31",
+    "achizitie_cont_lei_cu_tva": "41.24",
+    "pret_document_eur": "7.56",
+    "valoare_eur": "7.56"
+   },
+   {
+    "cod_bilka": "AXSPRMAT400",
+    "cantitate": "3",
+    "baza_eur": "4.50",
+    "achizitie_cont_eur": "4.55",
+    "achizitie_cont_lei_cu_tva": "29.74",
+    "pret_document_eur": "5.45",
+    "valoare_eur": "16.35"
+   },
+   {
+    "cod_bilka": "AXCAPGDM000",
+    "cantitate": "4",
+    "baza_eur": "4.77",
+    "achizitie_cont_eur": "4.82",
+    "achizitie_cont_lei_cu_tva": "31.51",
+    "pret_document_eur": "5.77",
+    "valoare_eur": "23.08"
+   },
+   {
+    "cod_bilka": "BANDABIT150",
+    "cantitate": "3",
+    "baza_eur": "11.35",
+    "achizitie_cont_eur": "11.46",
+    "achizitie_cont_lei_cu_tva": "74.91",
+    "pret_document_eur": "13.72",
+    "valoare_eur": "41.16"
+   },
+   {
+    "cod_bilka": "AXMAS300PRE",
+    "cantitate": "3",
+    "baza_eur": "6.05",
+    "achizitie_cont_eur": "6.11",
+    "achizitie_cont_lei_cu_tva": "39.94",
+    "pret_document_eur": "7.32",
+    "valoare_eur": "21.96"
+   },
+   {
+    "cod_bilka": "SPJGH1254ML",
+    "cantitate": "10",
+    "baza_eur": "8.71",
+    "achizitie_cont_eur": "8.80",
+    "achizitie_cont_lei_cu_tva": "57.52",
+    "pret_document_eur": "10.54",
+    "valoare_eur": "105.40"
+   },
+   {
+    "cod_bilka": "SPJGH1252ML",
+    "cantitate": "1",
+    "baza_eur": "4.36",
+    "achizitie_cont_eur": "4.40",
+    "achizitie_cont_lei_cu_tva": "28.76",
+    "pret_document_eur": "5.27",
+    "valoare_eur": "5.27"
+   },
+   {
+    "cod_bilka": "SPBUR0903ML",
+    "cantitate": "6",
+    "baza_eur": "8.07",
+    "achizitie_cont_eur": "8.15",
+    "achizitie_cont_lei_cu_tva": "53.27",
+    "pret_document_eur": "9.76",
+    "valoare_eur": "58.56"
+   },
+   {
+    "cod_bilka": "SPC21125000",
+    "cantitate": "56",
+    "baza_eur": "1.46",
+    "achizitie_cont_eur": "1.47",
+    "achizitie_cont_lei_cu_tva": "9.61",
+    "pret_document_eur": "1.76",
+    "valoare_eur": "98.56"
+   },
+   {
+    "cod_bilka": "SPBRIDA0000",
+    "cantitate": "50",
+    "baza_eur": "0.68",
+    "achizitie_cont_eur": "0.69",
+    "achizitie_cont_lei_cu_tva": "4.51",
+    "pret_document_eur": "0.83",
+    "valoare_eur": "41.50"
+   },
+   {
+    "cod_bilka": "SPCOL090000",
+    "cantitate": "12",
+    "baza_eur": "0.86",
+    "achizitie_cont_eur": "0.87",
+    "achizitie_cont_lei_cu_tva": "5.69",
+    "pret_document_eur": "1.04",
+    "valoare_eur": "12.48"
+   },
+   {
+    "cod_bilka": "SPCAP125000",
+    "cantitate": "12",
+    "baza_eur": "0.86",
+    "achizitie_cont_eur": "0.87",
+    "achizitie_cont_lei_cu_tva": "5.69",
+    "pret_document_eur": "1.04",
+    "valoare_eur": "12.48"
+   },
+   {
+    "cod_bilka": "SPELI125000",
+    "cantitate": "8",
+    "baza_eur": "1.38",
+    "achizitie_cont_eur": "1.39",
+    "achizitie_cont_lei_cu_tva": "9.09",
+    "pret_document_eur": "1.66",
+    "valoare_eur": "13.28"
+   },
+   {
+    "cod_bilka": "SPRAC125000",
+    "cantitate": "6",
+    "baza_eur": "2.31",
+    "achizitie_cont_eur": "2.33",
+    "achizitie_cont_lei_cu_tva": "15.23",
+    "pret_document_eur": "2.79",
+    "valoare_eur": "16.74"
+   },
+   {
+    "cod_bilka": "SPCOT090000",
+    "cantitate": "18",
+    "baza_eur": "2.31",
+    "achizitie_cont_eur": "2.33",
+    "achizitie_cont_lei_cu_tva": "15.23",
+    "pret_document_eur": "2.79",
+    "valoare_eur": "50.22"
+   },
+   {
+    "cod_bilka": "SPPRE09010M",
+    "cantitate": "6",
+    "baza_eur": "2.69",
+    "achizitie_cont_eur": "2.72",
+    "achizitie_cont_lei_cu_tva": "17.78",
+    "pret_document_eur": "3.26",
+    "valoare_eur": "19.56"
+   }
+  ],
+  "totaluri": {
+   "achizitie_cont_eur_fara_tva": "2706.11",
+   "achizitie_cont_lei_fara_tva": "14618.41",
+   "achizitie_cont_lei_cu_tva": "17688.28",
+   "tinta_lei_cu_tva": "20972.63",
+   "adaos_real_pct": "18.57",
+   "marja_lei": "3284.35",
+   "document_fara_tva_eur": "3240.68",
+   "tva_eur": "680.54",
+   "document_cu_tva_eur": "3921.22",
+   "document_total_lei": "20972.65",
+   "vanzari": {
+    "pret_vanzare_lei": "20972.65",
+    "cost_achizitie_lei": "17688.28",
+    "adaos_net_lei": "3284.37",
+    "adaos_brut_lei": "2714.36"
+   }
+  }
+ },
+ "reguli": "ETALON.md §0 (R1–R7)",
+ "format": "v1.1 (27.10.2026): pe liniile legate câmpul `invelitoare` = codul învelitorii de care aparțin; pe liniile independente / de sine stătătoare câmpul `culoare` {ral, finisaj[, grosime]}; prețul fix structurat în `pret_fix` {tip, valoare, normalizat_eur_fara_tva}"
+}

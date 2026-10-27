@@ -1,0 +1,573 @@
+{
+ "id": "E11",
+ "titlu": "Două pachete: Clasic 8017 mat (casa, cu accesorii și fixare) + Retro Plus 7016 mat (garaj, cu accesorii proprii) și sistem pluvial mat în două culori — agent 1 %, țintă adaos 20 %, prezentare simplă",
+ "status": "aprobat (Ionuț, 27.10.2026)",
+ "intrari": {
+  "curs_bnr": "5.3485",
+  "tva_pct": 21,
+  "adaos_cont_pct": "1.00",
+  "grupa_pct": "0",
+  "data_ofertei": "2026-10-22",
+  "cont": "Agent",
+  "client": "persoană fizică",
+  "mod_prezentare": "simplu",
+  "tinta": {
+   "tip": "adaos_pct",
+   "valoare": "20"
+  },
+  "invelitori": [
+   {
+    "cod_bilka": "TMCLSMAT050",
+    "rol": "principală",
+    "culoare": "RAL 8017",
+    "latime_totala_m": "1.20",
+    "panotaj": [
+     {
+      "lungime_m": "4.50",
+      "bucati": 20
+     },
+     {
+      "lungime_m": "3.80",
+      "bucati": 12
+     },
+     {
+      "lungime_m": "2.20",
+      "bucati": 10
+     }
+    ],
+    "mp": "189.120"
+   },
+   {
+    "cod_bilka": "REPROMAT050",
+    "rol": "secundară, cu accesorii proprii",
+    "varianta_profil": "Standard",
+    "culoare": "RAL 7016",
+    "latime_totala_m": "0.542",
+    "panotaj": [
+     {
+      "lungime_m": "5.10",
+      "bucati": 11
+     }
+    ],
+    "mp": "30.406"
+   }
+  ],
+  "linii": [
+   {
+    "rubrica": "Învelitori",
+    "cod_bilka": "TMCLSMAT050",
+    "denumire": "Țiglă metalică Clasic – mat – 0,50 mm",
+    "um": "mp",
+    "cantitate": "189.120",
+    "pachet": "P1 — Clasic 8017 mat",
+    "cheie_culoare": "RAL 8017 mat 0,50"
+   },
+   {
+    "rubrica": "Învelitori",
+    "cod_bilka": "REPROMAT050",
+    "denumire": "Retro Plus (Standard, Micro-Ribs, Flat, Double Line) – mat – 0,50 mm",
+    "um": "mp",
+    "cantitate": "30.406",
+    "pachet": "P2 — Retro 7016 mat",
+    "cheie_culoare": "RAL 7016 mat 0,50"
+   },
+   {
+    "rubrica": "Accesorii standard",
+    "cod_bilka": "ACMICMAT050",
+    "denumire": "Coamă mică – mat – 0,50 mm",
+    "um": "buc",
+    "cantitate": "12",
+    "pachet": "P1 — Clasic 8017 mat",
+    "cheie_culoare": "RAL 8017 mat 0,50 (moștenit)",
+    "invelitoare": "TMCLSMAT050"
+   },
+   {
+    "rubrica": "Accesorii standard",
+    "cod_bilka": "ABF31MAT050",
+    "denumire": "Bordură fronton – 312 mm / 2 m – mat – 0,50 mm",
+    "um": "buc",
+    "cantitate": "9",
+    "pachet": "P1 — Clasic 8017 mat",
+    "cheie_culoare": "RAL 8017 mat 0,50 (moștenit)",
+    "invelitoare": "TMCLSMAT050"
+   },
+   {
+    "rubrica": "Accesorii standard",
+    "cod_bilka": "AST20MAT050",
+    "denumire": "Bordură streașină – 208 mm / 2 m – mat – 0,50 mm",
+    "um": "buc",
+    "cantitate": "23",
+    "pachet": "P1 — Clasic 8017 mat",
+    "cheie_culoare": "RAL 8017 mat 0,50 (moștenit)",
+    "invelitoare": "TMCLSMAT050"
+   },
+   {
+    "rubrica": "Accesorii standard",
+    "cod_bilka": "AOZ20MAT050",
+    "denumire": "Opritor zăpadă – 208 mm / 2 m – mat – 0,50 mm",
+    "um": "buc",
+    "cantitate": "10",
+    "pachet": "P1 — Clasic 8017 mat",
+    "cheie_culoare": "RAL 8017 mat 0,50 (moștenit)",
+    "invelitoare": "TMCLSMAT050"
+   },
+   {
+    "rubrica": "Accesorii standard (învelitoarea secundară)",
+    "cod_bilka": "ACR41MAT050",
+    "denumire": "Coamă Retro – 417 mm / 2 m – mat – 0,50 mm",
+    "um": "buc",
+    "cantitate": "4",
+    "pachet": "P2 — Retro 7016 mat",
+    "cheie_culoare": "RAL 7016 mat 0,50 (moștenit)",
+    "invelitoare": "REPROMAT050"
+   },
+   {
+    "rubrica": "Accesorii standard (învelitoarea secundară)",
+    "cod_bilka": "ASTR3MAT050",
+    "denumire": "Bordură streașină Retro – 312 mm / 2 m – mat – 0,50 mm",
+    "um": "buc",
+    "cantitate": "6",
+    "pachet": "P2 — Retro 7016 mat",
+    "cheie_culoare": "RAL 7016 mat 0,50 (moștenit)",
+    "invelitoare": "REPROMAT050"
+   },
+   {
+    "rubrica": "Fixare și etanșare",
+    "cod_bilka": "SUCLE408035",
+    "denumire": "Holțșuruburi în culoare, lemn – 4,8 × 35 mm",
+    "um": "cutie",
+    "cantitate": "8",
+    "pachet": "P1 — Clasic 8017 mat",
+    "cheie_culoare": "RAL 8017 (moștenit)",
+    "invelitoare": "TMCLSMAT050"
+   },
+   {
+    "rubrica": "Fixare și etanșare",
+    "cod_bilka": "AXCAPMAT000",
+    "denumire": "Capac coamă – mat",
+    "um": "buc",
+    "cantitate": "3",
+    "pachet": "P1 — Clasic 8017 mat",
+    "cheie_culoare": "RAL 8017 (moștenit)",
+    "invelitoare": "TMCLSMAT050"
+   },
+   {
+    "rubrica": "Fixare și etanșare (învelitoarea secundară)",
+    "cod_bilka": "SUCLE408035",
+    "denumire": "Holțșuruburi în culoare, lemn – 4,8 × 35 mm",
+    "um": "cutie",
+    "cantitate": "2",
+    "pachet": "P2 — Retro 7016 mat",
+    "cheie_culoare": "RAL 7016 (moștenit)",
+    "invelitoare": "REPROMAT050"
+   },
+   {
+    "rubrica": "Sistem pluvial",
+    "cod_bilka": "SMJGH1254ML",
+    "denumire": "Jgheab 125 / 4m – pluvial mat",
+    "um": "buc",
+    "cantitate": "11",
+    "pachet": "Pluvial A — mat 8017",
+    "cheie_culoare": "RAL 8017 mat (ales)",
+    "culoare": {
+     "ral": "RAL 8017",
+     "finisaj": "pluvial mat"
+    }
+   },
+   {
+    "rubrica": "Sistem pluvial",
+    "cod_bilka": "SMBUR0903ML",
+    "denumire": "Burlan 90 / 3m – pluvial mat",
+    "um": "buc",
+    "cantitate": "7",
+    "pachet": "Pluvial A — mat 8017",
+    "cheie_culoare": "RAL 8017 mat (ales)",
+    "culoare": {
+     "ral": "RAL 8017",
+     "finisaj": "pluvial mat"
+    }
+   },
+   {
+    "rubrica": "Sistem pluvial",
+    "cod_bilka": "SMC21125000",
+    "denumire": "Cârlig jgheab 125 / 210 mm – pluvial mat",
+    "um": "buc",
+    "cantitate": "56",
+    "pachet": "Pluvial A — mat 8017",
+    "cheie_culoare": "RAL 8017 mat (ales)",
+    "culoare": {
+     "ral": "RAL 8017",
+     "finisaj": "pluvial mat"
+    }
+   },
+   {
+    "rubrica": "Sistem pluvial",
+    "cod_bilka": "SMCOL090000",
+    "denumire": "Colier burlan 90 – pluvial mat",
+    "um": "buc",
+    "cantitate": "14",
+    "pachet": "Pluvial A — mat 8017",
+    "cheie_culoare": "RAL 8017 mat (ales)",
+    "culoare": {
+     "ral": "RAL 8017",
+     "finisaj": "pluvial mat"
+    }
+   },
+   {
+    "rubrica": "Sistem pluvial",
+    "cod_bilka": "SMRAC125000",
+    "denumire": "Racord jgheab – burlan 125 / 90 – pluvial mat",
+    "um": "buc",
+    "cantitate": "7",
+    "pachet": "Pluvial A — mat 8017",
+    "cheie_culoare": "RAL 8017 mat (ales)",
+    "culoare": {
+     "ral": "RAL 8017",
+     "finisaj": "pluvial mat"
+    }
+   },
+   {
+    "rubrica": "Sistem pluvial",
+    "cod_bilka": "SMCOT090000",
+    "denumire": "Cot de 60 grade 90 – pluvial mat",
+    "um": "buc",
+    "cantitate": "21",
+    "pachet": "Pluvial A — mat 8017",
+    "cheie_culoare": "RAL 8017 mat (ales)",
+    "culoare": {
+     "ral": "RAL 8017",
+     "finisaj": "pluvial mat"
+    }
+   },
+   {
+    "rubrica": "Sistem pluvial (al doilea)",
+    "cod_bilka": "SMJGH1254ML",
+    "denumire": "Jgheab 125 / 4m – pluvial mat",
+    "um": "buc",
+    "cantitate": "3",
+    "pachet": "Pluvial B — mat 7016",
+    "cheie_culoare": "RAL 7016 mat (ales)",
+    "culoare": {
+     "ral": "RAL 7016",
+     "finisaj": "pluvial mat"
+    }
+   },
+   {
+    "rubrica": "Sistem pluvial (al doilea)",
+    "cod_bilka": "SMBUR0903ML",
+    "denumire": "Burlan 90 / 3m – pluvial mat",
+    "um": "buc",
+    "cantitate": "2",
+    "pachet": "Pluvial B — mat 7016",
+    "cheie_culoare": "RAL 7016 mat (ales)",
+    "culoare": {
+     "ral": "RAL 7016",
+     "finisaj": "pluvial mat"
+    }
+   },
+   {
+    "rubrica": "Sistem pluvial (al doilea)",
+    "cod_bilka": "SMC21125000",
+    "denumire": "Cârlig jgheab 125 / 210 mm – pluvial mat",
+    "um": "buc",
+    "cantitate": "15",
+    "pachet": "Pluvial B — mat 7016",
+    "cheie_culoare": "RAL 7016 mat (ales)",
+    "culoare": {
+     "ral": "RAL 7016",
+     "finisaj": "pluvial mat"
+    }
+   },
+   {
+    "rubrica": "Sistem pluvial (al doilea)",
+    "cod_bilka": "SMCOL090000",
+    "denumire": "Colier burlan 90 – pluvial mat",
+    "um": "buc",
+    "cantitate": "4",
+    "pachet": "Pluvial B — mat 7016",
+    "cheie_culoare": "RAL 7016 mat (ales)",
+    "culoare": {
+     "ral": "RAL 7016",
+     "finisaj": "pluvial mat"
+    }
+   },
+   {
+    "rubrica": "Sistem pluvial (al doilea)",
+    "cod_bilka": "SMCOT090000",
+    "denumire": "Cot de 60 grade 90 – pluvial mat",
+    "um": "buc",
+    "cantitate": "6",
+    "pachet": "Pluvial B — mat 7016",
+    "cheie_culoare": "RAL 7016 mat (ales)",
+    "culoare": {
+     "ral": "RAL 7016",
+     "finisaj": "pluvial mat"
+    }
+   }
+  ]
+ },
+ "asteptat": {
+  "curs_achizitie": "5.4020",
+  "linii": [
+   {
+    "cod_bilka": "TMCLSMAT050",
+    "cantitate": "189.120",
+    "baza_eur": "6.54",
+    "achizitie_cont_eur": "6.61",
+    "achizitie_cont_lei_cu_tva": "43.21",
+    "pret_document_eur": "8.01",
+    "valoare_eur": "1514.85"
+   },
+   {
+    "cod_bilka": "REPROMAT050",
+    "cantitate": "30.406",
+    "baza_eur": "8.04",
+    "achizitie_cont_eur": "8.12",
+    "achizitie_cont_lei_cu_tva": "53.08",
+    "pret_document_eur": "9.84",
+    "valoare_eur": "299.20"
+   },
+   {
+    "cod_bilka": "ACMICMAT050",
+    "cantitate": "12",
+    "baza_eur": "4.90",
+    "achizitie_cont_eur": "4.95",
+    "achizitie_cont_lei_cu_tva": "32.36",
+    "pret_document_eur": "6.00",
+    "valoare_eur": "72.00"
+   },
+   {
+    "cod_bilka": "ABF31MAT050",
+    "cantitate": "9",
+    "baza_eur": "4.90",
+    "achizitie_cont_eur": "4.95",
+    "achizitie_cont_lei_cu_tva": "32.36",
+    "pret_document_eur": "6.00",
+    "valoare_eur": "54.00"
+   },
+   {
+    "cod_bilka": "AST20MAT050",
+    "cantitate": "23",
+    "baza_eur": "3.27",
+    "achizitie_cont_eur": "3.30",
+    "achizitie_cont_lei_cu_tva": "21.57",
+    "pret_document_eur": "4.01",
+    "valoare_eur": "92.23"
+   },
+   {
+    "cod_bilka": "AOZ20MAT050",
+    "cantitate": "10",
+    "baza_eur": "3.27",
+    "achizitie_cont_eur": "3.30",
+    "achizitie_cont_lei_cu_tva": "21.57",
+    "pret_document_eur": "4.00",
+    "valoare_eur": "40.00"
+   },
+   {
+    "cod_bilka": "ACR41MAT050",
+    "cantitate": "4",
+    "baza_eur": "6.54",
+    "achizitie_cont_eur": "6.61",
+    "achizitie_cont_lei_cu_tva": "43.21",
+    "pret_document_eur": "8.01",
+    "valoare_eur": "32.04"
+   },
+   {
+    "cod_bilka": "ASTR3MAT050",
+    "cantitate": "6",
+    "baza_eur": "4.90",
+    "achizitie_cont_eur": "4.95",
+    "achizitie_cont_lei_cu_tva": "32.36",
+    "pret_document_eur": "6.00",
+    "valoare_eur": "36.00"
+   },
+   {
+    "cod_bilka": "SUCLE408035",
+    "cantitate": "8",
+    "baza_eur": "6.25",
+    "achizitie_cont_eur": "6.31",
+    "achizitie_cont_lei_cu_tva": "41.24",
+    "pret_document_eur": "7.65",
+    "valoare_eur": "61.20"
+   },
+   {
+    "cod_bilka": "AXCAPMAT000",
+    "cantitate": "3",
+    "baza_eur": "3.94",
+    "achizitie_cont_eur": "3.98",
+    "achizitie_cont_lei_cu_tva": "26.01",
+    "pret_document_eur": "4.82",
+    "valoare_eur": "14.46"
+   },
+   {
+    "cod_bilka": "SUCLE408035",
+    "cantitate": "2",
+    "baza_eur": "6.25",
+    "achizitie_cont_eur": "6.31",
+    "achizitie_cont_lei_cu_tva": "41.24",
+    "pret_document_eur": "7.65",
+    "valoare_eur": "15.30"
+   },
+   {
+    "cod_bilka": "SMJGH1254ML",
+    "cantitate": "11",
+    "baza_eur": "8.71",
+    "achizitie_cont_eur": "8.80",
+    "achizitie_cont_lei_cu_tva": "57.52",
+    "pret_document_eur": "10.67",
+    "valoare_eur": "117.37"
+   },
+   {
+    "cod_bilka": "SMBUR0903ML",
+    "cantitate": "7",
+    "baza_eur": "8.07",
+    "achizitie_cont_eur": "8.15",
+    "achizitie_cont_lei_cu_tva": "53.27",
+    "pret_document_eur": "9.89",
+    "valoare_eur": "69.23"
+   },
+   {
+    "cod_bilka": "SMC21125000",
+    "cantitate": "56",
+    "baza_eur": "1.46",
+    "achizitie_cont_eur": "1.47",
+    "achizitie_cont_lei_cu_tva": "9.61",
+    "pret_document_eur": "1.78",
+    "valoare_eur": "99.68"
+   },
+   {
+    "cod_bilka": "SMCOL090000",
+    "cantitate": "14",
+    "baza_eur": "0.86",
+    "achizitie_cont_eur": "0.87",
+    "achizitie_cont_lei_cu_tva": "5.69",
+    "pret_document_eur": "1.05",
+    "valoare_eur": "14.70"
+   },
+   {
+    "cod_bilka": "SMRAC125000",
+    "cantitate": "7",
+    "baza_eur": "2.31",
+    "achizitie_cont_eur": "2.33",
+    "achizitie_cont_lei_cu_tva": "15.23",
+    "pret_document_eur": "2.82",
+    "valoare_eur": "19.74"
+   },
+   {
+    "cod_bilka": "SMCOT090000",
+    "cantitate": "21",
+    "baza_eur": "2.31",
+    "achizitie_cont_eur": "2.33",
+    "achizitie_cont_lei_cu_tva": "15.23",
+    "pret_document_eur": "2.83",
+    "valoare_eur": "59.43"
+   },
+   {
+    "cod_bilka": "SMJGH1254ML",
+    "cantitate": "3",
+    "baza_eur": "8.71",
+    "achizitie_cont_eur": "8.80",
+    "achizitie_cont_lei_cu_tva": "57.52",
+    "pret_document_eur": "10.67",
+    "valoare_eur": "32.01"
+   },
+   {
+    "cod_bilka": "SMBUR0903ML",
+    "cantitate": "2",
+    "baza_eur": "8.07",
+    "achizitie_cont_eur": "8.15",
+    "achizitie_cont_lei_cu_tva": "53.27",
+    "pret_document_eur": "9.88",
+    "valoare_eur": "19.76"
+   },
+   {
+    "cod_bilka": "SMC21125000",
+    "cantitate": "15",
+    "baza_eur": "1.46",
+    "achizitie_cont_eur": "1.47",
+    "achizitie_cont_lei_cu_tva": "9.61",
+    "pret_document_eur": "1.78",
+    "valoare_eur": "26.70"
+   },
+   {
+    "cod_bilka": "SMCOL090000",
+    "cantitate": "4",
+    "baza_eur": "0.86",
+    "achizitie_cont_eur": "0.87",
+    "achizitie_cont_lei_cu_tva": "5.69",
+    "pret_document_eur": "1.05",
+    "valoare_eur": "4.20"
+   },
+   {
+    "cod_bilka": "SMCOT090000",
+    "cantitate": "6",
+    "baza_eur": "2.31",
+    "achizitie_cont_eur": "2.33",
+    "achizitie_cont_lei_cu_tva": "15.23",
+    "pret_document_eur": "2.82",
+    "valoare_eur": "16.92"
+   }
+  ],
+  "totaluri": {
+   "achizitie_cont_eur_fara_tva": "2236.81",
+   "achizitie_cont_lei_fara_tva": "12083.25",
+   "achizitie_cont_lei_cu_tva": "14620.73",
+   "tinta_lei_cu_tva": "17544.88",
+   "adaos_real_pct": "20.00",
+   "marja_lei": "2924.15",
+   "document_fara_tva_eur": "2711.02",
+   "tva_eur": "569.31",
+   "document_cu_tva_eur": "3280.33",
+   "document_total_lei": "17544.85",
+   "vanzari": {
+    "pret_vanzare_lei": "17544.85",
+    "cost_achizitie_lei": "14620.73",
+    "adaos_net_lei": "2924.12",
+    "adaos_brut_lei": "2416.63"
+   }
+  },
+  "pachete": [
+   {
+    "pachet": "P1 — Clasic 8017 mat",
+    "linii": 7,
+    "achizitie_eur": "1525.35"
+   },
+   {
+    "pachet": "P2 — Retro 7016 mat",
+    "linii": 4,
+    "achizitie_eur": "315.66"
+   },
+   {
+    "pachet": "Pluvial A — mat 8017",
+    "linii": 6,
+    "achizitie_eur": "313.59"
+   },
+   {
+    "pachet": "Pluvial B — mat 7016",
+    "linii": 5,
+    "achizitie_eur": "82.21"
+   }
+  ],
+  "formulare_bilka": [
+   {
+    "nr": 1,
+    "continut": "Clasic 8017 mat 0,50 ca învelitoare principală + accesoriile standard și fixarea pachetului P1 (cheie 8017 mat 0,50)"
+   },
+   {
+    "nr": 2,
+    "continut": "Retro Plus Standard 7016 mat 0,50 ca învelitoare principală + accesoriile Retro și fixarea proprie (cheie 7016 mat 0,50) — pachet separat pentru că are accesorii proprii și altă cheie"
+   },
+   {
+    "nr": 3,
+    "continut": "Pluvial mat RAL 8017 (toate piesele sistemului A)"
+   },
+   {
+    "nr": 4,
+    "continut": "Pluvial mat RAL 7016 (sistemul B) — un formular per finisaj + culoare"
+   }
+  ],
+  "nota": "împachetarea o decide softul (FISA-OFERTARE 3.4–3.5); agentul vede doar „se vor genera 4 formulare” și de ce"
+ },
+ "reguli": "ETALON.md §0 (R1–R7)",
+ "format": "v1.1 (27.10.2026): pe liniile legate câmpul `invelitoare` = codul învelitorii de care aparțin; pe liniile independente / de sine stătătoare câmpul `culoare` {ral, finisaj[, grosime]}; prețul fix structurat în `pret_fix` {tip, valoare, normalizat_eur_fara_tva}"
+}

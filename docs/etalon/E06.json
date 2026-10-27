@@ -1,0 +1,115 @@
+{
+ "id": "E06",
+ "titlu": "Șipcă de gard Oslo dreaptă mat 0,50 RAL 7016 — varianta Calcul (tronsoane: lungime șipcă, lungime tronson, distanță), agent 1 %, sumă discutată 1.000 lei, prezentare simplă",
+ "status": "aprobat (Ionuț, 23.10.2026: la abatere, totalul în lei „cât iese”)",
+ "intrari": {
+  "curs_bnr": "5.3297",
+  "tva_pct": 21,
+  "adaos_cont_pct": "1.00",
+  "grupa_pct": "0",
+  "data_ofertei": "2026-10-21",
+  "cont": "Agent",
+  "client": "persoană fizică",
+  "mod_prezentare": "simplu",
+  "tinta": {
+   "tip": "total_cu_tva_lei",
+   "valoare": "1000"
+  },
+  "sipca": {
+   "model": "Oslo, capăt drept",
+   "cod_bilka": "SIPCAMAT050",
+   "culoare": "RAL 7016",
+   "latime_sipca_mm": "92.9",
+   "varianta": "Calcul",
+   "tronsoane": [
+    {
+     "lungime_sipca_m": "1.20",
+     "lungime_tronson_m": "11.00",
+     "distanta_mm": "25",
+     "bucati_asteptat": 94,
+     "ml_asteptat": "112.800"
+    },
+    {
+     "lungime_sipca_m": "1.20",
+     "lungime_tronson_m": "0.70",
+     "distanta_mm": "25",
+     "bucati_asteptat": 6,
+     "ml_asteptat": "7.200"
+    }
+   ],
+   "bucati_total": 100,
+   "ml_total": "120.000"
+  },
+  "linii": [
+   {
+    "rubrica": "Șipcă gard",
+    "cod_bilka": "SIPCAMAT050",
+    "denumire": "Șipcă Oslo – mat – 0,50 mm",
+    "um": "ml",
+    "cantitate": "120.000",
+    "culoare": {
+     "ral": "RAL 7016",
+     "finisaj": "mat",
+     "grosime": "0,50 mm"
+    }
+   },
+   {
+    "rubrica": "Fixare și etanșare",
+    "cod_bilka": "SUCLE408035",
+    "denumire": "Holțșuruburi în culoare, lemn – 4,8 × 35 mm",
+    "um": "cutie",
+    "cantitate": "2",
+    "culoare": {
+     "ral": "RAL 7016",
+     "finisaj": "mat",
+     "grosime": "0,50 mm"
+    }
+   }
+  ]
+ },
+ "asteptat": {
+  "curs_achizitie": "5.3830",
+  "linii": [
+   {
+    "cod_bilka": "SIPCAMAT050",
+    "cantitate": "120.000",
+    "baza_eur": "1.11",
+    "achizitie_cont_eur": "1.12",
+    "achizitie_cont_lei_cu_tva": "7.30",
+    "pret_document_eur": "1.18",
+    "valoare_eur": "141.60"
+   },
+   {
+    "cod_bilka": "SUCLE408035",
+    "cantitate": "2",
+    "baza_eur": "6.25",
+    "achizitie_cont_eur": "6.31",
+    "achizitie_cont_lei_cu_tva": "41.10",
+    "pret_document_eur": "6.73",
+    "valoare_eur": "13.46"
+   }
+  ],
+  "totaluri": {
+   "achizitie_cont_eur_fara_tva": "147.02",
+   "achizitie_cont_lei_fara_tva": "791.41",
+   "achizitie_cont_lei_cu_tva": "957.61",
+   "tinta_lei_cu_tva": "1000.00",
+   "adaos_real_pct": "4.43",
+   "marja_lei": "42.39",
+   "document_fara_tva_eur": "155.06",
+   "tva_eur": "32.56",
+   "document_cu_tva_eur": "187.62",
+   "document_total_lei": "999.96",
+   "vanzari": {
+    "pret_vanzare_lei": "999.96",
+    "cost_achizitie_lei": "957.61",
+    "adaos_net_lei": "42.35",
+    "adaos_brut_lei": "35.00"
+   }
+  },
+  "abatere_eur": "−0.01 (restul nu se poate repartiza în cenți întregi; vezi ETALON R5)",
+  "nota_total_lei": "ținta 1.000,00 nu se poate atinge exact (abatere 1 cent pe linii) → totalul afișat e cel calculat: 187,62 EUR × 5,3297 = 999,96 lei (R6)"
+ },
+ "reguli": "ETALON.md §0 (R1–R7)",
+ "format": "v1.1 (27.10.2026): pe liniile legate câmpul `invelitoare` = codul învelitorii de care aparțin; pe liniile independente / de sine stătătoare câmpul `culoare` {ral, finisaj[, grosime]}; prețul fix structurat în `pret_fix` {tip, valoare, normalizat_eur_fara_tva}"
+}

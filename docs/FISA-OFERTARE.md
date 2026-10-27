@@ -1,6 +1,6 @@
 # Fișa de modul — OFERTARE (OFE + DOC)
 
-Versiunea 1.0 · 13 octombrie 2026 · Status: ÎNCHISĂ pentru oferta clasică (capitolele 0–16, 2b, 19, 21). Rămân deschise, deliberat: 17 Ferestre (când există listele), 18 Offline (după punerea în funcțiune), 20 Pazie și Gard (după oferta clasică), 22 Aviz de marfă (odată cu fișa COMENZI). Se reia doar printr-o cerere explicită de MODIFICARE.
+Versiunea 1.1 · 23 octombrie 2026 (MODIFICARE la cap. 11 și 13 — cele două cursuri, totalul în lei, prețul fix „achiziție + x %"; completare la cap. 19 — vânzările colaboratorilor, la 11.3 — procedura grupei, la 11.8 — totalul în lei la abatere, la cap. 9 — liniile zonei B integral manuale, cu UM și opțiuni pe linie (27.10); deciziile lui Ionuț din 23 și 27.10.2026 pe ofertele-model E01–E08, `docs/ETALON.md`) · Status: ÎNCHISĂ pentru oferta clasică (capitolele 0–16, 2b, 19, 21). Rămân deschise, deliberat: 17 Ferestre (când există listele), 18 Offline (după punerea în funcțiune), 20 Pazie și Gard (după oferta clasică), 22 Aviz de marfă (odată cu fișa COMENZI). Se reia doar printr-o cerere explicită de MODIFICARE.
 Se sprijină pe: FISA-CONTURI (cine ce poate), FISA-CATALOG-PRETURI (ce produse, ce prețuri, cascada model → finisaj → grosime → culoare).
 
 Fiecare capitol are statusul lui: **PROPUS** (schița mea din descrierea ta) → **ÎNCHIS** (ok-ul tău). Un capitol închis nu se mai reia.
@@ -72,7 +72,7 @@ Un capitol per mesaj: îmi descrii cum vrei să meargă (cum ai făcut la contur
 **Principiul calculului:** ținta se introduce ca **totalul cu TVA discutat cu clientul** (sau ca adaos %), iar prezentarea se calculează invers, astfel încât „Total cu TVA" de pe document să fie exact suma discutată, la leu. Cine nu înțelege că liniile sunt fără TVA primește explicația pe loc.
 
 **Pe PDF (subsol):**
-- Cursul euro folosit (BNR + 1 %, data cursului).
+- Cursul euro folosit: **cursul BNR al zilei ofertei** (4 zecimale, data cursului) — modificat 23.10.2026; cursul BNR + 1 % rămâne doar la calculul achiziției (11.8).
 - **Garanțiile pe categorii** — țiglă metalică, sistem pluvial — luate din tabelul de garanții după finisajul / grosimea produselor de pe ofertă (ex. „Țiglă metalică Grande Mat 0,50 mm: 30 de ani culoare și coroziune · Sistem pluvial colorat: 15 ani culoare / 30 ani coroziune").
 
 **În aplicație** antetul e primul panou al ofertei: firma (fixă, a contului), agentul (fix), clientul (capitolul 2), numărul (dat automat la salvare), data, cursul înghețat.
@@ -97,7 +97,7 @@ Un capitol per mesaj: îmi descrii cum vrei să meargă (cum ai făcut la contur
 - Completarea preia clientul, adresa, montatorul și sursa din oferta inițială; are propriul flux de statusuri și propria comandă.
 - **Retururi**: din tabelul de comenzi, Gestiunea și Contabilitatea pot calcula un retur de marfă la prețurile din ofertă; returul scade adaosul lucrării și generează o **notă de retur** pentru client (ce s-a calculat, la ce prețuri, ce bani primește înapoi). Detaliile: fișa COMENZI.
 
-## Capitolul 19 — Tabelul de vânzări și comisioanele — ÎNCHIS (11.09.2026)
+## Capitolul 19 — Tabelul de vânzări și comisioanele — ÎNCHIS (11.09.2026; completat 23.10.2026 cu regula colaboratorilor)
 
 **Ce este:** un **ecran de lucru** (nu doar raport), alimentat automat din comenzi, cu sortări și filtre, pe care Administratorul calculează comisioanele. Se construiește odată cu modulul de comenzi (Etapa 5), dar legăturile de date se pun de acum.
 
@@ -121,6 +121,8 @@ Un capitol per mesaj: îmi descrii cum vrei să meargă (cum ai făcut la contur
 **Statistici** (pe selecție: lună, an, interval; pe un agent sau combinat pe mai mulți): Total cost achiziție · Total preț vânzare · Total adaos net · Total adaos brut · Total comisioane · Procent de adaos · altele la nevoie.
 
 **Cine vede ce:** agentul își vede **propriul tabel** (fără statistici); Administratorul vede tabelele tuturor agenților lui, statisticile, și combinații între agenți; Admin general tot. Bifele „achitat" (comision agent, comision recomandare) le pune Administratorul — consecvent cu fișa CONTURI.
+
+**Colaboratorii (decis 23.10.2026, pe oferta-model E03):** colaboratorul **nu are tabel de vânzări**. Ce îi vinde firma — adică **achiziția lui** (preț de bază + adaosul lui negociat, la cursul de achiziție) — apare ca **vânzare în tabelul Administratorului** de care aparține: Preț vânzare = achiziția colaboratorului (ce i se facturează), Cost achiziție = **prețul de bază** (catalog, la cursul de achiziție, cu TVA), Adaos net = diferența (= adaosul lui negociat), Adaos brut = net ÷ 1,21. Oferta pe care colaboratorul o face clientului lui (de la achiziția afișată, ca un agent) nu intră în vânzările firmei. Colaboratorul are nevoie în primul rând de prețul lui de achiziție (ecranul „Aflat preț", cap. 21); oferta o construiește doar când are nevoie.
 
 ## Capitolul 3 — Învelitoarea și pachetele — ÎNCHIS (11.09.2026)
 
@@ -210,8 +212,8 @@ Rubrică proprie pe ofertă. **Produsul** = profilul (Haga, Oslo, Berna, Sofia) 
 
 ## Capitolul 9 — Zona B — ÎNCHIS (14.09.2026)
 
-- **Fără linii predefinite.** De regulă: șipcă de lemn, manoperă, șuruburi de lemn — dar poate fi orice. Agentul scrie **denumirea** și **suma totală** a liniei, la liber.
-- Suma se introduce **în lei**, cu bifa **„conține TVA"** (în unele cazuri conține).
+- **Fără linii predefinite, nimic precompletat** (precizat 27.10.2026). De regulă: șipcă de lemn, manoperă, șuruburi de lemn — dar poate fi orice. Agentul scrie, pe fiecare linie, la liber: **denumirea**, **unitatea de măsură** (ml, mp, buc, lucrare…), **cantitatea** și **suma totală** a liniei; în tabelul de facturare linia apare cu UM, cantitate și preț unitar = sumă ÷ cantitate (4 zecimale).
+- Suma se introduce **în lei**, cu bifa **„conține TVA"** (în unele cazuri conține) — opțiunile „conține TVA" și „preia în factură" sunt **separate, pe fiecare linie** în parte. Exemplu: `docs/ETALON.md` E07.
 - Pe ofertă, zona B apare ca **un tabel simplu, separat** de restul ofertei — de tip **„Supliment la ofertă"** — cu sumele **așa cum au fost scrise, în lei**.
 - **Bifa „preia în factură"** pe fiecare linie: doar liniile bifate intră în tabelul de facturare (și în sarcina voastră); acestea se afișează **convertite în euro la cursul ofertei**. Restul rămân informație pentru client.
 - **Manopera** se dă de regulă prin montatorul vostru (colaborator, nu angajat); apare pe ofertă ca informație pentru client; în anumite cazuri o facturați voi — atunci se bifează.
@@ -227,12 +229,12 @@ Produsele din compartimentul Stoc sau de la un alt furnizor (Novatik etc.) apar 
 Solicitarea vine pe orice canal (client direct, constructor, montator, teren). Agentul măsoară sau primește o schiță / un necesar, completează produsele, apoi **discută prețul verbal** cu clientul — de regulă totalul cu TVA sau prețul pe mp. În scris, clientul primește: **oferta** (suprafețe, categorii, prețuri), **rezumatul** (fără cantități, când nu vrem să dăm necesarul „mură în gură") sau o **întâlnire** în care i se prezintă fiecare produs; **oferta detaliată** (cu lungimi și bucăți) o primește **la acceptare și după avans**, ca să poată verifica marfa la recepție. Softul trebuie să susțină fiecare din aceste drumuri fără ca agentul să refacă nimic.
 
 ### 11.2 Cele trei straturi de preț (ce vede agentul)
-1. **Achiziția contului** — prețul de bază din catalog + adaosul % al contului (setat de Administrator), convertit la cursul ofertei (BNR + 1 %), **afișat cu TVA** în zona de țintă. Agentul nu vede niciodată prețul de bază, nici procentul.
-2. **Ținta** — agentul introduce **fie** adaosul țintă %, **fie** totalul cu TVA discutat cu clientul; softul calculează restul. Vede pe loc: total achiziție, total țintă, **marja rămasă** (țintă − achiziție), procentul rezultat.
+1. **Achiziția contului** — prețul de bază din catalog + adaosul % al contului (setat de Administrator), **rotunjit la 2 zecimale în euro** (decis 23.10.2026), convertit la **cursul de achiziție (BNR + 1 %)**, **afișat cu TVA** în zona de țintă. Agentul nu vede niciodată prețul de bază, nici procentul.
+2. **Ținta** — agentul introduce **fie** adaosul țintă %, **fie** totalul cu TVA discutat cu clientul; softul calculează restul. Vede pe loc: total achiziție, total țintă, **marja rămasă** (țintă − achiziție), procentul rezultat. **Adaosul și marja se calculează în lei** (achiziția la cursul de achiziție, ținta așa cum e discutată) — lei-ul e banul real; euro-ul de pe document e prezentare (decis 23.10.2026). Adaosul țintă implicit propus: 20 % (Ionuț: „ideal 20–25 %, după context").
 3. **Prezentarea** — cum apar prețurile pe document, în unul din trei moduri (11.4). Principiu: **„Total cu TVA" de pe document = suma discutată, la leu**; softul repartizează rotunjirile astfel încât totalul să iasă exact.
 
 ### 11.3 „Grupa" — adaosul discret (nou, 18.09.2026)
-Situația „prietenească": agentul are o relație specială cu clientul sau constructorul și îi arată „cât costă la fabrică" — adică achiziția din zona de țintă. Ca să poată totuși pune un adaos fără ca relația să pară altfel: **înainte de zona de învelitori, o căsuță discretă, „Grupă"**, în care agentul scrie un număr (ex. 5) = procentul adăugat **artificial** la achiziția afișată în zona de țintă. Goală = nimic în plus, formula rămâne bază + adaosul contului. Nu apare nicăieri pe documente. **În tabelul de vânzări costul de achiziție e cel real** (fără grupă); grupa e parte din adaos. Oferta prietenească înseamnă „la achiziție + puțin, pentru logistică" — niciodată sub.
+Situația „prietenească": agentul are o relație specială cu clientul sau constructorul și îi arată „cât costă la fabrică" — adică achiziția din zona de țintă. Ca să poată totuși pune un adaos fără ca relația să pară altfel: **înainte de zona de învelitori, o căsuță discretă, „Grupă"**, în care agentul scrie un număr (ex. 5) = procentul adăugat **artificial** la achiziția afișată în zona de țintă. Goală = nimic în plus, formula rămâne bază + adaosul contului. Nu apare nicăieri pe documente. **În tabelul de vânzări costul de achiziție e cel real** (fără grupă); grupa e parte din adaos. Oferta prietenească înseamnă „la achiziție + puțin, pentru logistică" — niciodată sub. **Precizare (Ionuț, 23.10.2026):** grupa e un instrument **al agentului**, ascuns doar față de client: el o scrie cât consideră, în zona de țintă vede achiziția + grupa (10.000 → 10.500 lei), se tocmește peste ea (ținta 10.800), iar după acord poate șterge grupa și vede achiziția reală; în tabelul lui de vânzări apar costul real și prețul de vânzare, deci adaosul real — pe care se calculează și comisionul lui. Exemplu: `docs/ETALON.md` E05.
 
 ### 11.4 Cele trei moduri de prezentare
 - **Simplu**: prețurile de pe document sunt prețurile țintă pe linie; fără discount afișat.
@@ -241,7 +243,7 @@ Situația „prietenească": agentul are o relație specială cu clientul sau co
 Modul se alege pe ofertă și se poate schimba oricând cât e „În lucru".
 
 ### 11.5 Prețuri fixe
-Pe orice linie, agentul poate fixa prețul negociat pentru acel produs: introdus **în lei sau euro, cu sau fără TVA**; softul îl normalizează (euro, fără TVA, la cursul ofertei). Linia fixă iese din calculul discountului și rămâne așa cum a fost scrisă; restul liniilor absorb diferența până la țintă.
+Pe orice linie, agentul poate fixa prețul negociat pentru acel produs: introdus **în lei sau euro, cu sau fără TVA**, **sau ca „achiziție + x %"** (butonul de pe linie; decis 23.10.2026 — cazul tipic: țigla la cel mult achiziție + 5 %, pentru că acolo clientul compară lei / mp, iar restul liniilor poartă adaosul); softul îl normalizează (euro, fără TVA, la cursul documentului). Linia fixă iese din calculul discountului și rămâne așa cum a fost scrisă; restul liniilor absorb diferența până la țintă. Exemplu: `docs/ETALON.md` E02.
 
 ### 11.6 Garda: niciodată sub achiziție
 Nicio linie și niciun total nu pot fi salvate **sub achiziția reală a contului** (fără grupă); prezentarea poate fi egală cu achiziția, nu mai jos, fără excepție. Singura excepție rămâne **completarea marcată** (capitolul 2b), care poate fi la 0. La ferestre (mod B) garda e aceeași: discountul acordat nu poate depăși achiziția.
@@ -249,8 +251,11 @@ Nicio linie și niciun total nu pot fi salvate **sub achiziția reală a contulu
 ### 11.7 Variante de preț
 Din orice ofertă, **„Creează variantă"**: aceeași ofertă, **același număr**, cu alt model / finisaj / grosime sau alte produse și prețuri, care **păstrează adaosul % al variantei de bază** aplicat pe noile prețuri de achiziție și se recalculează automat. Variantele sunt **versiuni în istoricul ofertei**, nu oferte separate: fiecare se poate tipări (IB-0147, varianta 2), iar cea acceptată devine cea curentă.
 
-### 11.8 Curs și TVA
-Cursul BNR + 1 % (4 zecimale), preluat automat zilnic, **înghețat pe ofertă la creare**, reîmprospătabil manual cât e „În lucru"; offline se folosește ultimul curs preluat. TVA-ul e o setare generală, aplicată la totaluri (linii fără TVA — varianta B). La ferestre, discountul se dă pe linie, cu achiziția și ținta afișate separat.
+### 11.8 Curs și TVA (modificat 23.10.2026)
+**Două cursuri, amândouă înghețate pe ofertă la creare**, reîmprospătabile manual cât e „În lucru"; offline se folosește ultimul curs preluat:
+- **cursul documentului = cursul BNR al zilei** (4 zecimale): la el se convertesc în euro prețurile de pe document și la el se afișează „Total în lei" și subsolul „Curs EURO";
+- **cursul de achiziție = BNR × 1,01** (4 zecimale): la el se calculează achiziția contului (ca la facturarea Bilka, verificată pe 21 de facturi: `docs/VERIFICARE-FACTURI-BILKA.md`).
+Cursul BNR se preia automat zilnic din sursa oficială BNR (nbrfxrates.xml), cu cursbnr.ro ca sursă de rezervă; BNR publică la 13:00 — până atunci cursul zilei e cel din ziua precedentă, exact ca în practica Bilka. **Totalul în lei de pe document**: când ținta e o **sumă în lei** și liniile ating exact totalul în euro, totalul în lei = suma discutată, **exact** (euro-ul e derivat; produsul total EUR × curs poate diferi de ea cu 1–3 bani din rotunjirea la 2 zecimale — acceptat; tabelul de facturare, în lei cu prețuri unitare la 4 zecimale, reproduce exact totalul); când restul de rotunjire nu se poate repartiza pe linii (oferte mici, `docs/ETALON.md` R5 / E06), totalul în lei e **cel calculat din linii**, iar agentul e avertizat că ținta nu se poate atinge exact (decis 23.10.2026: „o rotunjire care nu se poate matematic nu ajută"); când ținta e un **adaos %**, totalul în lei e cât iese, cu bani. TVA-ul e o setare generală, aplicată la totaluri (linii fără TVA — varianta B). La ferestre, discountul se dă pe linie, cu achiziția și ținta afișate separat.
 
 ### 11.9 Ecranul de preț (propunere de aranjare)
 Sus: **Grupă** (discret) · cursul · modul de prezentare · **„Preia prețuri din oferta …"** (11.11). Tabelul de produse cu cantitățile. Zona de **țintă**: pe linie achiziția cu TVA, ținta pe linie; jos câmpurile „adaos %" / „total cu TVA" și marja rămasă. Zona de **prezentare**: prețurile așa cum vor apărea pe document, discountul afișat, prețurile fixe marcate. Totaluri: fără TVA · TVA · cu TVA · lei.
@@ -300,8 +305,8 @@ Coloanele, după modul de prezentare:
 - *discount per linie*: Nr · Denumire · UM · Cantitate · Preț listă · Discount % · Preț net · Valoare
 Învelitorile: o linie per învelitoare (model, finisaj, grosime, culoare), **doar suprafața** (mp, 3 zecimale), preț / mp, valoare — fără lungimi. Fiecare categorie cu subtotal discret.
 **Supliment la ofertă** (zona B nebifată): pe **pagină separată**, sumele în lei așa cum au fost scrise; **pagina există doar dacă sunt completate suplimente** — fără linii în zona B, documentul are o singură pagină (decis 13.10.2026, valabil pentru ofertă și rezumat); conținutul și mențiunile paginii se stabilesc după consultarea expertului fiscal.
-**Totaluri**: Total fără TVA (EUR) · [Discount general] · TVA (cota) · **Total cu TVA (EUR)** · **Total în lei** la cursul ofertei (1 EUR = x,xxxx lei, BNR + 1 %, data).
-**Subsol** — două rânduri (decis 13.10.2026): „**Garanții:** învelitoare X ani culoare și coroziune; sistem pluvial X ani culoare, Y ani coroziune" — informația **completă**, compusă automat din tabelul de garanții (`garantii-finisaj-grosime.csv`, coloane separate pentru culoare și coroziune) după finisajul și grosimea fiecărui produs de pe ofertă, pe categorii; și „**Curs EURO – 5,2446**" (cursul din ziua ofertei, 4 zecimale). Nimic despre TVA, monedă sau valabilitate. Fără semnătură, fără ștampilă. Precizările libere ale agentului, doar dacă există.
+**Totaluri**: Total fără TVA (EUR) · [Discount general] · TVA (cota) · **Total cu TVA (EUR)** · **Total în lei** la cursul documentului (1 EUR = x,xxxx lei, BNR, data) — regula totalului în lei: 11.8.
+**Subsol** — două rânduri (decis 13.10.2026): „**Garanții:** învelitoare X ani culoare și coroziune; sistem pluvial X ani culoare, Y ani coroziune" — informația **completă**, compusă automat din tabelul de garanții (`garantii-finisaj-grosime.csv`, coloane separate pentru culoare și coroziune) după finisajul și grosimea fiecărui produs de pe ofertă, pe categorii; și „**Curs EURO – 5,2446**" (cursul BNR din ziua ofertei, 4 zecimale). Nimic despre TVA, monedă sau valabilitate. Fără semnătură, fără ștampilă. Precizările libere ale agentului, doar dacă există.
 
 ### 13.3 PDF-ul de OFERTĂ DETALIATĂ (machetă din 13.10.2026: `docs/design/macheta-oferta-detaliata.pdf`)
 Se dă **la acceptare și după avans**, pentru verificarea mărfii la recepție. Identic cu oferta, plus:
