@@ -615,6 +615,13 @@ model Oferta {
   clientId    String
   client      Client  @relation(fields: [clientId], references: [id])
   sursaClient String?
+  // adresa lucrarii si localitatea pe oferta (migrarea 7, S13): copiate din client
+  // la creare, editabile - o completare preia adresa din oferta initiala (cap. 2b),
+  // iar un client cu doua lucrari are doua adrese; fisa clientului pastreaza contactul
+  adresaLucrarii String?
+  localitate     String?
+  // campul liber de precizari al zonei B (cap. 9)
+  precizariZonaB String?
 
   // cele doua cursuri inghetate la creare (11.8): documentul = BNR al zilei,
   // achizitia = BNR x 1,01; data si sursa cursului; avertizare cand nu s-a

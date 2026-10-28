@@ -185,7 +185,8 @@ describe("vizibilitatea (FISA-CONTURI §2)", () => {
     expect(toate.body.total).toBeGreaterThanOrEqual(12);
     const f1 = await adminGeneral.get("/api/oferte").query({ firmaId: firma1, pageSize: 100 }).expect(200);
     expect(f1.body.total).toBe(12);
-    const multiplu = await adminGeneral.get("/api/oferte").query({ clientMultiplu: "da", pageSize: 100 }).expect(200);
+    // pe firma acestui test (alte teste creeaza oferte pe acelasi client in firmele lor)
+    const multiplu = await adminGeneral.get("/api/oferte").query({ clientMultiplu: "da", firmaId: firma1, pageSize: 100 }).expect(200);
     expect(multiplu.body.oferte.map((o: { numarComplet: string }) => o.numarComplet).sort()).toEqual(["OAG-0001", "OAG-0002"]);
     expect(multiplu.body.oferte[0].clientMultiplu).toBe(true);
     const f2 = await adminGeneral.get("/api/oferte").query({ firmaId: firma2 }).expect(200);

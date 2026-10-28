@@ -257,3 +257,22 @@ Fiecare intrare: data, obiectivul sesiunii, rezultatul, următorul pas propus.
 **De verificat de Ionuț:** conectare cu un cont de Administrator / Agent → „Oferte” → „+ Ofertă nouă” (clientul se autocompletează după telefon); Zona tehnică → „Curs BNR” → „Preia și istoricul” (prima preluare umple tabelul; până atunci oferta nouă cere un curs).
 
 **Următorul pas propus:** S13 — editorul ofertei, zona produselor (cap. 3–10): cascada învelitorii din catalog, cele trei moduri de cantitate, rubricile cu listele implicite, rezultatul motorului pe loc (mp, coli, pachete, formulare, comandabil), salvarea cu snapshot.
+
+## 2026-10-28 — S13: editorul ofertei — zona produselor (reluat după pana de curent)
+
+**Obiectiv:** S13 din PLAN v0.13 — cascada învelitorii din catalog, cele trei moduri de cantitate, rubricile în ordinea decisă cu listele implicite, accesoriile speciale, pluvialul, șipca, la lungimi, zona B, rezultatul motorului pe loc, salvarea automată cu snapshot, grupa, adresa lucrării pe ofertă (migrarea 7). Fără prețuri pe ecran.
+
+**Pana de curent (~14:10):** fișierele scrise înainte erau întregi (compilau), migrarea 7 era aplicată; lipseau potrivirea a patru nume din lista de fixare (spray, corector, foliile — finisajul lor stă în „variantă”), apelurile API din web și toate ecranele. Reluat de acolo, fără a reface nimic.
+
+**Rezultat:**
+- Migrarea 7 (SQL citit integral: doar ADD COLUMN), catalogul pentru editor (`ofe/catalog.ts`), salvarea produselor cu snapshot pe server (`ofe/produse.ts`), mapperul ofertă → intrarea motorului (`ofe/intrareMot.ts`), rezultatul doar cu cantități și structură.
+- Web: `pages/oferta/` — `Produse` (container cu salvare automată și indicator), `Invelitori`, `Rubrica` (standard și fixare, cu secțiuni pentru secundare și de sine stătătoare), `Speciale2ML`, `Pluvial`, `Sipca`, `Lungimi`, `ZonaB`, `Structura`; antetul primește adresa lucrării și localitatea.
+- Corectura aprobată: capacul de coamă prin `categorie_oferta` (CSV-ul 01 corectat, în commit); Ionuț mută categoria celor 3 produse din Zona tehnică (Produse → Capac coamă lucios / mat / Grande Mat → categoria „Fixare și etanșare”).
+- Teste: `npm test` — **219 verzi** (208 + 11: E01 prin API → 180,481 mp, 48 de coli, P1 cu 17 linii și Pluvial A, 2 formulare, snapshot cu preț de bază în bază dar nu în răspuns; a doua salvare fără dubluri; E06 → 100 buc, 120,000 ml; E11 → P1 / P2 / Pluvial A / Pluvial B și 4 formulare; cele 86 de rânduri din listele implicite rezolvate pentru cheile reale; cascada, căutarea, treptele, pluvialul, șipca fără prețuri; validări; drepturi; grupa și precizările; migrarea 7 aditivă). `npm run test:etalon` — 11 la zero.
+- ARH §4.3 completat (adresa pe ofertă, mapperul 1:1, limitele motorului), §13 intrarea S13. În commit: PLAN v0.13 (Claude chat, neatins), CSV-ul 01 corectat. Nimic din `mot/`, catalog (din cod), prețuri sau conturi nu s-a modificat. Serverele repornite.
+
+**De decis / de cerut ca MODIFICARE la nevoie (motorul e înghețat):** două învelitori cu același produs pe aceeași ofertă (culori diferite) nu se disting în motor; o singură rubrică de șipcă pe ofertă.
+
+**De verificat de Ionuț:** o ofertă nouă → zona produselor: alege învelitoarea în cascadă, completează panotajul, listele implicite apar pe rubrici; totul se salvează singur; rezultatul de jos arată mp, coli, pachetele și formularele.
+
+**Următorul pas propus:** S14 — prețurile în ofertă (cap. 11, 21): zona de țintă, modul de prezentare, prețurile fixe, garda, abaterea, totalurile, „Creează variantă”, „Preia prețuri din oferta…”, „Completare la…”, reîmprospătarea cursului, ecranul „Află preț”; testul de capăt E01 din ecran = etalon — prima verificare manuală a lui Ionuț.

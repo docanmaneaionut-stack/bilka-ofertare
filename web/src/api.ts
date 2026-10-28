@@ -605,15 +605,20 @@ export type OfertaDetaliu = {
   motivCompletare: string | null;
   completari: { id: string; numarComplet: string; motiv: string | null; status: StatusOferta }[];
   note: string | null;
+  adresaLucrarii: string | null;
+  localitate: string | null;
+  precizariZonaB: string | null;
   invelitori: unknown[];
   linii: unknown[];
+  sipca: unknown | null;
   zonaB: unknown[];
+  structura?: { rezultat: StructuraOferta | null; eroare: string | null } | null;
   poateModifica: boolean;
   createdAt: string;
   updatedAt: string;
 };
 
-export type AntetOferta = { data?: string; sursaClient?: string | null; note?: string | null };
+export type AntetOferta = { data?: string; sursaClient?: string | null; note?: string | null; adresaLucrarii?: string | null; localitate?: string | null };
 
 export type CursAzi = { cursBnr: string; cursAchizitie: string; dataCurs: string; sursaCurs: string; avertizareCurs: string | null };
 export type CursZi = { data: string; curs: string; sursa: string };
@@ -679,3 +684,172 @@ export function momentRelativ(iso: string): string {
   if (aceeasiZi(d, ieri)) return `ieri, ${ora}`;
   return `${d.toLocaleDateString("ro-RO", { day: "2-digit", month: "2-digit" })}, ${ora}`;
 }
+
+// --- Editorul ofertei: catalogul pentru editor si zona produselor (S13) ---
+
+export type ProdusEditor = {
+  id: string;
+  cod: string;
+  denumire: string;
+  um: string;
+  categorie: string | null;
+  compartiment: string;
+  grup: string;
+  familie: string | null;
+  varianta: string | null;
+  optiune: string | null;
+  finisaj: string | null;
+  grosime: string | null;
+  sistem: string | null;
+  treapta: string | null;
+  desfasurata: string | null;
+  latimeTotalaM: string | null;
+  latimeTotalaMm: string | null;
+  modulCm: string | null;
+  culoriDisponibile: string | null;
+  tablaPlana: "mp" | "coala" | null;
+};
+
+export type ReferinteEditor = {
+  culori: { furnizor: string; finisaj: string; grosime: string; culoare: string }[];
+  trepte: { treapta: string; deLaMm: number; panaLaMm: number }[];
+  variante: { model: string; variantaProfil: string; restrictii: string | null }[];
+  categorii: { denumire: string; zona: string; ordine: number }[];
+  categoriiListe: { rubrica: string; categorieInvelitoare: string }[];
+};
+
+export type CheieEditor = { finisaj?: string; grosime?: string; sistem?: string };
+
+export type PozitieEditor = { lungimeM: string; bucati: number };
+
+export type InvelitoareEditor = {
+  cheie: string;
+  produsId: string;
+  culoare?: string | null;
+  latimeTotalaM?: string;
+  mpDirect?: string | null;
+  panotaj: PozitieEditor[];
+  variantaProfil?: string | null;
+};
+
+export type LinieEditor = {
+  cheie: string;
+  rubrica: string;
+  produsId: string;
+  cantitate: string;
+  invelitoare?: string | null;
+  culoare?: { ral: string; finisaj?: string | null; grosime?: string | null } | null;
+  pozitii?: PozitieEditor[];
+};
+
+export type SipcaEditor = {
+  linie: string;
+  model: string;
+  culoare?: string | null;
+  varianta: "comanda" | "calcul";
+  tronsoane?: { lungimeSipcaM: string; lungimeTronsonM: string; distantaMm: string }[];
+};
+
+export type ZonaBEditor = { denumire: string; um: string; cantitate: string; sumaLei: string; contineTva: boolean; preiaInFactura: boolean };
+
+export type StareProduse = {
+  grupaPct?: string;
+  precizariZonaB?: string | null;
+  invelitori: InvelitoareEditor[];
+  linii: LinieEditor[];
+  sipca?: SipcaEditor | null;
+  zonaB: ZonaBEditor[];
+};
+
+export type StructuraOferta = {
+  cantitati: {
+    invelitori: { id: string; mp: string; mpPanotaj: string; mpDirect: string; coli: number; integralPanotata: boolean }[];
+    accesoriiMl: { linieId: string; ml: string }[];
+    sipca?: { tronsoane: { bucati: number; ml: string }[]; bucatiTotal: number; mlTotal: string };
+  };
+  comandabil: { da: boolean; motive: string[] };
+  linii: { id: string; cod: string; um: string; cantitate: string; pachet?: string }[];
+  pachete: { id: string; nume: string; tip: string; linii: string[] }[];
+  formulareBilka: { nr: number; pachete: string[]; continut: string }[];
+  textFormulare: string;
+  avertizari: string[];
+};
+
+// liniile si invelitorile salvate, asa cum vin in detaliul ofertei (snapshot, fara pret)
+export type InvelitoareSalvata = {
+  id: string;
+  ordine: number;
+  rol: string;
+  produsId: string | null;
+  cod: string;
+  denumire: string;
+  um: string;
+  finisaj: string | null;
+  grosime: string | null;
+  grup: string | null;
+  familie: string | null;
+  optiune: string | null;
+  culoare: string | null;
+  latimeTotalaM: string;
+  mpDirect: string | null;
+  variantaProfil: string | null;
+  panotaj: { id: string; ordine: number; lungimeM: string; bucati: number }[];
+};
+
+export type LinieSalvata = {
+  id: string;
+  ordine: number;
+  rubrica: string;
+  produsId: string | null;
+  cod: string;
+  denumire: string;
+  um: string;
+  finisaj: string | null;
+  grosime: string | null;
+  grup: string | null;
+  familie: string | null;
+  optiune: string | null;
+  cantitate: string;
+  invelitoareId: string | null;
+  culoareRal: string | null;
+  culoareFinisaj: string | null;
+  culoareGrosime: string | null;
+  pozitii: { id: string; ordine: number; lungimeM: string; bucati: number }[];
+};
+
+export type SipcaSalvata = {
+  linieId: string;
+  model: string;
+  culoare: string | null;
+  latimeSipcaMm: string;
+  varianta: "COMANDA" | "CALCUL";
+  tronsoane: { ordine: number; lungimeSipcaM: string; lungimeTronsonM: string; distantaMm: string }[];
+};
+
+export type ZonaBSalvata = { id: string; ordine: number; denumire: string; um: string; cantitate: string; sumaLei: string; contineTva: boolean; preiaInFactura: boolean };
+
+const BAZA_CATALOG_EDITOR = "/api/oferte/catalog";
+
+function cuParametri(cale: string, p: Record<string, string | undefined>): string {
+  const sp = new URLSearchParams();
+  for (const [k, v] of Object.entries(p)) if (v) sp.set(k, v);
+  const s = sp.toString();
+  return s ? `${cale}?${s}` : cale;
+}
+
+export const apiCatalogEditor = {
+  invelitori: () => cerere<{ produse: ProdusEditor[] }>(`${BAZA_CATALOG_EDITOR}/invelitori`),
+  referinte: () => cerere<ReferinteEditor>(`${BAZA_CATALOG_EDITOR}/referinte`),
+  listaImplicita: (rubrica: string, categorieInvelitoare: string | undefined, cheie: CheieEditor) =>
+    cerere<{ produse: (ProdusEditor & { ordine: number; numeLista: string })[]; nerezolvate: { ordine: number; nume: string; candidati: number }[] }>(
+      cuParametri(`${BAZA_CATALOG_EDITOR}/liste-implicite`, { rubrica, categorieInvelitoare, ...cheie }),
+    ),
+  cauta: (q: string, categorie: string | undefined, cheie: CheieEditor) => cerere<{ produse: ProdusEditor[]; total: number }>(cuParametri(`${BAZA_CATALOG_EDITOR}/cauta`, { q, categorie, ...cheie })),
+  speciale: (categorie: string, cheie: CheieEditor) => cerere<{ produse: ProdusEditor[] }>(cuParametri(`${BAZA_CATALOG_EDITOR}/speciale`, { categorie, ...cheie })),
+  pluvial: (finisaj: string, sistem: string) => cerere<{ implicite: (ProdusEditor & { ordine: number; numeLista: string })[]; nerezolvate: { nume: string }[]; restul: ProdusEditor[] }>(cuParametri(`${BAZA_CATALOG_EDITOR}/pluvial`, { finisaj, sistem })),
+  sipca: () => cerere<{ produse: ProdusEditor[] }>(`${BAZA_CATALOG_EDITOR}/sipca`),
+};
+
+export const apiProduseOferta = {
+  salveaza: (id: string, stare: StareProduse) => cerere<{ oferta: OfertaDetaliu }>(`${BAZA_OFE}/${id}/produse`, { method: "PUT", body: JSON.stringify(stare) }),
+};

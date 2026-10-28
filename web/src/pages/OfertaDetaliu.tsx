@@ -3,6 +3,7 @@ import { Link, useParams } from "react-router-dom";
 import { apiOferte, dataRo, ETICHETA_STATUS, type ClientDate, type OfertaDetaliu as Oferta } from "../api";
 import { clientGol, dinClient, FormularClient } from "../components/FormularClient";
 import { Ajutor, Camp, Mesaj, textEroare } from "../components/ui";
+import { Produse } from "./oferta/Produse";
 
 // Pagina ofertei (S12): antetul si clientul se editeaza; zona produselor vine la
 // S13, preturile la S14, statusurile si istoricul la S15, documentele la S16.
@@ -15,6 +16,8 @@ export function OfertaDetaliu() {
   const [data, setData] = useState("");
   const [sursaClient, setSursaClient] = useState("");
   const [note, setNote] = useState("");
+  const [adresaLucrarii, setAdresaLucrarii] = useState("");
+  const [localitate, setLocalitate] = useState("");
   const [seSalveaza, setSeSalveaza] = useState(false);
 
   function preia(o: Oferta) {
@@ -23,6 +26,8 @@ export function OfertaDetaliu() {
     setData(o.data);
     setSursaClient(o.sursaClient ?? "");
     setNote(o.note ?? "");
+    setAdresaLucrarii(o.adresaLucrarii ?? "");
+    setLocalitate(o.localitate ?? "");
   }
 
   useEffect(() => {
@@ -40,7 +45,7 @@ export function OfertaDetaliu() {
     setMesaj(null);
     setSeSalveaza(true);
     try {
-      await apiOferte.antet(oferta.id, { data, sursaClient: sursaClient || null, note: note || null });
+      await apiOferte.antet(oferta.id, { data, sursaClient: sursaClient || null, note: note || null, adresaLucrarii: adresaLucrarii || null, localitate: localitate || null });
       const { oferta: dupa } = await apiOferte.client(oferta.id, client);
       preia(dupa);
       setMesaj("Antetul și clientul au fost salvate.");
@@ -96,6 +101,12 @@ export function OfertaDetaliu() {
             <Camp eticheta="Curs de achiziție (BNR × 1,01)">
               <input type="text" value={c.cursAchizitie} readOnly />
             </Camp>
+            <Camp eticheta="Adresa lucrării">
+              <input type="text" value={adresaLucrarii} onChange={(e) => setAdresaLucrarii(e.target.value)} disabled={!oferta.poateModifica} />
+            </Camp>
+            <Camp eticheta="Localitatea lucrării">
+              <input type="text" value={localitate} onChange={(e) => setLocalitate(e.target.value)} disabled={!oferta.poateModifica} />
+            </Camp>
             <Camp eticheta="Sursa clientului">
               <input type="text" value={sursaClient} onChange={(e) => setSursaClient(e.target.value)} disabled={!oferta.poateModifica} />
             </Camp>
@@ -136,10 +147,7 @@ export function OfertaDetaliu() {
         {eroare && <Mesaj tip="eroare">{eroare}</Mesaj>}
       </form>
 
-      <section className="panou in-lucru">
-        <h2>Produse</h2>
-        <p>Zona produselor vine în S13: învelitori cu panotaj, accesorii, fixare, pluvial, șipcă, zona B.</p>
-      </section>
+      <Produse oferta={oferta} onOferta={setOferta} />
       <section className="panou in-lucru">
         <h2>Prețuri</h2>
         <p>Zona de țintă și prezentarea vin în S14. Statusurile și istoricul în S15, documentele în S16.</p>

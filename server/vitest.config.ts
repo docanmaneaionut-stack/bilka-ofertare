@@ -1,4 +1,14 @@
 import { configDefaults, defineConfig } from "vitest/config";
+import { BaseSequencer, type TestSpecification } from "vitest/node";
+
+// fisierele ruleaza in ordine alfabetica, nu dupa durata din cache: testele
+// editorului de oferta (ofe-*) folosesc catalogul Bilka importat de testul de
+// import (imp-import), care trebuie sa ruleze primul pe un compartiment gol
+class OrdineAlfabetica extends BaseSequencer {
+  override async sort(files: TestSpecification[]): Promise<TestSpecification[]> {
+    return [...files].sort((a, b) => a.moduleId.localeCompare(b.moduleId));
+  }
+}
 import { config as incarcaEnv } from "dotenv";
 
 incarcaEnv();
@@ -29,5 +39,6 @@ export default defineConfig({
     hookTimeout: 120_000,
     // testele impart aceeasi baza; se ruleaza secvential ca sa nu se calce
     fileParallelism: false,
+    sequence: { sequencer: OrdineAlfabetica },
   },
 });

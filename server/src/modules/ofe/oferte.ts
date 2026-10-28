@@ -7,6 +7,8 @@ import { cereAutentificare, cereRol } from "../accounts/middleware.js";
 import { scrieCreare, scrieModificari } from "../adm/jurnal.js";
 import { cursulZilei, EroareCurs } from "../curs/serviciu.js";
 import { clientPublic, gasesteSauCreeazaClient, normalizeazaTelefon, numarComplet, schemaClient } from "./clienti.js";
+import { catalogEditorRouter } from "./catalog.js";
+import { calculeazaStructura, EroareProduse, salveazaProduse, schemaProduse } from "./produse.js";
 import { seteazaContor, urmatorulNumar } from "./numerotare.js";
 import { filtruVizibilitateOferte, poateModificaOferta, poateVedeaOferta, ROLURI_CU_OFERTE, vedePreturiDeBaza } from "./vizibilitate.js";
 
@@ -17,6 +19,8 @@ import { filtruVizibilitateOferte, poateModificaOferta, poateVedeaOferta, ROLURI
 
 export const oferteRouter = Router();
 oferteRouter.use(cereAutentificare);
+// catalogul pentru editor (inainte de rutele cu :id)
+oferteRouter.use("/catalog", catalogEditorRouter);
 
 const STATUSURI: StatusOferta[] = ["IN_LUCRU", "TRANSMISA", "DE_REVIZIONAT", "ACCEPTATA", "NEACCEPTATA", "AVANS_LUAT", "DE_COMANDAT", "COMANDAT"];
 
@@ -55,6 +59,7 @@ const selectLista = {
   avertizareCurs: true,
   motivCompletare: true,
   completareLaId: true,
+  localitate: true,
   createdAt: true,
   updatedAt: true,
   client: { select: { id: true, nume: true, localitate: true, telefon: true, telefonNormalizat: true } },
@@ -100,7 +105,7 @@ function spreRandSimplu(o: RandLista, clientiMultipli: Set<string> | null): Rand
     statusLa: o.statusLa,
     comandatLa: o.comandatLa,
     avertizareCurs: o.avertizareCurs,
-    client: { id: o.client.id, nume: o.client.nume, localitate: o.client.localitate, telefon: o.client.telefon },
+    client: { id: o.client.id, nume: o.client.nume, localitate: o.localitate ?? o.client.localitate, telefon: o.client.telefon },
     clientMultiplu: clientiMultipli ? clientiMultipli.has(o.client.telefonNormalizat) : false,
     agent: o.utilizator,
     firma: o.firma,
@@ -209,6 +214,9 @@ const schemaAntet = z.object({
   data: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
   sursaClient: z.string().trim().max(200).nullish(),
   note: z.string().trim().max(4000).nullish(),
+  // adresa lucrarii si localitatea stau pe oferta (migrarea 7; cap. 2b)
+  adresaLucrarii: z.string().trim().max(400).nullish(),
+  localitate: z.string().trim().max(200).nullish(),
 });
 
 oferteRouter.post("/", cereRol(...ROLURI_CU_OFERTE), async (req, res) => {
@@ -246,6 +254,9 @@ oferteRouter.post("/", cereRol(...ROLURI_CU_OFERTE), async (req, res) => {
         numar,
         data: new Date(`${corp.antet?.data ?? dataLocalaAzi()}T00:00:00Z`),
         clientId: client.id,
+        // adresa lucrarii: din antet daca e data, altfel copiata de la client
+        adresaLucrarii: corp.antet?.adresaLucrarii || corp.client.adresa,
+        localitate: corp.antet?.localitate || corp.client.localitate || null,
         sursaClient: corp.antet?.sursaClient || null,
         note: corp.antet?.note || null,
         cursBnr: curs.cursBnr,
@@ -306,6 +317,9 @@ async function detaliu(id: string, u: Utilizator) {
     cont: o.utilizator,
     client: clientPublic(o.client),
     sursaClient: o.sursaClient,
+    adresaLucrarii: o.adresaLucrarii,
+    localitate: o.localitate,
+    precizariZonaB: o.precizariZonaB,
     curs: { cursBnr: o.cursBnr.toFixed(4), cursAchizitie: o.cursAchizitie.toFixed(4), dataCurs: dataDoar(o.dataCurs), sursaCurs: o.sursaCurs, avertizareCurs: o.avertizareCurs },
     listaPret: o.listaPret,
     tvaPct: o.tvaPct.toString(),
@@ -319,10 +333,11 @@ async function detaliu(id: string, u: Utilizator) {
     completari: o.completari.map((c) => ({ id: c.id, numarComplet: numarComplet(c.serie, c.numar), motiv: c.motivCompletare, status: c.status })),
     preluataDinId: o.preluataDinId,
     note: o.note,
-    invelitori: o.invelitori.map(faraBaza),
-    linii: o.linii.map(faraBaza),
-    sipca: o.sipca,
-    zonaB: o.zonaB,
+    invelitori: o.invelitori.map((i) => faraBaza({ ...i, latimeTotalaM: i.latimeTotalaM.toString(), mpDirect: i.mpDirect?.toString() ?? null, panotaj: i.panotaj.map((p) => ({ ...p, lungimeM: p.lungimeM.toString() })) })),
+    linii: o.linii.map((l) => faraBaza({ ...l, cantitate: l.cantitate.toString(), pretFixValoare: l.pretFixValoare?.toString() ?? null, discountPct: l.discountPct?.toString() ?? null, pozitii: l.pozitii.map((p) => ({ ...p, lungimeM: p.lungimeM.toString() })) })),
+    sipca: o.sipca ? { ...o.sipca, latimeSipcaMm: o.sipca.latimeSipcaMm.toString(), tronsoane: o.sipca.tronsoane.map((t) => ({ ...t, lungimeSipcaM: t.lungimeSipcaM.toString(), lungimeTronsonM: t.lungimeTronsonM.toString(), distantaMm: t.distantaMm.toString() })) } : null,
+    zonaB: o.zonaB.map((zb) => ({ ...zb, cantitate: zb.cantitate.toString(), sumaLei: zb.sumaLei.toString() })),
+    structura: await calculeazaStructura(o.id),
     poateModifica: poateModificaOferta(u, o),
     creatDeId: o.creatDeId,
     modificatDeId: o.modificatDeId,
@@ -359,14 +374,16 @@ oferteRouter.put("/:id/antet", async (req, res) => {
   }
   const date = schemaAntet.parse(req.body);
   const u = req.utilizator!;
-  const inainte = await prisma.oferta.findUniqueOrThrow({ where: { id: r.oferta.id }, select: { data: true, sursaClient: true, note: true } });
+  const inainte = await prisma.oferta.findUniqueOrThrow({ where: { id: r.oferta.id }, select: { data: true, sursaClient: true, note: true, adresaLucrarii: true, localitate: true } });
   const dupa = {
     data: date.data ? new Date(`${date.data}T00:00:00Z`) : inainte.data,
     sursaClient: date.sursaClient === undefined ? inainte.sursaClient : date.sursaClient || null,
     note: date.note === undefined ? inainte.note : date.note || null,
+    adresaLucrarii: date.adresaLucrarii === undefined ? inainte.adresaLucrarii : date.adresaLucrarii || null,
+    localitate: date.localitate === undefined ? inainte.localitate : date.localitate || null,
   };
   await prisma.oferta.update({ where: { id: r.oferta.id }, data: { ...dupa, modificatDeId: u.id } });
-  await scrieModificari(u, "Oferta", r.oferta.id, ["data", "sursaClient", "note"], inainte, dupa);
+  await scrieModificari(u, "Oferta", r.oferta.id, ["data", "sursaClient", "note", "adresaLucrarii", "localitate"], inainte, dupa);
   res.json({ oferta: await detaliu(r.oferta.id, u) });
 });
 
@@ -389,6 +406,26 @@ oferteRouter.put("/:id/client", async (req, res) => {
     }
   });
   res.json({ oferta: await detaliu(r.oferta.id, u) });
+});
+
+// zona produselor (cap. 3-10): salvare automata cu snapshot, apoi structura din motor
+oferteRouter.put("/:id/produse", async (req, res) => {
+  const r = await incarcaCuDrepturi(req, true);
+  if (r.eroare) {
+    res.status(r.eroare.status).json({ eroare: r.eroare.mesaj });
+    return;
+  }
+  const date = schemaProduse.parse(req.body);
+  try {
+    await salveazaProduse(r.oferta.id, date, req.utilizator!);
+  } catch (e) {
+    if (e instanceof EroareProduse) {
+      res.status(e.status).json({ eroare: e.message });
+      return;
+    }
+    throw e;
+  }
+  res.json({ oferta: await detaliu(r.oferta.id, req.utilizator!) });
 });
 
 // contorul unei serii poate porni de la un numar dat (Admin general), cu jurnal
