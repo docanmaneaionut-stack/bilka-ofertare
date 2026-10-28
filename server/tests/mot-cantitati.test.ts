@@ -145,7 +145,7 @@ describe("sipca (cap. 8)", () => {
 
   it("E06, varianta Calcul: 94 + 6 = 100 buc, 112,800 + 7,200 = 120,000 ml", () => {
     const s = calculeazaSipca({
-      linieId: "L1",
+      id: "S1",
       produsCod: "SIPCAMAT050",
       model: "Oslo, capăt drept",
       latimeSipcaMm: "92.9",
@@ -155,19 +155,19 @@ describe("sipca (cap. 8)", () => {
         { lungimeSipcaM: "1.20", lungimeTronsonM: "0.70", distantaMm: "25" },
       ],
     });
-    expect(s).toEqual({ tronsoane: [{ bucati: 94, ml: "112.800" }, { bucati: 6, ml: "7.200" }], bucatiTotal: 100, mlTotal: "120.000" });
+    expect(s).toEqual({ id: "S1", tronsoane: [{ bucati: 94, ml: "112.800" }, { bucati: 6, ml: "7.200" }], bucatiTotal: 100, mlTotal: "120.000" });
   });
 
   it("Comanda: ml = suma(lungime x bucati)", () => {
     const s = calculeazaSipca({
-      linieId: "L1",
+      id: "S2",
       produsCod: "SIPCAMAT050",
       model: "Haga, capăt rotund",
       latimeSipcaMm: "111.3",
       varianta: "comanda",
       pozitii: [{ lungimeM: "1.50", bucati: 40 }, { lungimeM: "1.20", bucati: 25 }],
     });
-    expect(s).toEqual({ tronsoane: [{ bucati: 40, ml: "60.000" }, { bucati: 25, ml: "30.000" }], bucatiTotal: 65, mlTotal: "90.000" });
+    expect(s).toEqual({ id: "S2", tronsoane: [{ bucati: 40, ml: "60.000" }, { bucati: 25, ml: "30.000" }], bucatiTotal: 65, mlTotal: "90.000" });
   });
 });
 
@@ -189,7 +189,7 @@ function ofertaMinima(): IntrareOferta {
     completare: false,
     invelitori: [invelitoare({ id: "TMIBEMAT050", culoare: "RAL 3005", produs: produs({ cod: "TMIBEMAT050", denumire: "Țiglă Iberic", finisaj: "mat", grosime: "0,50 mm", pretBazaEur: "6.79" }), panotaj: [{ lungimeM: "4.20", bucati: 15 }] })],
     linii: [
-      { id: "L1", rubrica: "Învelitori", produs: produs({ cod: "TMIBEMAT050", denumire: "Țiglă Iberic", um: "M2", pretBazaEur: "6.79" }), cantitate: "1" },
+      { id: "L1", rubrica: "Învelitori", produs: produs({ cod: "TMIBEMAT050", denumire: "Țiglă Iberic", um: "M2", pretBazaEur: "6.79" }), cantitate: "1", invelitoare: "TMIBEMAT050" },
       { id: "L2", rubrica: "Accesorii standard", produs: produs({ cod: "ACMICMAT050", denumire: "Coamă mică", um: "BUC", pretBazaEur: "4.90" }), cantitate: "13", invelitoare: "TMIBEMAT050" },
     ],
     zonaB: [],
@@ -247,15 +247,15 @@ describe("validarea intrarilor imposibile: eroare, nu rezultat", () => {
   it("sipca: distanta negativa, tronson 0, varianta Calcul fara tronsoane", () => {
     const sipca = (t: { lungimeSipcaM: string; lungimeTronsonM: string; distantaMm: string }[]) => {
       const o = ofertaMinima();
-      o.linii.push({ id: "L3", rubrica: "Șipcă gard", produs: produs({ cod: "SIPCAMAT050", denumire: "Șipcă Oslo", um: "ML", pretBazaEur: "1.11" }), cantitate: "1", culoare: { ral: "RAL 7016", finisaj: "mat", grosime: "0,50 mm" } });
-      o.sipca = { linieId: "L3", produsCod: "SIPCAMAT050", model: "Oslo", latimeSipcaMm: "92.9", varianta: "calcul", tronsoane: t };
+      o.linii.push({ id: "L3", rubrica: "Șipcă gard", produs: produs({ cod: "SIPCAMAT050", denumire: "Șipcă Oslo", um: "ML", pretBazaEur: "1.11" }), cantitate: "1", sipca: "S1", culoare: { ral: "RAL 7016", finisaj: "mat", grosime: "0,50 mm" } });
+      o.sipci = [{ id: "S1", produsCod: "SIPCAMAT050", model: "Oslo", latimeSipcaMm: "92.9", varianta: "calcul", tronsoane: t }];
       return o;
     };
     expect(() => calculeazaOferta(sipca([{ lungimeSipcaM: "1.20", lungimeTronsonM: "11", distantaMm: "-5" }]))).toThrow(/nu poate fi negativa/);
     expect(() => calculeazaOferta(sipca([{ lungimeSipcaM: "1.20", lungimeTronsonM: "0", distantaMm: "25" }]))).toThrow(/mai mare decat 0/);
     expect(() => calculeazaOferta(sipca([]))).toThrow(/tronsoane/);
     const r = calculeazaOferta(sipca([{ lungimeSipcaM: "1.20", lungimeTronsonM: "11", distantaMm: "0" }]));
-    expect(r.cantitati.sipca).toEqual({ tronsoane: [{ bucati: 119, ml: "142.800" }], bucatiTotal: 119, mlTotal: "142.800" }); // 11000 / 92,9 = 118,4 -> 119
+    expect(r.cantitati.sipci).toEqual([{ id: "S1", tronsoane: [{ bucati: 119, ml: "142.800" }], bucatiTotal: 119, mlTotal: "142.800" }]); // 11000 / 92,9 = 118,4 -> 119
     expect(r.linii[2].cantitate).toBe("142.800");
   });
 

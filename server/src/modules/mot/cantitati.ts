@@ -1,4 +1,4 @@
-import type { Comandabil, IntrareOferta, Invelitoare, InvelitoareCalculata, PozitieLungime, Sipca, SipcaCalculata } from "./tipuri.js";
+import { esteLinieInvelitoare, type Comandabil, type IntrareOferta, type Invelitoare, type InvelitoareCalculata, type PozitieLungime, type Sipca, type SipcaCalculata } from "./tipuri.js";
 import { ZERO, la3, suma, z, type Suma, type Zecimal } from "./zecimal.js";
 
 // Cantitatile ofertei (FISA-OFERTARE 3.2, 3.6, cap. 5, cap. 8; ETALON R8):
@@ -80,6 +80,7 @@ export function calculeazaSipca(sipca: Sipca): SipcaCalculata {
       return { bucati, ml: la3(z(t.lungimeSipcaM).times(bucati)) };
     });
     return {
+      id: sipca.id,
       tronsoane,
       bucatiTotal: tronsoane.reduce((t, x) => t + x.bucati, 0),
       mlTotal: la3(suma(tronsoane.map((t) => t.ml))),
@@ -87,6 +88,7 @@ export function calculeazaSipca(sipca: Sipca): SipcaCalculata {
   }
   const pozitii = sipca.pozitii ?? [];
   return {
+    id: sipca.id,
     tronsoane: pozitii.map((p) => ({ bucati: p.bucati, ml: la3(z(p.lungimeM).times(p.bucati)) })),
     bucatiTotal: coliDinPozitii(pozitii),
     mlTotal: mlDinPozitii(pozitii),
@@ -123,7 +125,8 @@ export function avertizariDripstop(invelitori: Invelitoare[], calculate: Invelit
 export interface CantitatiOferta {
   invelitori: InvelitoareCalculata[];
   accesoriiMl: { linieId: string; ml: Suma }[];
-  sipca?: SipcaCalculata;
+  // o intrare per rubrica de sipca, in ordinea din oferta (M1)
+  sipci: SipcaCalculata[];
   comandabil: Comandabil;
   avertizari: string[];
   // cantitatea calculata a fiecarei linii (declarata, acolo unde nu se calculeaza)
@@ -135,29 +138,30 @@ export function calculeazaCantitati(intrare: IntrareOferta): CantitatiOferta {
   const accesoriiMl = intrare.linii
     .filter((l) => l.pozitii !== undefined && l.pozitii.length > 0)
     .map((l) => ({ linieId: l.id, ml: mlDinPozitii(l.pozitii ?? []) }));
-  const sipca = intrare.sipca ? calculeazaSipca(intrare.sipca) : undefined;
+  const sipci = (intrare.sipci ?? []).map(calculeazaSipca);
 
+  // M1 (R9): linia invelitorii si linia rubricii de sipca se recunosc prin id-ul
+  // purtat de linie (invelitoare / sipca), nu prin codul produsului
   const peLinie = new Map<string, Suma>();
   for (const l of intrare.linii) {
-    const inv = esteLinieInvelitoare(l.rubrica) ? invelitori.find((i) => i.id === l.produs.cod) : undefined;
+    const inv = esteLinieInvelitoare(l.rubrica) && l.invelitoare !== undefined ? invelitori.find((i) => i.id === l.invelitoare) : undefined;
     const ml = accesoriiMl.find((a) => a.linieId === l.id);
+    const sipca = l.sipca !== undefined ? sipci.find((s) => s.id === l.sipca) : undefined;
     if (inv) peLinie.set(l.id, inv.mp);
     else if (ml) peLinie.set(l.id, ml.ml);
-    else if (sipca && intrare.sipca?.linieId === l.id) peLinie.set(l.id, sipca.mlTotal);
+    else if (sipca) peLinie.set(l.id, sipca.mlTotal);
     else peLinie.set(l.id, l.cantitate);
   }
 
-  const rezultat: CantitatiOferta = {
+  return {
     invelitori,
     accesoriiMl,
+    sipci,
     comandabil: verificaComandabil(intrare.invelitori, invelitori),
     avertizari: avertizariDripstop(intrare.invelitori, invelitori),
     peLinie,
   };
-  if (sipca) rezultat.sipca = sipca;
-  return rezultat;
 }
 
-export function esteLinieInvelitoare(rubrica: string): boolean {
-  return /^învelitori/i.test(rubrica.trim()) || /^invelitori/i.test(rubrica.trim());
-}
+// predicatul rubricii Invelitori sta in tipuri.ts (il foloseste si validarea); ramane exportat de aici
+export { esteLinieInvelitoare };

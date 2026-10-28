@@ -276,3 +276,20 @@ Fiecare intrare: data, obiectivul sesiunii, rezultatul, următorul pas propus.
 **De verificat de Ionuț:** o ofertă nouă → zona produselor: alege învelitoarea în cascadă, completează panotajul, listele implicite apar pe rubrici; totul se salvează singur; rezultatul de jos arată mp, coli, pachetele și formularele.
 
 **Următorul pas propus:** S14 — prețurile în ofertă (cap. 11, 21): zona de țintă, modul de prezentare, prețurile fixe, garda, abaterea, totalurile, „Creează variantă”, „Preia prețuri din oferta…”, „Completare la…”, reîmprospătarea cursului, ecranul „Află preț”; testul de capăt E01 din ecran = etalon — prima verificare manuală a lui Ionuț.
+
+## 2026-10-28 — S13b: MODIFICAREA M1 la motor (învelitori pe id, mai multe rubrici de șipcă) — `v0.2.1-motor`
+
+**Obiectiv:** PLAN v0.14 S13b — cele două limite găsite la S13, rezolvate după regula ARH §8: întâi testul (ETALON v1.4: R9, E12, fișierele etalon în format v1.3, scrise de Claude chat), apoi codul. §5 rămâne ÎNGHEȚAT, cu M1 notată.
+
+**Rezultat:**
+- Pasul 1 (testul primul): încărcătorul etalon și cel al testelor pe formatul v1.3 — legătura prin id e singurul drum (linia învelitorii poartă și ea id-ul, fără căutare după cod). Baseline: 12 etaloane, toate roșii (motorul vechi nu știa id-urile și `sipci`).
+- Pasul 2 (motorul, strict M1): învelitorile și rubricile de șipcă pe id, `sipci[]`, pachete de șipcă „Șipcă A — Oslo 7016 mat”, prima rubrică în primul formular, următoarele formular separat, validările legăturilor. **12 etaloane la zero** — E01–E11 cu cifrele neschimbate, E12 nou. Nimic altceva din motor nu s-a atins.
+- Pasul 3 (baza, mapperul, editorul): migrarea 8 (indexul unic de pe șipcă → index simplu + coloana `ordine`; SQL citit integral, serverele oprite, nimic șters); oferta ține oricâte rubrici de șipcă; linia fiecărei învelitori e legată de ea prin id; editorul are „+ Adaugă rubrică șipcă” pentru fiecare model în plus, iar două învelitori cu același produs în culori diferite au fiecare secțiunile ei.
+- Teste: `npm run test:etalon` — 12 la zero; `npm test` — **228 verzi** (219 + testele M1: motor și E12 prin API).
+- ARH: §5.3 / 5.4 / 5.9 completate, §13 intrarea „MODIFICAREA M1”, paranteza din §4.3. În commit: PLAN v0.14, ETALON v1.4, cele 12 fișiere etalon (neatinse de Code). Eticheta `v0.2.1-motor`.
+
+**De semnalat lui Claude chat (cosmetic, nu blochează):** în E01–E11 câmpul `format` începe tot cu „v1.1 (27.10.2026)” și descrie conversia v1.3 la coadă; E12 începe cu „v1.3”. Testul acceptă ambele.
+
+**De verificat de Ionuț:** pe o ofertă „În lucru”: adaugă a doua învelitoare cu același produs în altă culoare, cu accesorii proprii → rezultatul arată P1 și P2; la Șipcă gard apasă „+ Adaugă rubrică șipcă” și completează al doilea model → „Șipcă A” și „Șipcă B”, textul formularelor spune că a doua merge pe formular separat.
+
+**Următorul pas propus:** S14 — prețurile în ofertă (cap. 11, 21): zona de țintă, modul de prezentare, prețurile fixe, garda, abaterea, totalurile, „Creează variantă”, „Preia prețuri din oferta…”, „Completare la…”, reîmprospătarea cursului, ecranul „Află preț”; testul de capăt E01 din ecran = etalon — prima verificare manuală a lui Ionuț.

@@ -1,4 +1,4 @@
-import type { IntrareOferta, ProdusOferta, RezultatOferta } from "./tipuri.js";
+import { esteLinieInvelitoare, type IntrareOferta, type ProdusOferta, type RezultatOferta } from "./tipuri.js";
 
 // Varianta de pret (FISA-OFERTARE 11.7; ETALON E09): "Creeaza varianta" - aceeasi
 // oferta, acelasi numar, cu alt model / finisaj / grosime sau alte produse, care
@@ -15,22 +15,16 @@ export function construiesteVarianta(baza: IntrareOferta, rezultatBaza: Rezultat
   const produsNou = (p: ProdusOferta) => (inlocuiri[p.cod] ? { ...inlocuiri[p.cod] } : { ...p });
 
   const varianta: IntrareOferta = structuredClone(baza);
-  varianta.invelitori = baza.invelitori.map((inv) => ({
-    ...structuredClone(inv),
-    id: inv.id === inv.produs.cod ? codNou(inv.produs.cod) : inv.id,
-    produs: produsNou(inv.produs),
-  }));
-  varianta.linii = baza.linii.map((l) => {
-    const linie = { ...structuredClone(l), produs: produsNou(l.produs) };
-    if (l.invelitoare !== undefined) linie.invelitoare = codNou(l.invelitoare);
-    return linie;
-  });
-  if (baza.sipca) varianta.sipca = { ...structuredClone(baza.sipca), produsCod: codNou(baza.sipca.produsCod) };
+  // M1: id-urile invelitorilor, ale rubricilor de sipca si legaturile liniilor
+  // raman neschimbate (sunt id-uri pe oferta, nu coduri); se schimba doar produsele
+  varianta.invelitori = baza.invelitori.map((inv) => ({ ...structuredClone(inv), produs: produsNou(inv.produs) }));
+  varianta.linii = baza.linii.map((l) => ({ ...structuredClone(l), produs: produsNou(l.produs) }));
+  if (baza.sipci) varianta.sipci = baza.sipci.map((s) => ({ ...structuredClone(s), produsCod: codNou(s.produsCod) }));
   varianta.tinta = { tip: "adaos_pct_pastrat", valoare: rezultatBaza.totaluri.adaosRealPctExact };
   return varianta;
 }
 
 // liniile care urmeaza cheia unei invelitori (de inlocuit odata cu ea)
-export function liniiLegateDeInvelitoare(intrare: IntrareOferta, codInvelitoare: string): string[] {
-  return intrare.linii.filter((l) => l.invelitoare === codInvelitoare).map((l) => l.produs.cod);
+export function liniiLegateDeInvelitoare(intrare: IntrareOferta, idInvelitoare: string): string[] {
+  return intrare.linii.filter((l) => l.invelitoare === idInvelitoare && !esteLinieInvelitoare(l.rubrica)).map((l) => l.produs.cod);
 }

@@ -21,14 +21,18 @@
     "cod_bilka": "TMIBEMAT050",
     "denumire": "Țiglă metalică Iberic – mat – 0,50 mm",
     "um": "mp",
-    "cantitate": "180.481"
+    "cantitate": "180.481",
+    "nr": 1,
+    "invelitoare": "I1"
    },
    {
     "rubrica": "Învelitori",
     "cod_bilka": "TCT08MAT050",
     "denumire": "Tablă cutată T8 (perete) – mat – 0,50 mm",
     "um": "mp",
-    "cantitate": "6.000"
+    "cantitate": "6.000",
+    "nr": 2,
+    "invelitoare": "I2"
    },
    {
     "rubrica": "Accesorii standard",
@@ -36,7 +40,8 @@
     "denumire": "Coamă mică – mat – 0,50 mm",
     "um": "buc",
     "cantitate": "13",
-    "invelitoare": "TMIBEMAT050"
+    "invelitoare": "I1",
+    "nr": 3
    },
    {
     "rubrica": "Accesorii standard",
@@ -44,7 +49,8 @@
     "denumire": "Bordură fronton – 360 mm / 2 m – mat – 0,50 mm",
     "um": "buc",
     "cantitate": "17",
-    "invelitoare": "TMIBEMAT050"
+    "invelitoare": "I1",
+    "nr": 4
    },
    {
     "rubrica": "Accesorii standard",
@@ -52,7 +58,8 @@
     "denumire": "Colector fronton – 156 mm / 2 m – mat – 0,50 mm",
     "um": "buc",
     "cantitate": "16",
-    "invelitoare": "TMIBEMAT050"
+    "invelitoare": "I1",
+    "nr": 5
    },
    {
     "rubrica": "Accesorii standard",
@@ -60,7 +67,8 @@
     "denumire": "Bordură streașină – 208 mm / 2 m – mat – 0,50 mm",
     "um": "buc",
     "cantitate": "21",
-    "invelitoare": "TMIBEMAT050"
+    "invelitoare": "I1",
+    "nr": 6
    },
    {
     "rubrica": "Accesorii standard",
@@ -68,7 +76,8 @@
     "denumire": "Fixarea plăcilor pe zid – 250 mm / 2 m – mat – 0,50 mm",
     "um": "buc",
     "cantitate": "7",
-    "invelitoare": "TMIBEMAT050"
+    "invelitoare": "I1",
+    "nr": 7
    },
    {
     "rubrica": "Accesorii standard",
@@ -76,7 +85,8 @@
     "denumire": "Dolie – 417 mm / 2 m – mat – 0,50 mm",
     "um": "buc",
     "cantitate": "4",
-    "invelitoare": "TMIBEMAT050"
+    "invelitoare": "I1",
+    "nr": 8
    },
    {
     "rubrica": "Accesorii standard",
@@ -84,7 +94,8 @@
     "denumire": "Opritor zăpadă – 208 mm / 2 m – mat – 0,50 mm",
     "um": "buc",
     "cantitate": "12",
-    "invelitoare": "TMIBEMAT050"
+    "invelitoare": "I1",
+    "nr": 9
    },
    {
     "rubrica": "Accesorii standard",
@@ -92,7 +103,8 @@
     "denumire": "Set coș fum (4 piese × 1,25 m) – 4 piese × 1,25 m – mat – 0,50 mm",
     "um": "buc",
     "cantitate": "1",
-    "invelitoare": "TMIBEMAT050"
+    "invelitoare": "I1",
+    "nr": 10
    },
    {
     "rubrica": "Accesorii speciale 2 ML",
@@ -100,7 +112,8 @@
     "denumire": "Accesoriu special 2 ML – D05 (201–250 mm) – mat – 0,50 mm",
     "um": "buc",
     "cantitate": "2",
-    "invelitoare": "TMIBEMAT050"
+    "invelitoare": "I1",
+    "nr": 11
    },
    {
     "rubrica": "Fixare și etanșare",
@@ -108,7 +121,8 @@
     "denumire": "Holțșuruburi în culoare, lemn – 4,8 × 35 mm",
     "um": "cutie",
     "cantitate": "9",
-    "invelitoare": "TMIBEMAT050"
+    "invelitoare": "I1",
+    "nr": 12
    },
    {
     "rubrica": "Fixare și etanșare",
@@ -116,7 +130,8 @@
     "denumire": "Holțșuruburi în culoare, lemn – 4,8 × 20 mm",
     "um": "cutie",
     "cantitate": "1",
-    "invelitoare": "TMIBEMAT050"
+    "invelitoare": "I1",
+    "nr": 13
    },
    {
     "rubrica": "Fixare și etanșare",
@@ -124,7 +139,8 @@
     "denumire": "Spray corector 400 ml – mat",
     "um": "buc",
     "cantitate": "3",
-    "invelitoare": "TMIBEMAT050"
+    "invelitoare": "I1",
+    "nr": 14
    },
    {
     "rubrica": "Fixare și etanșare",
@@ -132,7 +148,8 @@
     "denumire": "Capac coamă – mat",
     "um": "buc",
     "cantitate": "4",
-    "invelitoare": "TMIBEMAT050"
+    "invelitoare": "I1",
+    "nr": 15
    },
    {
     "rubrica": "Fixare și etanșare",
@@ -140,7 +157,8 @@
     "denumire": "Bandă bituminoasă – 15 cm × 10 m",
     "um": "rolă",
     "cantitate": "3",
-    "invelitoare": "TMIBEMAT050"
+    "invelitoare": "I1",
+    "nr": 16
    },
    {
     "rubrica": "Fixare și etanșare",
@@ -148,7 +166,8 @@
     "denumire": "Mastic etanșare premium Bilka – 300 ml",
     "um": "buc",
     "cantitate": "3",
-    "invelitoare": "TMIBEMAT050"
+    "invelitoare": "I1",
+    "nr": 17
    },
    {
     "rubrica": "Sistem pluvial",
@@ -159,7 +178,8 @@
     "culoare": {
      "ral": "RAL 3005",
      "finisaj": "pluvial colorat (lucios)"
-    }
+    },
+    "nr": 18
    },
    {
     "rubrica": "Sistem pluvial",
@@ -170,7 +190,8 @@
     "culoare": {
      "ral": "RAL 3005",
      "finisaj": "pluvial colorat (lucios)"
-    }
+    },
+    "nr": 19
    },
    {
     "rubrica": "Sistem pluvial",
@@ -181,7 +202,8 @@
     "culoare": {
      "ral": "RAL 3005",
      "finisaj": "pluvial colorat (lucios)"
-    }
+    },
+    "nr": 20
    },
    {
     "rubrica": "Sistem pluvial",
@@ -192,7 +214,8 @@
     "culoare": {
      "ral": "RAL 3005",
      "finisaj": "pluvial colorat (lucios)"
-    }
+    },
+    "nr": 21
    },
    {
     "rubrica": "Sistem pluvial",
@@ -203,7 +226,8 @@
     "culoare": {
      "ral": "RAL 3005",
      "finisaj": "pluvial colorat (lucios)"
-    }
+    },
+    "nr": 22
    },
    {
     "rubrica": "Sistem pluvial",
@@ -214,7 +238,8 @@
     "culoare": {
      "ral": "RAL 3005",
      "finisaj": "pluvial colorat (lucios)"
-    }
+    },
+    "nr": 23
    },
    {
     "rubrica": "Sistem pluvial",
@@ -225,7 +250,8 @@
     "culoare": {
      "ral": "RAL 3005",
      "finisaj": "pluvial colorat (lucios)"
-    }
+    },
+    "nr": 24
    },
    {
     "rubrica": "Sistem pluvial",
@@ -236,7 +262,8 @@
     "culoare": {
      "ral": "RAL 3005",
      "finisaj": "pluvial colorat (lucios)"
-    }
+    },
+    "nr": 25
    },
    {
     "rubrica": "Sistem pluvial",
@@ -247,7 +274,8 @@
     "culoare": {
      "ral": "RAL 3005",
      "finisaj": "pluvial colorat (lucios)"
-    }
+    },
+    "nr": 26
    },
    {
     "rubrica": "Sistem pluvial",
@@ -258,7 +286,8 @@
     "culoare": {
      "ral": "RAL 3005",
      "finisaj": "pluvial colorat (lucios)"
-    }
+    },
+    "nr": 27
    },
    {
     "rubrica": "Sistem pluvial",
@@ -269,7 +298,8 @@
     "culoare": {
      "ral": "RAL 3005",
      "finisaj": "pluvial colorat (lucios)"
-    }
+    },
+    "nr": 28
    }
   ],
   "invelitori": [
@@ -297,7 +327,8 @@
       "bucati": 5
      }
     ],
-    "mp": "180.481"
+    "mp": "180.481",
+    "id": "I1"
    },
    {
     "cod_bilka": "TCT08MAT050",
@@ -311,7 +342,8 @@
       "bucati": 2
      }
     ],
-    "mp": "6.000"
+    "mp": "6.000",
+    "id": "I2"
    }
   ]
  },
@@ -325,7 +357,8 @@
     "achizitie_cont_eur": "7.20",
     "achizitie_cont_lei_cu_tva": "47.06",
     "pret_document_eur": "7.42",
-    "valoare_eur": "1339.17"
+    "valoare_eur": "1339.17",
+    "nr": 1
    },
    {
     "cod_bilka": "TCT08MAT050",
@@ -334,7 +367,8 @@
     "achizitie_cont_eur": "6.94",
     "achizitie_cont_lei_cu_tva": "45.36",
     "pret_document_eur": "7.15",
-    "valoare_eur": "42.90"
+    "valoare_eur": "42.90",
+    "nr": 2
    },
    {
     "cod_bilka": "ACMICMAT050",
@@ -343,7 +377,8 @@
     "achizitie_cont_eur": "5.20",
     "achizitie_cont_lei_cu_tva": "33.99",
     "pret_document_eur": "5.36",
-    "valoare_eur": "69.68"
+    "valoare_eur": "69.68",
+    "nr": 3
    },
    {
     "cod_bilka": "ABF36MAT050",
@@ -352,7 +387,8 @@
     "achizitie_cont_eur": "6.94",
     "achizitie_cont_lei_cu_tva": "45.36",
     "pret_document_eur": "7.15",
-    "valoare_eur": "121.55"
+    "valoare_eur": "121.55",
+    "nr": 4
    },
    {
     "cod_bilka": "ACF15MAT050",
@@ -361,7 +397,8 @@
     "achizitie_cont_eur": "2.60",
     "achizitie_cont_lei_cu_tva": "16.99",
     "pret_document_eur": "2.68",
-    "valoare_eur": "42.88"
+    "valoare_eur": "42.88",
+    "nr": 5
    },
    {
     "cod_bilka": "AST20MAT050",
@@ -370,7 +407,8 @@
     "achizitie_cont_eur": "3.47",
     "achizitie_cont_lei_cu_tva": "22.68",
     "pret_document_eur": "3.56",
-    "valoare_eur": "74.76"
+    "valoare_eur": "74.76",
+    "nr": 6
    },
    {
     "cod_bilka": "AFP25MAT050",
@@ -379,7 +417,8 @@
     "achizitie_cont_eur": "4.16",
     "achizitie_cont_lei_cu_tva": "27.19",
     "pret_document_eur": "4.29",
-    "valoare_eur": "30.03"
+    "valoare_eur": "30.03",
+    "nr": 7
    },
    {
     "cod_bilka": "ADO41MAT050",
@@ -388,7 +427,8 @@
     "achizitie_cont_eur": "6.94",
     "achizitie_cont_lei_cu_tva": "45.36",
     "pret_document_eur": "7.15",
-    "valoare_eur": "28.60"
+    "valoare_eur": "28.60",
+    "nr": 8
    },
    {
     "cod_bilka": "AOZ20MAT050",
@@ -397,7 +437,8 @@
     "achizitie_cont_eur": "3.47",
     "achizitie_cont_lei_cu_tva": "22.68",
     "pret_document_eur": "3.57",
-    "valoare_eur": "42.84"
+    "valoare_eur": "42.84",
+    "nr": 9
    },
    {
     "cod_bilka": "ASCF4MAT050",
@@ -406,7 +447,8 @@
     "achizitie_cont_eur": "20.81",
     "achizitie_cont_lei_cu_tva": "136.02",
     "pret_document_eur": "21.44",
-    "valoare_eur": "21.44"
+    "valoare_eur": "21.44",
+    "nr": 10
    },
    {
     "cod_bilka": "ASP05MAT050",
@@ -415,7 +457,8 @@
     "achizitie_cont_eur": "4.68",
     "achizitie_cont_lei_cu_tva": "30.59",
     "pret_document_eur": "4.82",
-    "valoare_eur": "9.64"
+    "valoare_eur": "9.64",
+    "nr": 11
    },
    {
     "cod_bilka": "SUCLE408035",
@@ -424,7 +467,8 @@
     "achizitie_cont_eur": "6.63",
     "achizitie_cont_lei_cu_tva": "43.34",
     "pret_document_eur": "6.83",
-    "valoare_eur": "61.47"
+    "valoare_eur": "61.47",
+    "nr": 12
    },
    {
     "cod_bilka": "SUCLE408020",
@@ -433,7 +477,8 @@
     "achizitie_cont_eur": "6.63",
     "achizitie_cont_lei_cu_tva": "43.34",
     "pret_document_eur": "6.83",
-    "valoare_eur": "6.83"
+    "valoare_eur": "6.83",
+    "nr": 13
    },
    {
     "cod_bilka": "AXSPRMAT400",
@@ -442,7 +487,8 @@
     "achizitie_cont_eur": "4.77",
     "achizitie_cont_lei_cu_tva": "31.18",
     "pret_document_eur": "4.91",
-    "valoare_eur": "14.73"
+    "valoare_eur": "14.73",
+    "nr": 14
    },
    {
     "cod_bilka": "AXCAPMAT000",
@@ -451,7 +497,8 @@
     "achizitie_cont_eur": "4.18",
     "achizitie_cont_lei_cu_tva": "27.32",
     "pret_document_eur": "4.31",
-    "valoare_eur": "17.24"
+    "valoare_eur": "17.24",
+    "nr": 15
    },
    {
     "cod_bilka": "BANDABIT150",
@@ -460,7 +507,8 @@
     "achizitie_cont_eur": "12.04",
     "achizitie_cont_lei_cu_tva": "78.70",
     "pret_document_eur": "12.40",
-    "valoare_eur": "37.20"
+    "valoare_eur": "37.20",
+    "nr": 16
    },
    {
     "cod_bilka": "AXMAS300PRE",
@@ -469,7 +517,8 @@
     "achizitie_cont_eur": "6.42",
     "achizitie_cont_lei_cu_tva": "41.96",
     "pret_document_eur": "6.61",
-    "valoare_eur": "19.83"
+    "valoare_eur": "19.83",
+    "nr": 17
    },
    {
     "cod_bilka": "SPJGH1254ML",
@@ -478,7 +527,8 @@
     "achizitie_cont_eur": "9.24",
     "achizitie_cont_lei_cu_tva": "60.40",
     "pret_document_eur": "9.52",
-    "valoare_eur": "95.20"
+    "valoare_eur": "95.20",
+    "nr": 18
    },
    {
     "cod_bilka": "SPJGH1252ML",
@@ -487,7 +537,8 @@
     "achizitie_cont_eur": "4.62",
     "achizitie_cont_lei_cu_tva": "30.20",
     "pret_document_eur": "4.76",
-    "valoare_eur": "4.76"
+    "valoare_eur": "4.76",
+    "nr": 19
    },
    {
     "cod_bilka": "SPBUR0903ML",
@@ -496,7 +547,8 @@
     "achizitie_cont_eur": "8.56",
     "achizitie_cont_lei_cu_tva": "55.95",
     "pret_document_eur": "8.81",
-    "valoare_eur": "52.86"
+    "valoare_eur": "52.86",
+    "nr": 20
    },
    {
     "cod_bilka": "SPC21125000",
@@ -505,7 +557,8 @@
     "achizitie_cont_eur": "1.55",
     "achizitie_cont_lei_cu_tva": "10.13",
     "pret_document_eur": "1.60",
-    "valoare_eur": "89.60"
+    "valoare_eur": "89.60",
+    "nr": 21
    },
    {
     "cod_bilka": "SPBRIDA0000",
@@ -514,7 +567,8 @@
     "achizitie_cont_eur": "0.72",
     "achizitie_cont_lei_cu_tva": "4.71",
     "pret_document_eur": "0.74",
-    "valoare_eur": "37.00"
+    "valoare_eur": "37.00",
+    "nr": 22
    },
    {
     "cod_bilka": "SPCOL090000",
@@ -523,7 +577,8 @@
     "achizitie_cont_eur": "0.91",
     "achizitie_cont_lei_cu_tva": "5.95",
     "pret_document_eur": "0.94",
-    "valoare_eur": "11.28"
+    "valoare_eur": "11.28",
+    "nr": 23
    },
    {
     "cod_bilka": "SPCAP125000",
@@ -532,7 +587,8 @@
     "achizitie_cont_eur": "0.91",
     "achizitie_cont_lei_cu_tva": "5.95",
     "pret_document_eur": "0.94",
-    "valoare_eur": "11.28"
+    "valoare_eur": "11.28",
+    "nr": 24
    },
    {
     "cod_bilka": "SPELI125000",
@@ -541,7 +597,8 @@
     "achizitie_cont_eur": "1.46",
     "achizitie_cont_lei_cu_tva": "9.54",
     "pret_document_eur": "1.50",
-    "valoare_eur": "12.00"
+    "valoare_eur": "12.00",
+    "nr": 25
    },
    {
     "cod_bilka": "SPRAC125000",
@@ -550,7 +607,8 @@
     "achizitie_cont_eur": "2.45",
     "achizitie_cont_lei_cu_tva": "16.01",
     "pret_document_eur": "2.52",
-    "valoare_eur": "15.12"
+    "valoare_eur": "15.12",
+    "nr": 26
    },
    {
     "cod_bilka": "SPCOT090000",
@@ -559,7 +617,8 @@
     "achizitie_cont_eur": "2.45",
     "achizitie_cont_lei_cu_tva": "16.01",
     "pret_document_eur": "2.51",
-    "valoare_eur": "45.18"
+    "valoare_eur": "45.18",
+    "nr": 27
    },
    {
     "cod_bilka": "SPPRE09010M",
@@ -568,7 +627,8 @@
     "achizitie_cont_eur": "2.85",
     "achizitie_cont_lei_cu_tva": "18.63",
     "pret_document_eur": "2.94",
-    "valoare_eur": "17.64"
+    "valoare_eur": "17.64",
+    "nr": 28
    }
   ],
   "totaluri": {
@@ -592,11 +652,11 @@
    "achizitie_reala_lei_cu_tva": "14337.77"
   },
   "mp_invelitori": {
-   "TMIBEMAT050": "180.481",
-   "TCT08MAT050": "6.000"
+   "I1": "180.481",
+   "I2": "6.000"
   },
   "comandabil": true
  },
  "reguli": "ETALON.md §0 (R1–R7)",
- "format": "v1.1 (27.10.2026): pe liniile legate câmpul `invelitoare` = codul învelitorii de care aparțin; pe liniile independente / de sine stătătoare câmpul `culoare` {ral, finisaj[, grosime]}; prețul fix structurat în `pret_fix` {tip, valoare, normalizat_eur_fara_tva} · v1.2 (27.10.2026): `invelitori` cu panotaj peste tot unde există învelitori; `asteptat.comandabil`"
+ "format": "v1.1 (27.10.2026): pe liniile legate câmpul `invelitoare` = codul învelitorii de care aparțin; pe liniile independente / de sine stătătoare câmpul `culoare` {ral, finisaj[, grosime]}; prețul fix structurat în `pret_fix` {tip, valoare, normalizat_eur_fara_tva} · v1.2 (27.10.2026): `invelitori` cu panotaj peste tot unde există învelitori; `asteptat.comandabil` · v1.3 (28.10.2026, MODIFICARE M1): `invelitori[].id` (I1, I2…) și `linii[].invelitoare` = id-ul învelitorii, nu codul — pe liniile legate și pe linia învelitorii însăși (același produs poate apărea de două ori, în culori diferite); `sipci[]` cu `id` (S1, S2…) în locul lui `sipca`, linia de șipcă poartă `sipca` = id; `linii[].nr` = poziția; `asteptat.mp_invelitori` și `asteptat.sipci` pe id"
 }

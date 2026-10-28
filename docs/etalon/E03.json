@@ -26,7 +26,8 @@
       "bucati": 6
      }
     ],
-    "mp": "37.107"
+    "mp": "37.107",
+    "id": "I1"
    }
   ],
   "accesorii_ml": [
@@ -51,7 +52,9 @@
     "cod_bilka": "TCT35MAT050",
     "denumire": "Tablă cutată T35 (acoperiș / perete) – mat – 0,50 mm",
     "um": "mp",
-    "cantitate": "37.107"
+    "cantitate": "37.107",
+    "nr": 1,
+    "invelitoare": "I1"
    },
    {
     "rubrica": "Accesorii standard",
@@ -59,7 +62,8 @@
     "denumire": "Bordură fronton – 312 mm / 2 m – mat – 0,50 mm",
     "um": "buc",
     "cantitate": "4",
-    "invelitoare": "TCT35MAT050"
+    "invelitoare": "I1",
+    "nr": 2
    },
    {
     "rubrica": "Accesorii speciale 2 ML",
@@ -67,7 +71,8 @@
     "denumire": "Accesoriu special 2 ML – D08 (351–400 mm) – mat – 0,50 mm",
     "um": "buc",
     "cantitate": "5",
-    "invelitoare": "TCT35MAT050"
+    "invelitoare": "I1",
+    "nr": 3
    },
    {
     "rubrica": "Accesorii speciale 2 ML",
@@ -75,7 +80,8 @@
     "denumire": "Accesoriu special 2 ML – D09 (401–450 mm) – mat – 0,50 mm",
     "um": "buc",
     "cantitate": "5",
-    "invelitoare": "TCT35MAT050"
+    "invelitoare": "I1",
+    "nr": 4
    },
    {
     "rubrica": "Fixare și etanșare",
@@ -83,7 +89,8 @@
     "denumire": "Holțșuruburi în culoare, lemn – 4,8 × 35 mm",
     "um": "cutie",
     "cantitate": "1",
-    "invelitoare": "TCT35MAT050"
+    "invelitoare": "I1",
+    "nr": 5
    },
    {
     "rubrica": "Fixare și etanșare",
@@ -91,7 +98,8 @@
     "denumire": "Bandă etanșare profilată T35 – coamă",
     "um": "buc",
     "cantitate": "10",
-    "invelitoare": "TCT35MAT050"
+    "invelitoare": "I1",
+    "nr": 6
    },
    {
     "rubrica": "Sistem pluvial",
@@ -102,7 +110,8 @@
     "culoare": {
      "ral": "RAL 9005",
      "finisaj": "pluvial colorat (lucios)"
-    }
+    },
+    "nr": 7
    },
    {
     "rubrica": "Sistem pluvial",
@@ -113,7 +122,8 @@
     "culoare": {
      "ral": "RAL 9005",
      "finisaj": "pluvial colorat (lucios)"
-    }
+    },
+    "nr": 8
    },
    {
     "rubrica": "Sistem pluvial",
@@ -124,7 +134,8 @@
     "culoare": {
      "ral": "RAL 9005",
      "finisaj": "pluvial colorat (lucios)"
-    }
+    },
+    "nr": 9
    },
    {
     "rubrica": "Sistem pluvial",
@@ -135,7 +146,8 @@
     "culoare": {
      "ral": "RAL 9005",
      "finisaj": "pluvial colorat (lucios)"
-    }
+    },
+    "nr": 10
    },
    {
     "rubrica": "Accesorii speciale la lungimi (ML)",
@@ -147,7 +159,8 @@
      "ral": "RAL 9002",
      "finisaj": "lucios",
      "grosime": "0,50 mm"
-    }
+    },
+    "nr": 11
    },
    {
     "rubrica": "Accesorii speciale la lungimi (ML)",
@@ -159,7 +172,8 @@
      "ral": "RAL 9002",
      "finisaj": "lucios",
      "grosime": "0,50 mm"
-    }
+    },
+    "nr": 12
    }
   ]
  },
@@ -173,7 +187,8 @@
     "achizitie_cont_eur": "7.29",
     "achizitie_cont_lei_cu_tva": "47.47",
     "pret_document_eur": "8.25",
-    "valoare_eur": "306.13"
+    "valoare_eur": "306.13",
+    "nr": 1
    },
    {
     "cod_bilka": "ABF31MAT050",
@@ -182,7 +197,8 @@
     "achizitie_cont_eur": "5.15",
     "achizitie_cont_lei_cu_tva": "33.54",
     "pret_document_eur": "5.83",
-    "valoare_eur": "23.32"
+    "valoare_eur": "23.32",
+    "nr": 2
    },
    {
     "cod_bilka": "ASP08MAT050",
@@ -191,7 +207,8 @@
     "achizitie_cont_eur": "7.41",
     "achizitie_cont_lei_cu_tva": "48.25",
     "pret_document_eur": "8.38",
-    "valoare_eur": "41.90"
+    "valoare_eur": "41.90",
+    "nr": 3
    },
    {
     "cod_bilka": "ASP09MAT050",
@@ -200,7 +217,8 @@
     "achizitie_cont_eur": "8.34",
     "achizitie_cont_lei_cu_tva": "54.31",
     "pret_document_eur": "9.43",
-    "valoare_eur": "47.15"
+    "valoare_eur": "47.15",
+    "nr": 4
    },
    {
     "cod_bilka": "SUCLE408035",
@@ -209,7 +227,8 @@
     "achizitie_cont_eur": "6.56",
     "achizitie_cont_lei_cu_tva": "42.72",
     "pret_document_eur": "7.42",
-    "valoare_eur": "7.42"
+    "valoare_eur": "7.42",
+    "nr": 5
    },
    {
     "cod_bilka": "BANDAETAT35",
@@ -218,7 +237,8 @@
     "achizitie_cont_eur": "1.16",
     "achizitie_cont_lei_cu_tva": "7.55",
     "pret_document_eur": "1.31",
-    "valoare_eur": "13.10"
+    "valoare_eur": "13.10",
+    "nr": 6
    },
    {
     "cod_bilka": "SPBUR0903ML",
@@ -227,7 +247,8 @@
     "achizitie_cont_eur": "8.47",
     "achizitie_cont_lei_cu_tva": "55.16",
     "pret_document_eur": "9.57",
-    "valoare_eur": "57.42"
+    "valoare_eur": "57.42",
+    "nr": 7
    },
    {
     "cod_bilka": "SPCOL090000",
@@ -236,7 +257,8 @@
     "achizitie_cont_eur": "0.90",
     "achizitie_cont_lei_cu_tva": "5.86",
     "pret_document_eur": "1.02",
-    "valoare_eur": "12.24"
+    "valoare_eur": "12.24",
+    "nr": 8
    },
    {
     "cod_bilka": "SPCOT090000",
@@ -245,7 +267,8 @@
     "achizitie_cont_eur": "2.43",
     "achizitie_cont_lei_cu_tva": "15.82",
     "pret_document_eur": "2.75",
-    "valoare_eur": "16.50"
+    "valoare_eur": "16.50",
+    "nr": 9
    },
    {
     "cod_bilka": "SPPRE09010M",
@@ -254,7 +277,8 @@
     "achizitie_cont_eur": "2.82",
     "achizitie_cont_lei_cu_tva": "18.36",
     "pret_document_eur": "3.19",
-    "valoare_eur": "9.57"
+    "valoare_eur": "9.57",
+    "nr": 10
    },
    {
     "cod_bilka": "AML11LUC050",
@@ -263,7 +287,8 @@
     "achizitie_cont_eur": "5.81",
     "achizitie_cont_lei_cu_tva": "37.83",
     "pret_document_eur": "6.57",
-    "valoare_eur": "78.84"
+    "valoare_eur": "78.84",
+    "nr": 11
    },
    {
     "cod_bilka": "AML08LUC050",
@@ -272,7 +297,8 @@
     "achizitie_cont_eur": "4.22",
     "achizitie_cont_lei_cu_tva": "27.48",
     "pret_document_eur": "4.77",
-    "valoare_eur": "38.16"
+    "valoare_eur": "38.16",
+    "nr": 12
    }
   ],
   "totaluri": {
@@ -297,5 +323,5 @@
   "comandabil": true
  },
  "reguli": "ETALON.md §0 (R1–R7)",
- "format": "v1.1 (27.10.2026): pe liniile legate câmpul `invelitoare` = codul învelitorii de care aparțin; pe liniile independente / de sine stătătoare câmpul `culoare` {ral, finisaj[, grosime]}; prețul fix structurat în `pret_fix` {tip, valoare, normalizat_eur_fara_tva} · v1.2 (27.10.2026): `invelitori` cu panotaj peste tot unde există învelitori; `asteptat.comandabil`"
+ "format": "v1.1 (27.10.2026): pe liniile legate câmpul `invelitoare` = codul învelitorii de care aparțin; pe liniile independente / de sine stătătoare câmpul `culoare` {ral, finisaj[, grosime]}; prețul fix structurat în `pret_fix` {tip, valoare, normalizat_eur_fara_tva} · v1.2 (27.10.2026): `invelitori` cu panotaj peste tot unde există învelitori; `asteptat.comandabil` · v1.3 (28.10.2026, MODIFICARE M1): `invelitori[].id` (I1, I2…) și `linii[].invelitoare` = id-ul învelitorii, nu codul — pe liniile legate și pe linia învelitorii însăși (același produs poate apărea de două ori, în culori diferite); `sipci[]` cu `id` (S1, S2…) în locul lui `sipca`, linia de șipcă poartă `sipca` = id; `linii[].nr` = poziția; `asteptat.mp_invelitori` și `asteptat.sipci` pe id"
 }

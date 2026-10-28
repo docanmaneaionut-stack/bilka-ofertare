@@ -1,11 +1,16 @@
-import type { CheieCuloare, IntrareOferta, Invelitoare, LinieOferta, PozitieLungime, TipCont, TipTinta } from "./tipuri.js";
+import type { CheieCuloare, IntrareOferta, Invelitoare, LinieOferta, PozitieLungime, Sipca, TipCont, TipTinta } from "./tipuri.js";
 import { z } from "./zecimal.js";
 
-// Maparea unei oferte-model (docs/etalon/E*.json, format v1.2) in intrarea
+// Maparea unei oferte-model (docs/etalon/E*.json, format v1.3) in intrarea
 // motorului. Nu stie de unde vine catalogul: in teste din CSV-urile Bilka, in
 // ecranul "Calcul de proba" din baza de date (lista activa). Fisierele etalon
 // sunt scrise de Claude chat si aprobate de Ionut - nu se modifica din cod; ce
 // nu se potriveste se raporteaza.
+// Format v1.3 (ETALON §0, M1): invelitorile si rubricile de sipca au id pe oferta
+// (I1, I2 / S1, S2); orice linie legata - inclusiv linia invelitorii insesi -
+// poarta `invelitoare` = id, linia de sipca poarta `sipca` = id; `nr` = pozitia.
+// Legatura prin id e singurul drum: nu se cauta dupa cod (acelasi cod poate
+// aparea de doua ori, in culori diferite - E12).
 
 export interface ProdusCatalogEtalon {
   cod: string;
@@ -36,6 +41,7 @@ export interface PanotajEtalon {
 }
 
 export interface InvelitoareEtalon {
+  id: string;
   cod_bilka: string;
   rol?: string;
   varianta_profil?: string;
@@ -46,17 +52,37 @@ export interface InvelitoareEtalon {
 }
 
 export interface LinieEtalon {
+  nr?: number;
   rubrica: string;
   cod_bilka: string;
   denumire: string;
   um: string;
   cantitate: string;
+  // id-ul invelitorii (pe liniile legate si pe linia invelitorii) sau al rubricii de sipca
   invelitoare?: string;
+  sipca?: string;
   culoare?: CheieCuloare;
   pret_fix_eur?: string;
   pret_fix?: { tip: string; valoare: string; normalizat_eur_fara_tva?: string };
   pachet?: string;
   cheie_culoare?: string;
+}
+
+// o rubrica de sipca (cap. 8): la Calcul tronsoanele (cu bucatile si ml asteptate),
+// la Comanda pozitiile (lungime x bucati)
+export interface SipcaEtalon {
+  id: string;
+  model: string;
+  cod_bilka: string;
+  culoare?: string;
+  finisaj?: string;
+  grosime?: string;
+  latime_sipca_mm: string;
+  varianta: string;
+  tronsoane?: { lungime_sipca_m: string; lungime_tronson_m: string; distanta_mm: string; bucati_asteptat: number; ml_asteptat: string }[];
+  pozitii?: PanotajEtalon[];
+  bucati_total: number;
+  ml_total: string;
 }
 
 export interface IntrariEtalon {
@@ -77,16 +103,7 @@ export interface IntrariEtalon {
   varianta_a?: string;
   invelitori?: InvelitoareEtalon[];
   accesorii_ml?: { cod_bilka: string; culoare?: string; lungime_m: string; bucati: number; ml: string }[];
-  sipca?: {
-    model: string;
-    cod_bilka: string;
-    culoare?: string;
-    latime_sipca_mm: string;
-    varianta: string;
-    tronsoane: { lungime_sipca_m: string; lungime_tronson_m: string; distanta_mm: string; bucati_asteptat: number; ml_asteptat: string }[];
-    bucati_total: number;
-    ml_total: string;
-  };
+  sipci?: SipcaEtalon[];
   zona_b?: { denumire: string; um: string; cantitate: string; suma_lei: string; contine_tva: boolean; preia_in_factura: boolean }[];
   linii: LinieEtalon[];
 }
@@ -168,9 +185,11 @@ export function construiesteIntrare(etalon: FisierEtalon, catalog: CatalogPentru
   }
 
   const linii: LinieOferta[] = i.linii.map((l, idx) => {
+    if (l.nr !== undefined && l.nr !== idx + 1) throw new Error(`${ctx}: linia de pe pozitia ${idx + 1} are nr ${l.nr}`);
     const p = catalog.gaseste(l.cod_bilka, l.denumire);
     const linie: LinieOferta = { id: `L${idx + 1}`, rubrica: l.rubrica, produs: produsDinCatalog(p, l.um), cantitate: l.cantitate };
     if (l.invelitoare) linie.invelitoare = l.invelitoare;
+    if (l.sipca) linie.sipca = l.sipca;
     if (l.culoare) linie.culoare = { ...l.culoare };
     if (l.pret_fix) {
       if (l.pret_fix.tip !== "eur_fara_tva" && l.pret_fix.tip !== "achizitie_plus_pct") {
@@ -188,16 +207,20 @@ export function construiesteIntrare(etalon: FisierEtalon, catalog: CatalogPentru
   });
 
   // invelitorile: din blocul "invelitori" (panotaj) sau, cand lipseste, din
-  // liniile rubricii "Invelitori" (suprafata directa)
+  // liniile rubricii "Invelitori" (suprafata directa); linia invelitorii se
+  // gaseste numai prin id (v1.3), niciodata dupa cod
   let invelitori: Invelitoare[];
   if (i.invelitori && i.invelitori.length > 0) {
     invelitori = i.invelitori.map((inv, idx) => {
-      const linie = i.linii.find((l) => l.cod_bilka === inv.cod_bilka && l.rubrica === "Învelitori");
-      if (!linie) throw new Error(`${ctx}: invelitoarea ${inv.cod_bilka} nu are linie in rubrica Invelitori`);
+      if (!inv.id) throw new Error(`${ctx}: invelitoarea ${inv.cod_bilka} nu are id (format v1.3)`);
+      const liniile = i.linii.filter((l) => l.rubrica === "Învelitori" && l.invelitoare === inv.id);
+      if (liniile.length !== 1) throw new Error(`${ctx}: invelitoarea ${inv.id} (${inv.cod_bilka}) are ${liniile.length} linii in rubrica Invelitori cu invelitoare = ${inv.id}; trebuie exact una`);
+      const linie = liniile[0];
+      if (linie.cod_bilka !== inv.cod_bilka) throw new Error(`${ctx}: linia invelitorii ${inv.id} are codul ${linie.cod_bilka}, blocul "invelitori" are ${inv.cod_bilka}`);
       const p = catalog.gaseste(inv.cod_bilka, linie.denumire);
-      const latime = verificaEgalNumeric("latimea totala", inv.latime_totala_m, latimeTotalaDinCatalog(p), `${ctx} ${inv.cod_bilka}`);
+      const latime = verificaEgalNumeric("latimea totala", inv.latime_totala_m, latimeTotalaDinCatalog(p), `${ctx} ${inv.id} ${inv.cod_bilka}`);
       const rezultat: Invelitoare = {
-        id: inv.cod_bilka,
+        id: inv.id,
         produs: produsDinCatalog(p, linie.um),
         rol: inv.rol ? (inv.rol.startsWith("principal") ? "principala" : "secundara") : idx === 0 ? "principala" : "secundara",
         latimeTotalaM: latime,
@@ -212,11 +235,12 @@ export function construiesteIntrare(etalon: FisierEtalon, catalog: CatalogPentru
     invelitori = i.linii
       .filter((l) => l.rubrica === "Învelitori")
       .map((l, idx) => {
+        if (!l.invelitoare) throw new Error(`${ctx}: linia ${idx + 1} din rubrica Invelitori (${l.cod_bilka}) nu poarta id-ul invelitorii (format v1.3)`);
         const p = catalog.gaseste(l.cod_bilka, l.denumire);
         const latime = latimeTotalaDinCatalog(p);
         if (!latime) throw new Error(`${ctx} ${l.cod_bilka}: latimea totala lipseste din catalog`);
         return {
-          id: l.cod_bilka,
+          id: l.invelitoare,
           produs: produsDinCatalog(p, l.um),
           rol: idx === 0 ? "principala" : "secundara",
           latimeTotalaM: z(latime).toString(),
@@ -248,22 +272,31 @@ export function construiesteIntrare(etalon: FisierEtalon, catalog: CatalogPentru
   if (i.discount_general_pct !== undefined) intrare.discountGeneralPct = i.discount_general_pct;
   if (i.discount_implicit_pct !== undefined) intrare.discountImplicitPct = i.discount_implicit_pct;
 
-  if (i.sipca) {
-    const s = i.sipca;
-    const idxLinie = i.linii.findIndex((l) => l.cod_bilka === s.cod_bilka);
-    if (idxLinie < 0) throw new Error(`${ctx}: sipca ${s.cod_bilka} nu are linie`);
-    const p = catalog.gaseste(s.cod_bilka, i.linii[idxLinie].denumire);
-    const latime = verificaEgalNumeric("latimea sipcii (mm)", s.latime_sipca_mm, p.latimeTotalaMm, `${ctx} ${s.cod_bilka}`);
-    const varianta = s.varianta.trim().toLowerCase();
-    intrare.sipca = {
-      linieId: `L${idxLinie + 1}`,
-      produsCod: s.cod_bilka,
-      model: s.model,
-      latimeSipcaMm: latime,
-      varianta: varianta === "calcul" ? "calcul" : "comanda",
-      tronsoane: s.tronsoane.map((t) => ({ lungimeSipcaM: t.lungime_sipca_m, lungimeTronsonM: t.lungime_tronson_m, distantaMm: t.distanta_mm })),
-    };
-    if (s.culoare) intrare.sipca.culoare = s.culoare;
+  // rubricile de sipca (v1.3): fiecare cu linia ei, legata prin `sipca` = id
+  if (i.sipci && i.sipci.length > 0) {
+    intrare.sipci = i.sipci.map((s) => {
+      const liniile = i.linii.filter((l) => l.sipca === s.id);
+      if (liniile.length !== 1) throw new Error(`${ctx}: rubrica de sipca ${s.id} (${s.cod_bilka}) are ${liniile.length} linii cu sipca = ${s.id}; trebuie exact una`);
+      const linie = liniile[0];
+      if (linie.cod_bilka !== s.cod_bilka) throw new Error(`${ctx}: linia rubricii de sipca ${s.id} are codul ${linie.cod_bilka}, blocul "sipci" are ${s.cod_bilka}`);
+      const p = catalog.gaseste(s.cod_bilka, linie.denumire);
+      const latime = verificaEgalNumeric("latimea sipcii (mm)", s.latime_sipca_mm, p.latimeTotalaMm, `${ctx} ${s.id} ${s.cod_bilka}`);
+      const varianta = s.varianta.trim().toLowerCase();
+      const sipca: Sipca = {
+        id: s.id,
+        produsCod: s.cod_bilka,
+        model: s.model,
+        latimeSipcaMm: latime,
+        varianta: varianta === "calcul" ? "calcul" : "comanda",
+      };
+      if (s.culoare) sipca.culoare = s.culoare;
+      if (sipca.varianta === "calcul") {
+        sipca.tronsoane = (s.tronsoane ?? []).map((t) => ({ lungimeSipcaM: t.lungime_sipca_m, lungimeTronsonM: t.lungime_tronson_m, distantaMm: t.distanta_mm }));
+      } else {
+        sipca.pozitii = pozitii(s.pozitii);
+      }
+      return sipca;
+    });
   }
 
   return intrare;

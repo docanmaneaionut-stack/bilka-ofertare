@@ -29,7 +29,8 @@ const inv = (id: string, p: ProdusOferta, culoare: string, rol: "principala" | "
   ...extra,
 });
 
-const linieInv = (id: string, p: ProdusOferta): LinieOferta => ({ id, rubrica: "Învelitori", produs: p, cantitate: "1" });
+// linia invelitorii poarta id-ul ei (M1); in testele de aici id-ul invelitorii e codul produsului
+const linieInv = (id: string, p: ProdusOferta, invelitoare = p.cod): LinieOferta => ({ id, rubrica: "Învelitori", produs: p, cantitate: "1", invelitoare });
 const legata = (id: string, p: ProdusOferta, invelitoare: string, cantitate = "5"): LinieOferta => ({ id, rubrica: "Accesorii standard", produs: p, cantitate, invelitoare });
 const pluvial = (id: string, p: ProdusOferta, ral: string, cantitate = "4"): LinieOferta => ({ id, rubrica: "Sistem pluvial", produs: p, cantitate, culoare: { ral, finisaj: p.finisaj ?? "" } });
 const deSine = (id: string, p: ProdusOferta, ral: string, grosime = "0,50 mm"): LinieOferta => ({ id, rubrica: "Fixare și etanșare", produs: p, cantitate: "2", culoare: { ral, finisaj: "mat", grosime } });

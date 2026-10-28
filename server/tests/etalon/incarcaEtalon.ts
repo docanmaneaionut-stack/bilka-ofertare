@@ -58,8 +58,9 @@ export function vanzariSpreAsteptat(v: RandVanzari): Obiect {
 export function spreAsteptat(rezultat: RezultatOferta, intrare: IntrareOferta): Obiect {
   const lista = intrare.modPrezentare === "lista_discount_general";
   const t = rezultat.totaluri;
-  const linii = rezultat.linii.map((l) =>
+  const linii = rezultat.linii.map((l, idx) =>
     faraNedefinite({
+      nr: idx + 1,
       cod_bilka: l.cod,
       cantitate: l.cantitate,
       baza_eur: l.bazaEur,
@@ -95,6 +96,7 @@ export function spreAsteptat(rezultat: RezultatOferta, intrare: IntrareOferta): 
     abatere_eur: rezultat.abatereEur,
     comandabil: rezultat.comandabil.da,
     mp_invelitori: Object.fromEntries(rezultat.cantitati.invelitori.map((i) => [i.id, i.mp])),
+    sipci: Object.fromEntries(rezultat.cantitati.sipci.map((s) => [s.id, { bucati: s.bucatiTotal, ml: s.mlTotal }])),
     pachete: rezultat.pachete.map((p) => ({ pachet: p.nume, linii: p.linii.length, achizitie_eur: p.achizitieEur })),
     formulare_bilka: rezultat.formulareBilka.map((f) => ({ nr: f.nr })),
   };
@@ -128,16 +130,19 @@ export function spreAsteptat(rezultat: RezultatOferta, intrare: IntrareOferta): 
 export function asteptariDinIntrari(etalon: FisierEtalon): Obiect {
   const i = etalon.intrari;
   const a: Obiect = {};
-  if (i.invelitori) a.invelitori = i.invelitori.map((inv) => ({ cod_bilka: inv.cod_bilka, mp: inv.mp }));
+  if (i.invelitori) a.invelitori = i.invelitori.map((inv) => ({ id: inv.id, mp: inv.mp }));
   if (i.accesorii_ml) a.accesorii_ml = i.accesorii_ml.map((m) => ({ cod_bilka: m.cod_bilka, ml: m.ml }));
-  if (i.sipca) {
-    a.sipca = {
-      tronsoane: i.sipca.tronsoane.map((t) => ({ bucati: t.bucati_asteptat, ml: t.ml_asteptat })),
-      bucati_total: i.sipca.bucati_total,
-      ml_total: i.sipca.ml_total,
-    };
+  // v1.3: rubricile de sipca pe id; la Calcul se compara si fiecare tronson
+  if (i.sipci) {
+    a.sipci = i.sipci.map((s) => ({
+      id: s.id,
+      ...(s.tronsoane ? { tronsoane: s.tronsoane.map((t) => ({ bucati: t.bucati_asteptat, ml: t.ml_asteptat })) } : {}),
+      bucati_total: s.bucati_total,
+      ml_total: s.ml_total,
+    }));
   }
-  if (i.linii.some((l) => l.pachet)) a.linii_pachet = i.linii.map((l) => ({ cod_bilka: l.cod_bilka, pachet: l.pachet ?? null }));
+  // v1.3: liniile pe pozitie (nr), codurile se pot repeta
+  if (i.linii.some((l) => l.pachet)) a.linii_pachet = i.linii.map((l, idx) => ({ nr: idx + 1, cod_bilka: l.cod_bilka, pachet: l.pachet ?? null }));
   return a;
 }
 
@@ -145,7 +150,7 @@ export function obtinuteDinIntrari(rezultat: RezultatOferta, intrare: IntrareOfe
   const i = etalon.intrari;
   const o: Obiect = {};
   if (i.invelitori) {
-    o.invelitori = rezultat.cantitati.invelitori.map((inv) => ({ cod_bilka: inv.id, mp: inv.mp }));
+    o.invelitori = rezultat.cantitati.invelitori.map((inv) => ({ id: inv.id, mp: inv.mp }));
   }
   if (i.accesorii_ml) {
     o.accesorii_ml = rezultat.cantitati.accesoriiMl.map((m) => {
@@ -153,13 +158,18 @@ export function obtinuteDinIntrari(rezultat: RezultatOferta, intrare: IntrareOfe
       return { cod_bilka: linie?.produs.cod ?? m.linieId, ml: m.ml };
     });
   }
-  if (i.sipca) {
-    const s = rezultat.cantitati.sipca;
-    o.sipca = s
-      ? { tronsoane: s.tronsoane.map((t) => ({ bucati: t.bucati, ml: t.ml })), bucati_total: s.bucatiTotal, ml_total: s.mlTotal }
-      : null;
+  if (i.sipci) {
+    o.sipci = rezultat.cantitati.sipci.map((s) => {
+      const dinFisier = i.sipci?.find((x) => x.id === s.id);
+      return {
+        id: s.id,
+        ...(dinFisier?.tronsoane ? { tronsoane: s.tronsoane.map((t) => ({ bucati: t.bucati, ml: t.ml })) } : {}),
+        bucati_total: s.bucatiTotal,
+        ml_total: s.mlTotal,
+      };
+    });
   }
-  if (i.linii.some((l) => l.pachet)) o.linii_pachet = rezultat.linii.map((l) => ({ cod_bilka: l.cod, pachet: l.pachet ?? null }));
+  if (i.linii.some((l) => l.pachet)) o.linii_pachet = rezultat.linii.map((l, idx) => ({ nr: idx + 1, cod_bilka: l.cod, pachet: l.pachet ?? null }));
   return o;
 }
 

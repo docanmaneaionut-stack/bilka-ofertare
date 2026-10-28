@@ -2,15 +2,15 @@ import type { Prisma } from "@prisma/client";
 import type { IntrareOferta, LinieOferta, ProdusOferta, RezultatOferta, TipTinta } from "../mot/tipuri.js";
 
 // Oferta din baza de date -> intrarea motorului (ARH §4.3: transformare 1:1,
-// fara traduceri). Invelitorile se identifica in motor prin codul produsului
-// (asa lucreaza pachetele si cantitatile din mot/, INGHETAT) - doua invelitori
-// cu acelasi produs pe aceeasi oferta nu se disting (notat pentru MODIFICARE).
+// fara traduceri). M1 (R9): invelitorile si rubricile de sipca intra in motor cu
+// id-ul lor din baza; liniile legate poarta id-ul invelitorii (inclusiv linia
+// invelitorii insesi), linia unei rubrici de sipca poarta id-ul rubricii.
 
 export const includeProduse = {
   utilizator: { select: { rol: true, adaosProcent: true } },
   invelitori: { orderBy: { ordine: "asc" as const }, include: { panotaj: { orderBy: { ordine: "asc" as const } } } },
   linii: { orderBy: { ordine: "asc" as const }, include: { pozitii: { orderBy: { ordine: "asc" as const } } } },
-  sipca: { include: { tronsoane: { orderBy: { ordine: "asc" as const } } } },
+  sipci: { orderBy: { ordine: "asc" as const }, include: { tronsoane: { orderBy: { ordine: "asc" as const } } } },
   zonaB: { orderBy: { ordine: "asc" as const } },
 } satisfies Prisma.OfertaInclude;
 
@@ -40,7 +40,8 @@ function produsDinSnapshot(s: { cod: string; denumire: string; um: string; pretB
 }
 
 export function spreIntrareMot(o: OfertaCuProduse): IntrareOferta {
-  const codInvelitoare = new Map(o.invelitori.map((i) => [i.id, i.cod]));
+  const idInvelitori = new Set(o.invelitori.map((i) => i.id));
+  const sipcaPeLinie = new Map(o.sipci.map((s) => [s.linieId, s.id]));
   const intrare: IntrareOferta = {
     cursBnr: o.cursBnr.toFixed(4),
     tvaPct: Number(o.tvaPct),
@@ -51,7 +52,7 @@ export function spreIntrareMot(o: OfertaCuProduse): IntrareOferta {
     completare: o.completareLaId !== null,
     invelitori: o.invelitori.map((i, idx) => {
       const inv: IntrareOferta["invelitori"][number] = {
-        id: i.cod,
+        id: i.id,
         produs: produsDinSnapshot(i),
         rol: i.rol === "principala" || (i.rol !== "secundara" && idx === 0) ? "principala" : "secundara",
         latimeTotalaM: i.latimeTotalaM.toString(),
@@ -65,7 +66,8 @@ export function spreIntrareMot(o: OfertaCuProduse): IntrareOferta {
     linii: o.linii.map((l) => {
       const linie: LinieOferta = { id: l.id, rubrica: l.rubrica, produs: produsDinSnapshot(l), cantitate: l.cantitate.toString() };
       if (l.pozitii.length > 0) linie.pozitii = l.pozitii.map((p) => ({ lungimeM: p.lungimeM.toString(), bucati: p.bucati }));
-      if (l.invelitoareId && codInvelitoare.has(l.invelitoareId)) linie.invelitoare = codInvelitoare.get(l.invelitoareId)!;
+      if (sipcaPeLinie.has(l.id)) linie.sipca = sipcaPeLinie.get(l.id)!;
+      if (l.invelitoareId && idInvelitori.has(l.invelitoareId)) linie.invelitoare = l.invelitoareId;
       else if (l.culoareRal) {
         linie.culoare = { ral: l.culoareRal, finisaj: l.culoareFinisaj ?? l.finisaj ?? "" };
         const grosime = l.culoareGrosime ?? l.grosime;
@@ -85,19 +87,21 @@ export function spreIntrareMot(o: OfertaCuProduse): IntrareOferta {
   if (o.completareLaId) intrare.completareLa = o.completareLaId;
   if (o.motivCompletare) intrare.motivCompletare = o.motivCompletare;
   if (o.preluataDinId) intrare.preluataDin = o.preluataDinId;
-  if (o.sipca) {
-    const s = o.sipca;
-    const linie = o.linii.find((l) => l.id === s.linieId);
-    intrare.sipca = {
-      linieId: s.linieId,
-      produsCod: linie?.cod ?? "",
-      model: s.model,
-      latimeSipcaMm: s.latimeSipcaMm.toString(),
-      varianta: s.varianta === "CALCUL" ? "calcul" : "comanda",
-    };
-    if (s.culoare) intrare.sipca.culoare = s.culoare;
-    if (s.varianta === "CALCUL") intrare.sipca.tronsoane = s.tronsoane.map((t) => ({ lungimeSipcaM: t.lungimeSipcaM.toString(), lungimeTronsonM: t.lungimeTronsonM.toString(), distantaMm: t.distantaMm.toString() }));
-    else intrare.sipca.pozitii = (linie?.pozitii ?? []).map((p) => ({ lungimeM: p.lungimeM.toString(), bucati: p.bucati }));
+  if (o.sipci.length > 0) {
+    intrare.sipci = o.sipci.map((s) => {
+      const linie = o.linii.find((l) => l.id === s.linieId);
+      const sipca: NonNullable<IntrareOferta["sipci"]>[number] = {
+        id: s.id,
+        produsCod: linie?.cod ?? "",
+        model: s.model,
+        latimeSipcaMm: s.latimeSipcaMm.toString(),
+        varianta: s.varianta === "CALCUL" ? "calcul" : "comanda",
+      };
+      if (s.culoare) sipca.culoare = s.culoare;
+      if (s.varianta === "CALCUL") sipca.tronsoane = s.tronsoane.map((t) => ({ lungimeSipcaM: t.lungimeSipcaM.toString(), lungimeTronsonM: t.lungimeTronsonM.toString(), distantaMm: t.distantaMm.toString() }));
+      else sipca.pozitii = (linie?.pozitii ?? []).map((p) => ({ lungimeM: p.lungimeM.toString(), bucati: p.bucati }));
+      return sipca;
+    });
   }
   return intrare;
 }

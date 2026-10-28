@@ -1,6 +1,6 @@
 # ETALON — ofertele-model ale motorului de calcul
 
-Versiunea 1.3 · 28 octombrie 2026 (E01–E11 aprobate și **toate la zero în motor** după S10, commit a186ef9; R2 și R4 precizate la S9; R6 completată la S10 cu totalul în lei al facturii; E09 recalculat cu adaosul păstrat ca procent cu 4 zecimale; fișiere format v1.2) · Scris de Claude (chat) · Precondiția (b) a Etapei 2 din PLAN.
+Versiunea 1.4 · 28 octombrie 2026 (E01–E11 aprobate și **toate la zero în motor** după S10, commit a186ef9, motor înghețat `v0.2-motor`; **E12 PROPUS** pentru cererea MODIFICARE M1 — învelitori identificate prin id, mai multe rubrici de șipcă — descoperită la S13; R9 nouă; fișiere format **v1.3**; istoric: R2 și R4 precizate la S9, R6 completată la S10, E09 recalculat 27.10) · Scris de Claude (chat) · Precondiția (b) a Etapei 2 din PLAN.
 Fiecare ofertă-model are: intrările (produse reale din catalog, cantități, cont, client, țintă, mod de prezentare, curs), calculul pas cu pas după FISA-OFERTARE cap. 11 (v1.1) și rezultatul așteptat, cifră cu cifră. Când Ionuț o aprobă („așa aș vinde"), devine test pentru Code (`docs/etalon/E0x.json`). Statusuri: PROPUS → APROBAT (data) · corecturile schimbă întâi fișa, apoi exemplul. Calculul de referință e făcut de mână (Python, Decimal), independent de codul softului.
 
 ## 0. Regulile comune (toate exemplele) — deciziile lui Ionuț din 23.10.2026 sunt incluse
@@ -15,6 +15,9 @@ Fiecare ofertă-model are: intrările (produse reale din catalog, cantități, c
 | R6 | **Total în lei pe document**: ținta = sumă și liniile ating exact totalul în euro (fără abatere) → se afișează **suma discutată, exact** (total EUR × curs poate diferi cu 1–3 bani din conversia la 2 zecimale — acceptat, iar tabelul de facturare, în lei cu prețuri unitare la 4 zecimale, reproduce exact totalul); ținta = sumă dar restul nu s-a putut repartiza (abatere, R5) → totalul în lei **„cât iese"**, calculat din linii (Ionuț, 23.10: „o rotunjire care nu se poate matematic nu ajută — n-aș putea factura"); ținta = adaos % → total EUR × curs, cu bani, „cât iese". **Același principiu pe tabelul de facturare** (precizat la S10, E07): totalul în lei al facturii = totalul în lei al ofertei + liniile preluate din zona B, în lei cu TVA, așa cum au fost scrise (sau desfăcute din TVA) — **nu** totalul EUR al facturii × curs, care poate diferi cu câțiva bani; lei-ul e ce plătește clientul. | FISA-OFERTARE 11.8, 13.5; deciziile D3, din 23.10 seara și din 28.10 (S10) |
 | R7 | **Garda**: niciun preț de pe document sub achiziția reală a contului (fără grupă) convertită la cursul documentului. | FISA-OFERTARE 11.6 |
 | R8 | **Cantități**: mp = Σ(lungime × bucăți) × lățimea totală, 3 zecimale; accesorii la bucată; ml cu 3 zecimale. | FISA-OFERTARE 3.2, 3.6 |
+| R9 | **Identitatea învelitorilor și a rubricilor de șipcă** (MODIFICARE M1, 28.10.2026, E12): o învelitoare se identifică prin **id-ul ei pe ofertă** (I1, I2…), nu prin codul produsului — același produs poate apărea de două ori, în culori diferite (casă 8017 + garaj 7016), iar accesoriile cu același cod intră în pachete diferite după învelitoarea de care sunt legate. **Mai multe rubrici de șipcă** pe ofertă (S1, S2…), fiecare cu modelul, cheia de culoare și varianta ei (Comandă / Calcul); prima merge în blocul de șipcă al primului formular, fiecare următoare = formular separat (formularul Bilka acceptă un singur model de șipcă). Numele pachetelor de șipcă: „Șipcă A — <profil> <RAL> <finisaj>”. | FISA-OFERTARE 3.3–3.5, cap. 8 |
+
+Formatul fișierelor (v1.3, 28.10.2026): `invelitori[].id` și `linii[].invelitoare` = id-ul învelitorii (nu codul) — pe liniile legate **și pe linia învelitorii însăși**, ca încărcătorul să aibă un singur drum; `sipci[]` cu `id`, linia de șipcă poartă `sipca` = id; `linii[].nr` = poziția în ofertă (codurile se pot repeta); `asteptat.mp_invelitori` și `asteptat.sipci` pe id. Conversia E01–E11 e mecanică (un singur id pe cod); cifrele lor nu se schimbă.
 
 Deciziile lui Ionuț (23.10.2026), scrise în FISA-OFERTARE v1.1: **D1** cursul documentului = BNR al zilei, achiziția la BNR + 1 % · **D2** achiziția contului la 2 zecimale · **D3** totalul în lei conform țintei (sumă → exact; procent → cât iese) · prețul fix „achiziție + x %" pe linie (țigla la cel mult + 5 % când clientul compară lei / mp) · adaos țintă ideal 20–25 %, după context.
 
@@ -435,4 +438,40 @@ Scopul: FISA-OFERTARE 3.3–3.5 — a doua învelitoare cu altă cheie **și** c
 
 ---
 
-**Setul etalon e complet pentru S7**: E01–E11 aprobate (23 și 27.10.2026); acoperă sumă / procent / adaos păstrat ca țintă, cele trei moduri de prezentare, prețuri fixe (sumă și „achiziție + x %"), grupa, colaboratorul, cantități mp / buc / ml / șipcă Calcul, zona B, completarea, variantele și pachetele.
+## E12 — **Același produs în două culori** (Clasic mat 0,50: casa RAL 8017 + garajul RAL 7016 cu accesorii proprii) · **două rubrici de șipcă** (Oslo 7016 Calcul + Haga 8017 Comandă) · agent 1 % · țintă 20 % · prezentare simplă — PROPUS (28.10.2026; cererea MODIFICARE M1 la motor)
+
+**De ce există:** la S13, editorul a scos la iveală două limite ale motorului înghețat: liniile se legau de învelitoare prin **codul produsului** (deci două învelitori cu același produs în culori diferite nu se puteau deosebi) și exista **o singură rubrică de șipcă** pe ofertă, deși FISA-OFERTARE cap. 8 cere „+ Adaugă rubrică șipcă" pentru al doilea model. Regula R9 și acest exemplu sunt testul care precede modificarea codului (ARH §8: întâi testul, apoi codul). Fișier: `docs/etalon/E12.json` (format v1.3).
+
+### Intrări
+- Curs BNR 5,3485 · achiziție 5,4020 · TVA 21 % · Agent 1 % · țintă **adaos 20 %** · simplu.
+- **I1** — Clasic – mat – 0,50 – **RAL 8017** (principală), panotaj 4,50 × 20 · 3,80 × 12 · 2,20 × 10, lățime 1,20 → **189,120 mp**; accesorii standard (coamă mică 12, bordură fronton 312 × 9, bordură streașină 208 × 23, opritor zăpadă × 10) și fixare (holțșuruburi 4,8 × 35 — 8 cutii, capac coamă × 3) — legate de I1, moștenesc 8017 mat 0,50.
+- **I2** — **același produs**, Clasic – mat – 0,50 – **RAL 7016** (secundară, cu accesorii proprii), panotaj 5,10 × 6, lățime 1,20 → **36,720 mp**; accesorii proprii („Adaugă accesorii pentru învelitoarea secundară"): coamă mică × 4, bordură fronton 312 × 4, bordură streașină 208 × 6, holțșuruburi 2 cutii — legate de I2, moștenesc 7016 mat 0,50. Codurile accesoriilor sunt **aceleași** ca la I1; doar legătura le desparte.
+- **S1** — Șipcă Oslo (capăt drept) – mat – 0,50 – RAL 7016, lățime 92,9 mm, **varianta Calcul**: tronson 14,00 m cu șipcă de 1,50 m la 30 mm → 14.000 ÷ 122,9 = 113,91 → **114 buc** = 171,000 ml; tronson 3,60 m → 29,29 → **30 buc** = 45,000 ml; total **144 buc, 216,000 ml**.
+- **S2** — a doua rubrică („+ Adaugă rubrică șipcă"): Șipcă Haga (capăt rotund) – mat – 0,50 – RAL 8017, lățime 111,3 mm, **varianta Comandă**: 1,20 m × 60 + 1,00 m × 25 → **85 buc, 97,000 ml**.
+
+### Rezultat
+- Prețuri: achiziție **2.203,26 EUR = 14.401,43 lei cu TVA** → țintă 20 % = **17.281,72** → document **2.670,36 + TVA 560,78 = 3.231,14 EUR** → total în lei „cât iese" (ținta e procent): **17.281,75 lei**; rest de rotunjire 0,78 EUR (învelitorile la mp nu primesc cenți, R5) → +0,01 pe toate liniile libere la bucată (23 + 12 + 10 + 9 + 8 + 6 + 4 + 4 + 2 = 78 de cenți), fără abatere; garda ok. Vânzări: 17.281,75 · cost 14.401,43 · net 2.880,32 · brut 2.380,43.
+- **Pachete** (decise de soft): **P1 — Clasic 8017 mat** (7 linii, 1.525,35 EUR achiziție) · **P2 — Clasic 7016 mat** (5 linii, 314,74 EUR) — separat, pentru că I2 are altă cheie **și** accesorii proprii, deși e același produs · **Șipcă A — Oslo 7016 mat** (241,92 EUR) · **Șipcă B — Haga 8017 mat** (121,25 EUR).
+- **Formulare Bilka: 3** — 1) Clasic 8017 mat ca principală + P1 + **blocul de șipcă A** (prima rubrică de șipcă merge pe primul formular); 2) Clasic 7016 mat ca principală + accesoriile și fixarea proprii; 3) **șipcă B singură** (un singur model de șipcă pe formular). Dacă I2 n-ar fi avut accesorii proprii, ar fi intrat ca secundară pe formularul 1 (2 formulare); dacă ar fi existat o singură șipcă, 2 formulare.
+- Comandabil: da (ambele învelitori integral în lungimi × bucăți).
+
+| Nr | Rubrica | Produs | UM | Cant. | Bază EUR | Achiziție cont EUR | Achiziție lei cu TVA (ecran) | Preț document EUR | Valoare EUR |
+|---|---|---|---|---|---|---|---|---|---|
+| 1 | Învelitori | Țiglă metalică Clasic – mat – 0,50 mm | mp | 189,120 | 6,54 | 6,61 | 43,21 | 8,01 | 1514,85 |
+| 2 | Învelitori | Țiglă metalică Clasic – mat – 0,50 mm | mp | 36,720 | 6,54 | 6,61 | 43,21 | 8,01 | 294,13 |
+| 3 | Accesorii standard | Coamă mică – mat – 0,50 mm | buc | 12 | 4,90 | 4,95 | 32,36 | 5,99 | 71,88 |
+| 4 | Accesorii standard | Bordură fronton – 312 mm / 2 m – mat – 0,50 mm | buc | 9 | 4,90 | 4,95 | 32,36 | 5,99 | 53,91 |
+| 5 | Accesorii standard | Bordură streașină – 208 mm / 2 m – mat – 0,50 mm | buc | 23 | 3,27 | 3,30 | 21,57 | 3,99 | 91,77 |
+| 6 | Accesorii standard | Opritor zăpadă – 208 mm / 2 m – mat – 0,50 mm | buc | 10 | 3,27 | 3,30 | 21,57 | 3,99 | 39,90 |
+| 7 | Accesorii standard (învelitoarea secundară) | Coamă mică – mat – 0,50 mm | buc | 4 | 4,90 | 4,95 | 32,36 | 5,99 | 23,96 |
+| 8 | Accesorii standard (învelitoarea secundară) | Bordură fronton – 312 mm / 2 m – mat – 0,50 mm | buc | 4 | 4,90 | 4,95 | 32,36 | 5,99 | 23,96 |
+| 9 | Accesorii standard (învelitoarea secundară) | Bordură streașină – 208 mm / 2 m – mat – 0,50 mm | buc | 6 | 3,27 | 3,30 | 21,57 | 3,99 | 23,94 |
+| 10 | Fixare și etanșare | Holțșuruburi în culoare, lemn – 4,8 × 35 mm | cutie | 8 | 6,25 | 6,31 | 41,24 | 7,64 | 61,12 |
+| 11 | Fixare și etanșare | Capac coamă – mat | buc | 3 | 3,94 | 3,98 | 26,01 | 4,82 | 14,46 |
+| 12 | Fixare și etanșare (învelitoarea secundară) | Holțșuruburi în culoare, lemn – 4,8 × 35 mm | cutie | 2 | 6,25 | 6,31 | 41,24 | 7,64 | 15,28 |
+| 13 | Șipcă gard | Șipcă Oslo – mat – 0,50 mm | ml | 216,000 | 1,11 | 1,12 | 7,32 | 1,36 | 293,76 |
+| 14 | Șipcă gard (a doua rubrică) | Șipcă Haga – mat – 0,50 mm | ml | 97,000 | 1,24 | 1,25 | 8,17 | 1,52 | 147,44 |
+
+---
+
+**Setul etalon**: E01–E11 aprobate (23 și 27.10.2026) și la zero în motor (S10); acoperă sumă / procent / adaos păstrat ca țintă, cele trei moduri de prezentare, prețuri fixe (sumă și „achiziție + x %"), grupa, colaboratorul, cantități mp / buc / ml / șipcă Calcul, zona B, completarea, variantele și pachetele. **E12 (propus 28.10.2026)** adaugă identitatea învelitorilor prin id și mai multe rubrici de șipcă (R9) — devine test odată cu aprobarea lui Ionuț și cu MODIFICAREA M1 a motorului.

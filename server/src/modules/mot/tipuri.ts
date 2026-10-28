@@ -82,8 +82,11 @@ export interface LinieOferta {
   cantitate: Suma;
   // lungime x bucati pentru accesoriile la metru liniar (FISA-OFERTARE cap. 5)
   pozitii?: PozitieLungime[];
-  // linie legata de o invelitoare (mosteneste cheia ei) ...
+  // linie legata de o invelitoare prin id-ul ei pe oferta (mosteneste cheia ei);
+  // linia invelitorii insesi (rubrica Invelitori) poarta tot id-ul ei (M1, R9) ...
   invelitoare?: string;
+  // ... sau linia unei rubrici de sipca (id-ul rubricii din `sipci`) ...
+  sipca?: string;
   // ... sau independenta / de sine statatoare, cu cheia ei
   culoare?: CheieCuloare;
   pretFix?: PretFix;
@@ -98,8 +101,9 @@ export interface Tronson {
   distantaMm: Suma;
 }
 
+// o rubrica de sipca (M1, R9): id-ul ei pe oferta; linia ei poarta `sipca` = id
 export interface Sipca {
-  linieId: string;
+  id: string;
   produsCod: string;
   model: string;
   culoare?: string;
@@ -138,7 +142,8 @@ export interface IntrareOferta {
   // "preia preturi din oferta ..." (11.11): identificatorul ofertei-sursa
   preluataDin?: string;
   invelitori: Invelitoare[];
-  sipca?: Sipca;
+  // rubricile de sipca, in ordinea din oferta (M1: pot fi mai multe)
+  sipci?: Sipca[];
   linii: LinieOferta[];
   zonaB: LinieZonaB[];
 }
@@ -228,8 +233,9 @@ export interface ZonaBCalculata {
 }
 
 // FISA-OFERTARE 3.4-3.5: un pachet = o invelitoare + sectiunile ei; pluvialul
-// se grupeaza pe finisaj + culoare; sectiunile de sine statatoare pe cheie
-export type TipPachet = "invelitoare" | "pluvial" | "de_sine_statatoare";
+// se grupeaza pe finisaj + culoare; sectiunile de sine statatoare pe cheie;
+// fiecare rubrica de sipca e pachetul ei (M1, R9)
+export type TipPachet = "invelitoare" | "pluvial" | "de_sine_statatoare" | "sipca";
 
 export interface Pachet {
   id: string;
@@ -260,6 +266,7 @@ export interface InvelitoareCalculata {
 }
 
 export interface SipcaCalculata {
+  id: string;
   tronsoane: { bucati: number; ml: Suma }[];
   bucatiTotal: number;
   mlTotal: Suma;
@@ -268,7 +275,7 @@ export interface SipcaCalculata {
 export interface CantitatiCalculate {
   invelitori: InvelitoareCalculata[];
   accesoriiMl: { linieId: string; ml: Suma }[];
-  sipca?: SipcaCalculata;
+  sipci: SipcaCalculata[];
 }
 
 export interface Comandabil {
@@ -293,6 +300,11 @@ export interface RezultatOferta {
   // ce vede agentul: "Se vor genera 4 formulare Bilka: 1) ...; 2) ..."
   textFormulare: string;
   avertizari: string[];
+}
+
+// rubrica "Invelitori" (linia unei invelitori; cantitatea ei vine din panotaj / mp)
+export function esteLinieInvelitoare(rubrica: string): boolean {
+  return /^învelitori/i.test(rubrica.trim()) || /^invelitori/i.test(rubrica.trim());
 }
 
 // ------------------------------------------------- validarea intrarii (zod)
@@ -350,20 +362,23 @@ export const schemaIntrareOferta = zod.object({
         message: "o invelitoare are fie panotaj (lungimi x bucati), fie suprafata directa (mp), fie amandoua",
       }),
   ),
-  sipca: zod
-    .object({
-      linieId: zod.string().min(1),
-      produsCod: zod.string().min(1),
-      model: zod.string(),
-      culoare: zod.string().optional(),
-      latimeSipcaMm: sumaPozitiva,
-      varianta: zod.enum(["comanda", "calcul"]),
-      pozitii: zod.array(schemaPozitie).optional(),
-      tronsoane: zod.array(zod.object({ lungimeSipcaM: sumaPozitiva, lungimeTronsonM: sumaPozitiva, distantaMm: sumaNenegativa })).optional(),
-    })
-    .refine((s) => (s.varianta === "calcul" ? (s.tronsoane?.length ?? 0) > 0 : (s.pozitii?.length ?? 0) > 0), {
-      message: "sipca in varianta Calcul are tronsoane; in varianta Comanda are pozitii (lungime x bucati)",
-    })
+  sipci: zod
+    .array(
+      zod
+        .object({
+          id: zod.string().min(1),
+          produsCod: zod.string().min(1),
+          model: zod.string(),
+          culoare: zod.string().optional(),
+          latimeSipcaMm: sumaPozitiva,
+          varianta: zod.enum(["comanda", "calcul"]),
+          pozitii: zod.array(schemaPozitie).optional(),
+          tronsoane: zod.array(zod.object({ lungimeSipcaM: sumaPozitiva, lungimeTronsonM: sumaPozitiva, distantaMm: sumaNenegativa })).optional(),
+        })
+        .refine((s) => (s.varianta === "calcul" ? (s.tronsoane?.length ?? 0) > 0 : (s.pozitii?.length ?? 0) > 0), {
+          message: "sipca in varianta Calcul are tronsoane; in varianta Comanda are pozitii (lungime x bucati)",
+        }),
+    )
     .optional(),
   linii: zod.array(
     zod.object({
@@ -373,6 +388,7 @@ export const schemaIntrareOferta = zod.object({
       cantitate: sumaPozitiva,
       pozitii: zod.array(schemaPozitie).optional(),
       invelitoare: zod.string().optional(),
+      sipca: zod.string().optional(),
       culoare: zod.object({ ral: zod.string(), finisaj: zod.string(), grosime: zod.string().optional() }).optional(),
       pretFix: zod.object({ tip: zod.enum(["eur_fara_tva", "achizitie_plus_pct"]), valoare: sumaNenegativa, preluat: zod.boolean().optional() }).optional(),
       discountPct: procent.optional(),
@@ -388,4 +404,32 @@ export const schemaIntrareOferta = zod.object({
       preiaInFactura: zod.boolean(),
     }),
   ),
-});
+})
+  // M1 (R9): identitatea invelitorilor si a rubricilor de sipca e id-ul lor pe
+  // oferta - id-uri unice, legaturi doar catre id-uri existente, fiecare
+  // invelitoare cu exact o linie in rubrica Invelitori, fiecare sipca cu exact o linie
+  .superRefine((o, ctx) => {
+    const eroare = (path: (string | number)[], message: string) => ctx.addIssue({ code: "custom", path, message });
+    const idInvelitori = new Set<string>();
+    o.invelitori.forEach((i, k) => {
+      if (idInvelitori.has(i.id)) eroare(["invelitori", k, "id"], `id de invelitoare dublat: ${i.id}`);
+      idInvelitori.add(i.id);
+    });
+    const idSipci = new Set<string>();
+    (o.sipci ?? []).forEach((s, k) => {
+      if (idSipci.has(s.id)) eroare(["sipci", k, "id"], `id de rubrica de sipca dublat: ${s.id}`);
+      idSipci.add(s.id);
+    });
+    o.linii.forEach((l, k) => {
+      if (l.invelitoare !== undefined && !idInvelitori.has(l.invelitoare)) eroare(["linii", k, "invelitoare"], `linia ${l.id} (${l.produs.cod}) trimite la o invelitoare inexistenta: ${l.invelitoare}`);
+      if (l.sipca !== undefined && !idSipci.has(l.sipca)) eroare(["linii", k, "sipca"], `linia ${l.id} (${l.produs.cod}) trimite la o rubrica de sipca inexistenta: ${l.sipca}`);
+    });
+    o.invelitori.forEach((i, k) => {
+      const n = o.linii.filter((l) => esteLinieInvelitoare(l.rubrica) && l.invelitoare === i.id).length;
+      if (n !== 1) eroare(["invelitori", k], `invelitoarea ${i.id} (${i.produs.cod}) are ${n} linii in rubrica Invelitori legate de ea; trebuie exact una`);
+    });
+    (o.sipci ?? []).forEach((s, k) => {
+      const n = o.linii.filter((l) => l.sipca === s.id).length;
+      if (n !== 1) eroare(["sipci", k], `rubrica de sipca ${s.id} (${s.produsCod}) are ${n} linii; trebuie exact una`);
+    });
+  });

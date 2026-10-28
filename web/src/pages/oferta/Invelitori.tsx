@@ -7,6 +7,7 @@ import {
   finisaje,
   grosimi,
   invelitoareGoala,
+  invelitoriTrimise,
   latimeDinCatalog,
   modele,
   optiuni,
@@ -25,6 +26,13 @@ type Props = { catalog: Catalog; stare: StareEditor; set: (f: (s: StareEditor) =
 export function Invelitori({ catalog, stare, set, poate, structura }: Props) {
   const seteaza = (cheie: string, schimba: (i: InvelitoareUI) => InvelitoareUI) =>
     set((s) => ({ ...s, invelitori: s.invelitori.map((i) => (i.cheie === cheie ? schimba(i) : i)) }));
+  // M1: cantitatile vin pe id-ul din baza, necunoscut pe ecran; ordinea e aceeasi
+  // cu a invelitorilor trimise (doua invelitori cu acelasi produs se disting asa)
+  const trimise = invelitoriTrimise(stare);
+  const calculPentru = (inv: InvelitoareUI) => {
+    const k = trimise.indexOf(inv);
+    return k >= 0 ? (structura?.cantitati.invelitori[k] ?? null) : null;
+  };
 
   return (
     <section className="panou">
@@ -36,7 +44,7 @@ export function Invelitori({ catalog, stare, set, poate, structura }: Props) {
           idx={idx}
           catalog={catalog}
           poate={poate}
-          calcul={structura?.cantitati.invelitori.find((c) => c.id === catalog.invelitori.find((p) => p.id === inv.produsId)?.cod) ?? null}
+          calcul={calculPentru(inv)}
           onSchimba={(f) => seteaza(inv.cheie, f)}
           onSterge={idx > 0 ? () => set((s) => ({ ...s, invelitori: s.invelitori.filter((i) => i.cheie !== inv.cheie), linii: s.linii.filter((l) => l.invelitoare !== inv.cheie) })) : undefined}
         />

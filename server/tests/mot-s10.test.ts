@@ -119,8 +119,9 @@ describe("varianta (11.7, E01 -> E09)", () => {
 
     const varianta = construiesteVarianta(baza.intrare, baza.rezultat, inlocuiri);
     expect(varianta.tinta).toEqual({ tip: "adaos_pct_pastrat", valoare: "18.5680" });
-    expect(varianta.invelitori.map((i) => i.id)).toEqual(["TMIBEGDM050", "TCT08GDM050"]);
-    expect(varianta.linii[2].invelitoare).toBe("TMIBEGDM050");
+    // M1: id-urile si legaturile raman, se schimba doar produsele
+    expect(varianta.invelitori.map((i) => [i.id, i.produs.cod])).toEqual([["I1", "TMIBEGDM050"], ["I2", "TCT08GDM050"]]);
+    expect(varianta.linii[2].invelitoare).toBe("I1");
 
     const rezultat = calculeazaOferta(varianta);
     const diferente = compara(e09.etalon.asteptat, spreAsteptat(rezultat, varianta));
@@ -130,7 +131,8 @@ describe("varianta (11.7, E01 -> E09)", () => {
 
   it("liniile legate de invelitoare sunt cele care urmeaza cheia", () => {
     const { intrare } = rezultatEtalon("E01");
-    const legate = liniiLegateDeInvelitoare(intrare, "TMIBEMAT050");
+    const legate = liniiLegateDeInvelitoare(intrare, "I1");
+    expect(legate).not.toContain("TMIBEMAT050"); // linia invelitorii insesi nu e "legata"
     expect(legate).toContain("ACMICMAT050");
     expect(legate).not.toContain("SPJGH1254ML"); // pluvialul are culoarea lui
   });
@@ -150,7 +152,7 @@ describe("preia preturi din oferta ... (11.11)", () => {
       rubrica: "Accesorii standard",
       produs: { cod: coamaMare.cod, denumire: coamaMare.denumire, um: "buc", pretBazaEur: coamaMare.pretEur, finisaj: "mat", grosime: "0,50 mm" },
       cantitate: "6",
-      invelitoare: "TMIBEMAT050",
+      invelitoare: "I1",
     });
     noua.tinta = { tip: "total_cu_tva_lei", valoare: "9000" };
     return noua;

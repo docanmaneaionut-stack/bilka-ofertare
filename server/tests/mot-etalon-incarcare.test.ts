@@ -52,8 +52,8 @@ describe("catalogul din CSV-urile Bilka", () => {
 describe("incarcarea ofertelor-model", () => {
   const ids = listeazaEtaloane();
 
-  it("gaseste E01-E11", () => {
-    expect(ids).toEqual(["E01", "E02", "E03", "E04", "E05", "E06", "E07", "E08", "E09", "E10", "E11"]);
+  it("gaseste E01-E12", () => {
+    expect(ids).toEqual(["E01", "E02", "E03", "E04", "E05", "E06", "E07", "E08", "E09", "E10", "E11", "E12"]);
   });
 
   for (const id of ids) {
@@ -73,11 +73,12 @@ describe("incarcarea ofertelor-model", () => {
 
   it("campurile v1.1: invelitoare pe liniile legate, culoare pe cele independente, pret fix structurat", () => {
     const e01 = incarcaEtalon("E01").intrare;
-    expect(e01.linii[2].invelitoare).toBe("TMIBEMAT050"); // coama mica
+    expect(e01.linii[0].invelitoare).toBe("I1"); // linia invelitorii poarta id-ul ei (v1.3)
+    expect(e01.linii[2].invelitoare).toBe("I1"); // coama mica
     expect(e01.linii[17].culoare).toEqual({ ral: "RAL 3005", finisaj: "pluvial colorat (lucios)" }); // jgheab
     expect(e01.invelitori.map((i) => [i.id, i.rol, i.latimeTotalaM, i.panotaj.length])).toEqual([
-      ["TMIBEMAT050", "principala", "1.18", 4],
-      ["TCT08MAT050", "secundara", "1.2", 1],
+      ["I1", "principala", "1.18", 4],
+      ["I2", "secundara", "1.2", 1],
     ]);
 
     const e02 = incarcaEtalon("E02").intrare;
@@ -98,8 +99,10 @@ describe("incarcarea ofertelor-model", () => {
     expect(e05.grupaPct).toBe("5.00");
 
     const e06 = incarcaEtalon("E06").intrare;
-    expect(e06.sipca).toMatchObject({ linieId: "L1", produsCod: "SIPCAMAT050", latimeSipcaMm: "92.9", varianta: "calcul" });
-    expect(e06.sipca?.tronsoane).toHaveLength(2);
+    expect(e06.sipci).toHaveLength(1);
+    expect(e06.sipci?.[0]).toMatchObject({ id: "S1", produsCod: "SIPCAMAT050", latimeSipcaMm: "92.9", varianta: "calcul" });
+    expect(e06.sipci?.[0].tronsoane).toHaveLength(2);
+    expect(e06.linii[0].sipca).toBe("S1");
 
     const e07 = incarcaEtalon("E07").intrare;
     expect(e07.zonaB).toHaveLength(2);
@@ -120,10 +123,10 @@ describe("incarcarea ofertelor-model", () => {
 
     const e11 = incarcaEtalon("E11").intrare;
     expect(e11.invelitori.map((i) => [i.id, i.rol, i.variantaProfil])).toEqual([
-      ["TMCLSMAT050", "principala", undefined],
-      ["REPROMAT050", "secundara", "Standard"],
+      ["I1", "principala", undefined],
+      ["I2", "secundara", "Standard"],
     ]);
-    expect(e11.linii[6].invelitoare).toBe("REPROMAT050"); // coama Retro
+    expect(e11.linii[6].invelitoare).toBe("I2"); // coama Retro
     expect(e11.linii[17].culoare).toEqual({ ral: "RAL 7016", finisaj: "pluvial mat" }); // pluvial B
   });
 
@@ -148,9 +151,11 @@ describe("incarcarea ofertelor-model", () => {
     ]);
   });
 
-  it("fisierele etalon sunt in formatul v1.1", () => {
+  it("fisierele etalon sunt in formatul v1.3 (id-uri pe invelitori si sipci)", () => {
     for (const id of ids) {
-      expect(citesteEtalon(id).format, id).toMatch(/^v1\.1/);
+      // E01-E11 pastreaza in antetul campului "format" istoricul v1.1 / v1.2 si descriu conversia v1.3 la coada
+      expect(citesteEtalon(id).format, id).toMatch(/^v1\.[123]/);
+      expect(citesteEtalon(id).format, id).toMatch(/asteptat\.sipci|sipci\[\]|v1\.3/);
     }
   });
 });

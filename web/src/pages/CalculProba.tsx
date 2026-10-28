@@ -466,7 +466,7 @@ export function CalculProba() {
             <p className="text-secundar mic">
               Învelitori:{" "}
               {rezultat.cantitati.invelitori.map((i) => `${i.id} ${i.mp} mp (${i.coli} coli)`).join(" · ")}
-              {rezultat.cantitati.sipca ? ` · Șipcă: ${rezultat.cantitati.sipca.bucatiTotal} buc, ${rezultat.cantitati.sipca.mlTotal} ml` : ""}
+              {rezultat.cantitati.sipci.length ? ` · Șipcă: ${rezultat.cantitati.sipci.map((s) => `${s.bucatiTotal} buc, ${s.mlTotal} ml`).join(" / ")}` : ""}
             </p>
           )}
         </>

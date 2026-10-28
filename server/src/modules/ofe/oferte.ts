@@ -291,7 +291,7 @@ async function detaliu(id: string, u: Utilizator) {
       listaPret: { select: { id: true, denumire: true, status: true } },
       invelitori: { orderBy: { ordine: "asc" }, include: { panotaj: { orderBy: { ordine: "asc" } } } },
       linii: { orderBy: { ordine: "asc" }, include: { pozitii: { orderBy: { ordine: "asc" } } } },
-      sipca: { include: { tronsoane: { orderBy: { ordine: "asc" } } } },
+      sipci: { orderBy: { ordine: "asc" }, include: { tronsoane: { orderBy: { ordine: "asc" } } } },
       zonaB: { orderBy: { ordine: "asc" } },
     },
   });
@@ -335,7 +335,7 @@ async function detaliu(id: string, u: Utilizator) {
     note: o.note,
     invelitori: o.invelitori.map((i) => faraBaza({ ...i, latimeTotalaM: i.latimeTotalaM.toString(), mpDirect: i.mpDirect?.toString() ?? null, panotaj: i.panotaj.map((p) => ({ ...p, lungimeM: p.lungimeM.toString() })) })),
     linii: o.linii.map((l) => faraBaza({ ...l, cantitate: l.cantitate.toString(), pretFixValoare: l.pretFixValoare?.toString() ?? null, discountPct: l.discountPct?.toString() ?? null, pozitii: l.pozitii.map((p) => ({ ...p, lungimeM: p.lungimeM.toString() })) })),
-    sipca: o.sipca ? { ...o.sipca, latimeSipcaMm: o.sipca.latimeSipcaMm.toString(), tronsoane: o.sipca.tronsoane.map((t) => ({ ...t, lungimeSipcaM: t.lungimeSipcaM.toString(), lungimeTronsonM: t.lungimeTronsonM.toString(), distantaMm: t.distantaMm.toString() })) } : null,
+    sipci: o.sipci.map((s) => ({ ...s, latimeSipcaMm: s.latimeSipcaMm.toString(), tronsoane: s.tronsoane.map((t) => ({ ...t, lungimeSipcaM: t.lungimeSipcaM.toString(), lungimeTronsonM: t.lungimeTronsonM.toString(), distantaMm: t.distantaMm.toString() })) })),
     zonaB: o.zonaB.map((zb) => ({ ...zb, cantitate: zb.cantitate.toString(), sumaLei: zb.sumaLei.toString() })),
     structura: await calculeazaStructura(o.id),
     poateModifica: poateModificaOferta(u, o),

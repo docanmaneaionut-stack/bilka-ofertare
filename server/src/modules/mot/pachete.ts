@@ -25,6 +25,18 @@ export function numeModel(produs: ProdusOferta): string {
   return nume || produs.denumire;
 }
 
+// profilul sipcii pentru numele pachetului (M1, R9): familia fara cuvintele de
+// inceput comune cu grupul - "Șipcă Oslo" in grupul "Șipcă metalică de gard" ->
+// "Oslo"; nu se aplica la celelalte pachete ("Tablă sinus S18" ramane intreg)
+export function numeProfilSipca(produs: ProdusOferta): string {
+  const familie = numeModel(produs);
+  const cuvinte = familie.split(/\s+/);
+  const grup = (produs.grup ?? "").trim().split(/\s+/);
+  let n = 0;
+  while (n < cuvinte.length - 1 && n < grup.length && cuvinte[n].toLowerCase() === grup[n].toLowerCase()) n++;
+  return cuvinte.slice(n).join(" ") || familie;
+}
+
 // "RAL 8017" -> "8017"
 export function numarRal(ral: string | undefined): string {
   return (ral ?? "").replace(/^\s*RAL\s*/i, "").trim();
@@ -85,8 +97,12 @@ export function impacheteaza(intrare: IntrareOferta): Impachetare {
       pachetPeLinie.set(id, p.nume);
     }
   };
-  const liniaInvelitorii = (inv: Invelitoare) => linii.filter((l) => esteLinieInvelitoare(l.rubrica) && l.produs.cod === inv.id).map((l) => l.id);
-  const liniileLegate = (inv: Invelitoare) => linii.filter((l) => l.invelitoare === inv.id).map((l) => l.id);
+  // M1 (R9): linia invelitorii si liniile legate de ea se recunosc prin id-ul
+  // invelitorii pe oferta, nu prin codul produsului (acelasi produs poate fi
+  // de doua ori, in culori diferite - E12)
+  const liniaInvelitorii = (inv: Invelitoare) => linii.filter((l) => esteLinieInvelitoare(l.rubrica) && l.invelitoare === inv.id).map((l) => l.id);
+  const liniileLegate = (inv: Invelitoare) => linii.filter((l) => !esteLinieInvelitoare(l.rubrica) && l.invelitoare === inv.id).map((l) => l.id);
+  const esteLinieSipca = (l: LinieOferta) => l.sipca !== undefined;
 
   // 1. pachetele invelitorilor
   const principala = intrare.invelitori.find((i) => i.rol === "principala") ?? intrare.invelitori[0];
@@ -155,7 +171,7 @@ export function impacheteaza(intrare: IntrareOferta): Impachetare {
   // 3. sectiunile de sine statatoare (cheie proprie, fara invelitoare); accesoriile
   //    la lungimi raman pe foaia lor, nu formeaza pachet
   const laLungimi = linii.filter((x) => esteRubricaLungimi(x.rubrica) || (x.pozitii !== undefined && x.pozitii.length > 0 && !esteLinieInvelitoare(x.rubrica)));
-  for (const l of linii.filter((x) => !pachetPeLinie.has(x.id) && x.culoare && !laLungimi.includes(x))) {
+  for (const l of linii.filter((x) => !pachetPeLinie.has(x.id) && x.culoare && !laLungimi.includes(x) && !esteLinieSipca(x))) {
     const cheie = cheieLinie(l);
     let p = pachete.find((x) => x.tip === "de_sine_statatoare" && aceeasiCheie(x.cheie, cheie));
     if (!p) {
@@ -176,7 +192,7 @@ export function impacheteaza(intrare: IntrareOferta): Impachetare {
 
   // 4. ce a ramas fara pachet: liniile legate de principala fara cheie proprie,
   //    sau linii neatribuite (avertizare)
-  for (const l of linii.filter((x) => !pachetPeLinie.has(x.id) && !laLungimi.includes(x))) {
+  for (const l of linii.filter((x) => !pachetPeLinie.has(x.id) && !laLungimi.includes(x) && !esteLinieSipca(x))) {
     if (pachetPrincipal) {
       atribuie(pachetPrincipal, [l.id]);
     } else {
@@ -184,8 +200,37 @@ export function impacheteaza(intrare: IntrareOferta): Impachetare {
     }
   }
 
+  // 4b. rubricile de sipca (M1, R9): fiecare rubrica e pachetul ei, "Sipca A — <profil> <RAL> <finisaj>",
+  //     in ordinea din oferta; profilul vine din catalog (familia fara cuvintele comune cu grupul)
+  const pacheteSipca: Pachet[] = [];
+  (intrare.sipci ?? []).forEach((s, idx) => {
+    const liniileSipcii = linii.filter((l) => l.sipca === s.id);
+    const linie = liniileSipcii[0];
+    if (!linie) return;
+    const litera = litere[idx] ?? String(idx + 1);
+    const cheie = cheieLinie(linie);
+    if (s.culoare) cheie.ral = s.culoare;
+    const p: Pachet = {
+      id: `SIP${litera}`,
+      nume: `Șipcă ${litera} — ${numeProfilSipca(linie.produs)} ${numarRal(cheie.ral)} ${finisajScurt(cheie.finisaj)}`.trim(),
+      tip: "sipca",
+      cheie,
+      invelitoriSecundare: [],
+      linii: [],
+      achizitieEur: ZERO2,
+    };
+    pachete.push(p);
+    pacheteSipca.push(p);
+    atribuie(
+      p,
+      liniileSipcii.map((l) => l.id),
+    );
+  });
+
   // 5. formularele: unul per pachet de invelitoare, unul per pluvial, unul per
-  //    sectiune de sine statatoare; accesoriile la lungimi si sipca pe primul
+  //    sectiune de sine statatoare; accesoriile la lungimi pe primul; prima
+  //    rubrica de sipca in blocul primului formular, fiecare urmatoare formular
+  //    separat (formularul Bilka accepta un singur model de sipca - cap. 8)
   const formulare: FormularBilka[] = [];
   const numeInvelitoare = (id: string) => {
     const inv = intrare.invelitori.find((i) => i.id === id);
@@ -194,6 +239,7 @@ export function impacheteaza(intrare: IntrareOferta): Impachetare {
     return `${numeModel(inv.produs)}${varianta} ${numarRal(inv.culoare)} ${finisajScurt(inv.produs.finisaj)} ${(inv.produs.grosime ?? "").replace(/\s*mm$/i, "")}`.trim();
   };
   for (const p of pachete) {
+    if (p.tip === "sipca") continue;
     const nr = formulare.length + 1;
     let continut: string;
     if (p.tip === "invelitoare" && p.invelitoarePrincipala) {
@@ -212,11 +258,20 @@ export function impacheteaza(intrare: IntrareOferta): Impachetare {
     if (formulare.length === 0) formulare.push({ nr: 1, pachete: [], continut: "Formular fără învelitoare" });
     formulare[0].continut += ` + accesorii speciale la lungimi pe foaia lor, cu culoarea pe rând (${laLungimi.length} rânduri)`;
   }
-  if (intrare.sipca) {
-    const pachetSipca = pachetPeLinie.get(intrare.sipca.linieId);
-    const f = formulare.find((x) => pachete.some((p) => x.pachete.includes(p.id) && p.nume === pachetSipca)) ?? formulare[0];
-    if (f) f.continut += ` + blocul de șipcă (${intrare.sipca.model})`;
-  }
+  pacheteSipca.forEach((p, idx) => {
+    const descriere = p.nume.replace(/^Șipcă \S+ — /, "");
+    if (idx === 0) {
+      if (formulare.length === 0) formulare.push({ nr: 1, pachete: [], continut: "Formular fără învelitoare" });
+      formulare[0].pachete.push(p.id);
+      formulare[0].continut += ` + blocul de șipcă ${p.id.replace(/^SIP/, "")} (${descriere}) — prima rubrică de șipcă merge pe primul formular`;
+    } else {
+      formulare.push({
+        nr: formulare.length + 1,
+        pachete: [p.id],
+        continut: `${p.nume} singură — formularul Bilka acceptă un singur model de șipcă; fiecare rubrică următoare = formular separat`,
+      });
+    }
+  });
 
   const n = formulare.length;
   const text =

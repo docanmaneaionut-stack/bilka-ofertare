@@ -150,7 +150,7 @@ export function calculeazaOferta(intrareBruta: IntrareOferta): RezultatOferta {
     cantitati: {
       invelitori: cantitati.invelitori,
       accesoriiMl: cantitati.accesoriiMl,
-      ...(cantitati.sipca ? { sipca: cantitati.sipca } : {}),
+      sipci: cantitati.sipci,
     },
     comandabil: cantitati.comandabil,
     linii,

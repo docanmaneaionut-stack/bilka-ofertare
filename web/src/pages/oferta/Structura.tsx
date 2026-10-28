@@ -18,20 +18,20 @@ export function Structura({ structura }: { structura: { rezultat: StructuraOfert
       {!r.comandabil.da && <Mesaj tip="avertizare">Nu se poate comanda: {r.comandabil.motive.join("; ")}</Mesaj>}
       {r.comandabil.da && r.cantitati.invelitori.length > 0 && <Mesaj tip="ok">Oferta se poate comanda: fiecare învelitoare e integral în lungimi × bucăți.</Mesaj>}
       <div className="grila-totaluri">
-        {r.cantitati.invelitori.map((i) => (
+        {r.cantitati.invelitori.map((i, idx) => (
           <div key={i.id}>
-            <span className="text-secundar mic">{i.id}</span>
+            <span className="text-secundar mic">Învelitoarea {idx + 1}</span>
             <span className="numar-mare">{i.mp} mp</span>
             <span className="mic text-secundar">{i.coli} coli{i.mpDirect !== "0.000" ? ` · ${i.mpDirect} mp direct` : ""}</span>
           </div>
         ))}
-        {r.cantitati.sipca && (
-          <div>
-            <span className="text-secundar mic">Șipcă</span>
-            <span className="numar-mare">{r.cantitati.sipca.mlTotal} ml</span>
-            <span className="mic text-secundar">{r.cantitati.sipca.bucatiTotal} buc</span>
+        {r.cantitati.sipci.map((s, idx) => (
+          <div key={s.id}>
+            <span className="text-secundar mic">Șipcă {String.fromCharCode(65 + idx)}</span>
+            <span className="numar-mare">{s.mlTotal} ml</span>
+            <span className="mic text-secundar">{s.bucatiTotal} buc</span>
           </div>
-        )}
+        ))}
       </div>
       <p>{r.textFormulare}</p>
       {r.pachete.length > 0 && (

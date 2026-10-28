@@ -462,7 +462,7 @@ export type IntrareProba = {
   discountImplicitPct?: string;
   completare: boolean;
   invelitori: InvelitoareIntrare[];
-  sipca?: unknown;
+  sipci?: unknown[];
   linii: LinieIntrare[];
   zonaB: unknown[];
 };
@@ -492,7 +492,7 @@ export type LinieRezultat = {
 export type RezultatProba = {
   cursBnr: string;
   cursAchizitie: string;
-  cantitati: { invelitori: { id: string; mp: string; coli: number; integralPanotata: boolean }[]; accesoriiMl: { linieId: string; ml: string }[]; sipca?: { bucatiTotal: number; mlTotal: string } };
+  cantitati: { invelitori: { id: string; mp: string; coli: number; integralPanotata: boolean }[]; accesoriiMl: { linieId: string; ml: string }[]; sipci: { id: string; bucatiTotal: number; mlTotal: string }[] };
   comandabil: { da: boolean; motive: string[] };
   linii: LinieRezultat[];
   totaluri: Record<string, string | undefined>;
@@ -610,7 +610,7 @@ export type OfertaDetaliu = {
   precizariZonaB: string | null;
   invelitori: unknown[];
   linii: unknown[];
-  sipca: unknown | null;
+  sipci: unknown[];
   zonaB: unknown[];
   structura?: { rezultat: StructuraOferta | null; eroare: string | null } | null;
   poateModifica: boolean;
@@ -757,7 +757,8 @@ export type StareProduse = {
   precizariZonaB?: string | null;
   invelitori: InvelitoareEditor[];
   linii: LinieEditor[];
-  sipca?: SipcaEditor | null;
+  // rubricile de sipca, oricate (M1)
+  sipci: SipcaEditor[];
   zonaB: ZonaBEditor[];
 };
 
@@ -765,7 +766,7 @@ export type StructuraOferta = {
   cantitati: {
     invelitori: { id: string; mp: string; mpPanotaj: string; mpDirect: string; coli: number; integralPanotata: boolean }[];
     accesoriiMl: { linieId: string; ml: string }[];
-    sipca?: { tronsoane: { bucati: number; ml: string }[]; bucatiTotal: number; mlTotal: string };
+    sipci: { id: string; tronsoane: { bucati: number; ml: string }[]; bucatiTotal: number; mlTotal: string }[];
   };
   comandabil: { da: boolean; motive: string[] };
   linii: { id: string; cod: string; um: string; cantitate: string; pachet?: string }[];
@@ -818,6 +819,8 @@ export type LinieSalvata = {
 };
 
 export type SipcaSalvata = {
+  id: string;
+  ordine: number;
   linieId: string;
   model: string;
   culoare: string | null;

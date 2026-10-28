@@ -664,7 +664,7 @@ model Oferta {
 
   invelitori OfertaInvelitoare[]
   linii      OfertaLinie[]
-  sipca      OfertaSipca?
+  sipci      OfertaSipca[]
   zonaB      OfertaZonaB[]
   istoric    OfertaIstoric[]
   atasamente OfertaAtasament[]
@@ -769,11 +769,13 @@ model OfertaLinie {
   @@map("oferta_linie")
 }
 
-// sipca de gard (cap. 8): modelul, latimea sipcii, varianta si tronsoanele
+// rubricile de sipca de gard (cap. 8; M1, migrarea 8: oricate pe oferta, in
+// ordine): modelul, latimea sipcii, varianta si tronsoanele; o linie = o rubrica
 model OfertaSipca {
   id            String        @id @default(uuid())
-  ofertaId      String        @unique
+  ofertaId      String
   oferta        Oferta        @relation(fields: [ofertaId], references: [id])
+  ordine        Int           @default(1)
   linieId       String        @unique
   linie         OfertaLinie   @relation(fields: [linieId], references: [id])
   model         String
@@ -783,6 +785,7 @@ model OfertaSipca {
 
   tronsoane OfertaTronson[]
 
+  @@index([ofertaId])
   @@map("oferta_sipca")
 }
 

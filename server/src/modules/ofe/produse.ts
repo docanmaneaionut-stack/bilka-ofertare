@@ -43,15 +43,18 @@ export const schemaProduse = z.object({
       pozitii: z.array(schemaPozitie).optional(),
     }),
   ),
-  sipca: z
-    .object({
-      linie: z.string().min(1),
-      model: z.string().trim().min(1),
-      culoare: z.string().trim().nullish(),
-      varianta: z.enum(["comanda", "calcul"]),
-      tronsoane: z.array(z.object({ lungimeSipcaM: pozitiva, lungimeTronsonM: pozitiva, distantaMm: nenegativa })).optional(),
-    })
-    .nullish(),
+  // rubricile de sipca (cap. 8, M1): oricate, fiecare cu linia ei
+  sipci: z
+    .array(
+      z.object({
+        linie: z.string().min(1),
+        model: z.string().trim().min(1),
+        culoare: z.string().trim().nullish(),
+        varianta: z.enum(["comanda", "calcul"]),
+        tronsoane: z.array(z.object({ lungimeSipcaM: pozitiva, lungimeTronsonM: pozitiva, distantaMm: nenegativa })).optional(),
+      }),
+    )
+    .default([]),
   zonaB: z
     .array(
       z.object({
@@ -121,8 +124,13 @@ export async function salveazaProduse(ofertaId: string, date: DateProduse, u: Ut
     if (l.invelitoare && !cheiInvelitori.has(l.invelitoare)) throw new EroareProduse(`Linia ${l.cheie} e legată de o învelitoare care nu există`);
     if (l.invelitoare && l.culoare) throw new EroareProduse(`Linia ${l.cheie}: o linie are fie învelitoarea, fie cheia ei de culoare, nu amândouă`);
   }
-  if (date.sipca && !date.linii.some((l) => l.cheie === date.sipca!.linie)) throw new EroareProduse("Șipca nu are linie în ofertă");
-  if (date.sipca?.varianta === "calcul" && !(date.sipca.tronsoane?.length)) throw new EroareProduse("Șipca în varianta Calcul are nevoie de cel puțin un tronson");
+  const liniiSipci = new Set<string>();
+  for (const [k, s] of date.sipci.entries()) {
+    if (!date.linii.some((l) => l.cheie === s.linie)) throw new EroareProduse(`Rubrica de șipcă ${k + 1} nu are linie în ofertă`);
+    if (liniiSipci.has(s.linie)) throw new EroareProduse(`Rubrica de șipcă ${k + 1}: aceeași linie e folosită de două rubrici`);
+    liniiSipci.add(s.linie);
+    if (s.varianta === "calcul" && !s.tronsoane?.length) throw new EroareProduse(`Rubrica de șipcă ${k + 1} în varianta Calcul are nevoie de cel puțin un tronson`);
+  }
   for (const i of date.invelitori) {
     if (i.panotaj.length === 0 && !i.mpDirect) throw new EroareProduse(`Învelitoarea ${ia(i.produsId, "învelitoare").editor.denumire} nu are cantitate: panotaj (lungime × bucăți) sau suprafață în mp`);
   }
@@ -156,12 +164,12 @@ export async function salveazaProduse(ofertaId: string, date: DateProduse, u: Ut
       });
       idInvelitoare.set(i.cheie, creat.id);
     }
-    // linia fiecarei invelitori (rubrica Invelitori): motorul o cere pentru mp si pachet;
-    // cantitatea o calculeaza el din panotaj / mp direct
+    // linia fiecarei invelitori (rubrica Invelitori), legata de ea prin id (M1):
+    // motorul o cere pentru mp si pachet; cantitatea o calculeaza el din panotaj / mp direct
     let ordine = 0;
     for (const i of date.invelitori) {
       const p = ia(i.produsId, "Învelitoarea");
-      await tx.ofertaLinie.create({ data: { ofertaId, ordine: ++ordine, rubrica: "Învelitori", ...snapshot(p.editor, p.pret), cantitate: "1" } });
+      await tx.ofertaLinie.create({ data: { ofertaId, ordine: ++ordine, rubrica: "Învelitori", ...snapshot(p.editor, p.pret), cantitate: "1", invelitoareId: idInvelitoare.get(i.cheie)! } });
     }
     const idLinie = new Map<string, string>();
     for (const [idx, l] of date.linii.entries()) {
@@ -182,20 +190,21 @@ export async function salveazaProduse(ofertaId: string, date: DateProduse, u: Ut
       });
       idLinie.set(l.cheie, creat.id);
     }
-    if (date.sipca) {
-      const linie = date.linii.find((l) => l.cheie === date.sipca!.linie)!;
-      const p = ia(linie.produsId, "Șipca");
+    for (const [k, s] of date.sipci.entries()) {
+      const linie = date.linii.find((l) => l.cheie === s.linie)!;
+      const p = ia(linie.produsId, `Rubrica de șipcă ${k + 1}`);
       const latime = p.editor.latimeTotalaMm;
       if (!latime) throw new EroareProduse(`${p.editor.denumire}: lățimea șipcii lipsește din catalog`);
       await tx.ofertaSipca.create({
         data: {
           ofertaId,
-          linieId: idLinie.get(date.sipca.linie)!,
-          model: date.sipca.model,
-          culoare: date.sipca.culoare || null,
+          ordine: k + 1,
+          linieId: idLinie.get(s.linie)!,
+          model: s.model,
+          culoare: s.culoare || null,
           latimeSipcaMm: latime,
-          varianta: date.sipca.varianta === "calcul" ? "CALCUL" : "COMANDA",
-          tronsoane: { create: (date.sipca.tronsoane ?? []).map((t, k) => ({ ordine: k + 1, lungimeSipcaM: nr(t.lungimeSipcaM), lungimeTronsonM: nr(t.lungimeTronsonM), distantaMm: nr(t.distantaMm) })) },
+          varianta: s.varianta === "calcul" ? "CALCUL" : "COMANDA",
+          tronsoane: { create: (s.tronsoane ?? []).map((t, j) => ({ ordine: j + 1, lungimeSipcaM: nr(t.lungimeSipcaM), lungimeTronsonM: nr(t.lungimeTronsonM), distantaMm: nr(t.distantaMm) })) },
         },
       });
     }

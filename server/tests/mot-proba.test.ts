@@ -123,7 +123,7 @@ describe("/api/mot/etaloane", () => {
   it("listeaza cele 11 oferte-model", async () => {
     const admin = await autentificaAgent(app, EMAIL_ADMIN);
     const { body } = await admin.get("/api/mot/etaloane").expect(200);
-    expect(body.etaloane.map((e: { id: string }) => e.id)).toEqual(["E01", "E02", "E03", "E04", "E05", "E06", "E07", "E08", "E09", "E10", "E11"]);
+    expect(body.etaloane.map((e: { id: string }) => e.id)).toEqual(["E01", "E02", "E03", "E04", "E05", "E06", "E07", "E08", "E09", "E10", "E11", "E12"]);
     expect(body.etaloane[0].titlu).toMatch(/Iberic/);
   });
 
@@ -133,7 +133,8 @@ describe("/api/mot/etaloane", () => {
     expect(body.etalon.id).toBe("E06");
     expect(body.intrare.linii).toHaveLength(2);
     expect(body.intrare.linii[0].produs).toMatchObject({ cod: "SIPCAMAT050", pretBazaEur: "1.11", um: "ml", finisaj: "mat", grup: "Șipcă metalică de gard" });
-    expect(body.intrare.sipca).toMatchObject({ latimeSipcaMm: "92.9", varianta: "calcul" });
+    expect(body.intrare.sipci).toHaveLength(1);
+    expect(body.intrare.sipci[0]).toMatchObject({ id: "S1", latimeSipcaMm: "92.9", varianta: "calcul" });
     expect(body.asteptat.totaluri.document_total_lei).toBe("999.96");
   });
 
@@ -167,7 +168,7 @@ describe("/api/mot/proba", () => {
     const r = body.rezultat;
     expect(r.totaluri).toMatchObject({ achizitieContLeiCuTva: "957.61", documentFaraTvaEur: "155.06", documentCuTvaEur: "187.62", documentTotalLei: "999.96" });
     expect(r.abatereEur).toBe("-0.01");
-    expect(r.cantitati.sipca).toMatchObject({ bucatiTotal: 100, mlTotal: "120.000" });
+    expect(r.cantitati.sipci[0]).toMatchObject({ id: "S1", bucatiTotal: 100, mlTotal: "120.000" });
     expect(r.linii.map((l: { pretDocumentEur: string }) => l.pretDocumentEur)).toEqual(["1.18", "6.73"]);
     expect(r.garda.respectata).toBe(true);
     expect(r.textFormulare).toMatch(/^Se va genera 1 formular Bilka/);

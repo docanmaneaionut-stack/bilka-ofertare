@@ -54,16 +54,20 @@ async function produs(cod: string, denumire: string) {
 async function corpDinEtalon(e: FisierEtalon) {
   const i = e.intrari;
   const invelitori = [];
+  // format v1.3: invelitorile si rubricile de sipca pe id; linia invelitorii poarta id-ul ei
   for (const inv of i.invelitori ?? []) {
-    const linie = i.linii.find((l) => l.cod_bilka === inv.cod_bilka && l.rubrica === "Învelitori")!;
+    const linie = i.linii.find((l) => l.invelitoare === inv.id && l.rubrica === "Învelitori")!;
     const p = await produs(inv.cod_bilka, linie.denumire);
-    invelitori.push({ cheie: inv.cod_bilka, produsId: p.id, culoare: inv.culoare, panotaj: (inv.panotaj ?? []).map((x) => ({ lungimeM: x.lungime_m, bucati: x.bucati })), variantaProfil: inv.varianta_profil ?? null });
+    invelitori.push({ cheie: inv.id, produsId: p.id, culoare: inv.culoare, panotaj: (inv.panotaj ?? []).map((x) => ({ lungimeM: x.lungime_m, bucati: x.bucati })), variantaProfil: inv.varianta_profil ?? null });
   }
   const linii = [];
   for (const [idx, l] of i.linii.entries()) {
     if (l.rubrica === "Învelitori") continue;
     const p = await produs(l.cod_bilka, l.denumire);
-    const pozitii = (i.accesorii_ml ?? []).filter((a) => a.cod_bilka === l.cod_bilka).map((a) => ({ lungimeM: a.lungime_m, bucati: a.bucati }));
+    const sipcaLiniei = l.sipca ? i.sipci?.find((s) => s.id === l.sipca) : undefined;
+    const pozitii = sipcaLiniei?.pozitii
+      ? sipcaLiniei.pozitii.map((p) => ({ lungimeM: p.lungime_m, bucati: p.bucati }))
+      : (i.accesorii_ml ?? []).filter((a) => a.cod_bilka === l.cod_bilka).map((a) => ({ lungimeM: a.lungime_m, bucati: a.bucati }));
     linii.push({
       cheie: `L${idx + 1}`,
       rubrica: p.categorie,
@@ -74,18 +78,18 @@ async function corpDinEtalon(e: FisierEtalon) {
       ...(pozitii.length ? { pozitii } : {}),
     });
   }
-  let sipca = null;
-  if (i.sipca) {
-    const idx = i.linii.findIndex((l) => l.cod_bilka === i.sipca!.cod_bilka);
-    sipca = {
+  const sipci = (i.sipci ?? []).map((s) => {
+    const idx = i.linii.findIndex((l) => l.sipca === s.id);
+    const calcul = s.varianta.trim().toLowerCase() === "calcul";
+    return {
       linie: `L${idx + 1}`,
-      model: i.sipca.model,
-      culoare: i.sipca.culoare,
-      varianta: "calcul",
-      tronsoane: i.sipca.tronsoane.map((t) => ({ lungimeSipcaM: t.lungime_sipca_m, lungimeTronsonM: t.lungime_tronson_m, distantaMm: t.distanta_mm })),
+      model: s.model,
+      culoare: s.culoare,
+      varianta: calcul ? ("calcul" as const) : ("comanda" as const),
+      ...(calcul ? { tronsoane: (s.tronsoane ?? []).map((t) => ({ lungimeSipcaM: t.lungime_sipca_m, lungimeTronsonM: t.lungime_tronson_m, distantaMm: t.distanta_mm })) } : {}),
     };
-  }
-  return { invelitori, linii, sipca, zonaB: (i.zona_b ?? []).map((zb) => ({ denumire: zb.denumire, um: zb.um, cantitate: zb.cantitate, sumaLei: zb.suma_lei, contineTva: zb.contine_tva, preiaInFactura: zb.preia_in_factura })) };
+  });
+  return { invelitori, linii, sipci, zonaB: (i.zona_b ?? []).map((zb) => ({ denumire: zb.denumire, um: zb.um, cantitate: zb.cantitate, sumaLei: zb.suma_lei, contineTva: zb.contine_tva, preiaInFactura: zb.preia_in_factura })) };
 }
 
 async function ofertaNoua(email: string): Promise<string> {
@@ -104,10 +108,15 @@ describe("E01 prin API, din produse reale", () => {
     const o = r.body.oferta;
     const s = o.structura.rezultat;
     expect(o.structura.eroare).toBeNull();
-    expect(s.cantitati.invelitori, JSON.stringify(s.cantitati.invelitori)).toEqual([
-      { id: "TMIBEMAT050", mp: "180.481", mpPanotaj: "180.481", mpDirect: "0.000", coli: 48, integralPanotata: true },
-      { id: "TCT08MAT050", mp: "6.000", mpPanotaj: "6.000", mpDirect: "0.000", coli: 2, integralPanotata: true },
+    // M1: invelitorile intra in motor cu id-ul lor din baza
+    const idInvelitori = o.invelitori.map((i: { id: string }) => i.id);
+    expect(s.cantitati.invelitori.map((c: { id: string }) => c.id)).toEqual(idInvelitori);
+    expect(s.cantitati.invelitori.map(({ id, ...rest }: { id: string }) => rest), JSON.stringify(s.cantitati.invelitori)).toEqual([
+      { mp: "180.481", mpPanotaj: "180.481", mpDirect: "0.000", coli: 48, integralPanotata: true },
+      { mp: "6.000", mpPanotaj: "6.000", mpDirect: "0.000", coli: 2, integralPanotata: true },
     ]);
+    // linia fiecarei invelitori e legata de ea prin id
+    expect(o.linii.filter((l: { rubrica: string }) => l.rubrica === "Învelitori").map((l: { invelitoareId: string | null }) => l.invelitoareId)).toEqual(idInvelitori);
     expect(s.comandabil).toEqual({ da: true, motive: [] });
     expect(s.pachete.map((p: { nume: string; linii: string[] }) => [p.nume, p.linii.length]), JSON.stringify(s.pachete) + s.textFormulare).toEqual([
       ["P1 — Iberic 3005 mat", 17], // 2 invelitori + 8 standard + 1 special + 6 fixare
@@ -151,10 +160,53 @@ describe("E06: sipca Oslo, varianta Calcul", () => {
     const r = await agent.put(`/api/oferte/${id}/produse`).send(corp);
     expect(r.status, JSON.stringify(r.body)).toBe(200);
     const s = r.body.oferta.structura.rezultat;
-    expect(s.cantitati.sipca).toEqual({ tronsoane: [{ bucati: 94, ml: "112.800" }, { bucati: 6, ml: "7.200" }], bucatiTotal: 100, mlTotal: "120.000" });
+    expect(s.cantitati.sipci).toHaveLength(1);
+    expect(s.cantitati.sipci[0]).toMatchObject({ tronsoane: [{ bucati: 94, ml: "112.800" }, { bucati: 6, ml: "7.200" }], bucatiTotal: 100, mlTotal: "120.000" });
     expect(s.linii.find((l: { cod: string }) => l.cod === "SIPCAMAT050").cantitate).toBe("120.000");
     expect(s.comandabil.da).toBe(true);
-    expect(r.body.oferta.sipca).toMatchObject({ model: "Oslo, capăt drept", varianta: "CALCUL", latimeSipcaMm: "92.9" });
+    expect(r.body.oferta.sipci).toHaveLength(1);
+    expect(r.body.oferta.sipci[0]).toMatchObject({ ordine: 1, model: "Oslo, capăt drept", varianta: "CALCUL", latimeSipcaMm: "92.9" });
+    expect(s.cantitati.sipci[0].id).toBe(r.body.oferta.sipci[0].id);
+  });
+});
+
+describe("E12 prin API (M1): acelasi produs in doua culori si doua rubrici de sipca", () => {
+  it("P1 / P2 pe id-ul invelitorii, Sipca A in primul formular, Sipca B formular separat; ambele rubrici revin la reincarcare", async () => {
+    const agent = await autentificaAgent(app, EMAIL.agent1);
+    const id = await ofertaNoua(EMAIL.agent1);
+    const corp = await corpDinEtalon(citesteEtalon("E12"));
+    expect(corp.invelitori.map((i) => i.produsId)).toHaveLength(2);
+    expect(corp.invelitori[0].produsId).toBe(corp.invelitori[1].produsId); // acelasi produs, Clasic mat 0,50
+    expect(corp.sipci).toHaveLength(2);
+    const r = await agent.put(`/api/oferte/${id}/produse`).send(corp);
+    expect(r.status, JSON.stringify(r.body)).toBe(200);
+    const o = r.body.oferta;
+    const s = o.structura.rezultat;
+    expect(o.structura.eroare).toBeNull();
+    expect(s.cantitati.invelitori.map((c: { mp: string; coli: number }) => [c.mp, c.coli])).toEqual([["189.120", 42], ["36.720", 6]]);
+    expect(s.pachete.map((p: { nume: string; linii: string[] }) => [p.nume, p.linii.length]), s.textFormulare).toEqual([
+      ["P1 — Clasic 8017 mat", 7],
+      ["P2 — Clasic 7016 mat", 5],
+      ["Șipcă A — Oslo 7016 mat", 1],
+      ["Șipcă B — Haga 8017 mat", 1],
+    ]);
+    expect(s.formulareBilka).toHaveLength(3);
+    expect(s.formulareBilka[0].continut).toMatch(/blocul de șipcă A/);
+    expect(s.formulareBilka[2].continut).toMatch(/^Șipcă B — Haga 8017 mat singură/);
+    expect(s.cantitati.sipci.map((x: { bucatiTotal: number; mlTotal: string }) => [x.bucatiTotal, x.mlTotal])).toEqual([[144, "216.000"], [85, "97.000"]]);
+    // accesoriile cu acelasi cod, in pachete diferite dupa invelitoarea de care sunt legate
+    const coame = s.linii.filter((l: { cod: string }) => l.cod === "ACMICMAT050").map((l: { cantitate: string; pachet?: string }) => [l.cantitate, l.pachet]);
+    expect(coame).toEqual([["12", "P1 — Clasic 8017 mat"], ["4", "P2 — Clasic 7016 mat"]]);
+    expect(o.sipci.map((x: { ordine: number; varianta: string }) => [x.ordine, x.varianta])).toEqual([[1, "CALCUL"], [2, "COMANDA"]]);
+    expect(await prisma.ofertaSipca.count({ where: { ofertaId: id } })).toBe(2);
+
+    // a doua salvare nu dubleaza nimic; GET intoarce aceeasi structura
+    await agent.put(`/api/oferte/${id}/produse`).send(corp).expect(200);
+    expect(await prisma.ofertaSipca.count({ where: { ofertaId: id } })).toBe(2);
+    const { body } = await agent.get(`/api/oferte/${id}`).expect(200);
+    expect(body.oferta.sipci).toHaveLength(2);
+    expect(body.oferta.structura.rezultat.pachete).toHaveLength(4);
+    expect(JSON.stringify(body)).not.toMatch(/pretBazaEur|achizitie|valoareEur|totaluri/);
   });
 });
 
@@ -166,10 +218,9 @@ describe("E11: doua pachete si pluvial in doua culori", () => {
     const r = await agent.put(`/api/oferte/${id}/produse`).send(corp);
     expect(r.status, JSON.stringify(r.body)).toBe(200);
     const s = r.body.oferta.structura.rezultat;
-    expect(s.cantitati.invelitori.map((i: { id: string; mp: string }) => [i.id, i.mp])).toEqual([
-      ["TMCLSMAT050", "189.120"],
-      ["REPROMAT050", "30.406"],
-    ]);
+    // M1: id-urile sunt cele din baza; mp-urile raman cele din E11
+    expect(s.cantitati.invelitori.map((i: { id: string }) => i.id)).toEqual(r.body.oferta.invelitori.map((i: { id: string }) => i.id));
+    expect(s.cantitati.invelitori.map((i: { mp: string }) => i.mp)).toEqual(["189.120", "30.406"]);
     expect(s.pachete.map((p: { nume: string; linii: string[] }) => [p.nume, p.linii.length])).toEqual([
       ["P1 — Clasic 8017 mat", 7],
       ["P2 — Retro Plus 7016 mat", 4],
@@ -252,8 +303,13 @@ describe("validari si drepturi", () => {
     const r3 = await agent.put(`/api/oferte/${id}/produse`).send({ ...corp, linii: [{ ...corp.linii[0], produsId: "nu-exista" }] });
     expect(r3.status).toBe(400);
     expect(r3.body.eroare).toMatch(/nu există în catalog/);
-    const r4 = await agent.put(`/api/oferte/${id}/produse`).send({ ...corp, sipca: { ...corp.sipca, tronsoane: [] } });
+    const r4 = await agent.put(`/api/oferte/${id}/produse`).send({ ...corp, sipci: corp.sipci.map((s) => ({ ...s, tronsoane: [] })) });
     expect(r4.status).toBe(400);
+    expect(r4.body.eroare).toMatch(/tronson/);
+    // doua rubrici pe aceeasi linie: refuzat
+    const r5 = await agent.put(`/api/oferte/${id}/produse`).send({ ...corp, sipci: [...corp.sipci, ...corp.sipci] });
+    expect(r5.status).toBe(400);
+    expect(r5.body.eroare).toMatch(/aceeași linie/);
   });
 
   it("alt agent nu poate salva produsele (403); Administratorul firmei poate", async () => {

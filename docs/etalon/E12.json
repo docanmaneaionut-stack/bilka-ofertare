@@ -1,0 +1,496 @@
+{
+ "id": "E12",
+ "titlu": "Același produs în două culori: Clasic mat 0,50 RAL 8017 (casa, cu accesorii și fixare) + Clasic mat 0,50 RAL 7016 (garajul, cu accesorii proprii → pachet separat) și două rubrici de șipcă (Oslo 7016 Calcul + Haga 8017 Comandă) — agent 1 %, țintă adaos 20 %, prezentare simplă",
+ "status": "propus (28.10.2026) — de aprobat de Ionuț",
+ "intrari": {
+  "curs_bnr": "5.3485",
+  "tva_pct": 21,
+  "adaos_cont_pct": "1.00",
+  "grupa_pct": "0",
+  "data_ofertei": "2026-10-28",
+  "cont": "Agent",
+  "client": "persoană fizică",
+  "mod_prezentare": "simplu",
+  "tinta": {
+   "tip": "adaos_pct",
+   "valoare": "20"
+  },
+  "invelitori": [
+   {
+    "id": "I1",
+    "cod_bilka": "TMCLSMAT050",
+    "denumire": "Țiglă metalică Clasic – mat – 0,50 mm",
+    "rol": "principală",
+    "culoare": "RAL 8017",
+    "latime_totala_m": "1.20",
+    "mod_cantitate": "panotaj",
+    "panotaj": [
+     {
+      "lungime_m": "4.50",
+      "bucati": 20
+     },
+     {
+      "lungime_m": "3.80",
+      "bucati": 12
+     },
+     {
+      "lungime_m": "2.20",
+      "bucati": 10
+     }
+    ],
+    "mp": "189.120"
+   },
+   {
+    "id": "I2",
+    "cod_bilka": "TMCLSMAT050",
+    "denumire": "Țiglă metalică Clasic – mat – 0,50 mm",
+    "rol": "secundară, cu accesorii proprii",
+    "culoare": "RAL 7016",
+    "latime_totala_m": "1.20",
+    "mod_cantitate": "panotaj",
+    "panotaj": [
+     {
+      "lungime_m": "5.10",
+      "bucati": 6
+     }
+    ],
+    "mp": "36.720"
+   }
+  ],
+  "sipci": [
+   {
+    "id": "S1",
+    "model": "Oslo, capăt drept",
+    "cod_bilka": "SIPCAMAT050",
+    "culoare": "RAL 7016",
+    "finisaj": "mat",
+    "grosime": "0,50 mm",
+    "latime_sipca_mm": "92.9",
+    "varianta": "Calcul",
+    "tronsoane": [
+     {
+      "lungime_sipca_m": "1.50",
+      "lungime_tronson_m": "14.00",
+      "distanta_mm": "30",
+      "bucati_asteptat": 114,
+      "ml_asteptat": "171.000"
+     },
+     {
+      "lungime_sipca_m": "1.50",
+      "lungime_tronson_m": "3.60",
+      "distanta_mm": "30",
+      "bucati_asteptat": 30,
+      "ml_asteptat": "45.000"
+     }
+    ],
+    "bucati_total": 144,
+    "ml_total": "216.000"
+   },
+   {
+    "id": "S2",
+    "model": "Haga, capăt rotund",
+    "cod_bilka": "SIHAGMAT050",
+    "culoare": "RAL 8017",
+    "finisaj": "mat",
+    "grosime": "0,50 mm",
+    "latime_sipca_mm": "111.3",
+    "varianta": "Comandă",
+    "pozitii": [
+     {
+      "lungime_m": "1.20",
+      "bucati": 60
+     },
+     {
+      "lungime_m": "1.00",
+      "bucati": 25
+     }
+    ],
+    "bucati_total": 85,
+    "ml_total": "97.000"
+   }
+  ],
+  "linii": [
+   {
+    "rubrica": "Învelitori",
+    "cod_bilka": "TMCLSMAT050",
+    "denumire": "Țiglă metalică Clasic – mat – 0,50 mm",
+    "um": "mp",
+    "cantitate": "189.120",
+    "nr": 1,
+    "pachet": "P1 — Clasic 8017 mat",
+    "cheie_culoare": "RAL 8017 mat 0,50",
+    "invelitoare": "I1"
+   },
+   {
+    "rubrica": "Învelitori",
+    "cod_bilka": "TMCLSMAT050",
+    "denumire": "Țiglă metalică Clasic – mat – 0,50 mm",
+    "um": "mp",
+    "cantitate": "36.720",
+    "nr": 2,
+    "pachet": "P2 — Clasic 7016 mat",
+    "cheie_culoare": "RAL 7016 mat 0,50",
+    "invelitoare": "I2"
+   },
+   {
+    "rubrica": "Accesorii standard",
+    "cod_bilka": "ACMICMAT050",
+    "denumire": "Coamă mică – mat – 0,50 mm",
+    "um": "buc",
+    "cantitate": "12",
+    "nr": 3,
+    "pachet": "P1 — Clasic 8017 mat",
+    "cheie_culoare": "RAL 8017 mat 0,50 (moștenit)",
+    "invelitoare": "I1"
+   },
+   {
+    "rubrica": "Accesorii standard",
+    "cod_bilka": "ABF31MAT050",
+    "denumire": "Bordură fronton – 312 mm / 2 m – mat – 0,50 mm",
+    "um": "buc",
+    "cantitate": "9",
+    "nr": 4,
+    "pachet": "P1 — Clasic 8017 mat",
+    "cheie_culoare": "RAL 8017 mat 0,50 (moștenit)",
+    "invelitoare": "I1"
+   },
+   {
+    "rubrica": "Accesorii standard",
+    "cod_bilka": "AST20MAT050",
+    "denumire": "Bordură streașină – 208 mm / 2 m – mat – 0,50 mm",
+    "um": "buc",
+    "cantitate": "23",
+    "nr": 5,
+    "pachet": "P1 — Clasic 8017 mat",
+    "cheie_culoare": "RAL 8017 mat 0,50 (moștenit)",
+    "invelitoare": "I1"
+   },
+   {
+    "rubrica": "Accesorii standard",
+    "cod_bilka": "AOZ20MAT050",
+    "denumire": "Opritor zăpadă – 208 mm / 2 m – mat – 0,50 mm",
+    "um": "buc",
+    "cantitate": "10",
+    "nr": 6,
+    "pachet": "P1 — Clasic 8017 mat",
+    "cheie_culoare": "RAL 8017 mat 0,50 (moștenit)",
+    "invelitoare": "I1"
+   },
+   {
+    "rubrica": "Accesorii standard (învelitoarea secundară)",
+    "cod_bilka": "ACMICMAT050",
+    "denumire": "Coamă mică – mat – 0,50 mm",
+    "um": "buc",
+    "cantitate": "4",
+    "nr": 7,
+    "pachet": "P2 — Clasic 7016 mat",
+    "cheie_culoare": "RAL 7016 mat 0,50 (moștenit)",
+    "invelitoare": "I2"
+   },
+   {
+    "rubrica": "Accesorii standard (învelitoarea secundară)",
+    "cod_bilka": "ABF31MAT050",
+    "denumire": "Bordură fronton – 312 mm / 2 m – mat – 0,50 mm",
+    "um": "buc",
+    "cantitate": "4",
+    "nr": 8,
+    "pachet": "P2 — Clasic 7016 mat",
+    "cheie_culoare": "RAL 7016 mat 0,50 (moștenit)",
+    "invelitoare": "I2"
+   },
+   {
+    "rubrica": "Accesorii standard (învelitoarea secundară)",
+    "cod_bilka": "AST20MAT050",
+    "denumire": "Bordură streașină – 208 mm / 2 m – mat – 0,50 mm",
+    "um": "buc",
+    "cantitate": "6",
+    "nr": 9,
+    "pachet": "P2 — Clasic 7016 mat",
+    "cheie_culoare": "RAL 7016 mat 0,50 (moștenit)",
+    "invelitoare": "I2"
+   },
+   {
+    "rubrica": "Fixare și etanșare",
+    "cod_bilka": "SUCLE408035",
+    "denumire": "Holțșuruburi în culoare, lemn – 4,8 × 35 mm",
+    "um": "cutie",
+    "cantitate": "8",
+    "nr": 10,
+    "pachet": "P1 — Clasic 8017 mat",
+    "cheie_culoare": "RAL 8017 (moștenit)",
+    "invelitoare": "I1"
+   },
+   {
+    "rubrica": "Fixare și etanșare",
+    "cod_bilka": "AXCAPMAT000",
+    "denumire": "Capac coamă – mat",
+    "um": "buc",
+    "cantitate": "3",
+    "nr": 11,
+    "pachet": "P1 — Clasic 8017 mat",
+    "cheie_culoare": "RAL 8017 (moștenit)",
+    "invelitoare": "I1"
+   },
+   {
+    "rubrica": "Fixare și etanșare (învelitoarea secundară)",
+    "cod_bilka": "SUCLE408035",
+    "denumire": "Holțșuruburi în culoare, lemn – 4,8 × 35 mm",
+    "um": "cutie",
+    "cantitate": "2",
+    "nr": 12,
+    "pachet": "P2 — Clasic 7016 mat",
+    "cheie_culoare": "RAL 7016 (moștenit)",
+    "invelitoare": "I2"
+   },
+   {
+    "rubrica": "Șipcă gard",
+    "cod_bilka": "SIPCAMAT050",
+    "denumire": "Șipcă Oslo – mat – 0,50 mm",
+    "um": "ml",
+    "cantitate": "216.000",
+    "nr": 13,
+    "pachet": "Șipcă A — Oslo 7016 mat",
+    "cheie_culoare": "RAL 7016 mat 0,50 (ales)",
+    "sipca": "S1",
+    "culoare": {
+     "ral": "RAL 7016",
+     "finisaj": "mat",
+     "grosime": "0,50 mm"
+    }
+   },
+   {
+    "rubrica": "Șipcă gard (a doua rubrică)",
+    "cod_bilka": "SIHAGMAT050",
+    "denumire": "Șipcă Haga – mat – 0,50 mm",
+    "um": "ml",
+    "cantitate": "97.000",
+    "nr": 14,
+    "pachet": "Șipcă B — Haga 8017 mat",
+    "cheie_culoare": "RAL 8017 mat 0,50 (ales)",
+    "sipca": "S2",
+    "culoare": {
+     "ral": "RAL 8017",
+     "finisaj": "mat",
+     "grosime": "0,50 mm"
+    }
+   }
+  ]
+ },
+ "asteptat": {
+  "curs_achizitie": "5.4020",
+  "linii": [
+   {
+    "cod_bilka": "TMCLSMAT050",
+    "cantitate": "189.120",
+    "baza_eur": "6.54",
+    "achizitie_cont_eur": "6.61",
+    "achizitie_cont_lei_cu_tva": "43.21",
+    "pret_document_eur": "8.01",
+    "valoare_eur": "1514.85",
+    "nr": 1
+   },
+   {
+    "cod_bilka": "TMCLSMAT050",
+    "cantitate": "36.720",
+    "baza_eur": "6.54",
+    "achizitie_cont_eur": "6.61",
+    "achizitie_cont_lei_cu_tva": "43.21",
+    "pret_document_eur": "8.01",
+    "valoare_eur": "294.13",
+    "nr": 2
+   },
+   {
+    "cod_bilka": "ACMICMAT050",
+    "cantitate": "12",
+    "baza_eur": "4.90",
+    "achizitie_cont_eur": "4.95",
+    "achizitie_cont_lei_cu_tva": "32.36",
+    "pret_document_eur": "5.99",
+    "valoare_eur": "71.88",
+    "nr": 3
+   },
+   {
+    "cod_bilka": "ABF31MAT050",
+    "cantitate": "9",
+    "baza_eur": "4.90",
+    "achizitie_cont_eur": "4.95",
+    "achizitie_cont_lei_cu_tva": "32.36",
+    "pret_document_eur": "5.99",
+    "valoare_eur": "53.91",
+    "nr": 4
+   },
+   {
+    "cod_bilka": "AST20MAT050",
+    "cantitate": "23",
+    "baza_eur": "3.27",
+    "achizitie_cont_eur": "3.30",
+    "achizitie_cont_lei_cu_tva": "21.57",
+    "pret_document_eur": "3.99",
+    "valoare_eur": "91.77",
+    "nr": 5
+   },
+   {
+    "cod_bilka": "AOZ20MAT050",
+    "cantitate": "10",
+    "baza_eur": "3.27",
+    "achizitie_cont_eur": "3.30",
+    "achizitie_cont_lei_cu_tva": "21.57",
+    "pret_document_eur": "3.99",
+    "valoare_eur": "39.90",
+    "nr": 6
+   },
+   {
+    "cod_bilka": "ACMICMAT050",
+    "cantitate": "4",
+    "baza_eur": "4.90",
+    "achizitie_cont_eur": "4.95",
+    "achizitie_cont_lei_cu_tva": "32.36",
+    "pret_document_eur": "5.99",
+    "valoare_eur": "23.96",
+    "nr": 7
+   },
+   {
+    "cod_bilka": "ABF31MAT050",
+    "cantitate": "4",
+    "baza_eur": "4.90",
+    "achizitie_cont_eur": "4.95",
+    "achizitie_cont_lei_cu_tva": "32.36",
+    "pret_document_eur": "5.99",
+    "valoare_eur": "23.96",
+    "nr": 8
+   },
+   {
+    "cod_bilka": "AST20MAT050",
+    "cantitate": "6",
+    "baza_eur": "3.27",
+    "achizitie_cont_eur": "3.30",
+    "achizitie_cont_lei_cu_tva": "21.57",
+    "pret_document_eur": "3.99",
+    "valoare_eur": "23.94",
+    "nr": 9
+   },
+   {
+    "cod_bilka": "SUCLE408035",
+    "cantitate": "8",
+    "baza_eur": "6.25",
+    "achizitie_cont_eur": "6.31",
+    "achizitie_cont_lei_cu_tva": "41.24",
+    "pret_document_eur": "7.64",
+    "valoare_eur": "61.12",
+    "nr": 10
+   },
+   {
+    "cod_bilka": "AXCAPMAT000",
+    "cantitate": "3",
+    "baza_eur": "3.94",
+    "achizitie_cont_eur": "3.98",
+    "achizitie_cont_lei_cu_tva": "26.01",
+    "pret_document_eur": "4.82",
+    "valoare_eur": "14.46",
+    "nr": 11
+   },
+   {
+    "cod_bilka": "SUCLE408035",
+    "cantitate": "2",
+    "baza_eur": "6.25",
+    "achizitie_cont_eur": "6.31",
+    "achizitie_cont_lei_cu_tva": "41.24",
+    "pret_document_eur": "7.64",
+    "valoare_eur": "15.28",
+    "nr": 12
+   },
+   {
+    "cod_bilka": "SIPCAMAT050",
+    "cantitate": "216.000",
+    "baza_eur": "1.11",
+    "achizitie_cont_eur": "1.12",
+    "achizitie_cont_lei_cu_tva": "7.32",
+    "pret_document_eur": "1.36",
+    "valoare_eur": "293.76",
+    "nr": 13
+   },
+   {
+    "cod_bilka": "SIHAGMAT050",
+    "cantitate": "97.000",
+    "baza_eur": "1.24",
+    "achizitie_cont_eur": "1.25",
+    "achizitie_cont_lei_cu_tva": "8.17",
+    "pret_document_eur": "1.52",
+    "valoare_eur": "147.44",
+    "nr": 14
+   }
+  ],
+  "totaluri": {
+   "achizitie_cont_eur_fara_tva": "2203.26",
+   "achizitie_cont_lei_fara_tva": "11902.01",
+   "achizitie_cont_lei_cu_tva": "14401.43",
+   "tinta_lei_cu_tva": "17281.72",
+   "adaos_real_pct": "20.00",
+   "marja_lei": "2880.29",
+   "document_fara_tva_eur": "2670.36",
+   "tva_eur": "560.78",
+   "document_cu_tva_eur": "3231.14",
+   "document_total_lei": "17281.75",
+   "vanzari": {
+    "pret_vanzare_lei": "17281.75",
+    "cost_achizitie_lei": "14401.43",
+    "adaos_net_lei": "2880.32",
+    "adaos_brut_lei": "2380.43"
+   }
+  },
+  "mp_invelitori": {
+   "I1": "189.120",
+   "I2": "36.720"
+  },
+  "sipci": {
+   "S1": {
+    "bucati": 144,
+    "ml": "216.000"
+   },
+   "S2": {
+    "bucati": 85,
+    "ml": "97.000"
+   }
+  },
+  "comandabil": true,
+  "pachete": [
+   {
+    "pachet": "P1 — Clasic 8017 mat",
+    "linii": 7,
+    "achizitie_eur": "1525.35"
+   },
+   {
+    "pachet": "P2 — Clasic 7016 mat",
+    "linii": 5,
+    "achizitie_eur": "314.74"
+   },
+   {
+    "pachet": "Șipcă A — Oslo 7016 mat",
+    "linii": 1,
+    "achizitie_eur": "241.92"
+   },
+   {
+    "pachet": "Șipcă B — Haga 8017 mat",
+    "linii": 1,
+    "achizitie_eur": "121.25"
+   }
+  ],
+  "formulare_bilka": [
+   {
+    "nr": 1,
+    "continut": "Clasic 8017 mat 0,50 ca învelitoare principală + accesoriile standard și fixarea pachetului P1 (cheie 8017 mat 0,50) + blocul de șipcă A (Oslo mat 7016, 216,000 ml) — prima rubrică de șipcă merge pe primul formular"
+   },
+   {
+    "nr": 2,
+    "continut": "Clasic 7016 mat 0,50 ca învelitoare principală + accesoriile și fixarea proprii (cheie 7016 mat 0,50) — pachet separat: același produs, altă cheie și accesorii proprii"
+   },
+   {
+    "nr": 3,
+    "continut": "Șipcă B (Haga mat 8017, 97,000 ml) singură — formularul Bilka acceptă un singur model de șipcă, a doua rubrică = formular separat (cap. 8), ca la pluvialul în două culori"
+   }
+  ],
+  "nota": "învelitorile și șipcile se identifică prin id (I1, I2, S1, S2), nu prin cod: același produs apare de două ori, în culori diferite, iar accesoriile cu același cod merg în pachete diferite după învelitoarea de care sunt legate; pachetele P1 și P2 sunt separate pentru că a doua învelitoare are altă cheie și accesorii proprii (FISA-OFERTARE 3.4); numele pachetelor de șipcă: „Șipcă A — <profil> <RAL> <finisaj>”"
+ },
+ "reguli": "ETALON.md §0 (R1–R7)",
+ "format": "v1.3 (28.10.2026): `invelitori[].id` și `linii[].invelitoare` = id-ul învelitorii (nu codul), pe liniile legate și pe linia învelitorii însăși; `sipci[]` cu `id`, iar linia de șipcă poartă `sipca` = id; `linii[].nr` = poziția; `asteptat.mp_invelitori` și `asteptat.sipci` pe id · restul ca v1.1 / v1.2"
+}

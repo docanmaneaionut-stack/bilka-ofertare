@@ -13,8 +13,8 @@ import { asteptariDinIntrari, compara, incarcaEtalon, listeazaEtaloane, obtinute
 const ids = listeazaEtaloane();
 
 describe("ETALON — ofertele-model", () => {
-  it("exista 11 oferte-model", () => {
-    expect(ids).toHaveLength(11);
+  it("exista 12 oferte-model", () => {
+    expect(ids).toHaveLength(12);
   });
 
   for (const id of ids) {

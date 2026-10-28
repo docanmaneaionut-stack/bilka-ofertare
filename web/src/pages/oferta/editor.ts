@@ -61,7 +61,8 @@ export type StareEditor = {
   precizariZonaB: string;
   invelitori: InvelitoareUI[];
   linii: LinieUI[];
-  sipca: SipcaUI | null;
+  // rubricile de sipca, oricate (FISA cap. 8, M1): fiecare cu linia, modelul si varianta ei
+  sipci: SipcaUI[];
   zonaB: { denumire: string; um: string; cantitate: string; sumaLei: string; contineTva: boolean; preiaInFactura: boolean }[];
 };
 
@@ -169,7 +170,7 @@ export function invelitoareGoala(): InvelitoareUI {
 }
 
 export function stareGoala(): StareEditor {
-  return { grupaPct: "0", precizariZonaB: "", invelitori: [invelitoareGoala()], linii: [], sipca: null, zonaB: [] };
+  return { grupaPct: "0", precizariZonaB: "", invelitori: [invelitoareGoala()], linii: [], sipci: [], zonaB: [] };
 }
 
 function produsDinSnapshot(l: LinieSalvata | InvelitoareSalvata, categorie: string | null, catalog: Map<string, ProdusEditor>): ProdusEditor {
@@ -241,26 +242,24 @@ export function stareDinOferta(o: OfertaDetaliu, invelitoriCatalog: ProdusEditor
         dinLista: false,
       };
     });
-  const sipcaSalvata = o.sipca as SipcaSalvata | null;
-  let sipca: SipcaUI | null = null;
-  if (sipcaSalvata) {
+  const sipci: SipcaUI[] = ((o.sipci ?? []) as SipcaSalvata[]).map((sipcaSalvata) => {
     const linie = liniiSalvate.find((l) => l.id === sipcaSalvata.linieId);
     const idx = liniiSalvate.filter((l) => l.rubrica !== RUBRICI.invelitori).findIndex((l) => l.id === sipcaSalvata.linieId);
     const [profil, capat] = sipcaSalvata.model.split(",").map((s) => s.trim());
-    sipca = {
+    return {
       linie: idx >= 0 ? linii[idx].cheie : "",
       profil: profil || (linie?.familie ?? ""),
       capat: /rotund/i.test(capat ?? "") ? "rotund" : "drept",
       varianta: sipcaSalvata.varianta === "CALCUL" ? "calcul" : "comanda",
-      tronsoane: sipcaSalvata.tronsoane.map((t) => ({ lungimeSipcaM: t.lungimeSipcaM, lungimeTronsonM: t.lungimeTronsonM, distantaMm: t.distantaMm })),
+      tronsoane: sipcaSalvata.tronsoane.length ? sipcaSalvata.tronsoane.map((t) => ({ lungimeSipcaM: t.lungimeSipcaM, lungimeTronsonM: t.lungimeTronsonM, distantaMm: t.distantaMm })) : [{ lungimeSipcaM: "", lungimeTronsonM: "", distantaMm: "" }],
     };
-  }
+  });
   return {
     grupaPct: o.grupaPct ?? "0",
     precizariZonaB: o.precizariZonaB ?? "",
     invelitori: invelitori.length ? invelitori : [invelitoareGoala()],
     linii,
-    sipca,
+    sipci,
     zonaB: (o.zonaB as ZonaBSalvata[]).map((z) => ({ denumire: z.denumire, um: z.um, cantitate: z.cantitate, sumaLei: z.sumaLei, contineTva: z.contineTva, preiaInFactura: z.preiaInFactura })),
   };
 }
@@ -272,10 +271,20 @@ export function sectiuneaLiniei(rubrica: string, invelitoare: string | null, cul
   return `${rubrica}|`;
 }
 
+// invelitorile care pleaca spre server (cu produs), in ordine: pozitia lor e si
+// pozitia in cantitatile intoarse de motor (M1: id-ul din baza nu e cunoscut pe ecran)
+export function invelitoriTrimise(s: StareEditor): InvelitoareUI[] {
+  return s.invelitori.filter((i) => i.produsId);
+}
+
+// rubricile de sipca care pleaca spre server: cele cu linie trimisa
+export function sipciTrimise(s: StareEditor, cheiLiniiTrimise: string[]): SipcaUI[] {
+  return s.sipci.filter((x) => cheiLiniiTrimise.includes(x.linie));
+}
+
 // ce pleaca spre server: doar invelitorile cu produs si liniile cu cantitate
 export function spreServer(s: StareEditor): StareProduse {
-  const invelitori = s.invelitori
-    .filter((i) => i.produsId)
+  const invelitori = invelitoriTrimise(s)
     .map((i) => ({
       cheie: i.cheie,
       produsId: i.produsId!,
@@ -300,22 +309,22 @@ export function spreServer(s: StareEditor): StareProduse {
         ...(pozitii?.length ? { pozitii } : {}),
       };
     });
-  const sipca = s.sipca && linii.some((l) => l.cheie === s.sipca!.linie)
-    ? {
-        linie: s.sipca.linie,
-        model: `${s.sipca.profil}, capăt ${s.sipca.capat}`,
-        varianta: s.sipca.varianta,
-        ...(s.sipca.varianta === "calcul"
-          ? { tronsoane: s.sipca.tronsoane.filter((t) => t.lungimeSipcaM.trim() && t.lungimeTronsonM.trim()).map((t) => ({ lungimeSipcaM: t.lungimeSipcaM.trim(), lungimeTronsonM: t.lungimeTronsonM.trim(), distantaMm: t.distantaMm.trim() || "0" })) }
-          : {}),
-      }
-    : null;
+  // rubricile de sipca care au linie cu produs, in ordinea de pe ecran (motorul
+  // le intoarce in aceeasi ordine - asa se potrivesc cantitatile pe rubrica)
+  const sipci = sipciTrimise(s, linii.map((l) => l.cheie)).map((x) => ({
+    linie: x.linie,
+    model: `${x.profil}, capăt ${x.capat}`,
+    varianta: x.varianta,
+    ...(x.varianta === "calcul"
+      ? { tronsoane: x.tronsoane.filter((t) => t.lungimeSipcaM.trim() && t.lungimeTronsonM.trim()).map((t) => ({ lungimeSipcaM: t.lungimeSipcaM.trim(), lungimeTronsonM: t.lungimeTronsonM.trim(), distantaMm: t.distantaMm.trim() || "0" })) }
+      : {}),
+  }));
   return {
     grupaPct: s.grupaPct.trim() || "0",
     precizariZonaB: s.precizariZonaB.trim() || null,
     invelitori,
     linii,
-    sipca,
+    sipci,
     zonaB: s.zonaB.filter((z) => z.denumire.trim() && Number(z.cantitate) > 0).map((z) => ({ ...z, denumire: z.denumire.trim(), um: z.um.trim() || "buc", cantitate: z.cantitate.trim(), sumaLei: z.sumaLei.trim() || "0" })),
   };
 }

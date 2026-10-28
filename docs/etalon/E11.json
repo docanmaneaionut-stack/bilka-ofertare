@@ -35,7 +35,8 @@
       "bucati": 10
      }
     ],
-    "mp": "189.120"
+    "mp": "189.120",
+    "id": "I1"
    },
    {
     "cod_bilka": "REPROMAT050",
@@ -49,7 +50,8 @@
       "bucati": 11
      }
     ],
-    "mp": "30.406"
+    "mp": "30.406",
+    "id": "I2"
    }
   ],
   "linii": [
@@ -60,7 +62,9 @@
     "um": "mp",
     "cantitate": "189.120",
     "pachet": "P1 — Clasic 8017 mat",
-    "cheie_culoare": "RAL 8017 mat 0,50"
+    "cheie_culoare": "RAL 8017 mat 0,50",
+    "nr": 1,
+    "invelitoare": "I1"
    },
    {
     "rubrica": "Învelitori",
@@ -69,7 +73,9 @@
     "um": "mp",
     "cantitate": "30.406",
     "pachet": "P2 — Retro Plus 7016 mat",
-    "cheie_culoare": "RAL 7016 mat 0,50"
+    "cheie_culoare": "RAL 7016 mat 0,50",
+    "nr": 2,
+    "invelitoare": "I2"
    },
    {
     "rubrica": "Accesorii standard",
@@ -79,7 +85,8 @@
     "cantitate": "12",
     "pachet": "P1 — Clasic 8017 mat",
     "cheie_culoare": "RAL 8017 mat 0,50 (moștenit)",
-    "invelitoare": "TMCLSMAT050"
+    "invelitoare": "I1",
+    "nr": 3
    },
    {
     "rubrica": "Accesorii standard",
@@ -89,7 +96,8 @@
     "cantitate": "9",
     "pachet": "P1 — Clasic 8017 mat",
     "cheie_culoare": "RAL 8017 mat 0,50 (moștenit)",
-    "invelitoare": "TMCLSMAT050"
+    "invelitoare": "I1",
+    "nr": 4
    },
    {
     "rubrica": "Accesorii standard",
@@ -99,7 +107,8 @@
     "cantitate": "23",
     "pachet": "P1 — Clasic 8017 mat",
     "cheie_culoare": "RAL 8017 mat 0,50 (moștenit)",
-    "invelitoare": "TMCLSMAT050"
+    "invelitoare": "I1",
+    "nr": 5
    },
    {
     "rubrica": "Accesorii standard",
@@ -109,7 +118,8 @@
     "cantitate": "10",
     "pachet": "P1 — Clasic 8017 mat",
     "cheie_culoare": "RAL 8017 mat 0,50 (moștenit)",
-    "invelitoare": "TMCLSMAT050"
+    "invelitoare": "I1",
+    "nr": 6
    },
    {
     "rubrica": "Accesorii standard (învelitoarea secundară)",
@@ -119,7 +129,8 @@
     "cantitate": "4",
     "pachet": "P2 — Retro Plus 7016 mat",
     "cheie_culoare": "RAL 7016 mat 0,50 (moștenit)",
-    "invelitoare": "REPROMAT050"
+    "invelitoare": "I2",
+    "nr": 7
    },
    {
     "rubrica": "Accesorii standard (învelitoarea secundară)",
@@ -129,7 +140,8 @@
     "cantitate": "6",
     "pachet": "P2 — Retro Plus 7016 mat",
     "cheie_culoare": "RAL 7016 mat 0,50 (moștenit)",
-    "invelitoare": "REPROMAT050"
+    "invelitoare": "I2",
+    "nr": 8
    },
    {
     "rubrica": "Fixare și etanșare",
@@ -139,7 +151,8 @@
     "cantitate": "8",
     "pachet": "P1 — Clasic 8017 mat",
     "cheie_culoare": "RAL 8017 (moștenit)",
-    "invelitoare": "TMCLSMAT050"
+    "invelitoare": "I1",
+    "nr": 9
    },
    {
     "rubrica": "Fixare și etanșare",
@@ -149,7 +162,8 @@
     "cantitate": "3",
     "pachet": "P1 — Clasic 8017 mat",
     "cheie_culoare": "RAL 8017 (moștenit)",
-    "invelitoare": "TMCLSMAT050"
+    "invelitoare": "I1",
+    "nr": 10
    },
    {
     "rubrica": "Fixare și etanșare (învelitoarea secundară)",
@@ -159,7 +173,8 @@
     "cantitate": "2",
     "pachet": "P2 — Retro Plus 7016 mat",
     "cheie_culoare": "RAL 7016 (moștenit)",
-    "invelitoare": "REPROMAT050"
+    "invelitoare": "I2",
+    "nr": 11
    },
    {
     "rubrica": "Sistem pluvial",
@@ -172,7 +187,8 @@
     "culoare": {
      "ral": "RAL 8017",
      "finisaj": "pluvial mat"
-    }
+    },
+    "nr": 12
    },
    {
     "rubrica": "Sistem pluvial",
@@ -185,7 +201,8 @@
     "culoare": {
      "ral": "RAL 8017",
      "finisaj": "pluvial mat"
-    }
+    },
+    "nr": 13
    },
    {
     "rubrica": "Sistem pluvial",
@@ -198,7 +215,8 @@
     "culoare": {
      "ral": "RAL 8017",
      "finisaj": "pluvial mat"
-    }
+    },
+    "nr": 14
    },
    {
     "rubrica": "Sistem pluvial",
@@ -211,7 +229,8 @@
     "culoare": {
      "ral": "RAL 8017",
      "finisaj": "pluvial mat"
-    }
+    },
+    "nr": 15
    },
    {
     "rubrica": "Sistem pluvial",
@@ -224,7 +243,8 @@
     "culoare": {
      "ral": "RAL 8017",
      "finisaj": "pluvial mat"
-    }
+    },
+    "nr": 16
    },
    {
     "rubrica": "Sistem pluvial",
@@ -237,7 +257,8 @@
     "culoare": {
      "ral": "RAL 8017",
      "finisaj": "pluvial mat"
-    }
+    },
+    "nr": 17
    },
    {
     "rubrica": "Sistem pluvial (al doilea)",
@@ -250,7 +271,8 @@
     "culoare": {
      "ral": "RAL 7016",
      "finisaj": "pluvial mat"
-    }
+    },
+    "nr": 18
    },
    {
     "rubrica": "Sistem pluvial (al doilea)",
@@ -263,7 +285,8 @@
     "culoare": {
      "ral": "RAL 7016",
      "finisaj": "pluvial mat"
-    }
+    },
+    "nr": 19
    },
    {
     "rubrica": "Sistem pluvial (al doilea)",
@@ -276,7 +299,8 @@
     "culoare": {
      "ral": "RAL 7016",
      "finisaj": "pluvial mat"
-    }
+    },
+    "nr": 20
    },
    {
     "rubrica": "Sistem pluvial (al doilea)",
@@ -289,7 +313,8 @@
     "culoare": {
      "ral": "RAL 7016",
      "finisaj": "pluvial mat"
-    }
+    },
+    "nr": 21
    },
    {
     "rubrica": "Sistem pluvial (al doilea)",
@@ -302,7 +327,8 @@
     "culoare": {
      "ral": "RAL 7016",
      "finisaj": "pluvial mat"
-    }
+    },
+    "nr": 22
    }
   ]
  },
@@ -316,7 +342,8 @@
     "achizitie_cont_eur": "6.61",
     "achizitie_cont_lei_cu_tva": "43.21",
     "pret_document_eur": "8.01",
-    "valoare_eur": "1514.85"
+    "valoare_eur": "1514.85",
+    "nr": 1
    },
    {
     "cod_bilka": "REPROMAT050",
@@ -325,7 +352,8 @@
     "achizitie_cont_eur": "8.12",
     "achizitie_cont_lei_cu_tva": "53.08",
     "pret_document_eur": "9.84",
-    "valoare_eur": "299.20"
+    "valoare_eur": "299.20",
+    "nr": 2
    },
    {
     "cod_bilka": "ACMICMAT050",
@@ -334,7 +362,8 @@
     "achizitie_cont_eur": "4.95",
     "achizitie_cont_lei_cu_tva": "32.36",
     "pret_document_eur": "6.00",
-    "valoare_eur": "72.00"
+    "valoare_eur": "72.00",
+    "nr": 3
    },
    {
     "cod_bilka": "ABF31MAT050",
@@ -343,7 +372,8 @@
     "achizitie_cont_eur": "4.95",
     "achizitie_cont_lei_cu_tva": "32.36",
     "pret_document_eur": "6.00",
-    "valoare_eur": "54.00"
+    "valoare_eur": "54.00",
+    "nr": 4
    },
    {
     "cod_bilka": "AST20MAT050",
@@ -352,7 +382,8 @@
     "achizitie_cont_eur": "3.30",
     "achizitie_cont_lei_cu_tva": "21.57",
     "pret_document_eur": "4.01",
-    "valoare_eur": "92.23"
+    "valoare_eur": "92.23",
+    "nr": 5
    },
    {
     "cod_bilka": "AOZ20MAT050",
@@ -361,7 +392,8 @@
     "achizitie_cont_eur": "3.30",
     "achizitie_cont_lei_cu_tva": "21.57",
     "pret_document_eur": "4.00",
-    "valoare_eur": "40.00"
+    "valoare_eur": "40.00",
+    "nr": 6
    },
    {
     "cod_bilka": "ACR41MAT050",
@@ -370,7 +402,8 @@
     "achizitie_cont_eur": "6.61",
     "achizitie_cont_lei_cu_tva": "43.21",
     "pret_document_eur": "8.01",
-    "valoare_eur": "32.04"
+    "valoare_eur": "32.04",
+    "nr": 7
    },
    {
     "cod_bilka": "ASTR3MAT050",
@@ -379,7 +412,8 @@
     "achizitie_cont_eur": "4.95",
     "achizitie_cont_lei_cu_tva": "32.36",
     "pret_document_eur": "6.00",
-    "valoare_eur": "36.00"
+    "valoare_eur": "36.00",
+    "nr": 8
    },
    {
     "cod_bilka": "SUCLE408035",
@@ -388,7 +422,8 @@
     "achizitie_cont_eur": "6.31",
     "achizitie_cont_lei_cu_tva": "41.24",
     "pret_document_eur": "7.65",
-    "valoare_eur": "61.20"
+    "valoare_eur": "61.20",
+    "nr": 9
    },
    {
     "cod_bilka": "AXCAPMAT000",
@@ -397,7 +432,8 @@
     "achizitie_cont_eur": "3.98",
     "achizitie_cont_lei_cu_tva": "26.01",
     "pret_document_eur": "4.82",
-    "valoare_eur": "14.46"
+    "valoare_eur": "14.46",
+    "nr": 10
    },
    {
     "cod_bilka": "SUCLE408035",
@@ -406,7 +442,8 @@
     "achizitie_cont_eur": "6.31",
     "achizitie_cont_lei_cu_tva": "41.24",
     "pret_document_eur": "7.65",
-    "valoare_eur": "15.30"
+    "valoare_eur": "15.30",
+    "nr": 11
    },
    {
     "cod_bilka": "SMJGH1254ML",
@@ -415,7 +452,8 @@
     "achizitie_cont_eur": "8.80",
     "achizitie_cont_lei_cu_tva": "57.52",
     "pret_document_eur": "10.67",
-    "valoare_eur": "117.37"
+    "valoare_eur": "117.37",
+    "nr": 12
    },
    {
     "cod_bilka": "SMBUR0903ML",
@@ -424,7 +462,8 @@
     "achizitie_cont_eur": "8.15",
     "achizitie_cont_lei_cu_tva": "53.27",
     "pret_document_eur": "9.89",
-    "valoare_eur": "69.23"
+    "valoare_eur": "69.23",
+    "nr": 13
    },
    {
     "cod_bilka": "SMC21125000",
@@ -433,7 +472,8 @@
     "achizitie_cont_eur": "1.47",
     "achizitie_cont_lei_cu_tva": "9.61",
     "pret_document_eur": "1.78",
-    "valoare_eur": "99.68"
+    "valoare_eur": "99.68",
+    "nr": 14
    },
    {
     "cod_bilka": "SMCOL090000",
@@ -442,7 +482,8 @@
     "achizitie_cont_eur": "0.87",
     "achizitie_cont_lei_cu_tva": "5.69",
     "pret_document_eur": "1.05",
-    "valoare_eur": "14.70"
+    "valoare_eur": "14.70",
+    "nr": 15
    },
    {
     "cod_bilka": "SMRAC125000",
@@ -451,7 +492,8 @@
     "achizitie_cont_eur": "2.33",
     "achizitie_cont_lei_cu_tva": "15.23",
     "pret_document_eur": "2.82",
-    "valoare_eur": "19.74"
+    "valoare_eur": "19.74",
+    "nr": 16
    },
    {
     "cod_bilka": "SMCOT090000",
@@ -460,7 +502,8 @@
     "achizitie_cont_eur": "2.33",
     "achizitie_cont_lei_cu_tva": "15.23",
     "pret_document_eur": "2.83",
-    "valoare_eur": "59.43"
+    "valoare_eur": "59.43",
+    "nr": 17
    },
    {
     "cod_bilka": "SMJGH1254ML",
@@ -469,7 +512,8 @@
     "achizitie_cont_eur": "8.80",
     "achizitie_cont_lei_cu_tva": "57.52",
     "pret_document_eur": "10.67",
-    "valoare_eur": "32.01"
+    "valoare_eur": "32.01",
+    "nr": 18
    },
    {
     "cod_bilka": "SMBUR0903ML",
@@ -478,7 +522,8 @@
     "achizitie_cont_eur": "8.15",
     "achizitie_cont_lei_cu_tva": "53.27",
     "pret_document_eur": "9.88",
-    "valoare_eur": "19.76"
+    "valoare_eur": "19.76",
+    "nr": 19
    },
    {
     "cod_bilka": "SMC21125000",
@@ -487,7 +532,8 @@
     "achizitie_cont_eur": "1.47",
     "achizitie_cont_lei_cu_tva": "9.61",
     "pret_document_eur": "1.78",
-    "valoare_eur": "26.70"
+    "valoare_eur": "26.70",
+    "nr": 20
    },
    {
     "cod_bilka": "SMCOL090000",
@@ -496,7 +542,8 @@
     "achizitie_cont_eur": "0.87",
     "achizitie_cont_lei_cu_tva": "5.69",
     "pret_document_eur": "1.05",
-    "valoare_eur": "4.20"
+    "valoare_eur": "4.20",
+    "nr": 21
    },
    {
     "cod_bilka": "SMCOT090000",
@@ -505,7 +552,8 @@
     "achizitie_cont_eur": "2.33",
     "achizitie_cont_lei_cu_tva": "15.23",
     "pret_document_eur": "2.82",
-    "valoare_eur": "16.92"
+    "valoare_eur": "16.92",
+    "nr": 22
    }
   ],
   "totaluri": {
@@ -570,5 +618,5 @@
   "comandabil": true
  },
  "reguli": "ETALON.md §0 (R1–R7)",
- "format": "v1.1 (27.10.2026): pe liniile legate câmpul `invelitoare` = codul învelitorii de care aparțin; pe liniile independente / de sine stătătoare câmpul `culoare` {ral, finisaj[, grosime]}; prețul fix structurat în `pret_fix` {tip, valoare, normalizat_eur_fara_tva} · v1.2 (27.10.2026): `invelitori` cu panotaj peste tot unde există învelitori; `asteptat.comandabil`"
+ "format": "v1.1 (27.10.2026): pe liniile legate câmpul `invelitoare` = codul învelitorii de care aparțin; pe liniile independente / de sine stătătoare câmpul `culoare` {ral, finisaj[, grosime]}; prețul fix structurat în `pret_fix` {tip, valoare, normalizat_eur_fara_tva} · v1.2 (27.10.2026): `invelitori` cu panotaj peste tot unde există învelitori; `asteptat.comandabil` · v1.3 (28.10.2026, MODIFICARE M1): `invelitori[].id` (I1, I2…) și `linii[].invelitoare` = id-ul învelitorii, nu codul — pe liniile legate și pe linia învelitorii însăși (același produs poate apărea de două ori, în culori diferite); `sipci[]` cu `id` (S1, S2…) în locul lui `sipca`, linia de șipcă poartă `sipca` = id; `linii[].nr` = poziția; `asteptat.mp_invelitori` și `asteptat.sipci` pe id"
 }
