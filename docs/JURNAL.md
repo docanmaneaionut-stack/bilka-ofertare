@@ -242,3 +242,18 @@ Fiecare intrare: data, obiectivul sesiunii, rezultatul, următorul pas propus.
 - În commit: ETALON.md v1.3 și PLAN v0.11 (Claude chat, neatinse). Eticheta `v0.2-motor` pe commit-ul sesiunii. Serverele au rămas pornite.
 
 **Următorul pas propus:** Etapa 3 — ofertarea și documentele (OFE + DOC): ecranul de ofertă apelează motorul prin harta din §5.9; preluarea automată a cursului BNR; testele manuale ale lui Ionuț încep acolo.
+
+## 2026-10-28 — S12: modelul ofertei și lista de oferte
+
+**Obiectiv:** S12 din PLAN v0.12 — migrarea 6 (clienți, oferte, învelitori, linii cu snapshot, zona B, versiuni, istoric, atașamente, cursuri, contor pe serie), numerotarea continuă pe serie, cursul BNR cu regula orei 13:00, clienții cu deduplicare după telefon, ecranul „Oferte” și „+ Ofertă nouă”, ARH §4.3 rescris.
+
+**Rezultat:**
+- Migrarea 6 `20261028090000_ofertare_clienti_curs`: SQL-ul generat cu baza-umbră, citit integral (doar CREATE TYPE / TABLE / INDEX și chei străine), aplicat, clientul Prisma regenerat cu serverele oprite. Test care verifică pe textul migrării că e aditivă.
+- Server: `modules/curs/` (regula 13:00 pură, preluare BNR + rezervă + istoric, planificator, `/api/curs`), `modules/ofe/` (clienți cu telefon normalizat, numerotare atomică pe serie cu contor setabil, vizibilitate pe roluri, `/api/oferte`, `/api/clienti`). Setări noi în `.env.example`: `TVA_PCT`, `ADAOS_TINTA_IMPLICIT_PCT`.
+- Web: zona „Ofertare” (`Ofertare.tsx`), paginile `Oferte`, `OfertaNoua`, `OfertaDetaliu` (antet + client; produsele „vin în S13”, prețurile „în S14”), `ClientFisa`, `CursBnr` în Zona tehnică, contorul seriei în Utilizatori (Admin general). Agentul / Colaboratorul / Administratorul intră direct pe „Oferte”.
+- Teste: `npm test` — **208 verzi** (182 + 10 regula cursului, parsare, telefon + 16 API: numerotare cu 10 creări simultane, cursuri înghețate și cazul offline, deduplicare după telefon, vizibilitate pe toate rolurile, răspuns fără adaos / preț de bază la Agent, antet și client cu jurnal, fișa clientului, contorul seriei, cursul prin API, migrarea aditivă). `npm run test:etalon` — 11 la zero (neschimbat).
+- ARH §4.3 rescris, §13 intrarea S12. În commit: PLAN v0.12 (Claude chat, neatins). Nimic din `mot/`, catalog, prețuri sau conturi nu s-a modificat. Serverele repornite la final.
+
+**De verificat de Ionuț:** conectare cu un cont de Administrator / Agent → „Oferte” → „+ Ofertă nouă” (clientul se autocompletează după telefon); Zona tehnică → „Curs BNR” → „Preia și istoricul” (prima preluare umple tabelul; până atunci oferta nouă cere un curs).
+
+**Următorul pas propus:** S13 — editorul ofertei, zona produselor (cap. 3–10): cascada învelitorii din catalog, cele trei moduri de cantitate, rubricile cu listele implicite, rezultatul motorului pe loc (mp, coli, pachete, formulare, comandabil), salvarea cu snapshot.

@@ -19,4 +19,8 @@ export const env = {
   // contul de rezerva al Admin general (fisa CONTURI §8.1): apare marcat in
   // lista si nu se modifica din ecran
   adminRezervaEmail: process.env.ADMIN_REZERVA_EMAIL?.trim().toLowerCase() ?? null,
+  // setari generale ale ofertarii (FISA-OFERTARE 11.2, 11.8): cota TVA aplicata la
+  // totaluri si adaosul tinta implicit propus (decis 23.10.2026: 20 %)
+  tvaPct: Number(process.env.TVA_PCT ?? 21),
+  adaosTintaImplicitPct: process.env.ADAOS_TINTA_IMPLICIT_PCT ?? "20",
 };

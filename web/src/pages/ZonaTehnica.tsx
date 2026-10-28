@@ -11,6 +11,9 @@ export function ZonaTehnica({ utilizator, onLogout }: { utilizator: Utilizator; 
       <header className="bara-sus">
         <div className="titlu">Zona tehnică</div>
         <nav className="meniu" aria-label="Zona tehnică">
+          <NavLink to="/oferte" className={clasa}>
+            Oferte
+          </NavLink>
           {adminGeneral && (
             <>
               <NavLink to="/zona-tehnica/compartimente" className={clasa}>
@@ -45,6 +48,9 @@ export function ZonaTehnica({ utilizator, onLogout }: { utilizator: Utilizator; 
               </NavLink>
               <NavLink to="/zona-tehnica/calcul-proba" className={clasa}>
                 Calcul de probă
+              </NavLink>
+              <NavLink to="/zona-tehnica/curs" className={clasa}>
+                Curs BNR
               </NavLink>
             </>
           )}

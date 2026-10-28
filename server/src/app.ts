@@ -6,6 +6,9 @@ import { accountsRouter } from "./modules/accounts/routes.js";
 import { contRouter } from "./modules/accounts/cont.js";
 import { admRouter } from "./modules/adm/routes.js";
 import { motRouter } from "./modules/mot/routes.js";
+import { cursRouter } from "./modules/curs/routes.js";
+import { clientiRouter } from "./modules/ofe/clienti.js";
+import { oferteRouter } from "./modules/ofe/oferte.js";
 import { gestioneazaErori } from "./middleware/erori.js";
 import { env } from "./env.js";
 
@@ -30,6 +33,9 @@ export function creeazaApp() {
   app.use("/api/cont", contRouter);
   app.use("/api/adm", admRouter);
   app.use("/api/mot", motRouter);
+  app.use("/api/curs", cursRouter);
+  app.use("/api/clienti", clientiRouter);
+  app.use("/api/oferte", oferteRouter);
 
   app.use(gestioneazaErori);
 

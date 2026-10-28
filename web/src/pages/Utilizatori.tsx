@@ -1,5 +1,6 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { apiFirme, apiUtilizatori, type Firma, type RolCont, type UtilizatorAdmin } from "../api";
+import { ContorSerie } from "../components/ContorSerie";
 import { Ajutor, Camp, Mesaj, textEroare } from "../components/ui";
 import { useUtilizator } from "../contextUtilizator";
 import { ETICHETA_ROL } from "./ContulMeu";
@@ -291,6 +292,7 @@ export function Utilizatori() {
               await incarca();
             }}
           />
+          {adminGeneral && editat.serieOferta && <ContorSerie serie={editat.serieOferta} />}
           <hr className="separator" />
         </>
       )}

@@ -62,6 +62,7 @@ model Firma {
 
   utilizatori      Utilizator[]
   utilizatorFirmas UtilizatorFirma[]
+  oferte           Oferta[]
 
   @@map("firma")
 }
@@ -110,6 +111,12 @@ model Utilizator {
   firmeAcces          UtilizatorFirma[]
   listePretCreate     ListaPret[]
   jurnalIntrari       JurnalIntrare[]
+  oferte              Oferta[]            @relation("OferteCont")
+  oferteCreate        Oferta[]            @relation("OferteCreate")
+  oferteModificate    Oferta[]            @relation("OferteModificate")
+  clientiCreati       Client[]
+  ofertaIstoric       OfertaIstoric[]
+  ofertaAtasamente    OfertaAtasament[]
   jurnalAutentificari JurnalAutentificare[]
   importPropuneres    ImportPropunere[]
 
@@ -317,6 +324,8 @@ model Produs {
   updatedAt DateTime @updatedAt
 
   preturi PretListaProdus[]
+  ofertaInvelitori OfertaInvelitoare[]
+  ofertaLinii      OfertaLinie[]
 
   @@index([compartimentId])
   @@index([codFurnizor])
@@ -352,6 +361,7 @@ model ListaPret {
 
   preturi   PretListaProdus[]
   propuneri ImportPropunere[]
+  oferte    Oferta[]
 
   @@map("lista_pret")
 }
@@ -492,4 +502,345 @@ model TreaptaDesfasurata {
 
   @@unique([furnizor, treapta])
   @@map("treapta_desfasurata")
+}
+
+// ---------------------------------------------------------------------------
+// Ofertare (OFE) - migrarea 6 (S12). Structura urmeaza intrarea motorului de
+// calcul (src/modules/mot/tipuri.ts): o oferta salvata se transforma 1:1 in
+// IntrareOferta, fara traduceri. Sursa: FISA-OFERTARE v1.1 cap. 1, 2, 2b, 9,
+// 11, 14, 15; FISA-CONTURI §2-3.
+// ---------------------------------------------------------------------------
+
+// cele 8 statusuri ale ofertei (FISA-OFERTARE cap. 14)
+enum StatusOferta {
+  IN_LUCRU
+  TRANSMISA
+  DE_REVIZIONAT
+  ACCEPTATA
+  NEACCEPTATA
+  AVANS_LUAT
+  DE_COMANDAT
+  COMANDAT
+}
+
+enum ModPrezentare {
+  SIMPLU
+  LISTA_DISCOUNT_GENERAL
+  DISCOUNT_PER_LINIE
+}
+
+// tinta: suma cu TVA in lei, adaos %, adaosul pastrat al variantei de baza,
+// sau preluata din alta oferta (fara camp de tinta)
+enum TipTinta {
+  TOTAL_CU_TVA_LEI
+  ADAOS_PCT
+  ADAOS_PCT_PASTRAT
+  PRELUATA
+}
+
+enum TipPretFix {
+  EUR_FARA_TVA
+  ACHIZITIE_PLUS_PCT
+}
+
+enum VariantaSipca {
+  COMANDA
+  CALCUL
+}
+
+// baza de clienti e comuna tuturor conturilor (cap. 2); telefonul normalizat
+// (doar cifre, +40 / 0040 -> 0) e cheia de deduplicare
+model Client {
+  id                String      @id @default(uuid())
+  nume              String
+  telefon           String
+  telefonNormalizat String      @unique
+  adresa            String
+  localitate        String?
+  email             String?
+  observatii        String?
+  creatDeId         String?
+  creatDe           Utilizator? @relation(fields: [creatDeId], references: [id])
+  createdAt         DateTime    @default(now())
+  updatedAt         DateTime    @updatedAt
+
+  oferte Oferta[]
+
+  @@map("client")
+}
+
+// cursul BNR al zilei (4 zecimale), preluat zilnic (11.8)
+model CursValutar {
+  id        String   @id @default(uuid())
+  data      DateTime @db.Date
+  moneda    String   @default("EUR")
+  curs      Decimal  @db.Decimal(10, 4)
+  sursa     String
+  preluatLa DateTime @default(now())
+
+  @@unique([data, moneda])
+  @@map("curs_valutar")
+}
+
+// numerotarea continua pe serie (cap. 1): contorul se incrementeaza in
+// tranzactie, la prima salvare; poate porni de la un numar dat (dupa prototip)
+model ContorSerie {
+  serie        String   @id
+  ultimulNumar Int      @default(0)
+  updatedAt    DateTime @updatedAt
+
+  @@map("contor_serie")
+}
+
+model Oferta {
+  id String @id @default(uuid())
+
+  firmaId      String
+  firma        Firma      @relation(fields: [firmaId], references: [id])
+  utilizatorId String
+  utilizator   Utilizator @relation("OferteCont", fields: [utilizatorId], references: [id])
+
+  // SERIE-NUMAR, continuu pe serie; variantele sunt versiuni sub acelasi numar
+  serie    String
+  numar    Int
+  versiune Int     @default(1)
+  curenta  Boolean @default(true)
+
+  data       DateTime     @db.Date
+  status     StatusOferta @default(IN_LUCRU)
+  statusLa   DateTime     @default(now())
+  // data statusului "Comandat" (blocul de la sfarsitul listei, cap. 15)
+  comandatLa DateTime?
+
+  clientId    String
+  client      Client  @relation(fields: [clientId], references: [id])
+  sursaClient String?
+
+  // cele doua cursuri inghetate la creare (11.8): documentul = BNR al zilei,
+  // achizitia = BNR x 1,01; data si sursa cursului; avertizare cand nu s-a
+  // putut prelua cursul zilei (curs de ieri / offline)
+  cursBnr        Decimal  @db.Decimal(10, 4)
+  cursAchizitie  Decimal  @db.Decimal(10, 4)
+  dataCurs       DateTime @db.Date
+  sursaCurs      String
+  avertizareCurs String?
+
+  // versiunea listei de pret pe care s-a calculat (⚠ preturi vechi, 11.8)
+  listaPretId String?
+  listaPret   ListaPret? @relation(fields: [listaPretId], references: [id])
+  tvaPct      Decimal    @db.Decimal(5, 2)
+
+  modPrezentare       ModPrezentare @default(SIMPLU)
+  discountGeneralPct  Decimal?      @db.Decimal(6, 3)
+  discountImplicitPct Decimal?      @db.Decimal(6, 3)
+  tintaTip            TipTinta      @default(ADAOS_PCT)
+  tintaValoare        Decimal       @db.Decimal(14, 4)
+  grupaPct            Decimal       @default(0) @db.Decimal(6, 3)
+
+  // completare la oferta initiala (cap. 2b) si preluarea preturilor (11.11)
+  completareLaId  String?
+  completareLa    Oferta?  @relation("Completari", fields: [completareLaId], references: [id])
+  completari      Oferta[] @relation("Completari")
+  motivCompletare String?
+  preluataDinId   String?
+  preluataDin     Oferta?  @relation("Preluari", fields: [preluataDinId], references: [id])
+  preluari        Oferta[] @relation("Preluari")
+
+  note String?
+
+  creatDeId     String?
+  creatDe       Utilizator? @relation("OferteCreate", fields: [creatDeId], references: [id])
+  modificatDeId String?
+  modificatDe   Utilizator? @relation("OferteModificate", fields: [modificatDeId], references: [id])
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  invelitori OfertaInvelitoare[]
+  linii      OfertaLinie[]
+  sipca      OfertaSipca?
+  zonaB      OfertaZonaB[]
+  istoric    OfertaIstoric[]
+  atasamente OfertaAtasament[]
+
+  @@unique([serie, numar, versiune])
+  @@index([firmaId, data])
+  @@index([utilizatorId, data])
+  @@index([clientId])
+  @@index([status])
+  @@map("oferta")
+}
+
+// invelitoarea cu snapshot-ul produsului si panotajul ei (cap. 3)
+model OfertaInvelitoare {
+  id       String @id @default(uuid())
+  ofertaId String
+  oferta   Oferta @relation(fields: [ofertaId], references: [id])
+  ordine   Int
+  // principala / secundara
+  rol      String
+
+  produsId    String?
+  produs      Produs? @relation(fields: [produsId], references: [id])
+  cod         String
+  denumire    String
+  um          String
+  finisaj     String?
+  grosime     String?
+  grup        String?
+  familie     String?
+  optiune     String?
+  // pretul de baza la momentul salvarii (snapshot); nu pleaca spre Agent / Colaborator
+  pretBazaEur Decimal @db.Decimal(12, 4)
+
+  culoare        String?
+  latimeTotalaM  Decimal  @db.Decimal(8, 4)
+  mpDirect       Decimal? @db.Decimal(12, 3)
+  variantaProfil String?
+
+  panotaj OfertaPozitie[]
+  linii   OfertaLinie[]
+
+  @@index([ofertaId])
+  @@map("oferta_invelitoare")
+}
+
+// lungime x bucati: panotajul unei invelitori sau pozitiile unei linii la ml
+model OfertaPozitie {
+  id            String             @id @default(uuid())
+  invelitoareId String?
+  invelitoare   OfertaInvelitoare? @relation(fields: [invelitoareId], references: [id])
+  linieId       String?
+  linie         OfertaLinie?       @relation(fields: [linieId], references: [id])
+  ordine        Int
+  lungimeM      Decimal            @db.Decimal(8, 3)
+  bucati        Int
+
+  @@index([invelitoareId])
+  @@index([linieId])
+  @@map("oferta_pozitie")
+}
+
+// linia de oferta cu snapshot complet al produsului (ramane identica oricate
+// liste de pret apar dupa ea)
+model OfertaLinie {
+  id       String @id @default(uuid())
+  ofertaId String
+  oferta   Oferta @relation(fields: [ofertaId], references: [id])
+  ordine   Int
+  rubrica  String
+
+  produsId    String?
+  produs      Produs? @relation(fields: [produsId], references: [id])
+  cod         String
+  denumire    String
+  um          String
+  finisaj     String?
+  grosime     String?
+  grup        String?
+  familie     String?
+  optiune     String?
+  pretBazaEur Decimal @db.Decimal(12, 4)
+
+  cantitate Decimal @db.Decimal(12, 3)
+
+  // legata de o invelitoare (mosteneste cheia ei) sau independenta, cu cheia ei
+  invelitoareId  String?
+  invelitoare    OfertaInvelitoare? @relation(fields: [invelitoareId], references: [id])
+  culoareRal     String?
+  culoareFinisaj String?
+  culoareGrosime String?
+
+  pretFixTip     TipPretFix?
+  pretFixValoare Decimal?    @db.Decimal(12, 4)
+  pretFixPreluat Boolean     @default(false)
+  discountPct    Decimal?    @db.Decimal(6, 3)
+
+  pozitii OfertaPozitie[]
+  sipca   OfertaSipca?
+
+  @@index([ofertaId])
+  @@map("oferta_linie")
+}
+
+// sipca de gard (cap. 8): modelul, latimea sipcii, varianta si tronsoanele
+model OfertaSipca {
+  id            String        @id @default(uuid())
+  ofertaId      String        @unique
+  oferta        Oferta        @relation(fields: [ofertaId], references: [id])
+  linieId       String        @unique
+  linie         OfertaLinie   @relation(fields: [linieId], references: [id])
+  model         String
+  culoare       String?
+  latimeSipcaMm Decimal       @db.Decimal(8, 2)
+  varianta      VariantaSipca
+
+  tronsoane OfertaTronson[]
+
+  @@map("oferta_sipca")
+}
+
+model OfertaTronson {
+  id              String      @id @default(uuid())
+  sipcaId         String
+  sipca           OfertaSipca @relation(fields: [sipcaId], references: [id])
+  ordine          Int
+  lungimeSipcaM   Decimal     @db.Decimal(8, 3)
+  lungimeTronsonM Decimal     @db.Decimal(8, 3)
+  distantaMm      Decimal     @db.Decimal(8, 2)
+
+  @@index([sipcaId])
+  @@map("oferta_tronson")
+}
+
+// zona B (cap. 9): linii integral manuale, in lei
+model OfertaZonaB {
+  id             String  @id @default(uuid())
+  ofertaId       String
+  oferta         Oferta  @relation(fields: [ofertaId], references: [id])
+  ordine         Int
+  denumire       String
+  um             String
+  cantitate      Decimal @db.Decimal(12, 3)
+  sumaLei        Decimal @db.Decimal(12, 2)
+  contineTva     Boolean @default(false)
+  preiaInFactura Boolean @default(false)
+
+  @@index([ofertaId])
+  @@map("oferta_zona_b")
+}
+
+// istoricul ofertei, de la "Transmisa" (cap. 14): cine, cand, ce, mentiuni
+model OfertaIstoric {
+  id                     String      @id @default(uuid())
+  ofertaId               String
+  oferta                 Oferta      @relation(fields: [ofertaId], references: [id])
+  moment                 DateTime    @default(now())
+  utilizatorId           String?
+  utilizator             Utilizator? @relation(fields: [utilizatorId], references: [id])
+  numeUtilizatorLaMoment String
+  tip                    String
+  camp                   String?
+  valoareInainte         String?
+  valoareDupa            String?
+  mentiuni               String?
+
+  @@index([ofertaId, moment])
+  @@map("oferta_istoric")
+}
+
+// notite si atasamente pe oferta (poze, schite, documente), nu pe client
+model OfertaAtasament {
+  id           String      @id @default(uuid())
+  ofertaId     String
+  oferta       Oferta      @relation(fields: [ofertaId], references: [id])
+  nume         String
+  fisier       String
+  tipMime      String?
+  marime       Int?
+  incarcatDeId String?
+  incarcatDe   Utilizator? @relation(fields: [incarcatDeId], references: [id])
+  moment       DateTime    @default(now())
+
+  @@index([ofertaId])
+  @@map("oferta_atasament")
 }

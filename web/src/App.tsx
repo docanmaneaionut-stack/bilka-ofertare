@@ -16,6 +16,12 @@ import { Firme } from "./pages/Firme";
 import { Utilizatori } from "./pages/Utilizatori";
 import { Export } from "./pages/Export";
 import { CalculProba } from "./pages/CalculProba";
+import { CursBnr } from "./pages/CursBnr";
+import { Ofertare } from "./pages/Ofertare";
+import { Oferte } from "./pages/Oferte";
+import { OfertaNoua } from "./pages/OfertaNoua";
+import { OfertaDetaliu } from "./pages/OfertaDetaliu";
+import { ClientFisa } from "./pages/ClientFisa";
 import { ContulMeu, ETICHETA_ROL, SchimbaParolaObligatoriu } from "./pages/ContulMeu";
 import { UtilizatorContext } from "./contextUtilizator";
 
@@ -50,6 +56,9 @@ export default function App() {
 
   const adminGeneral = utilizator.rol === "ADMIN_GENERAL";
   const administrator = utilizator.rol === "ADMINISTRATOR";
+  // conturile care lucreaza in zona de ofertare (FISA-CONTURI §2): Admin general vede tot
+  const faceOferte = administrator || utilizator.rol === "AGENT" || utilizator.rol === "COLABORATOR";
+  const areOfertare = adminGeneral || faceOferte;
 
   return (
     <UtilizatorContext.Provider value={utilizator}>
@@ -72,17 +81,32 @@ export default function App() {
                 <Route path="import/:id" element={<ImportPropunere />} />
                 <Route path="export" element={<Export />} />
                 <Route path="calcul-proba" element={<CalculProba />} />
+                <Route path="curs" element={<CursBnr />} />
               </>
             )}
             <Route path="firme" element={<Firme />} />
             <Route path="utilizatori" element={<Utilizatori />} />
           </Route>
         )}
+        {areOfertare && (
+          <Route path="/oferte" element={<Ofertare utilizator={utilizator} onLogout={iesiDinCont} />}>
+            <Route index element={<Oferte />} />
+            {faceOferte && <Route path="noua" element={<OfertaNoua />} />}
+            <Route path=":id" element={<OfertaDetaliu />} />
+          </Route>
+        )}
+        {areOfertare && (
+          <Route path="/clienti" element={<Ofertare utilizator={utilizator} onLogout={iesiDinCont} />}>
+            <Route path=":id" element={<ClientFisa />} />
+          </Route>
+        )}
         <Route
           path="/cont"
           element={
-            adminGeneral || administrator ? (
+            adminGeneral ? (
               <ZonaTehnica utilizator={utilizator} onLogout={iesiDinCont} />
+            ) : faceOferte ? (
+              <Ofertare utilizator={utilizator} onLogout={iesiDinCont} />
             ) : (
               <PaginaSimpla utilizator={utilizator} onLogout={iesiDinCont} />
             )
@@ -90,7 +114,7 @@ export default function App() {
         >
           <Route index element={<ContulMeu />} />
         </Route>
-        <Route path="*" element={<Navigate to={adminGeneral || administrator ? "/zona-tehnica" : "/cont"} replace />} />
+        <Route path="*" element={<Navigate to={adminGeneral ? "/zona-tehnica" : faceOferte ? "/oferte" : "/cont"} replace />} />
       </Routes>
     </BrowserRouter>
     </UtilizatorContext.Provider>

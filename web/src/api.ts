@@ -511,3 +511,171 @@ export const apiMot = {
   etalon: (id: string) => cerere<{ etalon: { id: string; titlu: string }; intrare: IntrareProba; asteptat: Record<string, unknown> }>(`${BAZA_MOT}/etaloane/${id}`),
   proba: (intrare: IntrareProba) => cerere<{ rezultat: RezultatProba }>(`${BAZA_MOT}/proba`, { method: "POST", body: JSON.stringify(intrare) }),
 };
+
+// --- Ofertare (OFE): oferte, clienti, cursul BNR ---
+
+export type StatusOferta = "IN_LUCRU" | "TRANSMISA" | "DE_REVIZIONAT" | "ACCEPTATA" | "NEACCEPTATA" | "AVANS_LUAT" | "DE_COMANDAT" | "COMANDAT";
+
+export const ETICHETA_STATUS: Record<StatusOferta, string> = {
+  IN_LUCRU: "În lucru",
+  TRANSMISA: "Transmisă",
+  DE_REVIZIONAT: "De revizionat",
+  ACCEPTATA: "Acceptată",
+  NEACCEPTATA: "Neacceptată",
+  AVANS_LUAT: "Avans luat",
+  DE_COMANDAT: "De comandat",
+  COMANDAT: "Comandat",
+};
+export const STATUSURI_OFERTA = Object.keys(ETICHETA_STATUS) as StatusOferta[];
+
+export type ClientDate = {
+  nume: string;
+  telefon: string;
+  adresa: string;
+  localitate?: string | null;
+  email?: string | null;
+  observatii?: string | null;
+};
+export type Client = ClientDate & { id: string };
+
+export type RandOferta = {
+  id: string;
+  numarComplet: string;
+  serie: string;
+  numar: number;
+  versiune: number;
+  data: string;
+  status: StatusOferta;
+  statusLa: string;
+  comandatLa: string | null;
+  avertizareCurs: string | null;
+  client: { id: string; nume: string; localitate: string | null; telefon: string };
+  clientMultiplu: boolean;
+  agent: { id: string; nume: string };
+  firma: { id: string; denumire: string };
+  invelitoare: string | null;
+  totalCuTvaEur: string | null;
+  totalLei: string | null;
+  completareLa: { numarComplet: string; motiv: string | null } | null;
+  modificatLa: string;
+  completari?: RandOferta[];
+};
+
+export type FiltreOferte = {
+  q?: string;
+  status?: StatusOferta | "";
+  deLa?: string;
+  panaLa?: string;
+  agent?: string;
+  firmaId?: string;
+  clientMultiplu?: boolean;
+  page?: number;
+  pageSize?: number;
+};
+
+export type ListaOferte = {
+  oferte: RandOferta[];
+  total: number;
+  page: number;
+  pageSize: number;
+  numaratori: { total: number; inLucru: number; deComandat: number; comandate: number };
+  perioada: { deLa: string; panaLa: string };
+};
+
+export type OfertaDetaliu = {
+  id: string;
+  numarComplet: string;
+  serie: string;
+  numar: number;
+  versiune: number;
+  data: string;
+  status: StatusOferta;
+  statusLa: string;
+  firma: { id: string; denumire: string; cui: string; adresa: string; telefon: string; email: string; localitate: string | null };
+  cont: { id: string; nume: string; telefon: string | null; email: string; serieOferta: string | null };
+  client: Client;
+  sursaClient: string | null;
+  curs: { cursBnr: string; cursAchizitie: string; dataCurs: string; sursaCurs: string; avertizareCurs: string | null };
+  listaPret: { id: string; denumire: string; status: string } | null;
+  tvaPct: string;
+  modPrezentare: string;
+  tinta: { tip: string; valoare: string };
+  grupaPct: string;
+  completareLa: { id: string; numarComplet: string } | null;
+  motivCompletare: string | null;
+  completari: { id: string; numarComplet: string; motiv: string | null; status: StatusOferta }[];
+  note: string | null;
+  invelitori: unknown[];
+  linii: unknown[];
+  zonaB: unknown[];
+  poateModifica: boolean;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type AntetOferta = { data?: string; sursaClient?: string | null; note?: string | null };
+
+export type CursAzi = { cursBnr: string; cursAchizitie: string; dataCurs: string; sursaCurs: string; avertizareCurs: string | null };
+export type CursZi = { data: string; curs: string; sursa: string };
+
+const BAZA_OFE = "/api/oferte";
+
+export const apiOferte = {
+  lista: (f: FiltreOferte) => {
+    const p = new URLSearchParams();
+    for (const [k, v] of Object.entries(f)) {
+      if (v === undefined || v === "" || v === false) continue;
+      p.set(k, v === true ? "da" : String(v));
+    }
+    return cerere<ListaOferte>(`${BAZA_OFE}?${p.toString()}`);
+  },
+  creeaza: (client: ClientDate, antet?: AntetOferta) => cerere<{ oferta: OfertaDetaliu }>(BAZA_OFE, { method: "POST", body: JSON.stringify({ client, antet }) }),
+  detaliu: (id: string) => cerere<{ oferta: OfertaDetaliu }>(`${BAZA_OFE}/${id}`),
+  antet: (id: string, antet: AntetOferta) => cerere<{ oferta: OfertaDetaliu }>(`${BAZA_OFE}/${id}/antet`, { method: "PUT", body: JSON.stringify(antet) }),
+  client: (id: string, client: ClientDate) => cerere<{ oferta: OfertaDetaliu }>(`${BAZA_OFE}/${id}/client`, { method: "PUT", body: JSON.stringify(client) }),
+  contor: (serie: string) => cerere<{ serie: string; ultimulNumar: number }>(`${BAZA_OFE}/contor/${serie}`),
+  seteazaContor: (serie: string, ultimulNumar: number) => cerere<{ serie: string; ultimulNumar: number }>(`${BAZA_OFE}/contor/${serie}`, { method: "PUT", body: JSON.stringify({ ultimulNumar }) }),
+};
+
+export const apiClienti = {
+  cauta: (f: { telefon?: string; q?: string }) => {
+    const p = new URLSearchParams();
+    if (f.telefon) p.set("telefon", f.telefon);
+    if (f.q) p.set("q", f.q);
+    return cerere<{ clienti: Client[] }>(`/api/clienti?${p.toString()}`);
+  },
+  fisa: (id: string) =>
+    cerere<{
+      client: Client;
+      oferte: { id: string; numarComplet: string; data: string; status: StatusOferta; statusLa: string; updatedAt: string; utilizator: { id: string; nume: string }; completareLa: { serie: string; numar: number } | null; motivCompletare: string | null }[];
+    }>(`/api/clienti/${id}`),
+};
+
+export const apiCurs = {
+  azi: () => cerere<{ azi: CursAzi | null; ultimele: CursZi[]; eroare?: string }>("/api/curs"),
+  preia: (istoric: boolean) => cerere<{ salvate: number; sursa: string }>("/api/curs/preia", { method: "POST", body: JSON.stringify({ istoric }) }),
+  manual: (data: string, curs: string) => cerere<{ ok: true }>("/api/curs/manual", { method: "POST", body: JSON.stringify({ data, curs }) }),
+};
+
+export const apiOfertare = {
+  cont: () => cerere<{ utilizator: Utilizator; firma: { id: string; denumire: string } | null }>("/api/cont"),
+};
+
+// data in format romanesc (zz.ll.aaaa)
+export function dataRo(iso: string | Date | null | undefined): string {
+  if (!iso) return "–";
+  const d = typeof iso === "string" ? new Date(iso.length === 10 ? `${iso}T00:00:00` : iso) : iso;
+  return d.toLocaleDateString("ro-RO", { day: "2-digit", month: "2-digit", year: "numeric" });
+}
+
+// "azi, 17:40" / "ieri, 09:12" / "16.09, 18:05"
+export function momentRelativ(iso: string): string {
+  const d = new Date(iso);
+  const azi = new Date();
+  const ora = d.toLocaleTimeString("ro-RO", { hour: "2-digit", minute: "2-digit" });
+  const aceeasiZi = (a: Date, b: Date) => a.toDateString() === b.toDateString();
+  if (aceeasiZi(d, azi)) return `azi, ${ora}`;
+  const ieri = new Date(azi.getTime() - 24 * 3600 * 1000);
+  if (aceeasiZi(d, ieri)) return `ieri, ${ora}`;
+  return `${d.toLocaleDateString("ro-RO", { day: "2-digit", month: "2-digit" })}, ${ora}`;
+}
