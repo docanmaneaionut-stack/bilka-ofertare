@@ -13,7 +13,6 @@ import { autentificaAgent, creeazaUtilizatorTest } from "./helpers.js";
 const app = creeazaApp();
 const EMAIL_ADMIN = "test-mot-admin@exemplu.local";
 const EMAIL_AGENT = "test-mot-agent@exemplu.local";
-const CODURI = ["SIPCAMAT050", "SUCLE408035"];
 
 let compartimentId: string;
 let listaId: string;

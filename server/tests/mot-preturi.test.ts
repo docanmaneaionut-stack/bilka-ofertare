@@ -23,6 +23,7 @@ describe("achizitia contului (R2)", () => {
       achizitieContLeiCuTva: "44.84",
       valoareAchizitieEur: "1238.10",
       valoareAchizitieRealaEur: "1238.10",
+      valoareBazaEur: "1225.47",
     });
     // 6,31 x 5,4020 x 1,21 = 41,2448 -> 41,24 (rotunjind intai lei-ul fara TVA ar iesi 41,25)
     expect(achizitieLinie("6.25", "9", "1.00", "0", "5.4020", 21).achizitieContLeiCuTva).toBe("41.24");
@@ -144,8 +145,8 @@ describe("garda (R7)", () => {
 
 describe("randul din tabelul de vanzari (cap. 19)", () => {
   it("vanzare = totalul in lei, cost = achizitia reala cu TVA, net, brut / 1,21", () => {
-    expect(randVanzari("17000.00", "14337.77", 21)).toEqual({ pretVanzareLei: "17000.00", costAchizitieLei: "14337.77", adaosNetLei: "2662.23", adaosBrutLei: "2200.19" }); // E01
-    expect(randVanzari("15355.44", "14337.77", 21)).toEqual({ pretVanzareLei: "15355.44", costAchizitieLei: "14337.77", adaosNetLei: "1017.67", adaosBrutLei: "841.05" }); // E05: grupa nu intra in cost
+    expect(randVanzari("17000.00", "14337.77", 21)).toEqual({ pretVanzareLei: "17000.00", costAchizitieLei: "14337.77", adaosNetLei: "2662.23", adaosBrutLei: "2200.19", tabel: "propriu" }); // E01
+    expect(randVanzari("15355.44", "14337.77", 21)).toEqual({ pretVanzareLei: "15355.44", costAchizitieLei: "14337.77", adaosNetLei: "1017.67", adaosBrutLei: "841.05", tabel: "propriu" }); // E05: grupa nu intra in cost
     expect(randVanzari("999.96", "957.61", 21)).toMatchObject({ adaosNetLei: "42.35", adaosBrutLei: "35.00" }); // E06
     expect(randVanzari("0.00", "202.05", 21)).toMatchObject({ adaosNetLei: "-202.05", adaosBrutLei: "-166.98" }); // E10
   });

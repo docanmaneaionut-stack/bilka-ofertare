@@ -23,9 +23,15 @@ export {
   achizitieRealaLaCursulDocumentului,
   verificaGarda,
   randVanzari,
+  randVanzariColaborator,
   procentCaFactor,
 } from "./preturi.js";
 export { prezinta, pretFixNormalizat, gasesteTotalLista, repartizeazaRest } from "./prezentare.js";
+export { calculeazaZonaB } from "./zonaB.js";
+export { agregaLucrare, esteCompletare } from "./lucrare.js";
+export { construiesteVarianta, liniiLegateDeInvelitoare } from "./varianta.js";
+export type { Inlocuiri } from "./varianta.js";
+export { preiaPreturi, renuntaLaPreluare, adaosuriPeRubrica } from "./preluare.js";
 export { construiesteIntrare, coduriEtalon, latimeTotalaDinCatalog } from "./etalon.js";
 export type { CatalogPentruEtalon, FisierEtalon, ProdusCatalogEtalon, IntrariEtalon, LinieEtalon, InvelitoareEtalon } from "./etalon.js";
 export {

@@ -18,6 +18,8 @@ export interface AchizitieLinie {
   // achizitie x cantitate, 2 zecimale (totalurile sunt sume de valori pe linie)
   valoareAchizitieEur: Suma;
   valoareAchizitieRealaEur: Suma;
+  // baza din catalog x cantitate: costul firmei la colaboratori (cap. 19)
+  valoareBazaEur: Suma;
 }
 
 export function procentCaFactor(pct: Suma | number): Zecimal {
@@ -41,6 +43,7 @@ export function achizitieLinie(
     achizitieContLeiCuTva: la2(cont.times(z(cursAchizitie)).times(factorTva(tvaPct))),
     valoareAchizitieEur: la2(cont.times(z(cantitate))),
     valoareAchizitieRealaEur: la2(reala.times(z(cantitate))),
+    valoareBazaEur: la2(baza.times(z(cantitate))),
   };
 }
 
@@ -51,6 +54,9 @@ export interface TotaluriAchizitie {
   realaEurFaraTva: Suma;
   realaLeiFaraTva: Suma;
   realaLeiCuTva: Suma;
+  bazaEurFaraTva: Suma;
+  bazaLeiFaraTva: Suma;
+  bazaLeiCuTva: Suma;
 }
 
 // R3: achizitia totala in lei = suma valorilor (EUR, 2 zecimale pe linie) x cursul
@@ -58,8 +64,10 @@ export interface TotaluriAchizitie {
 export function totaluriAchizitie(linii: AchizitieLinie[], cursAchizitie: Suma, tvaPct: number | Suma): TotaluriAchizitie {
   const contEur = suma(linii.map((l) => l.valoareAchizitieEur));
   const realaEur = suma(linii.map((l) => l.valoareAchizitieRealaEur));
+  const bazaEur = suma(linii.map((l) => l.valoareBazaEur));
   const contLei = z(la2(contEur.times(z(cursAchizitie))));
   const realaLei = z(la2(realaEur.times(z(cursAchizitie))));
+  const bazaLei = z(la2(bazaEur.times(z(cursAchizitie))));
   return {
     contEurFaraTva: la2(contEur),
     contLeiFaraTva: la2(contLei),
@@ -67,6 +75,9 @@ export function totaluriAchizitie(linii: AchizitieLinie[], cursAchizitie: Suma, 
     realaEurFaraTva: la2(realaEur),
     realaLeiFaraTva: la2(realaLei),
     realaLeiCuTva: la2(realaLei.times(factorTva(tvaPct))),
+    bazaEurFaraTva: la2(bazaEur),
+    bazaLeiFaraTva: la2(bazaLei),
+    bazaLeiCuTva: la2(bazaLei.times(factorTva(tvaPct))),
   };
 }
 
@@ -146,5 +157,18 @@ export function randVanzari(pretVanzareLei: Suma, costAchizitieLei: Suma, tvaPct
     costAchizitieLei: la2(costAchizitieLei),
     adaosNetLei: la2(net),
     adaosBrutLei: la2(net.div(factorTva(tvaPct))),
+    tabel: "propriu",
+  };
+}
+
+// cap. 19 (decis 23.10.2026, E03): colaboratorul nu are tabel de vanzari; ce ii
+// vinde firma - achizitia lui (baza + adaosul negociat, la cursul de achizitie, cu
+// TVA) - apare ca vanzare in tabelul Administratorului, cu costul = pretul de baza.
+// Oferta lui catre clientul final nu intra in vanzarile firmei.
+export function randVanzariColaborator(achizitieColaboratorLeiCuTva: Suma, bazaLeiCuTva: Suma, tvaPct: number | Suma): RandVanzari {
+  return {
+    ...randVanzari(achizitieColaboratorLeiCuTva, bazaLeiCuTva, tvaPct),
+    tabel: "administrator",
+    nota: "vânzarea apare în tabelul Administratorului: preț vânzare = achiziția colaboratorului, cost = prețul de bază; oferta lui către client nu intră în vânzările firmei",
   };
 }

@@ -13,7 +13,9 @@ export type ModPrezentare = "simplu" | "lista_discount_general" | "discount_per_
 
 // FISA-OFERTARE 11.2 (suma discutata sau adaos %) si 11.7 (varianta pastreaza
 // adaosul % al variantei de baza, cu 4 zecimale)
-export type TipTinta = "total_cu_tva_lei" | "adaos_pct" | "adaos_pct_pastrat";
+// "preluata": oferta preia preturile din alta oferta (11.11) si nu are camp de tinta -
+// totalul rezulta din cantitati, "cat iese"
+export type TipTinta = "total_cu_tva_lei" | "adaos_pct" | "adaos_pct_pastrat" | "preluata";
 
 export interface Tinta {
   tip: TipTinta;
@@ -67,6 +69,8 @@ export interface Invelitoare {
 export interface PretFix {
   tip: "eur_fara_tva" | "achizitie_plus_pct";
   valoare: Suma;
+  // pus de "preia preturi din oferta ..." (11.11); renuntarea la preluare il scoate
+  preluat?: boolean;
 }
 
 export interface LinieOferta {
@@ -126,8 +130,13 @@ export interface IntrareOferta {
   modPrezentare: ModPrezentare;
   discountGeneralPct?: Suma;
   discountImplicitPct?: Suma;
-  // completare marcata (cap. 2b): garda nu se aplica
+  // completare marcata (cap. 2b): garda nu se aplica; legatura cu oferta initiala
+  // (seria-numarul ei) si motivul
   completare: boolean;
+  completareLa?: string;
+  motivCompletare?: string;
+  // "preia preturi din oferta ..." (11.11): identificatorul ofertei-sursa
+  preluataDin?: string;
   invelitori: Invelitoare[];
   sipca?: Sipca;
   linii: LinieOferta[];
@@ -189,6 +198,10 @@ export interface RandVanzari {
   costAchizitieLei: Suma;
   adaosNetLei: Suma;
   adaosBrutLei: Suma;
+  // "propriu": tabelul contului; "administrator": vanzarea unui colaborator apare
+  // in tabelul Administratorului (vanzare = achizitia lui, cost = baza)
+  tabel: "propriu" | "administrator";
+  nota?: string;
 }
 
 export interface Garda {
@@ -208,6 +221,7 @@ export interface ZonaBCalculata {
     cantitate: Suma;
     pretUnitarLeiFaraTva: Suma;
     leiFaraTva: Suma;
+    leiCuTva: Suma;
     eurFaraTva: Suma;
   }[];
   tabelFacturare: { faraTvaEur: Suma; tvaEur: Suma; cuTvaEur: Suma; totalLei: Suma };
@@ -312,11 +326,14 @@ export const schemaIntrareOferta = zod.object({
     adaosPct: procent,
   }),
   grupaPct: procent,
-  tinta: zod.object({ tip: zod.enum(["total_cu_tva_lei", "adaos_pct", "adaos_pct_pastrat"]), valoare: suma }),
+  tinta: zod.object({ tip: zod.enum(["total_cu_tva_lei", "adaos_pct", "adaos_pct_pastrat", "preluata"]), valoare: suma }),
   modPrezentare: zod.enum(["simplu", "lista_discount_general", "discount_per_linie"]),
   discountGeneralPct: procent.optional(),
   discountImplicitPct: procent.optional(),
   completare: zod.boolean(),
+  completareLa: zod.string().optional(),
+  motivCompletare: zod.string().optional(),
+  preluataDin: zod.string().optional(),
   invelitori: zod.array(
     zod
       .object({
@@ -357,7 +374,7 @@ export const schemaIntrareOferta = zod.object({
       pozitii: zod.array(schemaPozitie).optional(),
       invelitoare: zod.string().optional(),
       culoare: zod.object({ ral: zod.string(), finisaj: zod.string(), grosime: zod.string().optional() }).optional(),
-      pretFix: zod.object({ tip: zod.enum(["eur_fara_tva", "achizitie_plus_pct"]), valoare: sumaNenegativa }).optional(),
+      pretFix: zod.object({ tip: zod.enum(["eur_fara_tva", "achizitie_plus_pct"]), valoare: sumaNenegativa, preluat: zod.boolean().optional() }).optional(),
       discountPct: procent.optional(),
     }),
   ),

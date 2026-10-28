@@ -2,7 +2,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { construiesteIntrare, type FisierEtalon } from "../../src/modules/mot/etalon.js";
-import type { IntrareOferta, RezultatOferta } from "../../src/modules/mot/tipuri.js";
+import type { IntrareOferta, RandVanzari, RezultatOferta } from "../../src/modules/mot/tipuri.js";
 import { catalogCsv } from "./catalogCsv.js";
 
 export { latimeTotalaDinCatalog } from "../../src/modules/mot/etalon.js";
@@ -50,6 +50,10 @@ function faraNedefinite(o: Obiect): Obiect {
   return Object.fromEntries(Object.entries(o).filter(([, v]) => v !== undefined));
 }
 
+export function vanzariSpreAsteptat(v: RandVanzari): Obiect {
+  return { pret_vanzare_lei: v.pretVanzareLei, cost_achizitie_lei: v.costAchizitieLei, adaos_net_lei: v.adaosNetLei, adaos_brut_lei: v.adaosBrutLei };
+}
+
 // rezultatul motorului, in forma si cu numele de campuri ale blocului "asteptat"
 export function spreAsteptat(rezultat: RezultatOferta, intrare: IntrareOferta): Obiect {
   const lista = intrare.modPrezentare === "lista_discount_general";
@@ -83,12 +87,7 @@ export function spreAsteptat(rezultat: RezultatOferta, intrare: IntrareOferta): 
       tva_eur: t.tvaEur,
       document_cu_tva_eur: t.documentCuTvaEur,
       document_total_lei: t.documentTotalLei,
-      vanzari: {
-        pret_vanzare_lei: rezultat.vanzari.pretVanzareLei,
-        cost_achizitie_lei: rezultat.vanzari.costAchizitieLei,
-        adaos_net_lei: rezultat.vanzari.adaosNetLei,
-        adaos_brut_lei: rezultat.vanzari.adaosBrutLei,
-      },
+      vanzari: vanzariSpreAsteptat(rezultat.vanzari),
       total_lista_fara_tva_eur: t.totalListaFaraTvaEur,
       discount_general_eur: t.discountGeneralEur,
       achizitie_reala_lei_cu_tva: t.achizitieRealaLeiCuTva,
@@ -110,6 +109,7 @@ export function spreAsteptat(rezultat: RezultatOferta, intrare: IntrareOferta): 
         cantitate: f.cantitate,
         pret_unitar_lei_fara_tva: f.pretUnitarLeiFaraTva,
         lei_fara_tva: f.leiFaraTva,
+        lei_cu_tva: f.leiCuTva,
         eur_fara_tva: f.eurFaraTva,
       })),
       tabel_facturare: {

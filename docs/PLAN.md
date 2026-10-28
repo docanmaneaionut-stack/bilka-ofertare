@@ -1,6 +1,6 @@
 # PLAN — foaia de parcurs a construcției
 
-Versiunea 0.9 · 27 octombrie 2026 · Se citește împreună cu `docs/ARH.md` și cu fișele de specificație din `docs/` (FISA-CONTURI, FISA-CATALOG-PRETURI, FISA-OFERTARE, FISA-COMENZI). **Unde ARH și o fișă spun lucruri diferite, fișa are prioritate** (e mai nouă și e aprobată de Ionuț); diferența se notează în ARH §13 în aceeași sesiune.
+Versiunea 0.10 · 27 octombrie 2026 · Se citește împreună cu `docs/ARH.md` și cu fișele de specificație din `docs/` (FISA-CONTURI, FISA-CATALOG-PRETURI, FISA-OFERTARE, FISA-COMENZI). **Unde ARH și o fișă spun lucruri diferite, fișa are prioritate** (e mai nouă și e aprobată de Ionuț); diferența se notează în ARH §13 în aceeași sesiune.
 Claude Code actualizează statusul sesiunilor la finalul fiecărei sesiuni.
 
 ## Cum se folosește
@@ -53,7 +53,7 @@ Claude Code actualizează statusul sesiunilor la finalul fiecărei sesiuni.
 |---|---|---|
 | S7 | Formatul fișierelor etalon (`docs/etalon/*.json`, scrise de Claude chat, aprobate de Ionuț); ofertele-model transcrise ca teste (încă roșii); nicio logică de calcul încă | GATA (27.10, commit 00f34f4) — MOT ca funcții pure (`server/src/modules/mot/`, decimal.js, half-up), încărcătorul etalon ia prețurile și lățimile din CSV-urile Bilka; `npm test` 92 verzi, `npm run test:etalon` 11 roșii (diferențe la start: E01 128 · E02 126 · E03 65 · E04 128 · E05 127 · E06 29 · E07 138 · E08 181 · E09 126 · E10 18 · E11 144) |
 | S8 | Cantități: lungime × bucăți × lățime totală (3 zecimale), suprafață directă și combinată, cele două variante la șipcă (FISA-OFERTARE 3 și 8); pachetele și formularele Bilka (3.4–3.5) | GATA (27.10, commit f504ef9) — `cantitati.ts`, `pachete.ts`, comandabil cu motive, dripstop, validare; ml → buc abandonat (decizia din 04.09); `npm test` 127 verzi; etalon: diferențe rămase numai de preț — E01 126 · E02 126 · E03 62 · E04 128 · E05 127 · E06 23 · E07 138 · E08 181 · E09 126 · E10 18 · E11 106 |
-| S9 | Cele trei straturi de preț: achiziție (cu grupă), țintă în lei (sumă sau adaos %), prezentare (3 moduri, calcul invers, restul de rotunjire R5 și abaterea, totalul în lei R6), prețurile fixe (sumă și „achiziție + x %"), gardă absolută, varianta B de TVA, blocul de vânzări pentru conturile de Agent / Administrator (FISA-OFERTARE 11, ETALON R1–R7); **plus ecranul tehnic „Calcul de probă"** în Zona tehnică (Admin general alege produse din catalogul real, cantități, cont, grupă, țintă, mod de prezentare, prețuri fixe; buton „Încarcă etalonul E0x"; vede rezultatul motorului pe loc). Așteptat verzi după S9: E01, E02, E04, E05, E06, E08, E11 | NEÎNCEPUT |
+| S9 | Cele trei straturi de preț: achiziție (cu grupă), țintă în lei (sumă sau adaos %), prezentare (3 moduri, calcul invers, restul de rotunjire R5 și abaterea, totalul în lei R6), prețurile fixe (sumă și „achiziție + x %"), gardă absolută, varianta B de TVA, blocul de vânzări pentru conturile de Agent / Administrator (FISA-OFERTARE 11, ETALON R1–R7); **plus ecranul tehnic „Calcul de probă"** în Zona tehnică (Admin general alege produse din catalogul real, cantități, cont, grupă, țintă, mod de prezentare, prețuri fixe; buton „Încarcă etalonul E0x"; vede rezultatul motorului pe loc). Așteptat verzi după S9: E01, E02, E04, E05, E06, E08, E11 | GATA (27.10, commit 778c589) — `preturi.ts`, `prezentare.ts`, API `/api/mot` (Admin general), ecranul „Calcul de probă" cu „Încarcă etalonul E0x"; `npm test` 168 verzi; etalon: **8 la zero** (E01, E02, E04, E05, E06, E08, E09, E11), rămân E03 4 · E07 11 · E10 4 (toate pe S10); R2 și R4 precizate în ETALON v1.2; E09 recalculat (adaosul păstrat ca procent cu 4 zecimale) |
 | S10 | Variante cu adaosul păstrat (E09), completări sub achiziție și lucrarea recalculată (E10), colaboratori — blocul de vânzări al Administratorului (E03), zona B — supliment și tabel de facturare (E07), „preia prețuri din oferta…" (fără etalon, test propriu) | NEÎNCEPUT |
 | S11 | Toate ofertele etalon verzi; ARH §5 → ÎNGHEȚAT; etichetă `v0.2-motor` | NEÎNCEPUT |
 
@@ -86,6 +86,8 @@ Decizii (17.10.2026): **domeniul aplicației este `roofdata.ro`** — separat de
 - **Etapa 8 — SCH / GEO / PAN**: schiță 2D, geometrie, panotaj — în cele cinci sub-etape din ARH §7; motorul (GEO, PAN) se construiește și se testează pe acoperișuri reale înaintea interfeței de desen.
 
 ---
+- **ASIST — asistent (vocal) prin API** (idee 27.10.2026, după Faza 3 / punerea în funcțiune): fiecare utilizator primește un token de asistent; asistentul (bot Telegram / WhatsApp cu mesaje vocale, sau uneltele expuse aplicației Claude) e un client al aceluiași API ca browserul, cu drepturile contului și jurnal pe fiecare apel; unelte în ordinea: „Aflat preț" (cap. 21) și „Calculează" (MOT) → citirea ofertelor și a statusurilor → scriere doar cu confirmare pe ecran. Nicio regulă în asistent: traduce vorbirea, citește cifrele primite, întreabă înapoi când nu e sigur.
+
 
 ## Date de furnizat de Ionuț (o singură dată)
 

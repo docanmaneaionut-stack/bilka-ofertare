@@ -57,6 +57,9 @@ export interface ContextPrezentare {
   discountImplicitPct?: Suma;
   cursAchizitie: Suma;
   cursBnr: Suma;
+  // 11.11: oferta care preia preturi nu are tinta - liniile sunt toate fixe, iar
+  // totalul e suma lor; o linie ramasa libera iese cu pret 0 (apelantul avertizeaza)
+  faraTinta?: boolean;
 }
 
 // 11.5: pretul fix normalizat in EUR fara TVA; "achizitie reala + x %" porneste
@@ -126,7 +129,7 @@ export function prezinta(ctx: ContextPrezentare, tintaFaraTvaEur: Suma, linii: L
   if (lista && dGeneral.gte(1)) throw new Error("Discountul general trebuie sa fie sub 100 %");
 
   // tinta liniilor: netul (simplu, per linie) sau totalul de lista L
-  const tintaLinii = lista ? z(gasesteTotalLista(tintaFaraTvaEur, ctx.discountGeneralPct ?? "0")) : z(tintaFaraTvaEur);
+  let tintaLinii = lista ? z(gasesteTotalLista(tintaFaraTvaEur, ctx.discountGeneralPct ?? "0")) : z(tintaFaraTvaEur);
 
   const lucru: PretLucru[] = linii.map((l) => {
     if (!l.pretFix) return { linie: l, pretDoc: ZERO, fix: false };
@@ -140,7 +143,8 @@ export function prezinta(ctx: ContextPrezentare, tintaFaraTvaEur: Suma, linii: L
   const libere = lucru.filter((p) => !p.fix);
   const valoareFixe = suma(fixe.map(valoare));
   const achizitieLibere = suma(libere.map((p) => p.linie.valoareAchizitieEur));
-  const coeficient = achizitieLibere.isZero() ? ZERO : tintaLinii.minus(valoareFixe).div(achizitieLibere);
+  if (ctx.faraTinta) tintaLinii = valoareFixe;
+  const coeficient = achizitieLibere.isZero() || ctx.faraTinta ? ZERO : tintaLinii.minus(valoareFixe).div(achizitieLibere);
   for (const p of libere) p.pretDoc = z(la2(z(p.linie.achizitieContEur).times(coeficient)));
 
   const rest = tintaLinii.minus(suma(lucru.map(valoare)));
@@ -154,7 +158,8 @@ export function prezinta(ctx: ContextPrezentare, tintaFaraTvaEur: Suma, linii: L
       return { id: p.linie.id, pretDocumentEur: la2(p.pretDoc), pretNetEur: net, pretListaEur: la2(p.pretDoc), valoareEur: val, pretFix: p.fix };
     }
     if (ctx.mod === "discount_per_linie") {
-      const dPct = p.fix ? "0" : (p.linie.discountPct ?? ctx.discountImplicitPct ?? "0");
+      // fixul are discount 0, afara de cazul in care linia poarta explicit un discount (ex. preluat din alta oferta)
+      const dPct = p.fix ? (p.linie.discountPct ?? "0") : (p.linie.discountPct ?? ctx.discountImplicitPct ?? "0");
       const d = z(dPct).div(100);
       if (d.gte(1)) throw new Error(`Discountul pe linie trebuie sa fie sub 100 % (linia ${p.linie.id})`);
       return {

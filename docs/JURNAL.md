@@ -218,3 +218,15 @@ Fiecare intrare: data, obiectivul sesiunii, rezultatul, următorul pas propus.
 - ARH §13: intrarea S9. În commit: PLAN v0.9, ETALON.md v1.2, etaloanele rescrise (Claude chat, neatinse). Fără migrări, fără schimbări în catalog, prețuri sau conturi. Serverele pornite la final (`pornire.cmd` / preview).
 
 **Următorul pas propus:** S10 — vânzările colaboratorului (cap. 19), zona B în tabelul de facturare și suplimentul (cap. 9), lucrarea cu completări (cap. 2b), variantele și „preia prețuri din oferta …” (11.7, 11.11); E03, E07, E10 la zero.
+
+## 2026-10-28 — S10: restul regulilor motorului — toate cele 11 oferte-model la zero
+
+**Obiectiv:** S10 din PLAN v0.10 — vânzările colaboratorului (E03), zona B cu supliment și tabel de facturare (E07), completarea și lucrarea recalculată (E10), varianta cu adaosul păstrat (E01 → E09), „preia prețuri din oferta …” (fără etalon, test propriu).
+
+**Rezultat:**
+- `server/src/modules/mot/`: `zonaB.ts`, `lucrare.ts`, `varianta.ts`, `preluare.ts` noi; `preturi.ts` cu baza pe linie și rândul Administratorului la colaborator; `prezentare.ts` cu modul fără țintă (preluare) și discountul explicit pe prețurile fixe; `tipuri.ts` cu ținta `preluata`, `completareLa`, `motivCompletare`, `preluataDin`, `pretFix.preluat`, `vanzari.tabel`; `calcul.ts` leagă tot.
+- Regula totalului în lei al facturii (oferta + liniile preluate în lei cu TVA) confirmată de Ionuț și notată în ARH §13.
+- Teste: `npm test` — **182 verzi** (168 + 14 pentru cele cinci puncte: colaborator, zona B inclusiv linia cu „conține TVA”, gardă refuzată pe o ofertă obișnuită la 0, lucrarea E01 + E10, varianta E01 → E09 cifră cu cifră, preluarea din E01 cu jumătate din cantități + coamă mare, preluarea din E08 cu discount per linie, renunțarea la preluare). `npm run test:etalon` — **11 la zero**.
+- ARH §13: intrarea S10. În commit: PLAN v0.10 (Claude chat, neatins). Fără migrări, fără schimbări în catalog, prețuri sau conturi; serverele au rămas pornite.
+
+**Următorul pas propus:** S11 — toate etaloanele verzi sunt; rămâne rescrierea ARH §5 după FISA-OFERTARE v1.1 și ETALON (R1–R8 + deciziile S7–S10), trecerea §5 în ÎNGHEȚAT și eticheta `v0.2-motor`; de hotărât cu Ionuț dacă S11 include și verificarea manuală prin „Calcul de probă” înainte de Etapa 3.
