@@ -230,3 +230,15 @@ Fiecare intrare: data, obiectivul sesiunii, rezultatul, următorul pas propus.
 - ARH §13: intrarea S10. În commit: PLAN v0.10 (Claude chat, neatins). Fără migrări, fără schimbări în catalog, prețuri sau conturi; serverele au rămas pornite.
 
 **Următorul pas propus:** S11 — toate etaloanele verzi sunt; rămâne rescrierea ARH §5 după FISA-OFERTARE v1.1 și ETALON (R1–R8 + deciziile S7–S10), trecerea §5 în ÎNGHEȚAT și eticheta `v0.2-motor`; de hotărât cu Ionuț dacă S11 include și verificarea manuală prin „Calcul de probă” înainte de Etapa 3.
+
+## 2026-10-28 — S11: ARH §5 rescris și înghețat, eticheta `v0.2-motor`
+
+**Obiectiv:** sesiune de documentare și înghețare, fără modificări în codul motorului: ARH §5 rescris după FISA-OFERTARE v1.1 și ETALON v1.3 (deciziile S7–S10), harta funcțiilor publice din `mot/` pentru Etapa 3, §5 → ÎNGHEȚAT, eticheta `v0.2-motor`.
+
+**Rezultat:**
+- ARH §5 (5.1–5.9): regulile scrise ca reguli, cu trimitere la capitolul din fișă care le decide și la exemplul etalon care le probează; ce a fost abandonat sau înlocuit (ml → buc, „+1 % la curs +1 % [de confirmat]”) a dispărut; harta motorului listează `calculeazaOferta`, `agregaLucrare`, `construiesteVarianta`, `preiaPreturi` / `renuntaLaPreluare`, `construiesteIntrare`, tipurile de intrare / ieșire, aritmetica comună și `/api/mot`.
+- §5 ÎNGHEȚAT cu aceeași regulă ca §4.1 / §4.2 / §6. ARH §13: intrarea S11.
+- Dovada, rulată în sesiune: `npm test` **182 verzi**, `npm run test:etalon` **11 la zero**.
+- În commit: ETALON.md v1.3 și PLAN v0.11 (Claude chat, neatinse). Eticheta `v0.2-motor` pe commit-ul sesiunii. Serverele au rămas pornite.
+
+**Următorul pas propus:** Etapa 3 — ofertarea și documentele (OFE + DOC): ecranul de ofertă apelează motorul prin harta din §5.9; preluarea automată a cursului BNR; testele manuale ale lui Ionuț încep acolo.
