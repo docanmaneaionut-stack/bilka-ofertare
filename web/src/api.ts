@@ -613,9 +613,131 @@ export type OfertaDetaliu = {
   sipci: unknown[];
   zonaB: unknown[];
   structura?: { rezultat: StructuraOferta | null; eroare: string | null } | null;
+  // S14: preturile (filtrate pe rol pe server), versiunile, "preturi vechi", preluarea
+  preturi?: { rezultat: RezultatPreturi | null; eroare: string | null } | null;
+  versiuni?: VersiuneOferta[];
+  preturiVechi?: boolean;
+  preluataDin?: { id: string; numarComplet: string } | null;
+  discountGeneralPct?: string | null;
+  discountImplicitPct?: string | null;
   poateModifica: boolean;
   createdAt: string;
   updatedAt: string;
+};
+
+// S14: rezultatul motorului cu preturi, asa cum pleaca spre ecran (Agentul nu
+// primeste pretul de baza; Administratorul il primeste)
+export type LiniePret = {
+  id: string;
+  cod: string;
+  denumire: string;
+  rubrica: string;
+  um: string;
+  cantitate: string;
+  bazaEur?: string;
+  achizitieContEur: string;
+  achizitieRealaEur: string;
+  achizitieContLeiCuTva: string;
+  pretDocumentEur: string;
+  valoareEur: string;
+  pretListaEur?: string;
+  discountPct?: string;
+  pretNetEur?: string;
+  pretFix: boolean;
+  pretFixPreluat: boolean;
+  achizitieRealaDocEur: string;
+  subAchizitie: boolean;
+  pachet?: string;
+};
+
+export type RandVanzari = { pretVanzareLei: string; costAchizitieLei: string; adaosNetLei: string; adaosBrutLei: string; tabel: "propriu" | "administrator"; nota?: string };
+
+export type RezultatPreturi = {
+  cursBnr: string;
+  cursAchizitie: string;
+  linii: LiniePret[];
+  totaluri: {
+    achizitieContEurFaraTva: string;
+    achizitieContLeiFaraTva: string;
+    achizitieContLeiCuTva: string;
+    achizitieRealaLeiCuTva: string;
+    tintaLeiCuTva: string;
+    adaosRealPct: string;
+    adaosRealPctExact: string;
+    marjaLei: string;
+    documentFaraTvaEur: string;
+    tvaEur: string;
+    documentCuTvaEur: string;
+    documentTotalLei: string;
+    totalListaFaraTvaEur?: string;
+    discountGeneralEur?: string;
+  };
+  vanzari: RandVanzari | null;
+  lucrare: RandVanzari | null;
+  abatereEur: string;
+  garda: { respectata: boolean; liniiSubAchizitie: string[]; aplicata: boolean };
+  zonaB?: { suplimentTotalLei: string; tabelFacturare: { faraTvaEur: string; tvaEur: string; cuTvaEur: string; totalLei: string } };
+  avertizari: string[];
+  comandabil: { da: boolean; motive: string[] };
+};
+
+export type VersiuneOferta = { id: string; versiune: number; curenta: boolean; status: StatusOferta; tintaTip: string; tintaValoare: string; updatedAt: string };
+
+export type TipPretFixIntrare = "eur_fara_tva" | "eur_cu_tva" | "lei_fara_tva" | "lei_cu_tva" | "achizitie_plus_pct";
+
+export type DatePreturi = {
+  tinta?: { tip: "ADAOS_PCT" | "TOTAL_CU_TVA_LEI"; valoare: string };
+  modPrezentare?: "SIMPLU" | "LISTA_DISCOUNT_GENERAL" | "DISCOUNT_PER_LINIE";
+  discountGeneralPct?: string | null;
+  discountImplicitPct?: string | null;
+  linii?: { id: string; pretFix?: { tip: TipPretFixIntrare; valoare: string } | null; discountPct?: string | null }[];
+};
+
+export type SursaPreluare = { id: string; numarComplet: string; versiune: number; data: string; status: StatusOferta; client: { nume: string; localitate: string | null } };
+
+// eroarea gardei: serverul refuza cu 409 si intoarce liniile vinovate
+export class EroareGarda extends Error {
+  linii: { id: string; cod: string; denumire: string }[];
+  constructor(message: string, linii: { id: string; cod: string; denumire: string }[]) {
+    super(message);
+    this.linii = linii;
+  }
+}
+
+async function cererePreturi<T>(cale: string, optiuni?: RequestInit): Promise<T> {
+  const raspuns = await fetch(`${BAZA_API}${cale}`, { credentials: "include", headers: { "Content-Type": "application/json" }, ...optiuni });
+  if (!raspuns.ok) {
+    const corp = await raspuns.json().catch(() => ({}));
+    if (raspuns.status === 409 && Array.isArray(corp.liniiSubAchizitie)) throw new EroareGarda(corp.eroare ?? "Sub achiziție", corp.liniiSubAchizitie);
+    throw new Error(corp.eroare ?? `Cerere esuata (${raspuns.status})`);
+  }
+  return raspuns.json() as Promise<T>;
+}
+
+export const apiPreturi = {
+  salveaza: (id: string, date: DatePreturi) => cererePreturi<{ oferta: OfertaDetaliu }>(`/api/oferte/${id}/preturi`, { method: "PUT", body: JSON.stringify(date) }),
+  varianta: (id: string) => cerere<{ oferta: OfertaDetaliu }>(`/api/oferte/${id}/varianta`, { method: "POST" }),
+  faCurenta: (id: string) => cerere<{ oferta: OfertaDetaliu }>(`/api/oferte/${id}/curenta`, { method: "PUT" }),
+  surse: (id: string, q: string) => cerere<{ oferte: SursaPreluare[] }>(`/api/oferte/${id}/surse-preluare?q=${encodeURIComponent(q)}`),
+  preia: (id: string, sursaId: string) => cererePreturi<{ oferta: OfertaDetaliu }>(`/api/oferte/${id}/preia-preturi`, { method: "POST", body: JSON.stringify({ sursaId }) }),
+  renunta: (id: string, tinta: { tip: "ADAOS_PCT" | "TOTAL_CU_TVA_LEI"; valoare: string }) => cererePreturi<{ oferta: OfertaDetaliu }>(`/api/oferte/${id}/renunta-preluare`, { method: "POST", body: JSON.stringify({ tinta }) }),
+  completare: (id: string, motiv: string, text: string | null) => cerere<{ oferta: OfertaDetaliu }>(`/api/oferte/${id}/completare`, { method: "POST", body: JSON.stringify({ motiv, text }) }),
+  curs: (id: string) => cerere<{ oferta: OfertaDetaliu }>(`/api/oferte/${id}/curs`, { method: "POST" }),
+  recalculeaza: (id: string) => cerere<{ oferta: OfertaDetaliu }>(`/api/oferte/${id}/recalculeaza-preturi`, { method: "POST" }),
+};
+
+export const apiOptiuni = {
+  lista: (lista: "motiv_completare" | "sursa_client") => cerere<{ lista: string; optiuni: { valoare: string; ordine: number }[] }>(`/api/oferte/optiuni/${lista}`),
+};
+
+export type PretRapid = {
+  produs: ProdusEditor;
+  pret: { achizitieContEur: string; achizitieContLeiCuTva: string; um: string; cursAchizitie: string; dataCurs: string; avertizareCurs: string | null; pretBazaEur?: string };
+};
+
+export const apiPretRapid = {
+  cauta: (q: string) => cerere<{ produse: ProdusEditor[] }>(`/api/pret-rapid?q=${encodeURIComponent(q)}`),
+  pret: (produsId: string) => cerere<PretRapid>(`/api/pret-rapid/${produsId}`),
 };
 
 export type AntetOferta = { data?: string; sursaClient?: string | null; note?: string | null; adresaLucrarii?: string | null; localitate?: string | null };

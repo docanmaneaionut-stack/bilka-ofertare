@@ -90,6 +90,20 @@ export const trepteDesfasurataRouter = creeazaRuterReferinta({
   }),
 });
 
+// listele de optiuni configurabile (S14): motivele completarii, sursa clientului
+export const optiuniListeRouter = creeazaRuterReferinta({
+  entitate: "OptiuneLista",
+  model: prisma.optiuneLista,
+  orderBy: [{ lista: "asc" }, { ordine: "asc" }, { valoare: "asc" }],
+  campuri: ["lista", "valoare", "ordine", "activ"],
+  schema: z.object({
+    lista: z.enum(["motiv_completare", "sursa_client"]),
+    valoare: z.string().trim().min(1),
+    ordine: z.number().int().optional().default(0),
+    activ: z.boolean().optional().default(true),
+  }),
+});
+
 export const categoriiOfertaRouter = creeazaRuterReferinta({
   entitate: "CategorieOferta",
   model: prisma.categorieOferta,

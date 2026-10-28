@@ -293,3 +293,20 @@ Fiecare intrare: data, obiectivul sesiunii, rezultatul, următorul pas propus.
 **De verificat de Ionuț:** pe o ofertă „În lucru”: adaugă a doua învelitoare cu același produs în altă culoare, cu accesorii proprii → rezultatul arată P1 și P2; la Șipcă gard apasă „+ Adaugă rubrică șipcă” și completează al doilea model → „Șipcă A” și „Șipcă B”, textul formularelor spune că a doua merge pe formular separat.
 
 **Următorul pas propus:** S14 — prețurile în ofertă (cap. 11, 21): zona de țintă, modul de prezentare, prețurile fixe, garda, abaterea, totalurile, „Creează variantă”, „Preia prețuri din oferta…”, „Completare la…”, reîmprospătarea cursului, ecranul „Află preț”; testul de capăt E01 din ecran = etalon — prima verificare manuală a lui Ionuț.
+
+## 2026-10-28 — S14: prețurile în ofertă (zona de țintă, prezentarea, garda, varianta, preluarea, completarea, cursul, „Află preț”)
+
+**Obiectiv:** PLAN v0.15 S14 — prețurile în ofertă prin API-ul real al ecranului, cu motorul neatins (apelat prin ARH §5.9); testul de capăt: ofertele-model construite din editor + prețuri dau exact cifrele etalon.
+
+**Rezultat:**
+- Migrarea 9 (doar tabelul `optiune_lista`), `npm run seed` idempotent din `docs/import/configurare/optiuni-liste.csv` (rulat pe baza de dezvoltare: 10 valori), README de instalare (migrări → seed → prima pornire; seed după restaurare), tabelul în export și în Zona tehnică → Referințe.
+- Serverul: zona de prețuri cu normalizarea prețului fix, garda ca refuz 409 cu liniile vinovate, blocul `preturi` filtrat pe rol, varianta, preluarea și renunțarea, completarea, cursul, „prețuri vechi · recalculează”, „Află preț”.
+- Ecranul: panoul „Prețuri” în pagina ofertei, „Creează variantă”, „Completare la această ofertă” (motiv din listă), versiunile cu „Fă-o curentă”, sursa clientului din listă, pagina „Află preț” lângă lista de oferte.
+- Teste: `npm test` — **245 verzi**; `npm run test:etalon` — 12 la zero. Prin API: E01, E02, E04, E05, E08, E12 exact; E09 ca variantă; E10 ca completare cu lucrarea agregată; garda; filtrarea pe rol; preluarea; cursul; „Află preț”; listele.
+- ARH §4.3 (Completări S14), §13; în commit PLAN v0.15 și etaloanele cu câmpul `format` aranjat (neatinse de Code).
+
+**De semnalat:** legarea ulterioară a unei oferte existente ca completare (cap. 2b, „sau ulterior”) nu e făcută — se poate adăuga la S15, odată cu statusurile.
+
+**De verificat de Ionuț (nu a existat cont de test în sesiune):** pe o ofertă cu produse: scrie totalul discutat (ex. 17.000) → totalurile și prețurile pe linii se refac pe loc; pune un preț fix pe țiglă („achiziție + 5 %”); încearcă o țintă sub achiziție → mesaj cu liniile colorate, valoarea revine; schimbă modul pe „listă + discount general” cu 25 %; „Creează variantă” și schimbă modelul; „Completare la această ofertă”; „Află preț” cu „clasic mat”.
+
+**Următorul pas propus:** S15 — statusurile, istoricul, montatorul și trecerea în comandă (minim): cele 8 statusuri cu regula de ordine, „Acceptată” face varianta curentă, istoricul de la „Transmisă”, notițe și atașamente, montatori cu autocompletare, recomandarea, „Comandat” îngheață produsele și salvează rezultatul motorului + rândul de comandă minim.

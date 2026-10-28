@@ -131,6 +131,33 @@ export const REFERINTE: ConfigReferinta[] = [
   },
 ];
 
+// (S14) listele de optiuni configurabile: motivele completarii (cap. 2b), sursa clientului (cap. 2)
+REFERINTE.push({
+  cheie: "optiuni-liste",
+  cale: "optiuni-liste",
+  titlu: "Liste de opțiuni (motivele completării, sursa clientului)",
+  titluScurt: "Liste de opțiuni",
+  descriere:
+    "Valorile din listele derulante ale ofertei: „motiv_completare” (cap. 2b) și „sursa_client” (cap. 2). Valorile inițiale vin din docs/import/configurare/optiuni-liste.csv prin npm run seed; aici se adaugă, se reordonează sau se dezactivează — nimic nu se șterge.",
+  coloane: [
+    {
+      cheie: "lista",
+      eticheta: "Lista",
+      tip: "select",
+      obligatoriu: true,
+      implicit: "motiv_completare",
+      latime: "180px",
+      optiuni: [
+        { valoare: "motiv_completare", eticheta: "motiv_completare" },
+        { valoare: "sursa_client", eticheta: "sursa_client" },
+      ],
+    },
+    { cheie: "valoare", eticheta: "Valoare", tip: "text", obligatoriu: true },
+    { cheie: "ordine", eticheta: "Ordine", tip: "numar", obligatoriu: true, latime: "100px", implicit: 0 },
+    ACTIV,
+  ],
+});
+
 export function gasesteReferinta(cheie: string | undefined) {
   return REFERINTE.find((r) => r.cheie === cheie);
 }

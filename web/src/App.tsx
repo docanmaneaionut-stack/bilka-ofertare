@@ -20,6 +20,7 @@ import { CursBnr } from "./pages/CursBnr";
 import { Ofertare } from "./pages/Ofertare";
 import { Oferte } from "./pages/Oferte";
 import { OfertaNoua } from "./pages/OfertaNoua";
+import { AflaPret } from "./pages/AflaPret";
 import { OfertaDetaliu } from "./pages/OfertaDetaliu";
 import { ClientFisa } from "./pages/ClientFisa";
 import { ContulMeu, ETICHETA_ROL, SchimbaParolaObligatoriu } from "./pages/ContulMeu";
@@ -92,6 +93,7 @@ export default function App() {
           <Route path="/oferte" element={<Ofertare utilizator={utilizator} onLogout={iesiDinCont} />}>
             <Route index element={<Oferte />} />
             {faceOferte && <Route path="noua" element={<OfertaNoua />} />}
+            <Route path="afla-pret" element={<AflaPret />} />
             <Route path=":id" element={<OfertaDetaliu />} />
           </Route>
         )}

@@ -105,9 +105,9 @@ export function Oferte() {
             aria-label="Caută"
             style={{ minWidth: 320 }}
           />
-          <button className="buton secundar" disabled title="vine în S14">
+          <Link className="buton secundar" to="/oferte/afla-pret">
             Află preț
-          </button>
+          </Link>
           {faceOferte && (
             <Link className="buton" to="/oferte/noua">
               + Ofertă nouă
@@ -247,7 +247,7 @@ export function Oferte() {
                 ? "Vezi toate firmele; filtrul „Firma” și marcajul „Client cu mai multe oferte” (același telefon) sunt doar aici."
                 : "Vezi doar ofertele tale."}
           </li>
-          <li>„+ Ofertă nouă” cere antetul și clientul și salvează oferta „În lucru”. Produsele vin în S13, prețurile în S14, PDF-urile în S16; „Află preț” în S14.</li>
+          <li>„+ Ofertă nouă” cere antetul și clientul și salvează oferta „În lucru”. Prețurile și „Află preț” sunt gata; PDF-urile vin în S16.</li>
           <li>Nimic nu se șterge: o ofertă făcută din greșeală trece la „Neacceptată”.</li>
         </ul>
       </Ajutor>

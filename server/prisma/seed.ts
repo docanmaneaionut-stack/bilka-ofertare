@@ -2,6 +2,7 @@ import "dotenv/config";
 import { prisma } from "../src/db/prisma.js";
 import { hashParola } from "../src/modules/accounts/auth.js";
 import { CATEGORII_OFERTA_IMPLICITE } from "../src/modules/cat/categoriiImplicite.js";
+import { incarcaOptiuniListe } from "../src/modules/adm/optiuniListe.js";
 
 function requiredEnv(name: string): string {
   const value = process.env[name];
@@ -68,6 +69,11 @@ async function main() {
   );
 
   await creeazaCategoriiOferta();
+
+  // listele de optiuni configurabile (S14): din docs/import/configurare/optiuni-liste.csv,
+  // idempotent - doar ce lipseste; ce a modificat Admin general ramane
+  const adaugate = await incarcaOptiuniListe(prisma);
+  console.log(`Liste de optiuni: ${adaugate} valori adaugate (restul existau deja).`);
 }
 
 main()

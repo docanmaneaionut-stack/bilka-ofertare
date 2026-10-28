@@ -1,0 +1,11 @@
+﻿lista;valoare;ordine;activ
+motiv_completare;Greșeala agentului;1;da
+motiv_completare;Greșeala montatorului;2;da
+motiv_completare;Clientul mai vrea ceva după comandă;3;da
+motiv_completare;Altele;9;da
+sursa_client;Recomandare montator / constructor;1;da
+sursa_client;Client vechi;2;da
+sursa_client;Reclamă;3;da
+sursa_client;Online;4;da
+sursa_client;Trecere pe la sediu;5;da
+sursa_client;Altele;9;da

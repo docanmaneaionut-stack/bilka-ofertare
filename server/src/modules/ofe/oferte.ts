@@ -1,5 +1,5 @@
 import type { Prisma, StatusOferta, Utilizator } from "@prisma/client";
-import { Router } from "express";
+import { Router, type Response } from "express";
 import { z } from "zod";
 import { prisma } from "../../db/prisma.js";
 import { env } from "../../env.js";
@@ -7,7 +7,26 @@ import { cereAutentificare, cereRol } from "../accounts/middleware.js";
 import { scrieCreare, scrieModificari } from "../adm/jurnal.js";
 import { cursulZilei, EroareCurs } from "../curs/serviciu.js";
 import { clientPublic, gasesteSauCreeazaClient, normalizeazaTelefon, numarComplet, schemaClient } from "./clienti.js";
+import { optiunileListei } from "../adm/optiuniListe.js";
 import { catalogEditorRouter } from "./catalog.js";
+import {
+  blocPreturi,
+  creeazaCompletare,
+  creeazaVarianta,
+  EroareGarda,
+  EroarePreturi,
+  faCurenta,
+  suntPreturiVechi,
+  preiaPreturiDinOferta,
+  recalculeazaPreturiDeBaza,
+  reimprospateazaCursul,
+  renuntaLaPreluare,
+  salveazaPreturi,
+  schemaCompletare,
+  schemaPreturi,
+  surseDePreluare,
+  versiunile,
+} from "./preturi.js";
 import { calculeazaStructura, EroareProduse, salveazaProduse, schemaProduse } from "./produse.js";
 import { seteazaContor, urmatorulNumar } from "./numerotare.js";
 import { filtruVizibilitateOferte, poateModificaOferta, poateVedeaOferta, ROLURI_CU_OFERTE, vedePreturiDeBaza } from "./vizibilitate.js";
@@ -21,6 +40,16 @@ export const oferteRouter = Router();
 oferteRouter.use(cereAutentificare);
 // catalogul pentru editor (inainte de rutele cu :id)
 oferteRouter.use("/catalog", catalogEditorRouter);
+
+// listele de optiuni configurabile (S14): motivele completarii, sursa clientului
+oferteRouter.get("/optiuni/:lista", async (req, res) => {
+  const lista = String(req.params.lista);
+  if (!["motiv_completare", "sursa_client"].includes(lista)) {
+    res.status(404).json({ eroare: "Listă necunoscută" });
+    return;
+  }
+  res.json({ lista, optiuni: await optiunileListei(prisma, lista) });
+});
 
 const STATUSURI: StatusOferta[] = ["IN_LUCRU", "TRANSMISA", "DE_REVIZIONAT", "ACCEPTATA", "NEACCEPTATA", "AVANS_LUAT", "DE_COMANDAT", "COMANDAT"];
 
@@ -287,6 +316,7 @@ async function detaliu(id: string, u: Utilizator) {
       firma: { select: { id: true, denumire: true, cui: true, nrRegCom: true, adresa: true, telefon: true, email: true, localitate: true, judet: true } },
       utilizator: { select: { id: true, nume: true, telefon: true, email: true, serieOferta: true } },
       completareLa: { select: { id: true, serie: true, numar: true } },
+      preluataDin: { select: { id: true, serie: true, numar: true } },
       completari: { where: { curenta: true }, select: { id: true, serie: true, numar: true, motivCompletare: true, status: true } },
       listaPret: { select: { id: true, denumire: true, status: true } },
       invelitori: { orderBy: { ordine: "asc" }, include: { panotaj: { orderBy: { ordine: "asc" } } } },
@@ -296,6 +326,7 @@ async function detaliu(id: string, u: Utilizator) {
     },
   });
   const cuPreturi = vedePreturiDeBaza(u);
+  const preturiVechi = await suntPreturiVechi([...o.invelitori, ...o.linii]);
   const faraBaza = <T extends { pretBazaEur: unknown }>(x: T) => {
     if (cuPreturi) return x;
     const { pretBazaEur, ...rest } = x;
@@ -327,6 +358,10 @@ async function detaliu(id: string, u: Utilizator) {
     discountGeneralPct: o.discountGeneralPct?.toString() ?? null,
     discountImplicitPct: o.discountImplicitPct?.toString() ?? null,
     tinta: { tip: o.tintaTip, valoare: o.tintaValoare.toString() },
+    // "⚠ preturi vechi" (11.8): un pret de baza din snapshot difera de lista activa a produsului
+    preturiVechi,
+    preluataDin: o.preluataDin ? { id: o.preluataDin.id, numarComplet: numarComplet(o.preluataDin.serie, o.preluataDin.numar) } : null,
+    versiuni: await versiunile(o.serie, o.numar),
     grupaPct: o.grupaPct.toString(),
     completareLa: o.completareLa ? { id: o.completareLa.id, numarComplet: numarComplet(o.completareLa.serie, o.completareLa.numar) } : null,
     motivCompletare: o.motivCompletare,
@@ -338,6 +373,7 @@ async function detaliu(id: string, u: Utilizator) {
     sipci: o.sipci.map((s) => ({ ...s, latimeSipcaMm: s.latimeSipcaMm.toString(), tronsoane: s.tronsoane.map((t) => ({ ...t, lungimeSipcaM: t.lungimeSipcaM.toString(), lungimeTronsonM: t.lungimeTronsonM.toString(), distantaMm: t.distantaMm.toString() })) })),
     zonaB: o.zonaB.map((zb) => ({ ...zb, cantitate: zb.cantitate.toString(), sumaLei: zb.sumaLei.toString() })),
     structura: await calculeazaStructura(o.id),
+    preturi: await blocPreturi(o.id, u),
     poateModifica: poateModificaOferta(u, o),
     creatDeId: o.creatDeId,
     modificatDeId: o.modificatDeId,
@@ -406,6 +442,165 @@ oferteRouter.put("/:id/client", async (req, res) => {
     }
   });
   res.json({ oferta: await detaliu(r.oferta.id, u) });
+});
+
+// ------------------------------------------------------------- preturi (S14)
+
+function raspundeEroarePreturi(res: Response, e: unknown): boolean {
+  if (e instanceof EroareGarda) {
+    res.status(409).json({ eroare: e.message, liniiSubAchizitie: e.linii });
+    return true;
+  }
+  if (e instanceof EroarePreturi) {
+    res.status(e.status).json({ eroare: e.message });
+    return true;
+  }
+  if (e instanceof EroareCurs) {
+    res.status(409).json({ eroare: e.message });
+    return true;
+  }
+  return false;
+}
+
+// tinta, modul de prezentare, preturile fixe si discounturile pe linie (cap. 11);
+// garda refuza cu 409 si liniile vinovate, fara sa salveze nimic
+oferteRouter.put("/:id/preturi", async (req, res) => {
+  const r = await incarcaCuDrepturi(req, true);
+  if (r.eroare) {
+    res.status(r.eroare.status).json({ eroare: r.eroare.mesaj });
+    return;
+  }
+  const date = schemaPreturi.parse(req.body);
+  try {
+    await salveazaPreturi(r.oferta.id, date, req.utilizator!);
+  } catch (e) {
+    if (raspundeEroarePreturi(res, e)) return;
+    throw e;
+  }
+  res.json({ oferta: await detaliu(r.oferta.id, req.utilizator!) });
+});
+
+// 11.7: "Creeaza varianta" - versiune noua sub acelasi numar
+oferteRouter.post("/:id/varianta", async (req, res) => {
+  const r = await incarcaCuDrepturi(req, true);
+  if (r.eroare) {
+    res.status(r.eroare.status).json({ eroare: r.eroare.mesaj });
+    return;
+  }
+  const u = req.utilizator!;
+  const id = await creeazaVarianta(r.oferta.id, u);
+  await scrieCreare(u, "Oferta", id);
+  res.status(201).json({ oferta: await detaliu(id, u) });
+});
+
+// versiunea curenta a numarului (cea acceptata o va face automat S15)
+oferteRouter.put("/:id/curenta", async (req, res) => {
+  const r = await incarcaCuDrepturi(req, true);
+  if (r.eroare) {
+    res.status(r.eroare.status).json({ eroare: r.eroare.mesaj });
+    return;
+  }
+  await faCurenta(r.oferta.id, req.utilizator!);
+  res.json({ oferta: await detaliu(r.oferta.id, req.utilizator!) });
+});
+
+// 11.11: "Preia preturi din oferta ..." - ofertele vizibile contului, cu produse
+oferteRouter.get("/:id/surse-preluare", async (req, res) => {
+  const r = await incarcaCuDrepturi(req, false);
+  if (r.eroare) {
+    res.status(r.eroare.status).json({ eroare: r.eroare.mesaj });
+    return;
+  }
+  const q = typeof req.query.q === "string" ? req.query.q : undefined;
+  res.json({ oferte: await surseDePreluare(req.utilizator!, r.oferta.id, q) });
+});
+
+oferteRouter.post("/:id/preia-preturi", async (req, res) => {
+  const r = await incarcaCuDrepturi(req, true);
+  if (r.eroare) {
+    res.status(r.eroare.status).json({ eroare: r.eroare.mesaj });
+    return;
+  }
+  const { sursaId } = z.object({ sursaId: z.string().min(1) }).parse(req.body);
+  try {
+    await preiaPreturiDinOferta(r.oferta.id, sursaId, req.utilizator!);
+  } catch (e) {
+    if (raspundeEroarePreturi(res, e)) return;
+    throw e;
+  }
+  res.json({ oferta: await detaliu(r.oferta.id, req.utilizator!) });
+});
+
+oferteRouter.post("/:id/renunta-preluare", async (req, res) => {
+  const r = await incarcaCuDrepturi(req, true);
+  if (r.eroare) {
+    res.status(r.eroare.status).json({ eroare: r.eroare.mesaj });
+    return;
+  }
+  const { tinta } = z.object({ tinta: z.object({ tip: z.enum(["ADAOS_PCT", "TOTAL_CU_TVA_LEI"]), valoare: z.string().trim().regex(/^-?\d+([.,]\d+)?$/) }) }).parse(req.body);
+  try {
+    await renuntaLaPreluare(r.oferta.id, tinta, req.utilizator!);
+  } catch (e) {
+    if (raspundeEroarePreturi(res, e)) return;
+    throw e;
+  }
+  res.json({ oferta: await detaliu(r.oferta.id, req.utilizator!) });
+});
+
+// cap. 2b: "Completare la aceasta oferta" - oferta noua, legata de cea initiala
+oferteRouter.post("/:id/completare", cereRol(...ROLURI_CU_OFERTE), async (req, res) => {
+  const r = await incarcaCuDrepturi(req, false);
+  if (r.eroare) {
+    res.status(r.eroare.status).json({ eroare: r.eroare.mesaj });
+    return;
+  }
+  const u = req.utilizator!;
+  if (!poateModificaOferta(u, r.oferta)) {
+    res.status(403).json({ eroare: "Completarea o face cine a făcut oferta inițială sau Administratorul firmei" });
+    return;
+  }
+  const date = schemaCompletare.parse(req.body);
+  let id: string;
+  try {
+    id = await creeazaCompletare(r.oferta.id, date, u);
+  } catch (e) {
+    if (raspundeEroarePreturi(res, e)) return;
+    throw e;
+  }
+  await scrieCreare(u, "Oferta", id);
+  res.status(201).json({ oferta: await detaliu(id, u) });
+});
+
+// 11.8: "Reimprospateaza cursul" cat e "In lucru"
+oferteRouter.post("/:id/curs", async (req, res) => {
+  const r = await incarcaCuDrepturi(req, true);
+  if (r.eroare) {
+    res.status(r.eroare.status).json({ eroare: r.eroare.mesaj });
+    return;
+  }
+  try {
+    await reimprospateazaCursul(r.oferta.id, req.utilizator!);
+  } catch (e) {
+    if (raspundeEroarePreturi(res, e)) return;
+    throw e;
+  }
+  res.json({ oferta: await detaliu(r.oferta.id, req.utilizator!) });
+});
+
+// "⚠ preturi vechi · recalculeaza": snapshot-urile de baza din lista activa
+oferteRouter.post("/:id/recalculeaza-preturi", async (req, res) => {
+  const r = await incarcaCuDrepturi(req, true);
+  if (r.eroare) {
+    res.status(r.eroare.status).json({ eroare: r.eroare.mesaj });
+    return;
+  }
+  try {
+    await recalculeazaPreturiDeBaza(r.oferta.id, req.utilizator!);
+  } catch (e) {
+    if (raspundeEroarePreturi(res, e)) return;
+    throw e;
+  }
+  res.json({ oferta: await detaliu(r.oferta.id, req.utilizator!) });
 });
 
 // zona produselor (cap. 3-10): salvare automata cu snapshot, apoi structura din motor

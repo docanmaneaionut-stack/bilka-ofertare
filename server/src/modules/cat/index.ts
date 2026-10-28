@@ -7,6 +7,7 @@ import {
   culoriFinisajGrosimeRouter,
   garantiiFinisajGrosimeRouter,
   listeImpliciteOfertaRouter,
+  optiuniListeRouter,
   trepteDesfasurataRouter,
   varianteProfilRouter,
 } from "./referinte.js";
@@ -22,3 +23,4 @@ catRouter.use("/referinte/garantii-finisaj-grosime", garantiiFinisajGrosimeRoute
 catRouter.use("/referinte/liste-implicite-oferta", listeImpliciteOfertaRouter);
 catRouter.use("/referinte/trepte-desfasurata", trepteDesfasurataRouter);
 catRouter.use("/referinte/categorii-oferta", categoriiOfertaRouter);
+catRouter.use("/referinte/optiuni-liste", optiuniListeRouter);

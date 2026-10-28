@@ -15,6 +15,7 @@
     "prisma:migrate": "prisma migrate dev",
     "prisma:migrate:create": "prisma migrate dev --create-only",
     "prisma:seed": "tsx prisma/seed.ts",
+    "seed": "tsx prisma/seed.ts",
     "restore": "tsx scripts/restore.ts",
     "verifica:catalog": "tsx scripts/verifica-catalog.ts"
   },

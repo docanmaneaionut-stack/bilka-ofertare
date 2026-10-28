@@ -33,6 +33,7 @@ export const MODELE_EXPORT = [
   "GarantieFinisajGrosime",
   "ListaImplicitaOferta",
   "TreaptaDesfasurata",
+  "OptiuneLista",
   "ImportPropunere",
   "JurnalIntrare",
   "JurnalAutentificare",

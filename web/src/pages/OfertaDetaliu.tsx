@@ -1,8 +1,9 @@
 import { useEffect, useState, type FormEvent } from "react";
-import { Link, useParams } from "react-router-dom";
-import { apiOferte, dataRo, ETICHETA_STATUS, type ClientDate, type OfertaDetaliu as Oferta } from "../api";
+import { Link, useNavigate, useParams } from "react-router-dom";
+import { apiOferte, apiOptiuni, apiPreturi, dataRo, ETICHETA_STATUS, type ClientDate, type OfertaDetaliu as Oferta } from "../api";
 import { clientGol, dinClient, FormularClient } from "../components/FormularClient";
 import { Ajutor, Camp, Mesaj, textEroare } from "../components/ui";
+import { Preturi } from "./oferta/Preturi";
 import { Produse } from "./oferta/Produse";
 
 // Pagina ofertei (S12): antetul si clientul se editeaza; zona produselor vine la
@@ -19,6 +20,32 @@ export function OfertaDetaliu() {
   const [adresaLucrarii, setAdresaLucrarii] = useState("");
   const [localitate, setLocalitate] = useState("");
   const [seSalveaza, setSeSalveaza] = useState(false);
+  const [surseClient, setSurseClient] = useState<string[]>([]);
+  const [motive, setMotive] = useState<string[]>([]);
+  const [completare, setCompletare] = useState<{ motiv: string; text: string } | null>(null);
+  const [lucru, setLucru] = useState<string | null>(null);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    apiOptiuni.lista("sursa_client").then((r) => setSurseClient(r.optiuni.map((o) => o.valoare))).catch(() => setSurseClient([]));
+    apiOptiuni.lista("motiv_completare").then((r) => setMotive(r.optiuni.map((o) => o.valoare))).catch(() => setMotive([]));
+  }, []);
+
+  async function actiune(ce: string, f: () => Promise<Oferta | void>) {
+    setEroare(null);
+    setLucru(ce);
+    try {
+      const o = await f();
+      if (o) {
+        if (o.id !== id) navigate(`/oferte/${o.id}`);
+        else preia(o);
+      }
+    } catch (err) {
+      setEroare(textEroare(err));
+    } finally {
+      setLucru(null);
+    }
+  }
 
   function preia(o: Oferta) {
     setOferta(o);
@@ -77,9 +104,19 @@ export function OfertaDetaliu() {
           <Link className="buton secundar" to="/oferte">
             ← Oferte
           </Link>
-          <button className="buton secundar" disabled title="vine în S14">
+          <Link className="buton secundar" to="/oferte/afla-pret">
             Află preț
-          </button>
+          </Link>
+          {oferta.poateModifica && (
+            <button className="buton secundar" type="button" disabled={lucru !== null} onClick={() => actiune("varianta", async () => (await apiPreturi.varianta(oferta.id)).oferta)} title="Versiune nouă sub același număr, cu adaosul real păstrat (11.7)">
+              Creează variantă
+            </button>
+          )}
+          {oferta.poateModifica && !oferta.completareLa && (
+            <button className="buton secundar" type="button" disabled={lucru !== null} onClick={() => setCompletare({ motiv: motive[0] ?? "", text: "" })} title="Ofertă nouă legată de aceasta (cap. 2b)">
+              Completare la această ofertă
+            </button>
+          )}
           <button className="buton secundar" disabled title="vine în S16">
             PDF ▾
           </button>
@@ -87,6 +124,56 @@ export function OfertaDetaliu() {
       </div>
 
       {c.avertizareCurs && <Mesaj tip="avertizare">{c.avertizareCurs}</Mesaj>}
+      {(oferta.versiuni?.length ?? 0) > 1 && (
+        <section className="panou">
+          <h2>Versiuni (variante de preț)</h2>
+          <ul>
+            {oferta.versiuni!.map((v) => (
+              <li key={v.id}>
+                {v.id === oferta.id ? <strong>varianta {v.versiune}</strong> : <Link to={`/oferte/${v.id}`}>varianta {v.versiune}</Link>} · {ETICHETA_STATUS[v.status]}
+                {v.curenta ? " · curentă" : ""}
+                {!v.curenta && oferta.poateModifica && (
+                  <>
+                    {" "}
+                    <button className="buton secundar mic" type="button" disabled={lucru !== null} onClick={() => actiune("curenta", async () => (await apiPreturi.faCurenta(v.id)).oferta)}>
+                      Fă-o curentă
+                    </button>
+                  </>
+                )}
+              </li>
+            ))}
+          </ul>
+          <p className="mic text-secundar">Lista de oferte arată doar versiunea curentă; la S15, „Acceptată” o face curentă automat.</p>
+        </section>
+      )}
+      {completare && (
+        <section className="panou">
+          <h2>Completare la {oferta.numarComplet}</h2>
+          <div className="rand-campuri">
+            <Camp eticheta="Motivul" obligatoriu>
+              <select value={completare.motiv} onChange={(e) => setCompletare({ ...completare, motiv: e.target.value })}>
+                {motive.map((m) => (
+                  <option key={m} value={m}>
+                    {m}
+                  </option>
+                ))}
+              </select>
+            </Camp>
+            <Camp eticheta="Precizări">
+              <input type="text" value={completare.text} onChange={(e) => setCompletare({ ...completare, text: e.target.value })} />
+            </Camp>
+          </div>
+          <div className="actiuni">
+            <button className="buton" type="button" disabled={lucru !== null || !completare.motiv} onClick={() => actiune("completare", async () => (await apiPreturi.completare(oferta.id, completare.motiv, completare.text || null)).oferta)}>
+              Creează completarea
+            </button>
+            <button className="buton secundar" type="button" onClick={() => setCompletare(null)}>
+              Renunță
+            </button>
+          </div>
+          <p className="mic text-secundar">Oferta nouă primește numărul ei, preia clientul, adresa lucrării și sursa; garda nu se aplică (poate fi la 0), iar vânzările se văd pe lucrare.</p>
+        </section>
+      )}
 
       <form className="formular" onSubmit={salveaza}>
         <section className="panou">
@@ -108,7 +195,12 @@ export function OfertaDetaliu() {
               <input type="text" value={localitate} onChange={(e) => setLocalitate(e.target.value)} disabled={!oferta.poateModifica} />
             </Camp>
             <Camp eticheta="Sursa clientului">
-              <input type="text" value={sursaClient} onChange={(e) => setSursaClient(e.target.value)} disabled={!oferta.poateModifica} />
+              <input type="text" list="surse-client" value={sursaClient} onChange={(e) => setSursaClient(e.target.value)} disabled={!oferta.poateModifica} />
+              <datalist id="surse-client">
+                {surseClient.map((s) => (
+                  <option key={s} value={s} />
+                ))}
+              </datalist>
             </Camp>
             <Camp eticheta="Note">
               <input type="text" value={note} onChange={(e) => setNote(e.target.value)} disabled={!oferta.poateModifica} />
@@ -148,10 +240,7 @@ export function OfertaDetaliu() {
       </form>
 
       <Produse oferta={oferta} onOferta={setOferta} />
-      <section className="panou in-lucru">
-        <h2>Prețuri</h2>
-        <p>Zona de țintă și prezentarea vin în S14. Statusurile și istoricul în S15, documentele în S16.</p>
-      </section>
+      <Preturi oferta={oferta} onOferta={setOferta} />
 
       {oferta.completari.length > 0 && (
         <section className="panou">
@@ -169,7 +258,8 @@ export function OfertaDetaliu() {
 
       <Ajutor>
         <ul>
-          <li>Numărul, firma, agentul și cursurile sunt fixate la salvare. Cursurile se vor putea reîmprospăta cât e „În lucru” (S14).</li>
+          <li>Numărul, firma, agentul și cursurile sunt fixate la salvare. Cât e „În lucru”, cursurile se reîmprospătează din zona de prețuri.</li>
+          <li>„Creează variantă” face o versiune nouă sub același număr, cu adaosul real păstrat; „Completare la această ofertă” face o ofertă nouă legată de aceasta, fără gardă.</li>
           <li>Datele clientului se păstrează în baza comună: ce modifici aici se vede și pe celelalte oferte ale lui. Alt telefon existent leagă oferta de acel client.</li>
           <li>Oferta o modifică cine a făcut-o și Administratorul firmei; Admin general vede tot, dar nu face oferte.</li>
         </ul>

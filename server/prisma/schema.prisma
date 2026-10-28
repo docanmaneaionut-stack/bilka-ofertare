@@ -854,3 +854,19 @@ model OfertaAtasament {
   @@index([ofertaId])
   @@map("oferta_atasament")
 }
+
+// liste de optiuni configurabile (S14, migrarea 9): motivele completarii (cap. 2b),
+// sursa clientului (cap. 2). Valorile initiale vin din
+// docs/import/configurare/optiuni-liste.csv prin `npm run seed` (idempotent), nu
+// din migrare; Admin general le intretine din Zona tehnica -> Referinte
+model OptiuneLista {
+  id      String  @id @default(uuid())
+  lista   String
+  valoare String
+  ordine  Int     @default(0)
+  activ   Boolean @default(true)
+
+  @@unique([lista, valoare])
+  @@index([lista, ordine])
+  @@map("optiune_lista")
+}

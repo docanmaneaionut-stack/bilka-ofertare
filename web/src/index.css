@@ -413,6 +413,16 @@ tr.modificat td:first-child {
   line-height: 1.1;
 }
 
+/* S14: preturile */
+tr.sub-achizitie td {
+  background: #fdecec;
+}
+.pret-fix {
+  font-weight: 600;
+}
+.pret-preluat {
+  font-style: italic;
+}
 .grila-totaluri {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));

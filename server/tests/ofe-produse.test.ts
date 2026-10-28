@@ -2,10 +2,10 @@ import { readFileSync } from "node:fs";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { creeazaApp } from "../src/app.js";
 import { prisma } from "../src/db/prisma.js";
-import type { FisierEtalon } from "../src/modules/mot/etalon.js";
 import { cuvinte, rezolvaNumeLista } from "../src/modules/ofe/catalog.js";
 import { asiguraCatalogBilka } from "./catalogTest.js";
 import { citesteEtalon } from "./etalon/incarcaEtalon.js";
+import { corpDinEtalon } from "./etalonApi.js";
 import { autentificaAgent, creeazaUtilizatorTest } from "./helpers.js";
 
 // Editorul ofertei - zona produselor (S13): E01, E06, E11 construite prin API din
@@ -42,55 +42,6 @@ afterAll(async () => {
 });
 
 const CLIENT = { nume: "Client Produse", telefon: "0730000001", adresa: "Str. Test 1", localitate: "Focșani" };
-
-async function produs(cod: string, denumire: string) {
-  const p = await prisma.produs.findFirst({ where: { codFurnizor: cod, denumire, activ: true }, include: { categorieOferta: true } });
-  if (!p) throw new Error(`Produs lipsa in catalogul de test: ${cod} ${denumire}`);
-  return { id: p.id, categorie: p.categorieOferta?.denumire ?? "" };
-}
-
-// corpul PUT /produse din intrarile unui etalon: invelitorile din blocul lor, liniile
-// din rubricile de accesorii (liniile de invelitoare le creeaza serverul)
-async function corpDinEtalon(e: FisierEtalon) {
-  const i = e.intrari;
-  const invelitori = [];
-  // format v1.3: invelitorile si rubricile de sipca pe id; linia invelitorii poarta id-ul ei
-  for (const inv of i.invelitori ?? []) {
-    const linie = i.linii.find((l) => l.invelitoare === inv.id && l.rubrica === "Învelitori")!;
-    const p = await produs(inv.cod_bilka, linie.denumire);
-    invelitori.push({ cheie: inv.id, produsId: p.id, culoare: inv.culoare, panotaj: (inv.panotaj ?? []).map((x) => ({ lungimeM: x.lungime_m, bucati: x.bucati })), variantaProfil: inv.varianta_profil ?? null });
-  }
-  const linii = [];
-  for (const [idx, l] of i.linii.entries()) {
-    if (l.rubrica === "Învelitori") continue;
-    const p = await produs(l.cod_bilka, l.denumire);
-    const sipcaLiniei = l.sipca ? i.sipci?.find((s) => s.id === l.sipca) : undefined;
-    const pozitii = sipcaLiniei?.pozitii
-      ? sipcaLiniei.pozitii.map((p) => ({ lungimeM: p.lungime_m, bucati: p.bucati }))
-      : (i.accesorii_ml ?? []).filter((a) => a.cod_bilka === l.cod_bilka).map((a) => ({ lungimeM: a.lungime_m, bucati: a.bucati }));
-    linii.push({
-      cheie: `L${idx + 1}`,
-      rubrica: p.categorie,
-      produsId: p.id,
-      cantitate: l.cantitate,
-      invelitoare: l.invelitoare ?? null,
-      culoare: l.culoare ? { ral: l.culoare.ral, finisaj: l.culoare.finisaj, grosime: l.culoare.grosime ?? null } : null,
-      ...(pozitii.length ? { pozitii } : {}),
-    });
-  }
-  const sipci = (i.sipci ?? []).map((s) => {
-    const idx = i.linii.findIndex((l) => l.sipca === s.id);
-    const calcul = s.varianta.trim().toLowerCase() === "calcul";
-    return {
-      linie: `L${idx + 1}`,
-      model: s.model,
-      culoare: s.culoare,
-      varianta: calcul ? ("calcul" as const) : ("comanda" as const),
-      ...(calcul ? { tronsoane: (s.tronsoane ?? []).map((t) => ({ lungimeSipcaM: t.lungime_sipca_m, lungimeTronsonM: t.lungime_tronson_m, distantaMm: t.distanta_mm })) } : {}),
-    };
-  });
-  return { invelitori, linii, sipci, zonaB: (i.zona_b ?? []).map((zb) => ({ denumire: zb.denumire, um: zb.um, cantitate: zb.cantitate, sumaLei: zb.suma_lei, contineTva: zb.contine_tva, preiaInFactura: zb.preia_in_factura })) };
-}
 
 async function ofertaNoua(email: string): Promise<string> {
   const agent = await autentificaAgent(app, email);
@@ -132,7 +83,8 @@ describe("E01 prin API, din produse reale", () => {
     const tigla = await prisma.ofertaInvelitoare.findFirst({ where: { ofertaId: id, cod: "TMIBEMAT050" } });
     expect(tigla?.pretBazaEur.toFixed(2)).toBe("6.79");
     expect(tigla?.latimeTotalaM.toString()).toBe("1.18");
-    expect(JSON.stringify(r.body)).not.toMatch(/pretBazaEur|adaosProcent|achizitie|valoareEur|totaluri/);
+    // S14: preturile vin in raspuns (blocul preturi), dar niciodata pretul de baza / adaosul % catre Agent
+    expect(JSON.stringify(r.body)).not.toMatch(/pretBazaEur|adaosProcent|bazaEur/);
     // adresa lucrarii copiata din client la creare
     expect(o.adresaLucrarii).toBe("Str. Test 1");
     expect(o.localitate).toBe("Focșani");
@@ -206,7 +158,7 @@ describe("E12 prin API (M1): acelasi produs in doua culori si doua rubrici de si
     const { body } = await agent.get(`/api/oferte/${id}`).expect(200);
     expect(body.oferta.sipci).toHaveLength(2);
     expect(body.oferta.structura.rezultat.pachete).toHaveLength(4);
-    expect(JSON.stringify(body)).not.toMatch(/pretBazaEur|achizitie|valoareEur|totaluri/);
+    expect(JSON.stringify(body)).not.toMatch(/pretBazaEur|adaosProcent|bazaEur/);
   });
 });
 
