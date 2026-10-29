@@ -413,6 +413,115 @@ tr.modificat td:first-child {
   line-height: 1.1;
 }
 
+/* S15: zona produselor comprimata (verificarea lui Ionut, 28.10): randuri dense,
+   mai putin aer, rubricile in mai putina inaltime */
+.zona-produse .panou {
+  padding: 10px 14px;
+  margin-bottom: 10px;
+}
+.zona-produse .panou h2 {
+  font-size: 17px;
+  margin-bottom: 6px;
+}
+.zona-produse .panou h3 {
+  font-size: 15px;
+  margin: 8px 0 4px;
+}
+.zona-produse .rand-campuri {
+  gap: 8px 12px;
+  margin-bottom: 6px;
+}
+.zona-produse .camp > span {
+  font-size: 13px;
+}
+.zona-produse input[type="text"],
+.zona-produse input[type="search"],
+.zona-produse select {
+  min-height: 36px;
+  padding: 5px 9px;
+  font-size: 15px;
+}
+.zona-produse table.tabel {
+  font-size: 15px;
+}
+.zona-produse table.tabel th,
+.zona-produse table.tabel td {
+  padding: 4px 8px;
+}
+.zona-produse table.tabel.editabil input,
+.zona-produse table.tabel.editabil select {
+  min-height: 32px;
+  padding: 3px 8px;
+}
+.zona-produse .buton.mic {
+  min-height: 30px;
+  padding: 3px 10px;
+}
+.zona-produse .grila-totaluri > div {
+  padding: 6px 10px;
+}
+.zona-produse .ajutor-panou,
+.zona-produse details.ajutor {
+  margin-top: 6px;
+}
+
+/* S15: statusurile, istoricul, meniul ⋯ */
+.bara-statusuri {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+}
+.bara-statusuri button.status-curent {
+  outline: 3px solid var(--text);
+  outline-offset: 1px;
+  font-weight: 700;
+}
+.asterisc-rosu {
+  color: #b3261e;
+  font-weight: 700;
+  margin-left: 4px;
+}
+.meniu-actiuni {
+  position: relative;
+  display: inline-block;
+}
+.meniu-actiuni ul {
+  position: absolute;
+  right: 0;
+  top: 100%;
+  z-index: 20;
+  min-width: 260px;
+  margin: 4px 0 0;
+  padding: 6px 0;
+  list-style: none;
+  background: var(--bg);
+  border: 2px solid var(--border);
+  border-radius: 6px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);
+  text-align: left;
+}
+.meniu-actiuni li button {
+  width: 100%;
+  text-align: left;
+  padding: 8px 14px;
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+.meniu-actiuni li button:hover,
+.meniu-actiuni li button:focus-visible {
+  background: var(--bg-secundar);
+}
+.explicatie-buton {
+  font-size: 13px;
+  color: var(--text-secundar);
+}
+.istoric li {
+  padding: 6px 0;
+  border-bottom: 1px solid var(--border);
+}
+
 /* S14: preturile */
 tr.sub-achizitie td {
   background: #fdecec;

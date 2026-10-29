@@ -63,6 +63,7 @@ model Firma {
   utilizatori      Utilizator[]
   utilizatorFirmas UtilizatorFirma[]
   oferte           Oferta[]
+  comenzi          Comanda[]
 
   @@map("firma")
 }
@@ -108,12 +109,16 @@ model Utilizator {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  montatori      Montator[]     @relation("MontatoriiAgentului")
+  comenziTrimise Comanda[]      @relation("ComenziTrimise")
+  notiteScrise   OfertaNotita[] @relation("NotiteScrise")
+
   firmeAcces          UtilizatorFirma[]
   listePretCreate     ListaPret[]
   jurnalIntrari       JurnalIntrare[]
-  oferte              Oferta[]            @relation("OferteCont")
-  oferteCreate        Oferta[]            @relation("OferteCreate")
-  oferteModificate    Oferta[]            @relation("OferteModificate")
+  oferte              Oferta[]              @relation("OferteCont")
+  oferteCreate        Oferta[]              @relation("OferteCreate")
+  oferteModificate    Oferta[]              @relation("OferteModificate")
   clientiCreati       Client[]
   ofertaIstoric       OfertaIstoric[]
   ofertaAtasamente    OfertaAtasament[]
@@ -323,7 +328,7 @@ model Produs {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  preturi PretListaProdus[]
+  preturi          PretListaProdus[]
   ofertaInvelitori OfertaInvelitoare[]
   ofertaLinii      OfertaLinie[]
 
@@ -612,9 +617,9 @@ model Oferta {
   // data statusului "Comandat" (blocul de la sfarsitul listei, cap. 15)
   comandatLa DateTime?
 
-  clientId    String
-  client      Client  @relation(fields: [clientId], references: [id])
-  sursaClient String?
+  clientId       String
+  client         Client  @relation(fields: [clientId], references: [id])
+  sursaClient    String?
   // adresa lucrarii si localitatea pe oferta (migrarea 7, S13): copiate din client
   // la creare, editabile - o completare preia adresa din oferta initiala (cap. 2b),
   // iar un client cu doua lucrari are doua adrese; fisa clientului pastreaza contactul
@@ -655,6 +660,19 @@ model Oferta {
 
   note String?
 
+  // S15 (migrarea 11): avansul de la "Avans luat" (cap. 14, poate fi 0); persoana
+  // "montator / recomandare" din lista agentului si comisionul ei ca suma fixa
+  // (cap. 12; "achitat" il bifeaza Administratorul, Etapa 5); rezultatul complet
+  // al motorului salvat la "Comandat" (cap. 16: o viitoare MODIFICARE a motorului
+  // nu schimba o comanda facturata; documentele din S16 il citesc de aici)
+  avansLei               Decimal?  @db.Decimal(14, 2)
+  montatorId             String?
+  montator               Montator? @relation(fields: [montatorId], references: [id])
+  comisionRecomandareLei Decimal?  @db.Decimal(14, 2)
+  comisionAchitat        Boolean   @default(false)
+  rezultatMotor          Json?
+  rezultatSalvatLa       DateTime?
+
   creatDeId     String?
   creatDe       Utilizator? @relation("OferteCreate", fields: [creatDeId], references: [id])
   modificatDeId String?
@@ -668,6 +686,8 @@ model Oferta {
   zonaB      OfertaZonaB[]
   istoric    OfertaIstoric[]
   atasamente OfertaAtasament[]
+  notite     OfertaNotita[]
+  comanda    Comanda?
 
   @@unique([serie, numar, versiune])
   @@index([firmaId, data])
@@ -871,4 +891,91 @@ model OptiuneLista {
   @@unique([lista, valoare])
   @@index([lista, ordine])
   @@map("optiune_lista")
+}
+
+// ---------------------------------------------------------------- S15 (migrarea 11)
+
+enum TipMontator {
+  MONTATOR
+  CONSTRUCTOR
+}
+
+// statusul logistic al comenzii (cap. 16); tabelul complet de comenzi vine in Etapa 5
+enum StatusLogistic {
+  COMANDAT
+  RECEPTIONAT
+  RECEPTIONAT_PARTIAL
+  LIVRAT
+}
+
+// lista de montatori / constructori a fiecarui agent (cap. 12): nume si telefon
+// obligatorii, localitate optionala, tip; o vede el si oricare Administrator
+model Montator {
+  id                String      @id @default(uuid())
+  utilizatorId      String
+  utilizator        Utilizator  @relation("MontatoriiAgentului", fields: [utilizatorId], references: [id])
+  nume              String
+  telefon           String
+  telefonNormalizat String
+  localitate        String?
+  tip               TipMontator @default(MONTATOR)
+  activ             Boolean     @default(true)
+  createdAt         DateTime    @default(now())
+  updatedAt         DateTime    @updatedAt
+
+  oferte Oferta[]
+
+  @@index([utilizatorId, nume])
+  @@map("montator")
+}
+
+// randul de comanda minim creat la "Comandat" (cap. 16): numarul = numarul
+// ofertei, responsabilul = contul care a trimis, clientul, montatorul, rezumatul
+// comenzii, sumele, statusul logistic initial; restul (incasari, livrare,
+// facturare, retururi) in Etapa 5
+model Comanda {
+  id            String     @id @default(uuid())
+  ofertaId      String     @unique
+  oferta        Oferta     @relation(fields: [ofertaId], references: [id])
+  firmaId       String
+  firma         Firma      @relation(fields: [firmaId], references: [id])
+  responsabilId String
+  responsabil   Utilizator @relation("ComenziTrimise", fields: [responsabilId], references: [id])
+  serie         String
+  numar         Int
+  data          DateTime   @db.Date
+
+  clientNume       String
+  clientTelefon    String
+  clientLocalitate String?
+  montatorNume     String?
+  montatorTelefon  String?
+  rezumat          String
+
+  totalCuTvaEur Decimal @db.Decimal(14, 2)
+  totalLei      Decimal @db.Decimal(14, 2)
+  avansLei      Decimal @default(0) @db.Decimal(14, 2)
+  restLei       Decimal @db.Decimal(14, 2)
+
+  statusLogistic StatusLogistic @default(COMANDAT)
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+
+  @@index([firmaId, data])
+  @@map("comanda")
+}
+
+// notitele de pe oferta (cap. 14): text liber, cine, cand; raman accesibile din comanda
+model OfertaNotita {
+  id                     String      @id @default(uuid())
+  ofertaId               String
+  oferta                 Oferta      @relation(fields: [ofertaId], references: [id])
+  utilizatorId           String?
+  utilizator             Utilizator? @relation("NotiteScrise", fields: [utilizatorId], references: [id])
+  numeUtilizatorLaMoment String
+  text                   String
+  moment                 DateTime    @default(now())
+
+  @@index([ofertaId, moment])
+  @@map("oferta_notita")
 }

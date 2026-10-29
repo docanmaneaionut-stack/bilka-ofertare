@@ -8,6 +8,8 @@ import {
   ETICHETA_STATUS,
   momentRelativ,
   STATUSURI_OFERTA,
+  apiPreturi,
+  apiStatus,
   type FiltreOferte,
   type Firma,
   type ListaOferte,
@@ -15,6 +17,7 @@ import {
   type StatusOferta,
   type UtilizatorAdmin,
 } from "../api";
+import { MeniuActiuni } from "../components/MeniuActiuni";
 import { Ajutor, Camp, Mesaj, textEroare } from "../components/ui";
 import { useUtilizator } from "../contextUtilizator";
 
@@ -249,6 +252,7 @@ export function Oferte() {
           </li>
           <li>„+ Ofertă nouă” cere antetul și clientul și salvează oferta „În lucru”. Prețurile și „Află preț” sunt gata; PDF-urile vin în S16.</li>
           <li>Nimic nu se șterge: o ofertă făcută din greșeală trece la „Neacceptată”.</li>
+          <li>La „Avans luat” rândul arată și suma avansului. Meniul ⋯ de pe rând: copiază oferta, creează variantă, completare, legare ca completare, preia prețurile în altă ofertă, istoric, notițe. „PDF ▾” vine în S16.</li>
         </ul>
       </Ajutor>
     </>
@@ -267,6 +271,9 @@ function RandOfertaGrup({ oferta, vedeAgent, adminGeneral, onDeschide }: { ofert
 }
 
 function RandOfertaTr({ oferta: o, vedeAgent, adminGeneral, onDeschide, completare }: { oferta: RandOferta; vedeAgent: boolean; adminGeneral: boolean; onDeschide: (id: string) => void; completare?: boolean }) {
+  const eu = useUtilizator();
+  const faceOferte = eu.rol === "ADMINISTRATOR" || eu.rol === "AGENT" || eu.rol === "COLABORATOR";
+  void apiStatus;
   return (
     <tr className={`selectabil ${completare ? "completare" : ""}`} tabIndex={0} onClick={() => onDeschide(o.id)} onKeyDown={(e) => e.key === "Enter" && onDeschide(o.id)}>
       <td className="numar-oferta">
@@ -291,6 +298,7 @@ function RandOfertaTr({ oferta: o, vedeAgent, adminGeneral, onDeschide, completa
       </td>
       <td>
         <span className={`status-oferta ${o.status}`}>{ETICHETA_STATUS[o.status]}</span>
+        {o.status === "AVANS_LUAT" && o.avansLei !== null && <div className="mic">avans {o.avansLei} lei</div>}
         {o.avertizareCurs && (
           <div className="mic" style={{ color: "var(--avertizare-text)" }}>
             ⚠ {o.avertizareCurs.split(":")[0]}
@@ -304,12 +312,18 @@ function RandOfertaTr({ oferta: o, vedeAgent, adminGeneral, onDeschide, completa
           <button className="buton secundar mic" onClick={() => onDeschide(o.id)}>
             Deschide
           </button>
-          <button className="buton secundar mic" disabled title="vine în S16">
-            PDF ▾
-          </button>
-          <button className="buton secundar mic" disabled title="vine în S14 / S15">
-            ⋯
-          </button>
+          <MeniuActiuni eticheta="PDF ▾" actiuni={[{ eticheta: "Ofertă", dezactivat: "vine în S16" }, { eticheta: "Rezumat", dezactivat: "vine în S16" }, { eticheta: "Ofertă detaliată", dezactivat: "vine în S16" }, { eticheta: "Tabel de facturare", dezactivat: "vine în S16" }]} />
+          <MeniuActiuni
+            actiuni={[
+              { eticheta: "Copiază oferta", onClick: () => onDeschide(`${o.id}?actiune=copie`), dezactivat: faceOferte ? undefined : "doar conturile care fac oferte" },
+              { eticheta: "Creează variantă", onClick: () => void apiPreturi.varianta(o.id).then((r) => onDeschide(r.oferta.id)).catch((e) => window.alert(textEroare(e))), dezactivat: o.status === "COMANDAT" ? "oferta e comandată" : faceOferte ? undefined : "doar conturile care fac oferte" },
+              { eticheta: "Completare la această ofertă", onClick: () => onDeschide(`${o.id}?actiune=completare`), dezactivat: o.completareLa ? "e ea însăși o completare" : faceOferte ? undefined : "doar conturile care fac oferte" },
+              { eticheta: "Leagă ca completare la…", onClick: () => onDeschide(`${o.id}?actiune=legare`), dezactivat: o.completareLa ? `e deja completare la ${o.completareLa.numarComplet}` : faceOferte ? undefined : "doar conturile care fac oferte" },
+              { eticheta: "Preia prețurile în altă ofertă", onClick: () => onDeschide(`${o.id}?actiune=preia-in`) },
+              { eticheta: "Istoric", onClick: () => onDeschide(`${o.id}#istoric`) },
+              { eticheta: "Notițe și atașamente", onClick: () => onDeschide(`${o.id}#notite`) },
+            ]}
+          />
         </div>
       </td>
     </tr>

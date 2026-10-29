@@ -325,3 +325,23 @@ Fiecare intrare: data, obiectivul sesiunii, rezultatul, următorul pas propus.
 **De verificat de Ionuț:** Zona tehnică → Curs BNR → „Preia acum”: trebuie să apară „Preluate 1 cursuri (cursbnr.ro)” și, la „Ultima încercare”, mesajul că BNR n-a răspuns cu XML; pe o ofertă cu pluvial și o singură învelitoare, rezultatul spune „Se va genera 1 formular”.
 
 **Următorul pas propus:** S15 — statusurile, istoricul, montatorul și trecerea în comandă (minim); odată cu statusurile, legarea ulterioară a unei oferte existente ca completare (cap. 2b).
+
+## 2026-10-29 — S15: statusuri, istoric, montator, trecerea în comandă (minim) + lucrările de ecran
+
+**Obiectiv:** PLAN v0.18 S15 — cele 8 statusuri cu istoric de la „Transmisă”, montatorul / recomandarea, notițe și atașamente, „Comandat” cu rezultatul motorului salvat și rândul de comandă minim, legarea ulterioară ca completare, meniul ⋯ din listă, lucrările de ecran cerute la verificarea E01. Motorul neatins.
+
+**Rezultat:**
+- Migrarea 11 (aditivă, nimic șters): avans, montator / recomandare și comision pe ofertă, rezultatul motorului salvat, tabelele montator, comanda (rândul minim), oferta_notita.
+- Statusurile: orice ordine, cu revenire, cu istoric; doar „Comandat” ireversibil; „Avans luat” cere suma (0 permis); „Acceptată” face varianta curentă; alt agent primește 403.
+- Istoricul: nimic cât e „În lucru”; de la „Transmisă” orice modificare (status, antet, client, produse, cantități, prețuri, sume, montator, legare) cu cine, când, înainte / după și mențiunile scrise sus pe pagină; intervențiile Administratorului cu numele lui; asteriscul roșu la sumele modificate, cu „Vezi istoric”.
+- „Comandat”: blocat cât o învelitoare e în mp direct (cu motivele), îngheață antetul, clientul, produsele, cantitățile și prețurile; salvează rezultatul complet al motorului (de atunci se citește de acolo); creează rândul de comandă cu rezumatul după cap. 16 („Iberic 3005 mat 0,50 — 180.481 mp + T8 3005 mat 0,50 — 6.000 mp; sistem pluvial 3005 colorat (lucios); accesorii standard + …”), totalul, avansul și restul; avansul, montatorul, notițele și atașamentele rămân editabile.
+- Montatori: lista fiecărui agent (nume și telefon obligatorii), văzută de el și de toți Administratorii, autocompletare pe ofertă, adăugare pe loc; comisionul ca sumă fixă cu istoric; nimic pe documente.
+- Notițe (se adaugă, nu se rescriu) și atașamente (în folderul de date, cu nume, mărime, cine, când, descărcabile).
+- Legarea ulterioară ca completare, din orice ofertă și după comandă, cu motivul; lucrarea agregată (E01 + E10 prin API). Copierea ofertei (număr nou, aceleași produse și prețuri, clientul schimbabil).
+- Lista: totalul cu TVA și învelitoarea pe fiecare rând, eticheta „Avans luat” cu suma, meniul ⋯ funcțional; „PDF ▾” explică „vine în S16”.
+- Ecran: săgețile ↑ ↓ și Enter între căsuțele de cantitate și rândurile de panotaj (Tab rămâne), zona produselor comprimată, niciun buton gri fără explicație, mesaj clar la „Ofertă nouă” fără curs.
+- Teste: `npm test` — **266 verzi**; etalon — 12 la zero. ARH §4.3 (Completări S15), §13; în commit PLAN v0.18.
+
+**De verificat de Ionuț:** pe o ofertă cu produse: pune „Transmisă” cu o mențiune → apare istoricul; schimbă o cantitate → intrarea cu înainte / după; „Avans luat” cere suma; „Comandat” pe o ofertă cu mp direct → mesajul cu motivele; pe una panotată → oferta devine doar citire, cu rezumatul comenzii; în listă, meniul ⋯ și avansul pe rând; în zona produselor, săgețile ↑ ↓ între cantități.
+
+**Următorul pas propus:** S16 — documentele (cap. 13): PDF-ul de ofertă, rezumatul, oferta detaliată, tabelul de facturare, din rezultatul motorului (sau din cel salvat la „Comandat”), cu machetele din `docs/design/`; istoricul documentelor transmise.

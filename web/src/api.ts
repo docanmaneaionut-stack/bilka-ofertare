@@ -549,6 +549,7 @@ export type RandOferta = {
   statusLa: string;
   comandatLa: string | null;
   avertizareCurs: string | null;
+  avansLei: string | null;
   client: { id: string; nume: string; localitate: string | null; telefon: string };
   clientMultiplu: boolean;
   agent: { id: string; nume: string };
@@ -620,6 +621,17 @@ export type OfertaDetaliu = {
   preluataDin?: { id: string; numarComplet: string } | null;
   discountGeneralPct?: string | null;
   discountImplicitPct?: string | null;
+  // S15: avansul, montatorul / recomandarea, comanda minima, rezultatul salvat, istoricul
+  avansLei?: string | null;
+  montator?: Montator | null;
+  comisionRecomandareLei?: string | null;
+  comisionAchitat?: boolean;
+  comanda?: ComandaMinima | null;
+  rezultatSalvatLa?: string | null;
+  areIstoric?: boolean;
+  sumeModificate?: string[];
+  numaratori?: { notite: number; atasamente: number; istoric: number };
+  poateModificaSume?: boolean;
   poateModifica: boolean;
   createdAt: string;
   updatedAt: string;
@@ -686,6 +698,7 @@ export type VersiuneOferta = { id: string; versiune: number; curenta: boolean; s
 export type TipPretFixIntrare = "eur_fara_tva" | "eur_cu_tva" | "lei_fara_tva" | "lei_cu_tva" | "achizitie_plus_pct";
 
 export type DatePreturi = {
+  mentiuni?: string | null;
   tinta?: { tip: "ADAOS_PCT" | "TOTAL_CU_TVA_LEI"; valoare: string };
   modPrezentare?: "SIMPLU" | "LISTA_DISCOUNT_GENERAL" | "DISCOUNT_PER_LINIE";
   discountGeneralPct?: string | null;
@@ -740,7 +753,41 @@ export const apiPretRapid = {
   pret: (produsId: string) => cerere<PretRapid>(`/api/pret-rapid/${produsId}`),
 };
 
-export type AntetOferta = { data?: string; sursaClient?: string | null; note?: string | null; adresaLucrarii?: string | null; localitate?: string | null };
+export type Montator = { id: string; nume: string; telefon: string; localitate: string | null; tip: "MONTATOR" | "CONSTRUCTOR"; activ?: boolean; utilizator?: { id: string; nume: string } };
+export type ComandaMinima = { id: string; rezumat: string; totalCuTvaEur: string; totalLei: string; avansLei: string; restLei: string; statusLogistic: string; data: string; responsabil: string };
+export type IntrareIstoric = { id: string; moment: string; numeUtilizatorLaMoment: string; tip: string; camp: string | null; valoareInainte: string | null; valoareDupa: string | null; mentiuni: string | null };
+export type Notita = { id: string; text: string; numeUtilizatorLaMoment: string; moment: string };
+export type Atasament = { id: string; nume: string; tipMime: string | null; marime: number | null; moment: string; incarcatDe: string | null };
+
+export const apiStatus = {
+  schimba: (id: string, status: StatusOferta, extra: { avansLei?: string | null; mentiuni?: string | null } = {}) =>
+    cererePreturi<{ oferta: OfertaDetaliu }>(`/api/oferte/${id}/status`, { method: "PUT", body: JSON.stringify({ status, ...extra }) }),
+  istoric: (id: string) => cerere<{ areIstoric: boolean; intrari: IntrareIstoric[]; sumeModificate: string[] }>(`/api/oferte/${id}/istoric`),
+  montator: (id: string, date: { montatorId?: string | null; montatorNou?: { nume: string; telefon: string; localitate?: string | null; tip: "MONTATOR" | "CONSTRUCTOR" }; comisionRecomandareLei?: string | null; mentiuni?: string | null }) =>
+    cerere<{ oferta: OfertaDetaliu }>(`/api/oferte/${id}/montator`, { method: "PUT", body: JSON.stringify(date) }),
+  leaga: (id: string, ofertaId: string, motiv: string, text: string | null, mentiuni: string | null) =>
+    cerere<{ oferta: OfertaDetaliu }>(`/api/oferte/${id}/completare-la`, { method: "PUT", body: JSON.stringify({ ofertaId, motiv, text, mentiuni }) }),
+  copie: (id: string, client?: ClientDate) => cerere<{ oferta: OfertaDetaliu }>(`/api/oferte/${id}/copie`, { method: "POST", body: JSON.stringify(client ? { client } : {}) }),
+};
+
+export const apiMontatori = {
+  lista: (q: string) => cerere<{ montatori: Montator[] }>(`/api/montatori?q=${encodeURIComponent(q)}`),
+  creeaza: (m: { nume: string; telefon: string; localitate?: string | null; tip: "MONTATOR" | "CONSTRUCTOR" }) => cerere<{ montator: Montator }>("/api/montatori", { method: "POST", body: JSON.stringify(m) }),
+};
+
+export const apiNotite = {
+  lista: (id: string) => cerere<{ notite: Notita[] }>(`/api/oferte/${id}/notite`),
+  adauga: (id: string, text: string) => cerere<{ notita: Notita }>(`/api/oferte/${id}/notite`, { method: "POST", body: JSON.stringify({ text }) }),
+  atasamente: (id: string) => cerere<{ atasamente: Atasament[] }>(`/api/oferte/${id}/atasamente`),
+  incarca: async (id: string, fisier: File) => {
+    const f = new FormData();
+    f.append("fisier", fisier);
+    return cerereFormular<{ atasament: Atasament }>(`/api/oferte/${id}/atasamente`, f);
+  },
+  caleDescarcare: (id: string, aid: string) => `${BAZA_API}/api/oferte/${id}/atasamente/${aid}`,
+};
+
+export type AntetOferta = { data?: string; sursaClient?: string | null; note?: string | null; adresaLucrarii?: string | null; localitate?: string | null; mentiuni?: string | null };
 
 export type CursAzi = { cursBnr: string; cursAchizitie: string; dataCurs: string; sursaCurs: string; avertizareCurs: string | null };
 export type CursZi = { data: string; curs: string; sursa: string };
@@ -876,6 +923,7 @@ export type SipcaEditor = {
 export type ZonaBEditor = { denumire: string; um: string; cantitate: string; sumaLei: string; contineTva: boolean; preiaInFactura: boolean };
 
 export type StareProduse = {
+  mentiuni?: string | null;
   grupaPct?: string;
   precizariZonaB?: string | null;
   invelitori: InvelitoareEditor[];

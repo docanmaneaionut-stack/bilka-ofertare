@@ -19,6 +19,8 @@ const nenegativa = suma.refine((s) => Number(s.replace(",", ".")) >= 0, "nu poat
 const schemaPozitie = z.object({ lungimeM: pozitiva, bucati: z.number().int().min(1) });
 
 export const schemaProduse = z.object({
+  // mentiunile pentru istoric (cap. 14), cand oferta nu mai e "In lucru"
+  mentiuni: z.string().trim().max(2000).nullish(),
   grupaPct: nenegativa.optional(),
   precizariZonaB: z.string().trim().max(4000).nullish(),
   invelitori: z.array(

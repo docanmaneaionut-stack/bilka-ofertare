@@ -1,5 +1,5 @@
 import { useEffect, useState, type FormEvent } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { apiCurs, apiOfertare, apiOferte, dataRo, type ClientDate, type CursAzi } from "../api";
 import { clientGol, dinClient, FormularClient } from "../components/FormularClient";
 import { Ajutor, Camp, Mesaj, textEroare } from "../components/ui";
@@ -73,7 +73,17 @@ export function OfertaNoua() {
             </Camp>
           </div>
           {curs?.azi?.avertizareCurs && <Mesaj tip="avertizare">{curs.azi.avertizareCurs}</Mesaj>}
-          {curs?.eroare && <Mesaj tip="eroare">{curs.eroare}</Mesaj>}
+          {curs && !curs.azi && (
+            <Mesaj tip="eroare">
+              Nu există niciun curs BNR în baza de date, deci oferta nu se poate salva (cursurile se îngheață la creare).{" "}
+              {eu.rol === "ADMIN_GENERAL" ? (
+                <Link to="/zona-tehnica/curs">Zona tehnică → Curs BNR: „Preia acum” sau cursul manual</Link>
+              ) : (
+                "Roagă Admin general să preia cursul din Zona tehnică → Curs BNR (sau să-l introducă manual)."
+              )}
+              {curs.eroare ? ` (${curs.eroare})` : ""}
+            </Mesaj>
+          )}
         </section>
 
         <section className="panou">
@@ -86,6 +96,7 @@ export function OfertaNoua() {
           <button className="buton" type="submit" disabled={seSalveaza || !curs?.azi}>
             {seSalveaza ? "Se salvează…" : "Salvează oferta (În lucru)"}
           </button>
+          {curs && !curs.azi && <span className="explicatie-buton">Butonul e oprit până există un curs BNR (vezi mesajul de sus).</span>}
           <button className="buton secundar" type="button" onClick={() => navigate("/oferte")}>
             Renunță
           </button>

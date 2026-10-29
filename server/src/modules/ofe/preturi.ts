@@ -9,7 +9,8 @@ import { agregaLucrare } from "../mot/lucrare.js";
 import { preiaPreturi as preiaPreturiMot, renuntaLaPreluare as renuntaLaPreluareMot } from "../mot/preluare.js";
 import type { IntrareOferta, RandVanzari, RezultatOferta, Tinta } from "../mot/tipuri.js";
 import { la2, la4, z as zec } from "../mot/zecimal.js";
-import { numarComplet } from "./clienti.js";
+import { gasesteSauCreeazaClient, numarComplet, type DateClient } from "./clienti.js";
+import { scrieIstoric } from "./istoric.js";
 import { includeProduse, spreIntrareMot, type OfertaCuProduse } from "./intrareMot.js";
 import { urmatorulNumar } from "./numerotare.js";
 import { filtruVizibilitateOferte, poateVedeaOferta, vedePreturiDeBaza } from "./vizibilitate.js";
@@ -75,15 +76,22 @@ export function filtreazaPeRol(r: RezultatOferta, o: OfertaCuProduse, u: Utiliza
   return { ...r, linii, vanzari, lucrare };
 }
 
+// la "Comandat" rezultatul motorului e cel salvat atunci (cap. 14, 16): o viitoare
+// MODIFICARE a motorului nu schimba o comanda facturata
+export function rezultatSauSalvat(o: OfertaCuProduse & { rezultatMotor?: unknown }): { rezultat: RezultatOferta | null; eroare: string | null } {
+  if (o.status === "COMANDAT" && o.rezultatMotor) return { rezultat: o.rezultatMotor as unknown as RezultatOferta, eroare: null };
+  return rezultatOfertei(o);
+}
+
 export async function blocPreturi(ofertaId: string, u: Utilizator): Promise<{ rezultat: RezultatPreturi | null; eroare: string | null }> {
   const o = await prisma.oferta.findUniqueOrThrow({ where: { id: ofertaId }, include: includeProduse });
-  const { rezultat, eroare } = rezultatOfertei(o);
+  const { rezultat, eroare } = rezultatSauSalvat(o);
   if (!rezultat) return { rezultat: null, eroare };
   // lucrarea: oferta initiala + completarile ei curente (cap. 2b, 19)
   let lucrare: RandVanzari | null = null;
   if (!o.completareLaId) {
     const completari = await prisma.oferta.findMany({ where: { completareLaId: o.id, curenta: true }, include: includeProduse });
-    const rezultate = completari.map((c) => rezultatOfertei(c).rezultat).filter((x): x is RezultatOferta => x !== null);
+    const rezultate = completari.map((c) => rezultatSauSalvat(c).rezultat).filter((x): x is RezultatOferta => x !== null);
     if (rezultate.length > 0) lucrare = agregaLucrare(rezultat, rezultate, Number(o.tvaPct));
   }
   return { rezultat: filtreazaPeRol(rezultat, o, u, lucrare), eroare: null };
@@ -92,6 +100,7 @@ export async function blocPreturi(ofertaId: string, u: Utilizator): Promise<{ re
 // ------------------------------------------------------------- salvarea
 
 export const schemaPreturi = z.object({
+  mentiuni: z.string().trim().max(2000).nullish(),
   tinta: z.object({ tip: z.enum(["ADAOS_PCT", "TOTAL_CU_TVA_LEI"]), valoare: suma }).optional(),
   modPrezentare: z.enum(["SIMPLU", "LISTA_DISCOUNT_GENERAL", "DISCOUNT_PER_LINIE"]).optional(),
   discountGeneralPct: nenegativa.nullish(),
@@ -256,11 +265,18 @@ export async function creeazaVarianta(ofertaId: string, u: Utilizator): Promise<
         modificatDeId: u.id,
       },
     });
+    await copiazaCopiii(tx, baza, noua.id);
+    return noua.id;
+  });
+}
+
+// copiaza invelitorile, liniile, sipcile si zona B ale unei oferte pe alta (varianta, copie)
+async function copiazaCopiii(tx: Prisma.TransactionClient, baza: OfertaCuProduse, nouaId: string): Promise<void> {
     const idInvelitoare = new Map<string, string>();
     for (const i of baza.invelitori) {
       const { id, ofertaId: _o, panotaj, ...rest } = i;
       void _o;
-      const creat = await tx.ofertaInvelitoare.create({ data: { ...rest, ofertaId: noua.id, panotaj: { create: panotaj.map(({ id: _p, invelitoareId: _i, linieId: _l, ...p }) => (void _p, void _i, void _l, p)) } } });
+      const creat = await tx.ofertaInvelitoare.create({ data: { ...rest, ofertaId: nouaId, panotaj: { create: panotaj.map(({ id: _p, invelitoareId: _i, linieId: _l, ...p }) => (void _p, void _i, void _l, p)) } } });
       idInvelitoare.set(id, creat.id);
     }
     const idLinie = new Map<string, string>();
@@ -270,7 +286,7 @@ export async function creeazaVarianta(ofertaId: string, u: Utilizator): Promise<
       // preturile fixe preluate din alta oferta nu se copiaza (varianta isi face preturile ei)
       const fix = l.pretFixPreluat ? { pretFixTip: null, pretFixValoare: null, pretFixPreluat: false } : {};
       const creat = await tx.ofertaLinie.create({
-        data: { ...rest, ...fix, ofertaId: noua.id, invelitoareId: invelitoareId ? (idInvelitoare.get(invelitoareId) ?? null) : null, pozitii: { create: pozitii.map(({ id: _p, invelitoareId: _i, linieId: _l, ...p }) => (void _p, void _i, void _l, p)) } },
+        data: { ...rest, ...fix, ofertaId: nouaId, invelitoareId: invelitoareId ? (idInvelitoare.get(invelitoareId) ?? null) : null, pozitii: { create: pozitii.map(({ id: _p, invelitoareId: _i, linieId: _l, ...p }) => (void _p, void _i, void _l, p)) } },
       });
       idLinie.set(id, creat.id);
     }
@@ -278,15 +294,83 @@ export async function creeazaVarianta(ofertaId: string, u: Utilizator): Promise<
       const { id: _s, ofertaId: _o, linieId, tronsoane, ...rest } = s;
       void _s;
       void _o;
-      await tx.ofertaSipca.create({ data: { ...rest, ofertaId: noua.id, linieId: idLinie.get(linieId)!, tronsoane: { create: tronsoane.map(({ id: _t, sipcaId: _sp, ...t }) => (void _t, void _sp, t)) } } });
+      await tx.ofertaSipca.create({ data: { ...rest, ofertaId: nouaId, linieId: idLinie.get(linieId)!, tronsoane: { create: tronsoane.map(({ id: _t, sipcaId: _sp, ...t }) => (void _t, void _sp, t)) } } });
     }
     for (const zb of baza.zonaB) {
       const { id: _z, ofertaId: _o, ...rest } = zb;
       void _z;
       void _o;
-      await tx.ofertaZonaB.create({ data: { ...rest, ofertaId: noua.id } });
+      await tx.ofertaZonaB.create({ data: { ...rest, ofertaId: nouaId } });
     }
+}
+
+// "copiaza oferta" (cap. 15, meniul ⋯): oferta noua, numar nou pe seria contului,
+// aceleasi produse si preturi, "In lucru", fara istoric; clientul preluat sau
+// altul (vecinul cu un acoperis asemanator); cursurile zilei, ca la orice oferta noua
+export async function copiazaOferta(ofertaId: string, u: Utilizator, client: DateClient | undefined): Promise<string> {
+  const baza = await prisma.oferta.findUniqueOrThrow({ where: { id: ofertaId }, include: includeProduse });
+  if (!u.serieOferta || !u.firmaId) throw new EroarePreturi("Contul nu are serie de ofertă sau firmă");
+  const curs = await cursulZilei();
+  const listaActiva = await prisma.listaPret.findFirst({ where: { status: "ACTIVA" }, orderBy: { activataLa: "desc" }, select: { id: true } });
+  const serie = u.serieOferta;
+  return prisma.$transaction(async (tx) => {
+    const clientId = client ? (await gasesteSauCreeazaClient(tx, client, u)).client.id : baza.clientId;
+    const numar = await urmatorulNumar(tx, serie);
+    const noua = await tx.oferta.create({
+      data: {
+        firmaId: u.firmaId!,
+        utilizatorId: u.id,
+        serie,
+        numar,
+        data: new Date(`${new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Bucharest", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date())}T00:00:00Z`),
+        clientId,
+        sursaClient: baza.sursaClient,
+        adresaLucrarii: client?.adresa ?? baza.adresaLucrarii,
+        localitate: client?.localitate ?? baza.localitate,
+        precizariZonaB: baza.precizariZonaB,
+        cursBnr: curs.cursBnr,
+        cursAchizitie: curs.cursAchizitie,
+        dataCurs: new Date(`${curs.dataCurs}T00:00:00Z`),
+        sursaCurs: curs.sursaCurs,
+        avertizareCurs: curs.avertizareCurs,
+        listaPretId: listaActiva?.id ?? null,
+        tvaPct: baza.tvaPct,
+        modPrezentare: baza.modPrezentare,
+        discountGeneralPct: baza.discountGeneralPct,
+        discountImplicitPct: baza.discountImplicitPct,
+        tintaTip: baza.tintaTip === "PRELUATA" ? "ADAOS_PCT" : baza.tintaTip,
+        tintaValoare: baza.tintaTip === "PRELUATA" ? nr(env.adaosTintaImplicitPct) : baza.tintaValoare,
+        grupaPct: baza.grupaPct,
+        note: baza.note,
+        creatDeId: u.id,
+        modificatDeId: u.id,
+      },
+    });
+    await copiazaCopiii(tx, baza, noua.id);
     return noua.id;
+  });
+}
+
+// cap. 2b "sau ulterior": o oferta existenta se leaga ca completare la oferta
+// initiala (si dupa comanda); de la legare, garda e oprita si lucrarea agregata
+export const schemaLegare = z.object({
+  ofertaId: z.string().min(1),
+  motiv: z.string().trim().min(1, "motivul e obligatoriu").max(200),
+  text: z.string().trim().max(1000).nullish(),
+  mentiuni: z.string().trim().max(2000).nullish(),
+});
+
+export async function leagaCaCompletare(ofertaId: string, date: z.infer<typeof schemaLegare>, u: Utilizator): Promise<void> {
+  if (date.ofertaId === ofertaId) throw new EroarePreturi("O ofertă nu poate fi completare la ea însăși");
+  const o = await prisma.oferta.findUniqueOrThrow({ where: { id: ofertaId }, include: { completareLa: { select: { serie: true, numar: true } } } });
+  const initiala = await prisma.oferta.findUnique({ where: { id: date.ofertaId }, select: { id: true, serie: true, numar: true, utilizatorId: true, firmaId: true, completareLaId: true } });
+  if (!initiala || !poateVedeaOferta(u, initiala)) throw new EroarePreturi("Oferta inițială nu există sau nu e vizibilă contului", 404);
+  if (initiala.completareLaId) throw new EroarePreturi("Oferta aleasă e ea însăși o completare; leagă de oferta inițială a lucrării", 409);
+  if (o.completareLaId && o.completareLaId !== initiala.id) throw new EroarePreturi(`Oferta e deja completare la ${numarComplet(o.completareLa!.serie, o.completareLa!.numar)}`, 409);
+  const motiv = date.text ? `${date.motiv} — ${date.text}` : date.motiv;
+  await prisma.$transaction(async (tx) => {
+    await tx.oferta.update({ where: { id: ofertaId }, data: { completareLaId: initiala.id, motivCompletare: motiv, modificatDeId: u.id } });
+    await scrieIstoric(tx, o, u, [{ tip: "completare", camp: "completareLa", inainte: o.completareLa ? numarComplet(o.completareLa.serie, o.completareLa.numar) : null, dupa: `${numarComplet(initiala.serie, initiala.numar)} · ${motiv}` }], date.mentiuni);
   });
 }
 

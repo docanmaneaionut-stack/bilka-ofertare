@@ -153,9 +153,12 @@ export function Lungimi({ catalog, stare, set, poate, structura }: Props) {
         );
       })}
       {poate && (
-        <button className="buton secundar" type="button" onClick={adauga} disabled={produse.length === 0}>
-          + Adaugă accesoriu la lungimi
-        </button>
+        <div className="actiuni" style={{ justifyContent: "flex-start" }}>
+          <button className="buton secundar" type="button" onClick={adauga} disabled={produse.length === 0}>
+            + Adaugă accesoriu la lungimi
+          </button>
+          {produse.length === 0 && <span className="explicatie-buton">Catalogul nu are încă accesorii la lungimi pentru această cheie.</span>}
+        </div>
       )}
     </section>
   );

@@ -8,10 +8,19 @@ import { scrieCreare, scrieModificari } from "../adm/jurnal.js";
 import { cursulZilei, EroareCurs } from "../curs/serviciu.js";
 import { clientPublic, gasesteSauCreeazaClient, normalizeazaTelefon, numarComplet, schemaClient } from "./clienti.js";
 import { optiunileListei } from "../adm/optiuniListe.js";
+import { finisajScurt, numarRal, numeModel } from "../mot/pachete.js";
+import { campuriCuIstoric, diferenteCampuri, diferenteProduse, istoricRouter, produsePentruIstoric, scrieIstoric } from "./istoric.js";
+import { EroareMontator, schemaMontatorOferta, seteazaMontatorOferta } from "./montatori.js";
+import { notiteRouter } from "./notite.js";
+import { EroareStatus, schemaStatus, schimbaStatus } from "./statusuri.js";
 import { catalogEditorRouter } from "./catalog.js";
 import {
   blocPreturi,
+  copiazaOferta,
   creeazaCompletare,
+  leagaCaCompletare,
+  rezultatSauSalvat,
+  schemaLegare,
   creeazaVarianta,
   EroareGarda,
   EroarePreturi,
@@ -27,6 +36,7 @@ import {
   surseDePreluare,
   versiunile,
 } from "./preturi.js";
+import { includeProduse } from "./intrareMot.js";
 import { calculeazaStructura, EroareProduse, salveazaProduse, schemaProduse } from "./produse.js";
 import { seteazaContor, urmatorulNumar } from "./numerotare.js";
 import { filtruVizibilitateOferte, poateModificaOferta, poateVedeaOferta, ROLURI_CU_OFERTE, vedePreturiDeBaza } from "./vizibilitate.js";
@@ -40,6 +50,10 @@ export const oferteRouter = Router();
 oferteRouter.use(cereAutentificare);
 // catalogul pentru editor (inainte de rutele cu :id)
 oferteRouter.use("/catalog", catalogEditorRouter);
+
+// istoricul (cap. 14), notitele si atasamentele (S15)
+oferteRouter.use("/:id/istoric", istoricRouter);
+oferteRouter.use("/:id", notiteRouter);
 
 // listele de optiuni configurabile (S14): motivele completarii, sursa clientului
 oferteRouter.get("/optiuni/:lista", async (req, res) => {
@@ -86,6 +100,7 @@ const selectLista = {
   statusLa: true,
   comandatLa: true,
   avertizareCurs: true,
+  avansLei: true,
   motivCompletare: true,
   completareLaId: true,
   localitate: true,
@@ -111,6 +126,7 @@ interface RandOferta {
   statusLa: Date;
   comandatLa: Date | null;
   avertizareCurs: string | null;
+  avansLei: string | null;
   client: { id: string; nume: string; localitate: string | null; telefon: string };
   clientMultiplu: boolean;
   agent: { id: string; nume: string };
@@ -134,6 +150,7 @@ function spreRandSimplu(o: RandLista, clientiMultipli: Set<string> | null): Rand
     statusLa: o.statusLa,
     comandatLa: o.comandatLa,
     avertizareCurs: o.avertizareCurs,
+    avansLei: o.avansLei?.toString() ?? null,
     client: { id: o.client.id, nume: o.client.nume, localitate: o.localitate ?? o.client.localitate, telefon: o.client.telefon },
     clientMultiplu: clientiMultipli ? clientiMultipli.has(o.client.telefonNormalizat) : false,
     agent: o.utilizator,
@@ -226,6 +243,9 @@ oferteRouter.get("/", async (req, res) => {
     return rand;
   });
 
+  // invelitoarea si totalurile fiecarui rand afisat (cap. 15), din motor sau din rezultatul salvat la "Comandat"
+  await completeazaTotaluri([...randuri, ...randuri.flatMap((r) => r.completari)]);
+
   const numar = (s: StatusOferta) => numaratori.find((n) => n.status === s)?._count._all ?? 0;
   res.json({
     oferte: randuri,
@@ -237,9 +257,34 @@ oferteRouter.get("/", async (req, res) => {
   });
 });
 
+// invelitoarea (model · culoare · finisaj · grosime · mp, + pluvial / + sipca) si
+// totalul cu TVA (EUR si lei) pe randurile paginii afisate
+async function completeazaTotaluri(randuri: RandOferta[]): Promise<void> {
+  if (randuri.length === 0) return;
+  const oferte = await prisma.oferta.findMany({ where: { id: { in: randuri.map((r) => r.id) } }, include: includeProduse });
+  for (const o of oferte) {
+    const rand = randuri.find((r) => r.id === o.id);
+    if (!rand || (o.invelitori.length === 0 && o.linii.length === 0)) continue;
+    const { rezultat } = rezultatSauSalvat(o);
+    if (!rezultat) continue;
+    rand.totalCuTvaEur = rezultat.totaluri.documentCuTvaEur;
+    rand.totalLei = rezultat.totaluri.documentTotalLei;
+    const principala = o.invelitori[0];
+    if (principala) {
+      const mp = rezultat.cantitati.invelitori.find((c) => c.id === principala.id)?.mp;
+      const p = { cod: principala.cod, denumire: principala.denumire, um: principala.um, pretBazaEur: "0", grup: principala.grup ?? undefined, familie: principala.familie ?? undefined };
+      const extra = [o.invelitori.length > 1 ? `+ ${o.invelitori.length - 1} secundar${o.invelitori.length > 2 ? "e" : "ă"}` : "", o.linii.some((l) => /pluvial/i.test(l.rubrica)) ? "+ pluvial" : "", o.sipci.length > 0 ? "+ șipcă" : ""].filter(Boolean).join(" ");
+      rand.invelitoare = `${numeModel(p)} · ${finisajScurt(principala.finisaj ?? undefined)} ${(principala.grosime ?? "").replace(/\s*mm$/i, "")} · ${numarRal(principala.culoare ?? undefined)}${mp ? ` · ${mp} mp` : ""}${extra ? ` ${extra}` : ""}`.replace(/\s+/g, " ").trim();
+    } else {
+      rand.invelitoare = `fără învelitoare · ${o.linii.length} linii`;
+    }
+  }
+}
+
 // ---------------------------------------------------------------- creare
 
 const schemaAntet = z.object({
+  mentiuni: z.string().trim().max(2000).nullish(),
   data: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
   sursaClient: z.string().trim().max(200).nullish(),
   note: z.string().trim().max(4000).nullish(),
@@ -317,6 +362,9 @@ async function detaliu(id: string, u: Utilizator) {
       utilizator: { select: { id: true, nume: true, telefon: true, email: true, serieOferta: true } },
       completareLa: { select: { id: true, serie: true, numar: true } },
       preluataDin: { select: { id: true, serie: true, numar: true } },
+      montator: true,
+      comanda: { select: { id: true, rezumat: true, totalCuTvaEur: true, totalLei: true, avansLei: true, restLei: true, statusLogistic: true, data: true, responsabil: { select: { nume: true } } } },
+      _count: { select: { notite: true, atasamente: true, istoric: true } },
       completari: { where: { curenta: true }, select: { id: true, serie: true, numar: true, motivCompletare: true, status: true } },
       listaPret: { select: { id: true, denumire: true, status: true } },
       invelitori: { orderBy: { ordine: "asc" }, include: { panotaj: { orderBy: { ordine: "asc" } } } },
@@ -361,6 +409,16 @@ async function detaliu(id: string, u: Utilizator) {
     // "⚠ preturi vechi" (11.8): un pret de baza din snapshot difera de lista activa a produsului
     preturiVechi,
     preluataDin: o.preluataDin ? { id: o.preluataDin.id, numarComplet: numarComplet(o.preluataDin.serie, o.preluataDin.numar) } : null,
+    // S15: avansul, montatorul / recomandarea, comanda minima, rezultatul salvat, istoricul
+    avansLei: o.avansLei?.toString() ?? null,
+    montator: o.montator ? { id: o.montator.id, nume: o.montator.nume, telefon: o.montator.telefon, localitate: o.montator.localitate, tip: o.montator.tip } : null,
+    comisionRecomandareLei: o.comisionRecomandareLei?.toString() ?? null,
+    comisionAchitat: o.comisionAchitat,
+    comanda: o.comanda ? { ...o.comanda, totalCuTvaEur: o.comanda.totalCuTvaEur.toString(), totalLei: o.comanda.totalLei.toString(), avansLei: o.comanda.avansLei.toString(), restLei: o.comanda.restLei.toString(), data: dataDoar(o.comanda.data), responsabil: o.comanda.responsabil.nume } : null,
+    rezultatSalvatLa: o.rezultatSalvatLa,
+    areIstoric: o.status !== "IN_LUCRU",
+    sumeModificate: await campuriCuIstoric(o.id),
+    numaratori: { notite: o._count.notite, atasamente: o._count.atasamente, istoric: o._count.istoric },
     versiuni: await versiunile(o.serie, o.numar),
     grupaPct: o.grupaPct.toString(),
     completareLa: o.completareLa ? { id: o.completareLa.id, numarComplet: numarComplet(o.completareLa.serie, o.completareLa.numar) } : null,
@@ -374,7 +432,10 @@ async function detaliu(id: string, u: Utilizator) {
     zonaB: o.zonaB.map((zb) => ({ ...zb, cantitate: zb.cantitate.toString(), sumaLei: zb.sumaLei.toString() })),
     structura: await calculeazaStructura(o.id),
     preturi: await blocPreturi(o.id, u),
-    poateModifica: poateModificaOferta(u, o),
+    // "Comandat" ingheata produsele, cantitatile si preturile (cap. 14); sumele,
+    // montatorul, notitele si atasamentele raman ale celui care poate modifica
+    poateModifica: poateModificaOferta(u, o) && o.status !== "COMANDAT",
+    poateModificaSume: poateModificaOferta(u, o),
     creatDeId: o.creatDeId,
     modificatDeId: o.modificatDeId,
     createdAt: o.createdAt,
@@ -388,7 +449,7 @@ async function incarcaCuDrepturi(req: Parameters<typeof oferteRouter.get>[1] ext
   if (!o) return { eroare: { status: 404, mesaj: "Oferta nu există" } };
   if (!poateVedeaOferta(u, o)) return { eroare: { status: 403, mesaj: "Nu ai acces la această ofertă" } };
   if (pentruModificare && !poateModificaOferta(u, o)) return { eroare: { status: 403, mesaj: "Doar cine a făcut oferta și Administratorul firmei o pot modifica" } };
-  if (pentruModificare && o.status === "COMANDAT") return { eroare: { status: 409, mesaj: "Oferta e comandată: antetul și clientul nu se mai modifică" } };
+  if (pentruModificare && o.status === "COMANDAT") return { eroare: { status: 409, mesaj: "Oferta e comandată: produsele, cantitățile, prețurile, antetul și clientul sunt înghețate; se mai pot schimba avansul, montatorul, notițele și atașamentele (cap. 14)" } };
   return { oferta: o };
 }
 
@@ -420,6 +481,7 @@ oferteRouter.put("/:id/antet", async (req, res) => {
   };
   await prisma.oferta.update({ where: { id: r.oferta.id }, data: { ...dupa, modificatDeId: u.id } });
   await scrieModificari(u, "Oferta", r.oferta.id, ["data", "sursaClient", "note", "adresaLucrarii", "localitate"], inainte, dupa);
+  await scrieIstoric(prisma, r.oferta, u, diferenteCampuri("antet", ["data", "sursaClient", "note", "adresaLucrarii", "localitate"], inainte, dupa), date.mentiuni);
   res.json({ oferta: await detaliu(r.oferta.id, u) });
 });
 
@@ -432,14 +494,19 @@ oferteRouter.put("/:id/client", async (req, res) => {
     return;
   }
   const date = schemaClient.parse(req.body);
+  const { mentiuni } = z.object({ mentiuni: z.string().trim().max(2000).nullish() }).parse(req.body);
   const u = req.utilizator!;
-  const inainte = await prisma.oferta.findUniqueOrThrow({ where: { id: r.oferta.id }, select: { clientId: true } });
+  const inainte = await prisma.oferta.findUniqueOrThrow({ where: { id: r.oferta.id }, select: { clientId: true, client: { select: { nume: true, telefon: true, adresa: true, localitate: true } } } });
   await prisma.$transaction(async (tx) => {
     const { client } = await gasesteSauCreeazaClient(tx, date, u);
     if (client.id !== inainte.clientId) {
       await tx.oferta.update({ where: { id: r.oferta.id }, data: { clientId: client.id, modificatDeId: u.id } });
       await tx.jurnalIntrare.create({ data: { utilizatorId: u.id, numeUtilizatorLaMoment: u.nume, entitate: "Oferta", entitateId: r.oferta.id, actiune: "modificare", camp: "clientId", valoareInainte: inainte.clientId, valoareDupa: client.id } });
     }
+    // istoricul (cap. 14): clientul schimbat sau datele lui modificate
+    const dupa = await tx.client.findUniqueOrThrow({ where: { id: client.id }, select: { nume: true, telefon: true, adresa: true, localitate: true } });
+    const textClient = (c: { nume: string; telefon: string; adresa: string; localitate: string | null }) => [c.nume, c.telefon, c.adresa, c.localitate].filter(Boolean).join(" · ");
+    if (textClient(inainte.client) !== textClient(dupa)) await scrieIstoric(tx, r.oferta, u, [{ tip: "client", camp: "client", inainte: textClient(inainte.client), dupa: textClient(dupa) }], mentiuni);
   });
   res.json({ oferta: await detaliu(r.oferta.id, u) });
 });
@@ -471,12 +538,17 @@ oferteRouter.put("/:id/preturi", async (req, res) => {
     return;
   }
   const date = schemaPreturi.parse(req.body);
+  const campuriPret = ["tintaTip", "tintaValoare", "modPrezentare", "discountGeneralPct", "discountImplicitPct"];
+  const stare = () => prisma.oferta.findUniqueOrThrow({ where: { id: r.oferta.id }, select: { tintaTip: true, tintaValoare: true, modPrezentare: true, discountGeneralPct: true, discountImplicitPct: true, linii: { orderBy: { ordine: "asc" } } } });
+  const inainte = await stare();
   try {
     await salveazaPreturi(r.oferta.id, date, req.utilizator!);
   } catch (e) {
     if (raspundeEroarePreturi(res, e)) return;
     throw e;
   }
+  const dupa = await stare();
+  await scrieIstoric(prisma, r.oferta, req.utilizator!, [...diferenteCampuri("pret", campuriPret, inainte, dupa), ...diferenteProduse(produsePentruIstoric(inainte.linii), produsePentruIstoric(dupa.linii))], date.mentiuni);
   res.json({ oferta: await detaliu(r.oferta.id, req.utilizator!) });
 });
 
@@ -603,6 +675,101 @@ oferteRouter.post("/:id/recalculeaza-preturi", async (req, res) => {
   res.json({ oferta: await detaliu(r.oferta.id, req.utilizator!) });
 });
 
+// ------------------------------------------------------------- S15: statusuri, montator, legare, copie
+
+// cap. 14: cele 8 statusuri, orice ordine, cu istoric; "Comandat" ireversibil
+oferteRouter.put("/:id/status", async (req, res) => {
+  const r = await incarcaCuDrepturi(req, false);
+  if (r.eroare) {
+    res.status(r.eroare.status).json({ eroare: r.eroare.mesaj });
+    return;
+  }
+  const u = req.utilizator!;
+  if (!poateModificaOferta(u, r.oferta)) {
+    res.status(403).json({ eroare: "Statusul îl schimbă cine a făcut oferta și Administratorul firmei" });
+    return;
+  }
+  const date = schemaStatus.parse(req.body);
+  try {
+    await schimbaStatus(r.oferta.id, date, u);
+  } catch (e) {
+    if (e instanceof EroareStatus) {
+      res.status(e.status).json({ eroare: e.message, motive: e.motive });
+      return;
+    }
+    if (raspundeEroarePreturi(res, e)) return;
+    throw e;
+  }
+  res.json({ oferta: await detaliu(r.oferta.id, u) });
+});
+
+// cap. 12: montatorul / recomandarea si comisionul, oricand (si dupa "Comandat"), cu istoric
+oferteRouter.put("/:id/montator", async (req, res) => {
+  const r = await incarcaCuDrepturi(req, false);
+  if (r.eroare) {
+    res.status(r.eroare.status).json({ eroare: r.eroare.mesaj });
+    return;
+  }
+  const u = req.utilizator!;
+  if (!poateModificaOferta(u, r.oferta)) {
+    res.status(403).json({ eroare: "Montatorul și comisionul le schimbă cine a făcut oferta și Administratorul lui" });
+    return;
+  }
+  const date = schemaMontatorOferta.parse(req.body);
+  try {
+    await seteazaMontatorOferta(r.oferta.id, date, u);
+  } catch (e) {
+    if (e instanceof EroareMontator) {
+      res.status(400).json({ eroare: e.message });
+      return;
+    }
+    throw e;
+  }
+  res.json({ oferta: await detaliu(r.oferta.id, u) });
+});
+
+// cap. 2b "sau ulterior": legarea unei oferte existente ca completare (si dupa comanda)
+oferteRouter.put("/:id/completare-la", async (req, res) => {
+  const r = await incarcaCuDrepturi(req, false);
+  if (r.eroare) {
+    res.status(r.eroare.status).json({ eroare: r.eroare.mesaj });
+    return;
+  }
+  const u = req.utilizator!;
+  if (!poateModificaOferta(u, r.oferta)) {
+    res.status(403).json({ eroare: "Legarea o face cine a făcut oferta și Administratorul lui" });
+    return;
+  }
+  const date = schemaLegare.parse(req.body);
+  try {
+    await leagaCaCompletare(r.oferta.id, date, u);
+  } catch (e) {
+    if (raspundeEroarePreturi(res, e)) return;
+    throw e;
+  }
+  res.json({ oferta: await detaliu(r.oferta.id, u) });
+});
+
+// cap. 15 (meniul ⋯): "copiaza oferta" - oferta noua cu aceleasi produse si preturi
+oferteRouter.post("/:id/copie", cereRol(...ROLURI_CU_OFERTE), async (req, res) => {
+  const r = await incarcaCuDrepturi(req, false);
+  if (r.eroare) {
+    res.status(r.eroare.status).json({ eroare: r.eroare.mesaj });
+    return;
+  }
+  const u = req.utilizator!;
+  const corp = z.object({ client: schemaClient.optional() }).parse(req.body ?? {});
+  let id: string;
+  try {
+    id = await copiazaOferta(r.oferta.id, u, corp.client);
+  } catch (e) {
+    if (raspundeEroarePreturi(res, e)) return;
+    throw e;
+  }
+  await scrieCreare(u, "Oferta", id);
+  res.status(201).json({ oferta: await detaliu(id, u) });
+});
+
 // zona produselor (cap. 3-10): salvare automata cu snapshot, apoi structura din motor
 oferteRouter.put("/:id/produse", async (req, res) => {
   const r = await incarcaCuDrepturi(req, true);
@@ -611,6 +778,8 @@ oferteRouter.put("/:id/produse", async (req, res) => {
     return;
   }
   const date = schemaProduse.parse(req.body);
+  const liniile = () => prisma.ofertaLinie.findMany({ where: { ofertaId: r.oferta.id }, orderBy: { ordine: "asc" } });
+  const inainte = r.oferta.status === "IN_LUCRU" ? [] : await liniile();
   try {
     await salveazaProduse(r.oferta.id, date, req.utilizator!);
   } catch (e) {
@@ -620,6 +789,8 @@ oferteRouter.put("/:id/produse", async (req, res) => {
     }
     throw e;
   }
+  // istoricul (cap. 14): produse adaugate / scoase, cantitati schimbate - de la "Transmisa"
+  if (r.oferta.status !== "IN_LUCRU") await scrieIstoric(prisma, r.oferta, req.utilizator!, diferenteProduse(produsePentruIstoric(inainte), produsePentruIstoric(await liniile())), date.mentiuni);
   res.json({ oferta: await detaliu(r.oferta.id, req.utilizator!) });
 });
 

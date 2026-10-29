@@ -24,7 +24,7 @@ function lei(v: string | undefined): string {
   return Number.isFinite(n) ? n.toLocaleString("ro-RO", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : v;
 }
 
-export function Preturi({ oferta, onOferta }: { oferta: OfertaDetaliu; onOferta: (o: OfertaDetaliu) => void }) {
+export function Preturi({ oferta, onOferta, mentiuni = "" }: { oferta: OfertaDetaliu; onOferta: (o: OfertaDetaliu) => void; mentiuni?: string }) {
   const r = oferta.preturi?.rezultat ?? null;
   const poate = oferta.poateModifica;
   const [eroare, setEroare] = useState<string | null>(null);
@@ -55,7 +55,7 @@ export function Preturi({ oferta, onOferta }: { oferta: OfertaDetaliu; onOferta:
     setEroare(null);
     setLucru(true);
     try {
-      const { oferta: dupa } = await apiPreturi.salveaza(oferta.id, date);
+      const { oferta: dupa } = await apiPreturi.salveaza(oferta.id, { ...date, mentiuni: mentiuni.trim() || null });
       setVinovate([]);
       onOferta(dupa);
       setFixPentru(null);
@@ -231,7 +231,10 @@ export function Preturi({ oferta, onOferta }: { oferta: OfertaDetaliu; onOferta:
         </table>
       </div>
 
-      <h3>Țintă</h3>
+      {oferta.status === "COMANDAT" && oferta.rezultatSalvatLa && <Mesaj>Prețurile sunt cele salvate la „Comandat” ({new Date(oferta.rezultatSalvatLa).toLocaleString("ro-RO")}); nu se mai recalculează.</Mesaj>}
+      <h3>
+        Țintă{oferta.sumeModificate?.includes("tintaValoare") ? <span className="asterisc-rosu" title="sumă modificată — vezi istoricul">*</span> : null}
+      </h3>
       {preluata ? (
         <p>
           Prețurile sunt preluate din oferta <strong>{oferta.preluataDin?.numarComplet ?? "…"}</strong>: totalul rezultă din cantități, fără câmp de țintă.{" "}

@@ -10,6 +10,7 @@ import { cursRouter } from "./modules/curs/routes.js";
 import { clientiRouter } from "./modules/ofe/clienti.js";
 import { oferteRouter } from "./modules/ofe/oferte.js";
 import { pretRapidRouter } from "./modules/ofe/pretRapid.js";
+import { montatoriRouter } from "./modules/ofe/montatori.js";
 import { gestioneazaErori } from "./middleware/erori.js";
 import { env } from "./env.js";
 
@@ -38,6 +39,7 @@ export function creeazaApp() {
   app.use("/api/clienti", clientiRouter);
   app.use("/api/oferte", oferteRouter);
   app.use("/api/pret-rapid", pretRapidRouter);
+  app.use("/api/montatori", montatoriRouter);
 
   app.use(gestioneazaErori);
 
