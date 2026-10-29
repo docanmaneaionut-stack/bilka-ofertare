@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { apiDocumente, type DocumentOferta, type OfertaDetaliu, type TipDocument } from "../../api";
+import { apiDocumente, type DocumentOferta, type OfertaDetaliu, type TipDocument, type TipDocumentOrice } from "../../api";
 import { Mesaj, textEroare } from "../../components/ui";
 
 // Documentele ofertei (FISA-OFERTARE cap. 13.6, 14): generate pe server din
@@ -7,7 +7,7 @@ import { Mesaj, textEroare } from "../../components/ui";
 // data-ora si fisierul; "Marcheaza ca transmis" (WhatsApp · e-mail · print) scrie
 // in istoric. Trimiterea efectiva pe e-mail / WhatsApp vine dupa punerea in functiune.
 
-export const ETICHETA_TIP: Record<TipDocument, string> = { OFERTA: "Ofertă", REZUMAT: "Rezumat", DETALIATA: "Ofertă detaliată", TABEL_FACTURARE: "Tabel de facturare" };
+export const ETICHETA_TIP: Record<TipDocumentOrice, string> = { OFERTA: "Ofertă", REZUMAT: "Rezumat", DETALIATA: "Ofertă detaliată", TABEL_FACTURARE: "Tabel de facturare", FORMULAR_BILKA: "Formular Bilka" };
 const CANALE = [
   { canal: "WHATSAPP", eticheta: "WhatsApp" },
   { canal: "EMAIL", eticheta: "e-mail" },
@@ -67,7 +67,7 @@ export function Documente({ oferta, reincarca, mentiuni, onSchimbare }: { oferta
 
   return (
     <section className="panou" id="documente">
-      <h2>Documente (PDF)</h2>
+      <h2>Documente (PDF și formulare Bilka)</h2>
       {eroare && <Mesaj tip="eroare">{eroare}</Mesaj>}
       <div className="actiuni" style={{ justifyContent: "flex-start", flexWrap: "wrap" }}>
         {(["OFERTA", "REZUMAT", "DETALIATA", "TABEL_FACTURARE"] as TipDocument[]).map((tip) => {
@@ -102,11 +102,17 @@ export function Documente({ oferta, reincarca, mentiuni, onSchimbare }: { oferta
                   <td>
                     <a href={apiDocumente.cale(oferta.id, d.id)} target="_blank" rel="noreferrer">
                       {d.eticheta}
+                      {d.formularNr ? ` F${d.formularNr}` : ""}
                     </a>
                     <div className="mic text-secundar">
                       {d.nume} · {marime(d.marime)}
                       {d.pagini ? ` · ${d.pagini} pag.` : ""}
                     </div>
+                    {d.avertizari && (
+                      <div className="mic" style={{ color: "var(--avertizare-text)", whiteSpace: "pre-line" }}>
+                        ⚠ {d.avertizari}
+                      </div>
+                    )}
                   </td>
                   <td>{d.versiune > 1 ? `varianta ${d.versiune}` : "—"}</td>
                   <td className="mic">
@@ -137,7 +143,7 @@ export function Documente({ oferta, reincarca, mentiuni, onSchimbare }: { oferta
           </table>
         </div>
       )}
-      <p className="mic text-secundar">Fiecare generare rămâne atașată ofertei (tip, variantă, dată-oră). „Marchează ca transmis” notează canalul în istoric; trimiterea efectivă pe e-mail / WhatsApp vine după punerea în funcțiune.</p>
+      <p className="mic text-secundar">Fiecare generare rămâne atașată ofertei (tip, variantă, dată-oră). „Marchează ca transmis” notează canalul în istoric; trimiterea efectivă pe e-mail / WhatsApp vine după punerea în funcțiune. Formularele de comandă Bilka (.xlsm, cu macro-urile Bilka) se generează din „Formulare Bilka” de sus, de la „De comandat”; se deschid în Excel și se trimit în SAP ca până acum.</p>
     </section>
   );
 }

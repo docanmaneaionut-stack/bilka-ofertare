@@ -24,6 +24,7 @@ export type InvelitoareUI = {
   tip: string;
   model: string;
   variantaProfil: string;
+  montaj: string;
   optiune: string;
   finisaj: string;
   grosime: string;
@@ -166,7 +167,7 @@ export function textCheie(c: { finisaj: string; grosime?: string | null; ral: st
 // ------------------------------------------------------- stare <-> server
 
 export function invelitoareGoala(): InvelitoareUI {
-  return { cheie: cheieNoua("inv"), produsId: null, tip: "", model: "", variantaProfil: "", optiune: "", finisaj: "", grosime: "", culoare: "", latimeTotalaM: "", mpDirect: "", panotaj: [{ lungimeM: "", bucati: "" }] };
+  return { cheie: cheieNoua("inv"), produsId: null, tip: "", model: "", variantaProfil: "", montaj: "", optiune: "", finisaj: "", grosime: "", culoare: "", latimeTotalaM: "", mpDirect: "", panotaj: [{ lungimeM: "", bucati: "" }] };
 }
 
 export function stareGoala(): StareEditor {
@@ -215,6 +216,7 @@ export function stareDinOferta(o: OfertaDetaliu, invelitoriCatalog: ProdusEditor
       tip: p?.grup ?? i.grup ?? "",
       model: p ? numeModel(p) : (i.familie ?? ""),
       variantaProfil: i.variantaProfil ?? "",
+      montaj: i.montaj ?? "",
       optiune: i.optiune ?? "",
       finisaj: i.finisaj ?? "",
       grosime: i.grosime ?? "",
@@ -293,6 +295,7 @@ export function spreServer(s: StareEditor): StareProduse {
       mpDirect: i.mpDirect.trim() ? i.mpDirect.trim() : null,
       panotaj: i.panotaj.filter((p) => p.lungimeM.trim() && Number(p.bucati) > 0).map((p) => ({ lungimeM: p.lungimeM.trim(), bucati: Number(p.bucati) })),
       variantaProfil: i.variantaProfil || null,
+      montaj: i.montaj === "acoperis" || i.montaj === "perete" ? (i.montaj as "acoperis" | "perete") : null,
     }));
   const cheiInv = new Set(invelitori.map((i) => i.cheie));
   const linii = s.linii

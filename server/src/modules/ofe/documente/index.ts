@@ -37,11 +37,17 @@ export class EroareDocument extends Error {
 
 // cine poate vedea / genera un document: cine vede oferta; colaboratorul nu
 // primeste tabelul de facturare (FISA-CONTURI §2)
-export function poateVedeaDocument(u: Utilizator, oferta: { utilizatorId: string; firmaId: string }, tip: TipDocument): boolean {
+export function poateVedeaDocument(u: Utilizator, oferta: { utilizatorId: string; firmaId: string }, tip: TipDocument | "FORMULAR_BILKA"): boolean {
   if (!poateVedeaOferta(u, oferta)) return false;
-  if (u.rol === "COLABORATOR" && tip === "TABEL_FACTURARE") return false;
+  // colaboratorul nu primeste tabelul de facturare si nici formularul de comanda
+  // Bilka (S16b: comanda firmei catre furnizor)
+  if (u.rol === "COLABORATOR" && (tip === "TABEL_FACTURARE" || tip === "FORMULAR_BILKA")) return false;
   return true;
 }
+
+// eticheta oricarui document al ofertei (PDF-urile + formularul Bilka)
+export const ETICHETA_ORICE_DOCUMENT: Record<TipDocumentDb, string> = { ...ETICHETA_DOCUMENT, FORMULAR_BILKA: "Formular Bilka" };
+const TIP_CONTINUT: Record<string, string> = { ".pdf": "application/pdf", ".xlsm": "application/vnd.ms-excel.sheet.macroEnabled.12" };
 
 const dataRo = (d: Date) => new Intl.DateTimeFormat("ro-RO", { timeZone: "Europe/Bucharest", day: "2-digit", month: "2-digit", year: "numeric" }).format(d);
 
@@ -102,10 +108,10 @@ async function ofertaVizibila(u: Utilizator, id: string) {
   return o && poateVedeaOferta(u, o) ? o : null;
 }
 
-const spreRaspuns = (d: { id: string; tip: TipDocumentDb; versiune: number; nume: string; marime: number; pagini: number | null; generatLa: Date; transmisLa: Date | null; canal: string | null; generatDe: { nume: string } | null }) => ({
+const spreRaspuns = (d: { id: string; tip: TipDocumentDb; versiune: number; nume: string; marime: number; pagini: number | null; generatLa: Date; transmisLa: Date | null; canal: string | null; generatDe: { nume: string } | null; formularNr?: number | null; avertizari?: string | null }) => ({
   id: d.id,
   tip: d.tip,
-  eticheta: ETICHETA_DOCUMENT[d.tip as TipDocument],
+  eticheta: ETICHETA_ORICE_DOCUMENT[d.tip],
   versiune: d.versiune,
   nume: d.nume,
   marime: d.marime,
@@ -114,6 +120,8 @@ const spreRaspuns = (d: { id: string; tip: TipDocumentDb; versiune: number; nume
   generatDe: d.generatDe?.nume ?? null,
   transmisLa: d.transmisLa,
   canal: d.canal,
+  formularNr: d.formularNr ?? null,
+  avertizari: d.avertizari ?? null,
 });
 
 documenteRouter.get("/", async (req, res) => {
@@ -124,7 +132,7 @@ documenteRouter.get("/", async (req, res) => {
     return;
   }
   const documente = await prisma.ofertaDocument.findMany({ where: { ofertaId: o.id }, orderBy: { generatLa: "desc" }, include: { generatDe: { select: { nume: true } } } });
-  res.json({ documente: documente.filter((d) => poateVedeaDocument(u, o, d.tip as TipDocument)).map(spreRaspuns), tipuriPermise: TIPURI.filter((t) => poateVedeaDocument(u, o, t)) });
+  res.json({ documente: documente.filter((d) => poateVedeaDocument(u, o, d.tip)).map(spreRaspuns), tipuriPermise: TIPURI.filter((t) => poateVedeaDocument(u, o, t)) });
 });
 
 documenteRouter.post("/", async (req, res) => {
@@ -159,12 +167,14 @@ documenteRouter.get("/:did", async (req, res) => {
     return;
   }
   const d = await prisma.ofertaDocument.findFirst({ where: { id: String(req.params.did), ofertaId: o.id } });
-  if (!d || !poateVedeaDocument(u, o, d.tip as TipDocument)) {
+  if (!d || !poateVedeaDocument(u, o, d.tip)) {
     res.status(404).json({ eroare: "Documentul nu există" });
     return;
   }
-  res.setHeader("Content-Type", "application/pdf");
-  res.setHeader("Content-Disposition", `${req.query.descarca === "da" ? "attachment" : "inline"}; filename="${d.nume}"`);
+  const extensie = path.extname(d.nume).toLowerCase();
+  res.setHeader("Content-Type", TIP_CONTINUT[extensie] ?? "application/octet-stream");
+  // formularul Bilka (.xlsm) se descarca mereu; PDF-ul se deschide in browser
+  res.setHeader("Content-Disposition", `${req.query.descarca === "da" || extensie !== ".pdf" ? "attachment" : "inline"}; filename="${d.nume}"`);
   res.sendFile(path.resolve(env.dateDir, d.fisier));
 });
 
@@ -177,7 +187,7 @@ documenteRouter.put("/:did/transmis", async (req, res) => {
     return;
   }
   const d = await prisma.ofertaDocument.findFirst({ where: { id: String(req.params.did), ofertaId: o.id } });
-  if (!d || !poateVedeaDocument(u, o, d.tip as TipDocument)) {
+  if (!d || !poateVedeaDocument(u, o, d.tip)) {
     res.status(404).json({ eroare: "Documentul nu există" });
     return;
   }
@@ -186,7 +196,7 @@ documenteRouter.put("/:did/transmis", async (req, res) => {
   const acum = new Date();
   await prisma.$transaction(async (tx) => {
     await tx.ofertaDocument.update({ where: { id: d.id }, data: { transmisLa: acum, canal } });
-    await scrieIstoric(tx, o, u, [{ tip: "document", camp: "document", inainte: null, dupa: `${ETICHETA_DOCUMENT[d.tip as TipDocument]}${d.versiune > 1 ? ` (varianta ${d.versiune})` : ""} transmis pe ${ETICHETA_CANAL[canal]} — ${d.nume}` }], mentiuni);
+    await scrieIstoric(tx, o, u, [{ tip: "document", camp: "document", inainte: null, dupa: `${ETICHETA_ORICE_DOCUMENT[d.tip]}${d.versiune > 1 ? ` (varianta ${d.versiune})` : ""} transmis pe ${ETICHETA_CANAL[canal]} — ${d.nume}` }], mentiuni);
   });
   const actualizat = await prisma.ofertaDocument.findUniqueOrThrow({ where: { id: d.id }, include: { generatDe: { select: { nume: true } } } });
   res.json({ document: spreRaspuns(actualizat) });

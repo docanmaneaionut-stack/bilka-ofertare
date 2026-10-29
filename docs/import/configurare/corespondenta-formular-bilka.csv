@@ -1,0 +1,215 @@
+﻿furnizor;cheie;cuvant;nume_formular;stare;observatie
+Bilka;TMDAC;;DACIC;automat;
+Bilka;TMADR;;ADRIATIC;automat;
+Bilka;TMHEL;;HELLENIC;automat;
+Bilka;TMBRI;Britanic Retro;BRITANIC RETRO;automat;cuvantul se cauta in varianta de profil
+Bilka;TMBRI;;BRITANIC;automat;
+Bilka;TMCLS;;CLASIC;automat;
+Bilka;TMBLC;;BALCANIC;automat;
+Bilka;TMIBE;;IBERIC;automat;
+Bilka;TMGOT;;GOTIC;automat;
+Bilka;TMROM;;ROMANIC;automat;
+Bilka;TDCLS;;CLASIC;automat;dripstop: membrana „CU DRIPSTOP” din optiune
+Bilka;TDBLC;;BALCANIC;automat;dripstop
+Bilka;TDGOT;;GOTIC;automat;dripstop
+Bilka;TDIBE;;IBERIC;automat;dripstop
+Bilka;TCT08;ventilat;T 8 P VENTILAT;de_verificat;varianta „T8 perete ventilat”
+Bilka;TCT08;;T 8 P;de_verificat;T8 e doar perete
+Bilka;TCT12;;T 12;de_verificat;montajul (A / P) vine de pe invelitoare
+Bilka;TCT18;;T 18;de_verificat;montajul (A / P) vine de pe invelitoare
+Bilka;TCT35;;T 35;de_verificat;montajul (A / P) vine de pe invelitoare
+Bilka;TCT45;;T 45;de_verificat;montajul (A / P) vine de pe invelitoare
+Bilka;TDT18;;T 18;de_verificat;dripstop: membrana „CU DRIPSTOP”; montajul de pe invelitoare
+Bilka;TDT35;;T 35;de_verificat;dripstop; montajul de pe invelitoare
+Bilka;TDT45;;T 45;de_verificat;dripstop; montajul de pe invelitoare
+Bilka;SIN18;;S18 SINUS;automat;
+Bilka;TPLAN;BUC;TABLA PLANA 2.00*1.25;de_verificat;tabla plana ca accesoriu (la coala, um BUC) - randul C112; cuvantul se potriveste pe unitatea de masura
+Bilka;TPLAN;;TABLA PLANA;automat;tabla plana ca invelitoare (mp)
+Bilka;REPRO;Double Line;RETRO PLUS DOUBLE LINE;automat;cuvantul = varianta de profil
+Bilka;REPRO;Micro-Ribs;RETRO PLUS MICRO-RIBS;automat;cuvantul = varianta de profil
+Bilka;REPRO;Standard;RETRO PLUS STANDARD;automat;cuvantul = varianta de profil
+Bilka;REPRO;Flat;RETRO PLUS FLAT;automat;cuvantul = varianta de profil
+Bilka;REPDR;Double Line;RETRO PLUS DOUBLE LINE;automat;cuvantul = varianta de profil
+Bilka;REPDR;Micro-Ribs;RETRO PLUS MICRO-RIBS;automat;cuvantul = varianta de profil
+Bilka;REPDR;Standard;RETRO PLUS STANDARD;automat;cuvantul = varianta de profil
+Bilka;REPDR;Flat;RETRO PLUS FLAT;automat;cuvantul = varianta de profil
+Bilka;REPSC;Double Line;RETRO PLUS DOUBLE LINE;automat;cuvantul = varianta de profil
+Bilka;REPSC;Micro-Ribs;RETRO PLUS MICRO-RIBS;automat;cuvantul = varianta de profil
+Bilka;REPSC;Standard;RETRO PLUS STANDARD;automat;cuvantul = varianta de profil
+Bilka;REPSC;Flat;RETRO PLUS FLAT;automat;cuvantul = varianta de profil
+Bilka;RETRO;Micro-Ribs;RETROPANEL MICRO-RIBS;automat;cuvantul = varianta de profil
+Bilka;RETRO;Standard;RETROPANEL;automat;cuvantul = varianta de profil
+Bilka;RETRO;Flat;RETROPANEL FLAT;automat;cuvantul = varianta de profil
+Bilka;RETDR;Micro-Ribs;RETROPANEL MICRO-RIBS;automat;cuvantul = varianta de profil
+Bilka;RETDR;Standard;RETROPANEL;automat;cuvantul = varianta de profil
+Bilka;RETDR;Flat;RETROPANEL FLAT;automat;cuvantul = varianta de profil
+Bilka;RETSC;Micro-Ribs;RETROPANEL MICRO-RIBS;automat;cuvantul = varianta de profil
+Bilka;RETSC;Standard;RETROPANEL;automat;cuvantul = varianta de profil
+Bilka;RETSC;Flat;RETROPANEL FLAT;automat;cuvantul = varianta de profil
+Bilka;REDUO;Duo Micro-Ribs;RETRO DUO MICRORIBS;automat;cuvantul = varianta de profil
+Bilka;REDUO;Duo;RETRODUO;automat;cuvantul = varianta de profil
+Bilka;RDDUO;Duo Micro-Ribs;RETRO DUO MICRORIBS;automat;cuvantul = varianta de profil
+Bilka;RDDUO;Duo;RETRODUO;automat;cuvantul = varianta de profil
+Bilka;TFALT;;FALTUITA 560 MM;automat;
+Bilka;TFA36;;FALTUITA 360 MM;automat;
+Bilka;SIHAG;rotund;HAGA ROTUNDA;automat;
+Bilka;SIHAG;drept;HAGA DREAPTA;automat;
+Bilka;SIPCA;rotund;OSLO ROTUND;automat;
+Bilka;SIPCA;drept;OSLO DREPT;automat;
+Bilka;SIBER;rotund;BERNA ROTUNDA;automat;
+Bilka;SIBER;drept;BERNA DREAPTA;automat;
+Bilka;SISOF;rotund;SOFIA ROTUNDA;automat;
+Bilka;SISOF;drept;SOFIA DREAPTA;automat;
+Bilka;ACMIC;;COAMA MICA;automat;
+Bilka;ACMAR;;COAMA MARE;automat;
+Bilka;ACU31;;COAMA UNGHIULARA 312 MM;automat;
+Bilka;ACU41;;COAMA UNGHIULARA 417 MM;automat;
+Bilka;ACB41;;COAMA BRITANIC 417MM;automat;
+Bilka;ABF25;;BORDURA FRONTON 250 MM;automat;
+Bilka;ABF31;;BORDURA FRONTON 312 MM;automat;
+Bilka;ABF36;;BORDURA FRONTON 360 MM;automat;
+Bilka;ABP17;;BORDURA LA PERETE 178 MM;automat;
+Bilka;ABP20;;BORDURA LA PERETE 208 MM;automat;
+Bilka;ABP25;;BORDURA LA PERETE 250 MM;automat;
+Bilka;AST15;;BORDURA STREASINA 156 MM;automat;
+Bilka;AST17;;BORDURA STREASINA 178 MM;automat;
+Bilka;AST20;;BORDURA STREASINA 208 MM;automat;
+Bilka;AST25;;BORDURA STREASINA 250 MM;automat;
+Bilka;ACF15;;COLECTOR FRONTON 156 MM;automat;
+Bilka;ACF25;;COLECTOR FRONTON 250 MM;automat;
+Bilka;ADO31;;DOLIE 312 MM;automat;
+Bilka;ADO41;;DOLIE 417 MM;automat;
+Bilka;ADO62;;DOLIE 625 MM;automat;
+Bilka;AFP20;;FIXAREA PLACILOR PE ZID 208 MM;automat;
+Bilka;AFP25;;FIXAREA PLACILOR PE ZID 250 MM;automat;
+Bilka;AOMEG;;OPRITOR ZAPADA OMEGA;automat;
+Bilka;AOZ12;;OPRITOR ZAPADA 1.25 ML;de_verificat;208 mm / 1,25 m
+Bilka;AOZ20;;OPRITOR ZAPADA 2 ML;de_verificat;208 mm / 2 m
+Bilka;ARP20;convex;RUPEREA PANTEI CONVEXA 208 MM;automat;un cod, doua produse
+Bilka;ARP20;concav;RUPEREA PANTEI CONCAVA 208 MM;automat;un cod, doua produse
+Bilka;ARP25;convex;RUPEREA PANTEI CONVEXA 250 MM;automat;un cod, doua produse
+Bilka;ARP25;concav;RUPEREA PANTEI CONCAVA 250 MM;automat;un cod, doua produse
+Bilka;ASM31;;SEMICOAMA 312 MM;automat;
+Bilka;ASB41;;SEMICOAMA BRITANIC 417MM;automat;
+Bilka;ASCF4;;SET COS FUM ( 4 PIESE );automat;spatiile in plus din numele Bilka nu conteaza la potrivire
+Bilka;ACI31;;COAMA UNG. INDUSTRIALA 312MM;de_verificat;prescurtare Bilka
+Bilka;ACI41;;COAMA UNG. INDUSTRIALA 417MM;de_verificat;prescurtare Bilka
+Bilka;ACL25;exterior;COLTAR EXT. INDUSTRIAL 250 MM;de_verificat;un cod, doua produse
+Bilka;ACL25;interior;COLTAR INT. INDUSTRIAL 250 MM;de_verificat;un cod, doua produse
+Bilka;ACL31;exterior;COLTAR EXT. INDUSTRIAL 312MM;de_verificat;un cod, doua produse
+Bilka;ACL31;interior;COLTAR INT. INDUSTRIAL 312MM;de_verificat;un cod, doua produse
+Bilka;ACL41;exterior;COLTAR EXT. INDUSTRIAL 417 MM;de_verificat;un cod, doua produse
+Bilka;ACL41;interior;COLTAR INT. INDUSTRIAL 417 MM;de_verificat;un cod, doua produse
+Bilka;ASI31;;SUBCOAMA INDUSTRIALA 312MM;automat;
+Bilka;ASI41;;SUBCOAMA INDUSTRIALA 417MM;automat;
+Bilka;APU08;;PROFIL U TABLA CUTATA T8 45MM;automat;
+Bilka;APU12;;PROFIL U TABLA CUTATA T12;automat;
+Bilka;APU18;;PROFIL U TABLA CUTATA T18 60MM;automat;
+Bilka;APU35;;PROFIL U TABLA CUT. T35 100MM;automat;
+Bilka;APU45;;PROFIL U TABLA CUT. T45 110MM;automat;
+Bilka;AXCAP;;CAPAC DE COAMA;automat;formularul alege lucios / mat / GDM dupa finisajul invelitorii
+Bilka;AXINC;mare;INCHIDERE DE COAMA MARE;automat;un cod, doua produse
+Bilka;AXINC;mica;INCHIDERE DE COAMA MICA;automat;un cod, doua produse
+Bilka;AFR31;;BORDURA FRONTON RETRO 312MM;automat;
+Bilka;ASTR2;;BORD. STREASINA RETRO 250 MM;de_verificat;prescurtare Bilka
+Bilka;ASTR3;;BORD. STREASINA RETRO 312MM;de_verificat;prescurtare Bilka
+Bilka;ABPO3;;BORD. PER. ORIZ. RETRO 312MM;de_verificat;prescurtare Bilka
+Bilka;ABPL2;;BORD. PER. LATERAL RETRO 250MM;de_verificat;prescurtare Bilka
+Bilka;ADR41;;DOLIE RETRO 417MM;automat;
+Bilka;ADR62;;DOLIE RETRO 625MM;automat;
+Bilka;ARPR3;convex;RUP. PANTA CONV. RETRO 312MM;de_verificat;un cod, doua produse; prescurtare Bilka
+Bilka;ARPR3;concav;RUP. PANTA CONC. RETRO 312MM;de_verificat;un cod, doua produse; prescurtare Bilka
+Bilka;ASR31;;SEMICOAMA RETRO 370MM;automat;
+Bilka;ACR41;;COAMA RETRO 417MM;automat;
+Bilka;ASC12;;SUPORT COAMA RETRO 125MM;automat;
+Bilka;AES60;;ELEMENT MIC SUPRAP. RETRO 60MM;de_verificat;prescurtare Bilka
+Bilka;AES80;;ELEMENT MARE SUPRAP.RETRO 80MM;de_verificat;prescurtare Bilka
+Bilka;AOZRB;;OPRITOR ZAPADA RETRO TIP BARA;automat;
+Bilka;APCOZ;;PIESA CONEC. OPR. ZAPADA RETRO;de_verificat;prescurtare Bilka
+Bilka;ASCFR;;SET COS FUM ( 4 PIESE ) RETRO;automat;spatiile in plus din numele Bilka nu conteaza la potrivire
+Bilka;AXCLEFIX25X;;CLEMA FIXA FALT VERTICAL 25*30;automat;
+Bilka;AXCLEFIX32X;;CLEMA FIXA FALT VERTICAL 32*30;automat;
+Bilka;AXCLEMOB25X;;CLEMA MOBILA FALT VERT. 25*55;automat;
+Bilka;AXCLEMOB32X;;CLEMA MOBILA FALT VERT. 32*55;automat;
+Bilka;SURLINOX000;;HOLTS. RETRO PANEL 500 BUC;automat;
+Bilka;FOLVE150300;;MEMBRANA 150 G.RETRO/FALTUITA;automat;
+Bilka;COVVENTL300;;COVOR VENTILATIE RETRO/FALT.;automat;
+Bilka;SUCLE408020;;HOLTS. PT LEMN 250 BUC 4.8*20;automat;formula randului poarta codul
+Bilka;SUCLE408035;;HOLTS. PT LEMN 250 BUC 4.8*35;automat;formula randului poarta codul
+Bilka;SUCLE408055;;HOLTS. PT LEMN 100 BUC 4.8*55;automat;formula randului poarta codul
+Bilka;SUCLE408070;;HOLTS. PT LEMN 100 BUC 4.8*70;automat;formula randului poarta codul
+Bilka;SUCME408019;;HOLTS. PT METAL 250 BUC 4.8*19;automat;formula randului poarta codul
+Bilka;SUCME408035;;HOLTS. PT METAL 250 BUC 4.8*35;automat;formula randului poarta codul
+Bilka;AXSPRLUC400;;SPRAY RETUS;automat;formularul alege lucios / mat dupa finisajul invelitorii
+Bilka;AXSPRMAT400;;SPRAY RETUS;de_verificat;formularul alege lucios / mat dupa finisajul invelitorii, nu dupa produs
+Bilka;AXMAS300PRE;;MASTIC ETANSARE PREMIUM;automat;
+Bilka;AXMAS300UNI;;MASTIC ETANSARE;automat;
+Bilka;AXMASPISTOL;;PISTOL MASTIC;automat;
+Bilka;AXPIESTRUNI;;PIEPTENE STREASINA {RAL};de_verificat;culoarea in nume: {RAL} = culoarea liniei; formularul are doar 8004 / 8017 / 9005
+Bilka;AXPIESTRVEN;;PIEPTENE STREASINA VENTILATIE;automat;
+Bilka;AXSNR6MM8ML;;SNUR BUTILIC 6MM*8M;automat;
+Bilka;BANDAAER501;;BANDA AERISIRE STREASINA {RAL};de_verificat;culoarea in nume: 8004 / 8017 / 9005
+Bilka;BANDAANT345;;BANDA ANTIPASARI;automat;
+Bilka;BANDAANT160;;BANDA ANTIPASARI INOX 60 TEPI;automat;
+Bilka;BANDAANT180;;BANDA ANTIPASARI INOX 80 TEPI;automat;
+Bilka;BANDABCO531;;BANDA COAMA 310MM RAL {RAL};de_verificat;culoarea in nume: 3011 / 7024 / 8004 / 8017 / 9005
+Bilka;BANDABCO523;;BANDA COAMA 230MM RAL {RAL};de_verificat;culoarea in nume
+Bilka;BANDABCO515;;BANDA COAMA 150MM;automat;
+Bilka;BANDABIC075;;BANDA BIT. 7,5CM*10M RAL {RAL};de_verificat;culoarea in nume: 8004 / 8017 / 9006
+Bilka;BANDABIC100;;BANDA BIT. 10CM*10M RAL {RAL};de_verificat;culoarea in nume
+Bilka;BANDABIC150;;BANDA BIT. 15CM*10M RAL {RAL};de_verificat;culoarea in nume
+Bilka;BANDABIC300;;BANDA BIT. 30CM*10M RAL {RAL};de_verificat;culoarea in nume
+Bilka;BANDABIT075;;BANDA BITUMINOASA 7,5CM*10M;automat;
+Bilka;BANDABIT100;;BANDA BITUMINOASA 10CM*10M;automat;
+Bilka;BANDABIT150;;BANDA BITUMINOASA 15CM*10M;automat;
+Bilka;BANDABIT300;;BANDA BITUMINOASA 30CM*10M;automat;
+Bilka;BANDABUT315;;BANDA BUTILICA DUBLU ADEZIVA;automat;
+Bilka;BANDAETACLS;coam;BANDA ETANSARE COAMA CLASIC;automat;un cod, doua produse (coama / streasina)
+Bilka;BANDAETACLS;streas;BANDA ETANSARE STREAS.CLASIC;automat;un cod, doua produse (coama / streasina)
+Bilka;BANDAETABLC;coam;BANDA ETANSARE COAMA BALCANIC;automat;un cod, doua produse (coama / streasina)
+Bilka;BANDAETABLC;streas;BANDA ETANSARE STREAS.BALCANIC;automat;un cod, doua produse (coama / streasina)
+Bilka;BANDAETAIBE;coam;BANDA ETANSARE COAMA IBERIC;automat;un cod, doua produse (coama / streasina)
+Bilka;BANDAETAIBE;streas;BANDA ETANSARE STREAS.IBERIC;automat;un cod, doua produse (coama / streasina)
+Bilka;BANDAETAGOT;coam;BANDA ETANSARE COAMA GOTIC;automat;un cod, doua produse (coama / streasina)
+Bilka;BANDAETAGOT;streas;BANDA ETANSARE STREAS.GOTIC;automat;un cod, doua produse (coama / streasina)
+Bilka;BANDAETAROM;coam;BANDA ETANSARE COAMA ROMANIC;automat;un cod, doua produse (coama / streasina)
+Bilka;BANDAETAROM;streas;BANDA ETANSARE STREAS.ROMANIC;automat;un cod, doua produse (coama / streasina)
+Bilka;BANDAETAT18;coam;BANDA ETANSARE COAMA T18;automat;un cod, doua produse (coama / streasina)
+Bilka;BANDAETAT18;streas;BANDA ETANSARE STREAS. T18;automat;un cod, doua produse (coama / streasina)
+Bilka;BANDAETAT35;coam;BANDA ETANSARE COAMA T35;automat;un cod, doua produse (coama / streasina)
+Bilka;BANDAETAT35;streas;BANDA ETANSARE STREAS. T35;automat;un cod, doua produse (coama / streasina)
+Bilka;BANDAETAT45;coam;BANDA ETANSARE COAMA T45;automat;un cod, doua produse (coama / streasina)
+Bilka;BANDAETAT45;streas;BANDA ETANSARE STREAS. T45;automat;un cod, doua produse (coama / streasina)
+Bilka;BANDAETAUNI;;BANDA ETANSARE UNIVERSALA;automat;
+Bilka;BANDAFUM529;;BANDA COS FUM 5M*290MM {RAL};de_verificat;culoarea in nume: 7016 / 8004 / 8017
+Bilka;CLT18DPL057;;CALOTA T18 -DPL 0.60;automat;
+Bilka;CLT18DPM057;;CALOTA T18 -DPM 0.60;automat;
+Bilka;CLT35DPL057;;CALOTA T35 -DPL 0.60;automat;
+Bilka;CLT35DPM057;;CALOTA T35 -DPM 0.60;automat;
+Bilka;CLT45DPL057;;CALOTA T45 -DPL 0.60;automat;
+Bilka;CLT45DPM057;;CALOTA T45 -DPM 0.60;automat;
+Bilka;FAL30BLK090;;FOLIE BILKA ALUM. -90GR. -30MP;automat;
+Bilka;FAL75BLK090;;FOLIE BILKA ALUM. -90GR. -75MP;automat;
+Bilka;FAL75BLK150;;FOLIE BILKA ALUM. -150GR.-75MP;automat;
+Bilka;FAN75BLK100;;FOLIE ANTIDROP 100GR.-75MP;automat;
+Bilka;FOL30BLK095;;FOLIE ANTIC. 30MP BILKA 95;automat;
+Bilka;FOL75BLK095;;FOLIE ANTICONDENS BILKA 95 G.;automat;formula randului poarta codul
+Bilka;FOL30BLK120;;FOLIE ANTIC. 30MP BILKA 120;automat;
+Bilka;FOL75BLK120;;FOLIE ANTICONDENS BILKA 120 G.;automat;formula randului poarta codul
+Bilka;FOL30BLK140;;FOLIE ANTIC. 30MP BILKA 140;automat;
+Bilka;FOL75BLK140;;FOLIE ANTICONDENS BILKA 140 G.;automat;formula randului poarta codul
+Bilka;FOL30BLK150;;FOLIE ANTIC. 30MP BILKA 150;automat;
+Bilka;FOL75BLK150;;FOLIE ANTICONDENS BILKA 150 G.;automat;formula randului poarta codul
+Bilka;FOL30BLK180;;FOLIE ANTIC. 30MP BILKA 180;automat;
+Bilka;FOL75BLK180;;FOLIE ANTICONDENS BILKA 180 G.;automat;formula randului poarta codul
+Bilka;FOL30BLK200;;FOLIE ANTIC. 30MP BILKA 200;automat;
+Bilka;FOL75BLK200;;FOLIE ANTICONDENS BILKA 200 G.;automat;formula randului poarta codul
+Bilka;FOL50METALU;;FOLIE BILKA METAL ALU 50 MP;automat;
+Bilka;FOL75SFT000;;FOLIE SOFT;automat;
+Bilka;AXCOSVENUNI;;COS VENTILARE UNIVERSAL {RAL};de_verificat;culoarea in nume: {RAL} = culoarea liniei
+Bilka;AXCOSVENCLS;;COS VENTILARE CLASIC {RAL};de_verificat;culoarea in nume: {RAL} = culoarea liniei
+Bilka;AXCOSVENBLC;;COS VENTILARE BALCANIC {RAL};de_verificat;culoarea in nume: {RAL} = culoarea liniei
+Bilka;AXCOSVENIBE;;COS VENTILARE IBERIC {RAL};de_verificat;culoarea in nume: {RAL} = culoarea liniei
+Bilka;AXCOSVENGOT;;COS VENTILARE GOTIC {RAL};de_verificat;culoarea in nume: {RAL} = culoarea liniei
+Bilka;AXCOSVENROM;;COS VENTILARE ROMANIC {RAL};de_verificat;culoarea in nume: {RAL} = culoarea liniei
+Bilka;AXCOSVENPLT;;COS VENTILARE RETROPANEL {RAL};de_verificat;culoarea in nume: {RAL} = culoarea liniei

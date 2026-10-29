@@ -1,6 +1,6 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
-import { apiDocumente, apiOferte, apiOptiuni, apiPreturi, apiStatus, dataRo, ETICHETA_STATUS, type ClientDate, type OfertaDetaliu as Oferta, type SursaPreluare, type TipDocument } from "../api";
+import { apiDocumente, apiFormulareBilka, apiOferte, apiOptiuni, apiPreturi, apiStatus, dataRo, ETICHETA_STATUS, type ClientDate, type OfertaDetaliu as Oferta, type SursaPreluare, type TipDocument } from "../api";
 import { clientGol, dinClient, FormularClient } from "../components/FormularClient";
 import { MeniuActiuni } from "../components/MeniuActiuni";
 import { Ajutor, Camp, Mesaj, textEroare } from "../components/ui";
@@ -40,6 +40,34 @@ export function OfertaDetaliu() {
   const [reincarcaIstoric, setReincarcaIstoric] = useState(0);
   const navigate = useNavigate();
 
+  // S16b: formularele de comanda Bilka - un .xlsm per formular, de la "De comandat" si la
+  // "Comandat"; raman in panoul "Documente", avertizarile (produse fara loc) se arata aici
+  const [avertizariFormulare, setAvertizariFormulare] = useState<string[]>([]);
+  const [cereFormulare, setCereFormulare] = useState(false);
+  useEffect(() => {
+    if (!cereFormulare || !oferta) return;
+    setCereFormulare(false);
+    void formulareBilka();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [cereFormulare, oferta]);
+  async function formulareBilka() {
+    if (!oferta) return;
+    setEroare(null);
+    setAvertizariFormulare([]);
+    setLucru("formulare");
+    try {
+      const r = await apiFormulareBilka.genereaza(oferta.id);
+      setMesaj(`Formulare Bilka generate: ${r.documente.map((d) => d.nume).join(", ")} — le găsești în panoul „Documente” (descarcă, deschide în Excel, trimite în SAP).`);
+      setAvertizariFormulare(r.avertizari);
+      setReincarcaIstoric((n) => n + 1);
+      document.getElementById("documente")?.scrollIntoView({ behavior: "smooth" });
+    } catch (err) {
+      setEroare(textEroare(err));
+    } finally {
+      setLucru(null);
+    }
+  }
+
   // "PDF ▾": genereaza documentul si il deschide; ramane in lista documentelor ofertei
   async function pdf(tip: TipDocument) {
     if (!oferta) return;
@@ -65,6 +93,7 @@ export function OfertaDetaliu() {
   useEffect(() => {
     const a = parametri.get("actiune");
     if (a === "completare" || a === "legare" || a === "preia-in" || a === "copie") setDialog(a);
+    if (a === "formulare") setCereFormulare(true);
     if (a) setParametri({}, { replace: true });
   }, [parametri, setParametri]);
 
@@ -168,6 +197,11 @@ export function OfertaDetaliu() {
           <Link className="buton secundar" to="/oferte/afla-pret">
             Află preț
           </Link>
+          {(oferta.status === "DE_COMANDAT" || comandata) && (
+            <button className="buton" type="button" disabled={lucru !== null} onClick={() => void formulareBilka()} title="Generează formularele de comandă Bilka (.xlsm) din șablonul firmei; la „Comandat” din rezultatul salvat">
+              {lucru === "formulare" ? "se generează…" : `Formulare Bilka${oferta.structura?.rezultat ? ` (${oferta.structura.rezultat.formulareBilka.length})` : ""}`}
+            </button>
+          )}
           <MeniuActiuni
             eticheta={lucru?.startsWith("pdf-") ? "se generează…" : "PDF ▾"}
             actiuni={(["OFERTA", "REZUMAT", "DETALIATA", "TABEL_FACTURARE"] as TipDocument[]).map((tip) => ({
@@ -193,6 +227,16 @@ export function OfertaDetaliu() {
 
       {c.avertizareCurs && <Mesaj tip="avertizare">{c.avertizareCurs}</Mesaj>}
       {eroare && <Mesaj tip="eroare">{eroare}</Mesaj>}
+      {avertizariFormulare.length > 0 && (
+        <Mesaj tip="avertizare">
+          <strong>Formularele Bilka — de verificat în Excel:</strong>
+          <ul style={{ margin: "4px 0 0 18px" }}>
+            {avertizariFormulare.map((a, i) => (
+              <li key={i}>{a}</li>
+            ))}
+          </ul>
+        </Mesaj>
+      )}
 
       {oferta.areIstoric && poateSume && (
         <div className="rand-campuri">

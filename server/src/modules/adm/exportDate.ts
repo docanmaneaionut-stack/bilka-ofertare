@@ -34,6 +34,7 @@ export const MODELE_EXPORT = [
   "ListaImplicitaOferta",
   "TreaptaDesfasurata",
   "OptiuneLista",
+  "CorespondentaFormularBilka",
   "ImportPropunere",
   "JurnalIntrare",
   "JurnalAutentificare",

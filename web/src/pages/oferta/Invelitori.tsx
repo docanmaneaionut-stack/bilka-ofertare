@@ -198,6 +198,14 @@ function InvelitoareRand({
             <input type="text" value={produs.modulCm} readOnly />
           </Camp>
         )}
+        {produs && /acoperi/i.test(produs.familie ?? "") && /perete/i.test(produs.familie ?? "") && (
+          <Camp eticheta="Montaj">
+            <select value={inv.montaj || "acoperis"} onChange={(e) => onSchimba((i) => ({ ...i, montaj: e.target.value }))} disabled={!poate} title="Doar pentru formularul de comandă Bilka (T xx A / T xx P); nu intră în calcul">
+              <option value="acoperis">acoperiș</option>
+              <option value="perete">perete</option>
+            </select>
+          </Camp>
+        )}
       </div>
       {produs && (
         <p className="mic text-secundar">

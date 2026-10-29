@@ -1,4 +1,5 @@
 import { mkdir, writeFile } from "node:fs/promises";
+import { createReadStream } from "node:fs";
 import path from "node:path";
 import { Router } from "express";
 import multer from "multer";
@@ -7,6 +8,8 @@ import { prisma } from "../../db/prisma.js";
 import { env } from "../../env.js";
 import { scrieCreare, scrieModificari } from "../adm/jurnal.js";
 import { cereRol } from "./middleware.js";
+import { citesteSablon, EroareSablon } from "../ofe/formularBilka/sablon.js";
+import { EroareZip } from "../ofe/formularBilka/zip.js";
 
 // Firme (fisa CONTURI §3): Admin general le creeaza si le modifica integral;
 // Administratorul vede doar firma lui si ii modifica doar datele de contact.
@@ -129,4 +132,59 @@ firmeRouter.get("/:id/sigla", async (req, res) => {
     return;
   }
   res.sendFile(path.resolve(env.dateDir, firma.logo));
+});
+
+// sablonul formularului de comanda Bilka al firmei (S16b, FORMULAR-BILKA-HARTA §8):
+// .xlsm, max 8 MB, verificat la incarcare (numele definite si foile asteptate);
+// pastrat in folderul de date sub id-ul firmei; versiunea = numele fisierului +
+// data modificarii din arhiva; cine si cand l-a incarcat; intrare in jurnal
+const incarcareSablon = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 8 * 1024 * 1024, files: 1 },
+  fileFilter: (_req, f, cb) => cb(null, /.xlsm$/i.test(f.originalname)),
+});
+
+firmeRouter.post("/:id/sablon-bilka", cereRol("ADMIN_GENERAL"), incarcareSablon.single("sablon"), async (req, res) => {
+  const firma = await prisma.firma.findUnique({ where: { id: String(req.params.id) } });
+  if (!firma) {
+    res.status(404).json({ eroare: "Firma nu există" });
+    return;
+  }
+  const fisier = req.file;
+  if (!fisier) {
+    res.status(400).json({ eroare: "Șablonul trebuie să fie un fișier .xlsm (formularul de comandă Bilka) de cel mult 8 MB" });
+    return;
+  }
+  let modificatLa: string | null;
+  try {
+    const sablon = citesteSablon(fisier.buffer);
+    modificatLa = sablon.modificatLa;
+  } catch (e) {
+    if (e instanceof EroareSablon || e instanceof EroareZip) {
+      res.status(400).json({ eroare: `Fișierul nu poate fi folosit ca șablon: ${e.message}` });
+      return;
+    }
+    throw e;
+  }
+  const numeOriginal = Buffer.from(fisier.originalname, "latin1").toString("utf8");
+  const folder = path.join(env.dateDir, "sabloane-bilka");
+  await mkdir(folder, { recursive: true });
+  await writeFile(path.join(folder, `${firma.id}.xlsm`), fisier.buffer);
+  const actualizata = await prisma.firma.update({
+    where: { id: firma.id },
+    data: { sablonBilka: `sabloane-bilka/${firma.id}.xlsm`, sablonBilkaVersiune: `${numeOriginal}${modificatLa ? ` (modificat ${modificatLa})` : ""}`, sablonBilkaIncarcatLa: new Date(), sablonBilkaIncarcatDe: req.utilizator!.nume },
+  });
+  await scrieModificari(req.utilizator!, "Firma", firma.id, ["sablonBilka", "sablonBilkaVersiune"], firma, actualizata);
+  res.json({ firma: actualizata });
+});
+
+firmeRouter.get("/:id/sablon-bilka", async (req, res) => {
+  const firma = await firmaAccesibila(req, req.params.id);
+  if (!firma?.sablonBilka) {
+    res.status(404).json({ eroare: "Firma nu are șablon de formular Bilka" });
+    return;
+  }
+  res.setHeader("Content-Type", "application/vnd.ms-excel.sheet.macroEnabled.12");
+  res.setHeader("Content-Disposition", `attachment; filename="sablon-formular-bilka.xlsm"`);
+  createReadStream(path.resolve(env.dateDir, firma.sablonBilka)).pipe(res);
 });

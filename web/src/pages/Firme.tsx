@@ -164,6 +164,54 @@ function Sigla({ firma, poateIncarca, onIncarcata }: { firma: Firma; poateIncarc
   );
 }
 
+// S16b: sablonul formularului de comanda Bilka al firmei (.xlsm, cu datele de cont Bilka
+// ale firmei); il incarca Admin general; versiunea = numele fisierului + data modificarii
+function SablonBilka({ firma, poateIncarca, onIncarcat }: { firma: Firma; poateIncarca: boolean; onIncarcat: () => Promise<void> }) {
+  const [fisier, setFisier] = useState<File | null>(null);
+  const [mesaj, setMesaj] = useState<string | null>(null);
+  const [lucru, setLucru] = useState(false);
+
+  async function incarca() {
+    if (!fisier) return;
+    setMesaj(null);
+    setLucru(true);
+    try {
+      await apiFirme.incarcaSablonBilka(firma.id, fisier);
+      setFisier(null);
+      await onIncarcat();
+    } catch (e) {
+      setMesaj(textEroare(e));
+    } finally {
+      setLucru(false);
+    }
+  }
+
+  return (
+    <div className="camp">
+      <span>Șablon formular Bilka</span>
+      {firma.sablonBilka ? (
+        <span className="mic">
+          <a href={apiFirme.urlSablonBilka(firma.id)}>{firma.sablonBilkaVersiune ?? "șablon încărcat"}</a>
+          {firma.sablonBilkaIncarcatLa ? ` · încărcat ${new Date(firma.sablonBilkaIncarcatLa).toLocaleString("ro-RO")}` : ""}
+          {firma.sablonBilkaIncarcatDe ? ` de ${firma.sablonBilkaIncarcatDe}` : ""}
+        </span>
+      ) : (
+        <span className="text-secundar mic">fără șablon — formularele de comandă Bilka nu se pot genera pentru ofertele firmei</span>
+      )}
+      {poateIncarca && (
+        <div className="actiuni" style={{ marginTop: 8 }}>
+          <input type="file" accept=".xlsm" onChange={(e) => setFisier(e.target.files?.[0] ?? null)} />
+          <button type="button" className="buton secundar mic" onClick={incarca} disabled={!fisier || lucru}>
+            {lucru ? "se verifică…" : "Încarcă șablonul (.xlsm)"}
+          </button>
+        </div>
+      )}
+      <span className="text-secundar mic">Formularul de comandă Bilka al firmei (cu datele ei de cont Bilka în foaia „Date Client”), cu macro-urile Bilka. Se verifică la încărcare (numele definite și foile așteptate) și se păstrează în folderul de date, nu în git.</span>
+      {mesaj && <Mesaj tip="eroare">{mesaj}</Mesaj>}
+    </div>
+  );
+}
+
 export function Firme() {
   const utilizator = useUtilizator();
   const adminGeneral = utilizator.rol === "ADMIN_GENERAL";
@@ -225,6 +273,7 @@ export function Firme() {
           <h2>{editata.denumire}</h2>
           <div className="rand-campuri" style={{ marginBottom: 16 }}>
             <Sigla firma={editata} poateIncarca={adminGeneral} onIncarcata={incarca} />
+            <SablonBilka firma={editata} poateIncarca={adminGeneral} onIncarcat={incarca} />
           </div>
           <FormularFirma
             initial={dinFirma(editata)}

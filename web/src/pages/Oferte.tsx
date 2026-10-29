@@ -333,6 +333,7 @@ function RandOfertaTr({ oferta: o, vedeAgent, adminGeneral, onDeschide, completa
               { eticheta: "Completare la această ofertă", onClick: () => onDeschide(`${o.id}?actiune=completare`), dezactivat: o.completareLa ? "e ea însăși o completare" : faceOferte ? undefined : "doar conturile care fac oferte" },
               { eticheta: "Leagă ca completare la…", onClick: () => onDeschide(`${o.id}?actiune=legare`), dezactivat: o.completareLa ? `e deja completare la ${o.completareLa.numarComplet}` : faceOferte ? undefined : "doar conturile care fac oferte" },
               { eticheta: "Preia prețurile în altă ofertă", onClick: () => onDeschide(`${o.id}?actiune=preia-in`) },
+              { eticheta: "Formulare Bilka", explicatie: "formularele de comandă (.xlsm) din șablonul firmei", onClick: () => onDeschide(`${o.id}?actiune=formulare`), dezactivat: eu.rol === "COLABORATOR" ? "nu e disponibil colaboratorilor" : o.status === "DE_COMANDAT" || o.status === "COMANDAT" ? undefined : "de la „De comandat”" },
               { eticheta: "Istoric", onClick: () => onDeschide(`${o.id}#istoric`) },
               { eticheta: "Notițe și atașamente", onClick: () => onDeschide(`${o.id}#notite`) },
             ]}

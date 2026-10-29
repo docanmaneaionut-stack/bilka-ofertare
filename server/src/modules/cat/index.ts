@@ -4,6 +4,7 @@ import { grupuriFamiliiRouter } from "./grupuriFamilii.js";
 import { produseRouter } from "./produse.js";
 import {
   categoriiOfertaRouter,
+  corespondentaFormularBilkaRouter,
   culoriFinisajGrosimeRouter,
   garantiiFinisajGrosimeRouter,
   listeImpliciteOfertaRouter,
@@ -24,3 +25,4 @@ catRouter.use("/referinte/liste-implicite-oferta", listeImpliciteOfertaRouter);
 catRouter.use("/referinte/trepte-desfasurata", trepteDesfasurataRouter);
 catRouter.use("/referinte/categorii-oferta", categoriiOfertaRouter);
 catRouter.use("/referinte/optiuni-liste", optiuniListeRouter);
+catRouter.use("/referinte/corespondenta-formular-bilka", corespondentaFormularBilkaRouter);

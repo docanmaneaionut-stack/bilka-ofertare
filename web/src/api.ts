@@ -332,6 +332,11 @@ export type Firma = {
   contBancar: string | null;
   banca: string | null;
   logo: string | null;
+  // S16b: sablonul formularului de comanda Bilka al firmei
+  sablonBilka: string | null;
+  sablonBilkaVersiune: string | null;
+  sablonBilkaIncarcatLa: string | null;
+  sablonBilkaIncarcatDe: string | null;
   observatii: string | null;
   activ: boolean;
   _count?: { utilizatori: number };
@@ -351,6 +356,13 @@ export const apiFirme = {
     return cerereFormular<{ firma: Firma }>(`${BAZA_CON}/firme/${id}/sigla`, formular);
   },
   urlSigla: (id: string) => `${BAZA_API}${BAZA_CON}/firme/${id}/sigla`,
+  // S16b: sablonul formularului Bilka (.xlsm), incarcat de Admin general
+  incarcaSablonBilka: (id: string, fisier: File) => {
+    const formular = new FormData();
+    formular.append("sablon", fisier, fisier.name);
+    return cerereFormular<{ firma: Firma }>(`${BAZA_CON}/firme/${id}/sablon-bilka`, formular);
+  },
+  urlSablonBilka: (id: string) => `${BAZA_API}${BAZA_CON}/firme/${id}/sablon-bilka`,
 };
 
 export type RolCont = "ADMIN_GENERAL" | "ADMINISTRATOR" | "AGENT" | "COLABORATOR" | "CONTABILITATE" | "GESTIUNE";
@@ -771,13 +783,20 @@ export const apiStatus = {
 };
 
 export type TipDocument = "OFERTA" | "REZUMAT" | "DETALIATA" | "TABEL_FACTURARE";
-export type DocumentOferta = { id: string; tip: TipDocument; eticheta: string; versiune: number; nume: string; marime: number; pagini: number | null; generatLa: string; generatDe: string | null; transmisLa: string | null; canal: string | null };
+// S16b: formularul de comanda Bilka apare in lista documentelor, dar nu se genereaza din "PDF ▾"
+export type TipDocumentOrice = TipDocument | "FORMULAR_BILKA";
+export type DocumentOferta = { id: string; tip: TipDocumentOrice; eticheta: string; versiune: number; nume: string; marime: number; pagini: number | null; generatLa: string; generatDe: string | null; transmisLa: string | null; canal: string | null; formularNr: number | null; avertizari: string | null };
 
 export const apiDocumente = {
   lista: (id: string) => cerere<{ documente: DocumentOferta[]; tipuriPermise: TipDocument[] }>(`/api/oferte/${id}/documente`),
   genereaza: (id: string, tip: TipDocument) => cerere<{ document: DocumentOferta }>(`/api/oferte/${id}/documente`, { method: "POST", body: JSON.stringify({ tip }) }),
   transmis: (id: string, did: string, canal: "WHATSAPP" | "EMAIL" | "PRINT", mentiuni: string | null) => cerere<{ document: DocumentOferta }>(`/api/oferte/${id}/documente/${did}/transmis`, { method: "PUT", body: JSON.stringify({ canal, mentiuni }) }),
   cale: (id: string, did: string) => `${BAZA_API}/api/oferte/${id}/documente/${did}`,
+};
+
+// S16b: formularele de comanda Bilka (un .xlsm per formular R10), de la "De comandat" si la "Comandat"
+export const apiFormulareBilka = {
+  genereaza: (id: string) => cerere<{ documente: DocumentOferta[]; avertizari: string[] }>(`/api/oferte/${id}/formulare-bilka`, { method: "POST", body: "{}" }),
 };
 
 export const apiMontatori = {
@@ -910,6 +929,8 @@ export type InvelitoareEditor = {
   mpDirect?: string | null;
   panotaj: PozitieEditor[];
   variantaProfil?: string | null;
+  // S16b: montajul tablei cutate (acoperis / perete), doar pentru formularul Bilka
+  montaj?: "acoperis" | "perete" | null;
 };
 
 export type LinieEditor = {
@@ -975,6 +996,7 @@ export type InvelitoareSalvata = {
   latimeTotalaM: string;
   mpDirect: string | null;
   variantaProfil: string | null;
+  montaj: string | null;
   panotaj: { id: string; ordine: number; lungimeM: string; bucati: number }[];
 };
 

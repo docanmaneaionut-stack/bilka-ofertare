@@ -115,3 +115,20 @@ export const categoriiOfertaRouter = creeazaRuterReferinta({
     ordine: z.number().int().optional().default(0),
   }),
 });
+
+// tabela de corespondenta produs -> numele de pe formularul de comanda Bilka (S16b)
+export const corespondentaFormularBilkaRouter = creeazaRuterReferinta({
+  entitate: "CorespondentaFormularBilka",
+  model: prisma.corespondentaFormularBilka,
+  orderBy: [{ furnizor: "asc" }, { cheie: "asc" }, { cuvant: "asc" }],
+  campuri: ["furnizor", "cheie", "cuvant", "numeFormular", "stare", "observatie", "activ"],
+  schema: z.object({
+    furnizor: z.string().trim().min(1),
+    cheie: z.string().trim().min(1),
+    cuvant: z.string().trim().optional().default(""),
+    numeFormular: z.string().trim().min(1),
+    stare: z.enum(["automat", "de_verificat"]).optional().default("automat"),
+    observatie: textOptional,
+    activ: z.boolean().optional().default(true),
+  }),
+});

@@ -13,6 +13,7 @@ import { campuriCuIstoric, diferenteCampuri, diferenteProduse, istoricRouter, pr
 import { EroareMontator, schemaMontatorOferta, seteazaMontatorOferta } from "./montatori.js";
 import { notiteRouter } from "./notite.js";
 import { documenteRouter } from "./documente/index.js";
+import { formulareBilkaRouter } from "./formularBilka/index.js";
 import { EroareStatus, schemaStatus, schimbaStatus } from "./statusuri.js";
 import { catalogEditorRouter } from "./catalog.js";
 import {
@@ -55,6 +56,7 @@ oferteRouter.use("/catalog", catalogEditorRouter);
 // istoricul (cap. 14), notitele si atasamentele (S15)
 oferteRouter.use("/:id/istoric", istoricRouter);
 oferteRouter.use("/:id/documente", documenteRouter);
+oferteRouter.use("/:id/formulare-bilka", formulareBilkaRouter);
 oferteRouter.use("/:id", notiteRouter);
 
 // listele de optiuni configurabile (S14): motivele completarii, sursa clientului

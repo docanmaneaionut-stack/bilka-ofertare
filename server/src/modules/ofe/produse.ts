@@ -32,6 +32,8 @@ export const schemaProduse = z.object({
       mpDirect: pozitiva.nullish(),
       panotaj: z.array(schemaPozitie).default([]),
       variantaProfil: z.string().trim().nullish(),
+      // S16b: montajul tablei cutate (acoperis / perete) - doar pentru formularul Bilka
+      montaj: z.enum(["acoperis", "perete"]).nullish(),
     }),
   ),
   linii: z.array(
@@ -161,6 +163,7 @@ export async function salveazaProduse(ofertaId: string, date: DateProduse, u: Ut
           latimeTotalaM: latime,
           mpDirect: i.mpDirect ? nr(i.mpDirect) : null,
           variantaProfil: i.variantaProfil || null,
+          montaj: i.montaj ?? null,
           panotaj: { create: i.panotaj.map((poz, k) => ({ ordine: k + 1, lungimeM: nr(poz.lungimeM), bucati: poz.bucati })) },
         },
       });

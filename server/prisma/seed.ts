@@ -3,6 +3,7 @@ import { prisma } from "../src/db/prisma.js";
 import { hashParola } from "../src/modules/accounts/auth.js";
 import { CATEGORII_OFERTA_IMPLICITE } from "../src/modules/cat/categoriiImplicite.js";
 import { incarcaOptiuniListe } from "../src/modules/adm/optiuniListe.js";
+import { incarcaCorespondentaFormularBilka } from "../src/modules/adm/corespondentaFormular.js";
 
 function requiredEnv(name: string): string {
   const value = process.env[name];
@@ -74,6 +75,11 @@ async function main() {
   // idempotent - doar ce lipseste; ce a modificat Admin general ramane
   const adaugate = await incarcaOptiuniListe(prisma);
   console.log(`Liste de optiuni: ${adaugate} valori adaugate (restul existau deja).`);
+
+  // tabela de corespondenta pentru formularul Bilka (S16b): din
+  // docs/import/configurare/corespondenta-formular-bilka.csv, idempotent
+  const corespondente = await incarcaCorespondentaFormularBilka(prisma);
+  console.log(`Corespondenta formular Bilka: ${corespondente} randuri adaugate (restul existau deja).`);
 }
 
 main()

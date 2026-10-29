@@ -158,6 +158,36 @@ REFERINTE.push({
   ],
 });
 
+// (S16b) corespondenta produs -> numele de pe formularul de comanda Bilka
+REFERINTE.push({
+  cheie: "corespondenta-formular-bilka",
+  cale: "corespondenta-formular-bilka",
+  titlu: "Formular Bilka — corespondența numelor",
+  titluScurt: "Formular Bilka",
+  descriere:
+    "Numele de pe rândurile formularului de comandă Bilka pentru fiecare produs: cheia = codul de ierarhie întreg sau prefixul familiei (5 caractere); cuvântul de deosebire se caută în denumire, varianta de profil, modelul șipcii sau unitatea de măsură (convexă / concavă, coamă / streașină, BUC la tabla plană ca accesoriu); „{RAL}” în nume = culoarea liniei. Starea „de verificat” = potrivire hotărâtă de Code la S16b, de controlat aici. Valorile inițiale vin din docs/import/configurare/corespondenta-formular-bilka.csv prin npm run seed. Numele se verifică la fiecare generare pe listele șablonului firmei.",
+  coloane: [
+    FURNIZOR,
+    { cheie: "cheie", eticheta: "Cod / prefix", tip: "text", obligatoriu: true, latime: "130px" },
+    { cheie: "cuvant", eticheta: "Cuvânt de deosebire", tip: "text", latime: "150px", implicit: "" },
+    { cheie: "numeFormular", eticheta: "Numele pe formular", tip: "text", obligatoriu: true },
+    {
+      cheie: "stare",
+      eticheta: "Stare",
+      tip: "select",
+      obligatoriu: true,
+      implicit: "automat",
+      latime: "130px",
+      optiuni: [
+        { valoare: "automat", eticheta: "automat" },
+        { valoare: "de_verificat", eticheta: "de verificat" },
+      ],
+    },
+    { cheie: "observatie", eticheta: "Observație", tip: "text" },
+    ACTIV,
+  ],
+});
+
 export function gasesteReferinta(cheie: string | undefined) {
   return REFERINTE.find((r) => r.cheie === cheie);
 }
