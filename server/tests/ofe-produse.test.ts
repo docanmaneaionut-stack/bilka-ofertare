@@ -50,7 +50,7 @@ async function ofertaNoua(email: string): Promise<string> {
 }
 
 describe("E01 prin API, din produse reale", () => {
-  it("panotaj -> 180,481 mp si 48 de coli; liniile din liste; 2 formulare; snapshot cu pret de baza pe server, fara pret in raspuns", async () => {
+  it("panotaj -> 180,481 mp si 48 de coli; liniile din liste; 1 formular (M2); snapshot cu pret de baza pe server, fara pret in raspuns", async () => {
     const agent = await autentificaAgent(app, EMAIL.agent1);
     const id = await ofertaNoua(EMAIL.agent1);
     const corp = await corpDinEtalon(citesteEtalon("E01"));
@@ -73,8 +73,9 @@ describe("E01 prin API, din produse reale", () => {
       ["P1 — Iberic 3005 mat", 17], // 2 invelitori + 8 standard + 1 special + 6 fixare
       ["Pluvial A — colorat (lucios) 3005", 11],
     ]);
-    expect(s.formulareBilka).toHaveLength(2);
-    expect(s.textFormulare).toMatch(/^Se vor genera 2 formulare Bilka/);
+    expect(s.formulareBilka).toHaveLength(1); // M2: pluvialul pe locul „lucios 125/90” al aceluiasi formular
+    expect(s.textFormulare).toMatch(/^Se va genera 1 formular Bilka/);
+    expect(s.textFormulare).toContain("pe locul „colorat (lucios) 125/90”");
     // liniile de invelitoare le-a creat serverul; cantitatile pe linii vin din motor
     expect(o.linii).toHaveLength(28);
     expect(s.linii.find((l: { cod: string }) => l.cod === "TMIBEMAT050").cantitate).toBe("180.481");
@@ -142,9 +143,9 @@ describe("E12 prin API (M1): acelasi produs in doua culori si doua rubrici de si
       ["Șipcă A — Oslo 7016 mat", 1],
       ["Șipcă B — Haga 8017 mat", 1],
     ]);
-    expect(s.formulareBilka).toHaveLength(3);
+    expect(s.formulareBilka).toHaveLength(2); // M2: sipca B pe primul formular fara sipca (garajul)
     expect(s.formulareBilka[0].continut).toMatch(/blocul de șipcă A/);
-    expect(s.formulareBilka[2].continut).toMatch(/^Șipcă B — Haga 8017 mat singură/);
+    expect(s.formulareBilka[1].continut).toMatch(/blocul de șipcă B \(Haga 8017 mat\) — primul formular fără șipcă/);
     expect(s.cantitati.sipci.map((x: { bucatiTotal: number; mlTotal: string }) => [x.bucatiTotal, x.mlTotal])).toEqual([[144, "216.000"], [85, "97.000"]]);
     // accesoriile cu acelasi cod, in pachete diferite dupa invelitoarea de care sunt legate
     const coame = s.linii.filter((l: { cod: string }) => l.cod === "ACMICMAT050").map((l: { cantitate: string; pachet?: string }) => [l.cantitate, l.pachet]);
@@ -163,7 +164,7 @@ describe("E12 prin API (M1): acelasi produs in doua culori si doua rubrici de si
 });
 
 describe("E11: doua pachete si pluvial in doua culori", () => {
-  it("P1 / P2 / Pluvial A / Pluvial B si 4 formulare", async () => {
+  it("P1 / P2 / Pluvial A / Pluvial B si 2 formulare (M2)", async () => {
     const agent = await autentificaAgent(app, EMAIL.agent1);
     const id = await ofertaNoua(EMAIL.agent1);
     const corp = await corpDinEtalon(citesteEtalon("E11"));
@@ -179,7 +180,8 @@ describe("E11: doua pachete si pluvial in doua culori", () => {
       ["Pluvial A — mat 8017", 6],
       ["Pluvial B — mat 7016", 5],
     ]);
-    expect(s.formulareBilka.map((f: { nr: number }) => f.nr)).toEqual([1, 2, 3, 4]);
+    expect(s.formulareBilka.map((f: { nr: number }) => f.nr)).toEqual([1, 2]);
+    expect(s.formulareBilka[1].continut).toContain("pluvial mat 125/90 RAL 7016");
   });
 });
 

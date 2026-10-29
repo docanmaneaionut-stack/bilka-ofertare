@@ -59,6 +59,7 @@ function spreProdusProba(p: ProdusCuPret): ProdusProba | null {
   if (p.familie) produs.familie = p.familie.denumire;
   if (p.varianta) produs.varianta = p.varianta;
   if (p.optiune) produs.optiune = p.optiune;
+  if (p.sistem) produs.sistem = p.sistem;
   if (p.latimeTotalaM !== null) produs.latimeTotalaM = p.latimeTotalaM.toString();
   if (p.latimeTotalaMm !== null) produs.latimeTotalaMm = p.latimeTotalaMm.toString();
   // tabla plana: la mp (invelitoare) sau la coala (accesoriu la bucata)

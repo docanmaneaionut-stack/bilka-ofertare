@@ -599,22 +599,14 @@
   "formulare_bilka": [
    {
     "nr": 1,
-    "continut": "Clasic 8017 mat 0,50 ca învelitoare principală + accesoriile standard și fixarea pachetului P1 (cheie 8017 mat 0,50)"
+    "continut": "Clasic 8017 mat 0,50 ca învelitoare principală + accesoriile standard și fixarea pachetului P1 (cheie 8017 mat 0,50) + Pluvial A (mat 125/90, RAL 8017) pe locul „mat 125/90”"
    },
    {
     "nr": 2,
-    "continut": "Retro Plus Standard 7016 mat 0,50 ca învelitoare principală + accesoriile Retro și fixarea proprie (cheie 7016 mat 0,50) — pachet separat pentru că are accesorii proprii și altă cheie"
-   },
-   {
-    "nr": 3,
-    "continut": "Pluvial mat RAL 8017 (toate piesele sistemului A)"
-   },
-   {
-    "nr": 4,
-    "continut": "Pluvial mat RAL 7016 (sistemul B) — un formular per finisaj + culoare"
+    "continut": "Retro Plus Standard 7016 mat 0,50 ca învelitoare principală + accesoriile Retro și fixarea proprie (cheie 7016 mat 0,50) — pachet separat (altă cheie și accesorii proprii) + Pluvial B (mat 125/90, RAL 7016) pe locul lui liber de pe acest formular (M2: până la 28.10 erau 4 formulare)"
    }
   ],
-  "nota": "împachetarea o decide softul (FISA-OFERTARE 3.4–3.5); agentul vede doar „se vor genera 4 formulare” și de ce",
+  "nota": "împachetarea o decide softul (FISA-OFERTARE 3.4–3.5, v1.2); agentul vede doar „se vor genera 2 formulare” și de ce; pachetele rămân 4 (P1, P2, Pluvial A, Pluvial B), formularele sunt 2 (R10)",
   "comandabil": true
  },
  "reguli": "ETALON.md §0 (R1–R7)",

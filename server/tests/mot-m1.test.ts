@@ -123,7 +123,7 @@ describe("M1: mai multe rubrici de sipca (FISA cap. 8, R9)", () => {
     expect(r.formulareBilka[0].pachete).toEqual(["P1", "SIPA"]);
     expect(r.formulareBilka[0].continut).toMatch(/\+ blocul de șipcă A \(Oslo 7016 mat\)/);
     expect(r.formulareBilka[1]).toMatchObject({ nr: 2, pachete: ["SIPB"] });
-    expect(r.formulareBilka[1].continut).toMatch(/^Șipcă B — Haga 8017 mat singură/);
+    expect(r.formulareBilka[1].continut).toMatch(/^Formular doar cu blocul de șipcă B \(Haga 8017 mat\)/); // M2: fara formular liber -> formular nou
     expect(r.textFormulare).toMatch(/^Se vor genera 2 formulare Bilka/);
   });
 

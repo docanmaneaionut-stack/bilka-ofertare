@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { cursPentruMoment, dataLimitaCurs, lipsesteCursulZilei, localRomania, parseazaBnrXml, type CursZi } from "../src/modules/curs/regula.js";
-import { parseazaCursbnr } from "../src/modules/curs/serviciu.js";
+import { cursuriDinXmlBnr, parseazaCursbnr, preiaCursuri } from "../src/modules/curs/serviciu.js";
 import { normalizeazaTelefon } from "../src/modules/ofe/clienti.js";
 
 // Regula orei 13:00 (FISA-OFERTARE 11.8), cu ceas controlat: pana la publicarea
@@ -59,9 +59,29 @@ describe("parsarea surselor", () => {
     expect(parseazaBnrXml("<Body></Body>")).toEqual([]);
   });
 
-  it("rezerva cursbnr.ro: cea mai buna incercare pe pagina", () => {
+  it("rezerva cursbnr.ro: strict pe randul EUR, niciodata valoarea dolarului din meniu (28.10.2026)", () => {
     expect(parseazaCursbnr(`<p>Curs valutar 27.10.2026</p><td>EUR</td><td>5.3485</td>`)).toEqual({ data: "2026-10-27", curs: "5.3485", sursa: "cursbnr.ro" });
+    // fragmentele reale din pagina (28.10.2026): meniul cu EUR inaintea valorii USD, apoi "1 EURO = 5.3495 Lei"
+    const meniu = `<option value="5.3495" selected="selected">EUR</option><option value="4.8088">USD</option>`;
+    expect(parseazaCursbnr(meniu)).toBeNull();
+    const pagina = `${meniu}<div class="value">1 EURO = 5.3495 Lei</div><div>Cursul de astăzi (28 octombrie 2026) 28.10.2026</div>`;
+    expect(parseazaCursbnr(pagina)).toEqual({ data: "2026-10-28", curs: "5.3495", sursa: "cursbnr.ro" });
+    const tabel = `${meniu}<tr><td class="text-center">EUR</td><td><span class="flag-icon flag-icon-eu"></span>&nbsp;Euro</td><td class="text-center">5.3495</td></tr> 28.10.2026`;
+    expect(parseazaCursbnr(tabel)?.curs).toBe("5.3495");;
     expect(parseazaCursbnr("<p>nimic</p>")).toBeNull();
+  });
+
+  it("BNR fara XML (pagina HTML / Request Rejected) = esec, nu 0 cursuri -> rezerva cursbnr.ro; ultima incercare retinuta", async () => {
+    expect(() => cursuriDinXmlBnr("<!doctype html><html>pagina BNR</html>")).toThrow(/pagină HTML/);
+    expect(() => cursuriDinXmlBnr("<html><title>Request Rejected</title></html>")).toThrow(/respins/);
+    expect(() => cursuriDinXmlBnr('<DataSet><Body><Cube date="2026-10-28"><Rate currency="USD">4.8088</Rate></Cube></Body></DataSet>')).toThrow(/nu conține cursul EUR/);
+    const preluator = async (url: string) => (url.includes("bnr.ro/nbrfxrates") ? "<!doctype html><html>pagina</html>" : '<div class="value">1 EURO = 5.3495 Lei</div> 28.10.2026');
+    const r = await preiaCursuri({ preluator });
+    expect(r).toMatchObject({ salvate: 1, sursa: "cursbnr.ro" });
+    expect(r.mesaj).toMatch(/^BNR: BNR nu a răspuns cu XML/);
+    const r2 = await preiaCursuri({ preluator: async () => "<html>nimic</html>" });
+    expect(r2).toMatchObject({ salvate: 0, sursa: "niciuna" });
+    expect(r2.mesaj).toMatch(/cursbnr.ro: pagina nu are rândul EUR/);
   });
 });
 

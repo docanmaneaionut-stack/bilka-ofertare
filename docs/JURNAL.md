@@ -310,3 +310,18 @@ Fiecare intrare: data, obiectivul sesiunii, rezultatul, următorul pas propus.
 **De verificat de Ionuț (nu a existat cont de test în sesiune):** pe o ofertă cu produse: scrie totalul discutat (ex. 17.000) → totalurile și prețurile pe linii se refac pe loc; pune un preț fix pe țiglă („achiziție + 5 %”); încearcă o țintă sub achiziție → mesaj cu liniile colorate, valoarea revine; schimbă modul pe „listă + discount general” cu 25 %; „Creează variantă” și schimbă modelul; „Completare la această ofertă”; „Află preț” cu „clasic mat”.
 
 **Următorul pas propus:** S15 — statusurile, istoricul, montatorul și trecerea în comandă (minim): cele 8 statusuri cu regula de ordine, „Acceptată” face varianta curentă, istoricul de la „Transmisă”, notițe și atașamente, montatori cu autocompletare, recomandarea, „Comandat” îngheață produsele și salvează rezultatul motorului + rândul de comandă minim.
+
+## 2026-10-29 — S14b: MODIFICAREA M2 la motor (formularele Bilka) + repararea preluării cursului BNR — `v0.2.2-motor`
+
+**Obiectiv:** PLAN v0.17 S14b — R10 (șase locuri de pluvial pe formular, o variantă de șipcă pe formular, lungimile fără formulare în plus), după regula §8: întâi testul, apoi codul; plus cauza reală a cursului BNR nepreluat.
+
+**Rezultat:**
+- Testul primul: etalonul cu fișierele v1.5 — 11 din 12 roșii pe `formulare_bilka`. Apoi `pachete.ts`, strict pasul formularelor; pachetele neschimbate. **12 etaloane la zero**: familia E01 1 formular, E11 2, E12 2, E06 / E10 1 formular fără învelitoare.
+- `sistem` în contractul de intrare și în snapshot: migrarea 10 (coloana + UPDATE din catalog pentru liniile existente, nimic șters). Piesele comune „125 / 90 și 150 / 100” urmează grupul finisajului și culorii lor; singure, locul 125/90 — scris în ARH §5.4 ca regulă.
+- **Cursul BNR — ce am găsit:** de pe server, `https://www.bnr.ro/nbrfxrates.xml` răspunde cu 200, dar cu **pagina HTML a BNR** (302 pe pagina principală pentru identitatea noastră; „Request Rejected” pentru cereri care imită un browser) — la fel fișierele anuale. Site-ul BNR refuză cererile automate; nu e internetul, firewall-ul sau un certificat. În codul nostru: (1) HTML-ul trecea prin parserul XML cu 0 cursuri și nu era eșec → rezerva nu pornea niciodată; (2) parserul rezervei lua **USD 4,8088** în loc de EUR 5,3495 (pagina are „EUR” într-un meniu înaintea valorii dolarului). Reparat: răspuns care nu e XML = eșec cu mesaj → rezerva cursbnr.ro, parser strict pe rândul EUR; pagina „Curs BNR” arată ultima încercare (când, sursa, reușit / eșuat, mesajul); manualul rămâne plasa de siguranță. Ordinea rămâne BNR întâi — când BNR redeschide XML-ul, revenim singuri la sursa oficială. Fișierele de diagnostic au fost șterse; concluzia e aici.
+- Ecranul: rezultatul arată lista formularelor cu conținutul fiecăruia.
+- Teste: `npm test` — **257 verzi**; `npm run test:etalon` — 12 la zero. ARH §5.4 rescris pe R10, §13 „MODIFICAREA M2”; în commit FISA-OFERTARE v1.2, ETALON v1.5, PLAN v0.17, etaloanele.
+
+**De verificat de Ionuț:** Zona tehnică → Curs BNR → „Preia acum”: trebuie să apară „Preluate 1 cursuri (cursbnr.ro)” și, la „Ultima încercare”, mesajul că BNR n-a răspuns cu XML; pe o ofertă cu pluvial și o singură învelitoare, rezultatul spune „Se va genera 1 formular”.
+
+**Următorul pas propus:** S15 — statusurile, istoricul, montatorul și trecerea în comandă (minim); odată cu statusurile, legarea ulterioară a unei oferte existente ca completare (cap. 2b).

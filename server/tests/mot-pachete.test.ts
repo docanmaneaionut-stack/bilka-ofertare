@@ -110,7 +110,7 @@ describe("cele trei reguli de impachetare (FISA-OFERTARE 3.4)", () => {
 });
 
 describe("pluvialul si sectiunile de sine statatoare (FISA-OFERTARE 3.5, 3.8)", () => {
-  it("doua culori de pluvial -> doua grupuri, doua formulare, in ordinea aparitiei", () => {
+  it("doua culori de pluvial -> doua grupuri; pe formulare (M2): a doua culoare pe un formular nou doar cu pluvial", () => {
     const o = oferta(
       [inv("TMCLSMAT050", CLASIC, "RAL 8017")],
       [linieInv("L1", CLASIC), pluvial("L2", JGHEAB_MAT, "RAL 8017"), pluvial("L3", BURLAN_MAT, "RAL 8017"), pluvial("L4", JGHEAB_MAT, "RAL 7016"), pluvial("L5", BURLAN_MAT, "RAL 7016")],
@@ -121,14 +121,17 @@ describe("pluvialul si sectiunile de sine statatoare (FISA-OFERTARE 3.5, 3.8)", 
       ["PLA", "Pluvial A — mat 8017", ["L2", "L3"]],
       ["PLB", "Pluvial B — mat 7016", ["L4", "L5"]],
     ]);
-    expect(r.formulare).toHaveLength(3);
-    expect(r.formulare[1].continut).toBe("Pluvial mat RAL 8017 (2 poziții) — un formular per finisaj + culoare");
+    expect(r.formulare).toHaveLength(2);
+    expect(r.formulare[0].continut).toContain("pluvial mat 125/90 RAL 8017 (2 poziții) pe locul „mat 125/90”");
+    expect(r.formulare[1].continut).toMatch(/^Formular doar cu pluvial/);
+    expect(r.formulare[1].continut).toContain("pluvial mat 125/90 RAL 7016 (2 poziții)");
   });
 
-  it("pluvial lucios si mat in aceeasi culoare -> doua formulare (un formular per finisaj + culoare)", () => {
+  it("pluvial lucios si mat in aceeasi culoare -> doua pachete, dar un singur formular (locuri diferite, M2)", () => {
     const o = oferta([inv("TMCLSMAT050", CLASIC, "RAL 8017")], [linieInv("L1", CLASIC), pluvial("L2", JGHEAB_MAT, "RAL 8017"), pluvial("L3", JGHEAB_LUC, "RAL 8017")]);
     const r = impacheteaza(o);
     expect(r.pachete.filter((p) => p.tip === "pluvial").map((p) => p.nume)).toEqual(["Pluvial A — mat 8017", "Pluvial B — colorat (lucios) 8017"]);
+    expect(r.formulare).toHaveLength(1);
   });
 
   it("sectiune de sine statatoare (fara invelitoare) -> formular fara invelitoare, unul per cheie (E10)", () => {
@@ -139,9 +142,10 @@ describe("pluvialul si sectiunile de sine statatoare (FISA-OFERTARE 3.5, 3.8)", 
       ["de_sine_statatoare", ["L1", "L2"]],
       ["de_sine_statatoare", ["L3"]],
     ]);
-    expect(r.formulare).toHaveLength(3);
-    expect(r.formulare[1].continut).toMatch(/^Formular fără învelitoare: doar finisaj, grosime și culoare \(3005 mat 0,50\), 2 linii$/);
-    expect(r.text).toMatch(/^Se vor genera 3 formulare Bilka/);
+    // M2: doua sectiuni = doua formulare fara invelitoare; pluvialul intra pe locul lui de pe primul
+    expect(r.formulare).toHaveLength(2);
+    expect(r.formulare[0].continut).toMatch(/^Formular fără învelitoare: doar finisaj, grosime și culoare \(3005 mat 0,50\), 2 linii \+ pluvial colorat \(lucios\) 125\/90 RAL 3005/);
+    expect(r.text).toMatch(/^Se vor genera 2 formulare Bilka/);
   });
 
   it("fara niciun produs de formular: text explicit, fara avertizari", () => {
@@ -161,7 +165,7 @@ describe("calculeazaOferta leaga pachetele de linii", () => {
     expect(r.linii.map((l) => l.pachet)).toEqual(["P1 — Clasic 8017 mat", "P2 — Retro Plus 7016 mat", "P2 — Retro Plus 7016 mat", "Pluvial A — mat 8017"]);
     // achizitia pe pachet = suma valorilor de achizitie ale liniilor (1,00 x 1,01 = 1,01 EUR pe unitate)
     expect(r.pachete.map((p) => p.achizitieEur)).toEqual(["48.48", "53.53", "4.04"]); // 48 mp, 48 mp + 5 buc, 4 buc
-    expect(r.formulareBilka.map((f) => f.nr)).toEqual([1, 2, 3]);
-    expect(r.textFormulare).toMatch(/^Se vor genera 3 formulare Bilka: 1\) Clasic 8017 mat 0,50 ca învelitoare principală/);
+    expect(r.formulareBilka.map((f) => f.nr)).toEqual([1, 2]); // M2: pluvialul pe locul lui de pe primul formular
+    expect(r.textFormulare).toMatch(/^Se vor genera 2 formulare Bilka: 1\) Clasic 8017 mat 0,50 ca învelitoare principală/);
   });
 });

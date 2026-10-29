@@ -1,7 +1,7 @@
 {
  "id": "E12",
  "titlu": "Același produs în două culori: Clasic mat 0,50 RAL 8017 (casa, cu accesorii și fixare) + Clasic mat 0,50 RAL 7016 (garajul, cu accesorii proprii → pachet separat) și două rubrici de șipcă (Oslo 7016 Calcul + Haga 8017 Comandă) — agent 1 %, țintă adaos 20 %, prezentare simplă",
- "status": "propus (28.10.2026) — de aprobat de Ionuț",
+ "status": "aprobat (Ionuț, 28.10.2026, odată cu aprobarea sesiunii S13b; formularele recalculate la M2: 2)",
  "intrari": {
   "curs_bnr": "5.3485",
   "tva_pct": 21,
@@ -478,18 +478,14 @@
   "formulare_bilka": [
    {
     "nr": 1,
-    "continut": "Clasic 8017 mat 0,50 ca învelitoare principală + accesoriile standard și fixarea pachetului P1 (cheie 8017 mat 0,50) + blocul de șipcă A (Oslo mat 7016, 216,000 ml) — prima rubrică de șipcă merge pe primul formular"
+    "continut": "Clasic 8017 mat 0,50 ca învelitoare principală + accesoriile standard și fixarea pachetului P1 (cheie 8017 mat 0,50) + blocul de șipcă A (Oslo mat 7016, 216,000 ml)"
    },
    {
     "nr": 2,
-    "continut": "Clasic 7016 mat 0,50 ca învelitoare principală + accesoriile și fixarea proprii (cheie 7016 mat 0,50) — pachet separat: același produs, altă cheie și accesorii proprii"
-   },
-   {
-    "nr": 3,
-    "continut": "Șipcă B (Haga mat 8017, 97,000 ml) singură — formularul Bilka acceptă un singur model de șipcă, a doua rubrică = formular separat (cap. 8), ca la pluvialul în două culori"
+    "continut": "Clasic 7016 mat 0,50 ca învelitoare principală + accesoriile și fixarea proprii (cheie 7016 mat 0,50) + blocul de șipcă B (Haga mat 8017, 97,000 ml) — primul formular fără șipcă (M2: până la 28.10 șipca B era pe un al treilea formular)"
    }
   ],
-  "nota": "învelitorile și șipcile se identifică prin id (I1, I2, S1, S2), nu prin cod: același produs apare de două ori, în culori diferite, iar accesoriile cu același cod merg în pachete diferite după învelitoarea de care sunt legate; pachetele P1 și P2 sunt separate pentru că a doua învelitoare are altă cheie și accesorii proprii (FISA-OFERTARE 3.4); numele pachetelor de șipcă: „Șipcă A — <profil> <RAL> <finisaj>”"
+  "nota": "învelitorile și șipcile se identifică prin id (I1, I2, S1, S2), nu prin cod: același produs apare de două ori, în culori diferite, iar accesoriile cu același cod merg în pachete diferite după învelitoarea de care sunt legate; pachetele P1 și P2 sunt separate pentru că a doua învelitoare are altă cheie și accesorii proprii (FISA-OFERTARE 3.4); numele pachetelor de șipcă: „Șipcă A — <profil> <RAL> <finisaj>”; formulare: 2 (R10 — a doua șipcă pe primul formular fără șipcă)"
  },
  "reguli": "ETALON.md §0 (R1–R7)",
  "format": "v1.3 (28.10.2026): `invelitori[].id` și `linii[].invelitoare` = id-ul învelitorii (nu codul), pe liniile legate și pe linia învelitorii însăși; `sipci[]` cu `id`, iar linia de șipcă poartă `sipca` = id; `linii[].nr` = poziția; `asteptat.mp_invelitori` și `asteptat.sipci` pe id · restul ca v1.1 / v1.2"

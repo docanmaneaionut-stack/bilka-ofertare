@@ -33,7 +33,14 @@ export function Structura({ structura }: { structura: { rezultat: StructuraOfert
           </div>
         ))}
       </div>
-      <p>{r.textFormulare}</p>
+      <p>{r.textFormulare.replace(/:.*$/, ".")}</p>
+      {r.formulareBilka.length > 0 && (
+        <ol>
+          {r.formulareBilka.map((f) => (
+            <li key={f.nr}>{f.continut}</li>
+          ))}
+        </ol>
+      )}
       {r.pachete.length > 0 && (
         <ul>
           {r.pachete.map((p) => (

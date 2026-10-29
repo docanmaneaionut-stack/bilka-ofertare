@@ -29,13 +29,14 @@ const MOD: Record<string, IntrareOferta["modPrezentare"]> = {
   DISCOUNT_PER_LINIE: "discount_per_linie",
 };
 
-function produsDinSnapshot(s: { cod: string; denumire: string; um: string; pretBazaEur: Prisma.Decimal; finisaj: string | null; grosime: string | null; grup: string | null; familie: string | null; optiune: string | null }): ProdusOferta {
+function produsDinSnapshot(s: { cod: string; denumire: string; um: string; pretBazaEur: Prisma.Decimal; finisaj: string | null; grosime: string | null; grup: string | null; familie: string | null; optiune: string | null; sistem?: string | null }): ProdusOferta {
   const p: ProdusOferta = { cod: s.cod, denumire: s.denumire, um: s.um, pretBazaEur: s.pretBazaEur.toString() };
   if (s.finisaj) p.finisaj = s.finisaj;
   if (s.grosime) p.grosime = s.grosime;
   if (s.grup) p.grup = s.grup;
   if (s.familie) p.familie = s.familie;
   if (s.optiune) p.optiune = s.optiune;
+  if (s.sistem) p.sistem = s.sistem;
   return p;
 }
 

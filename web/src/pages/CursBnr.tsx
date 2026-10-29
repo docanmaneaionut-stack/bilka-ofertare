@@ -1,5 +1,5 @@
 import { useEffect, useState, type FormEvent } from "react";
-import { apiCurs, dataRo, type CursAzi, type CursZi } from "../api";
+import { apiCurs, dataRo, type CursAzi, type CursZi, type IncercareCurs } from "../api";
 import { Ajutor, Camp, Mesaj, textEroare } from "../components/ui";
 
 // Zona tehnica - Curs BNR (FISA-OFERTARE 11.8): cursul valabil acum, ultimele
@@ -7,6 +7,7 @@ import { Ajutor, Camp, Mesaj, textEroare } from "../components/ui";
 export function CursBnr() {
   const [azi, setAzi] = useState<CursAzi | null>(null);
   const [ultimele, setUltimele] = useState<CursZi[]>([]);
+  const [ultimaIncercare, setUltimaIncercare] = useState<IncercareCurs | null>(null);
   const [eroare, setEroare] = useState<string | null>(null);
   const [mesaj, setMesaj] = useState<string | null>(null);
   const [data, setData] = useState(new Date().toISOString().slice(0, 10));
@@ -18,6 +19,7 @@ export function CursBnr() {
       const r = await apiCurs.azi();
       setAzi(r.azi);
       setUltimele(r.ultimele);
+      setUltimaIncercare(r.ultimaIncercare);
       setEroare(r.eroare ?? null);
     } catch (e) {
       setEroare(textEroare(e));
@@ -33,7 +35,7 @@ export function CursBnr() {
     setSeLucreaza(true);
     try {
       const r = await apiCurs.preia(istoric);
-      setMesaj(r.salvate > 0 ? `Preluate ${r.salvate} cursuri (${r.sursa}).` : "Nicio sursă nu a răspuns; rămâne ultimul curs din tabel.");
+      setMesaj(r.salvate > 0 ? `Preluate ${r.salvate} cursuri (${r.sursa}).${r.mesaj ? ` ${r.mesaj}.` : ""}` : `Nicio sursă nu a răspuns (${r.mesaj}); rămâne ultimul curs din tabel. Poți introduce cursul manual mai jos.`);
       await incarca();
     } catch (e) {
       setEroare(textEroare(e));
@@ -72,6 +74,18 @@ export function CursBnr() {
       {eroare && <Mesaj tip="eroare">{eroare}</Mesaj>}
       {mesaj && <Mesaj tip="ok">{mesaj}</Mesaj>}
       {azi?.avertizareCurs && <Mesaj tip="avertizare">{azi.avertizareCurs}</Mesaj>}
+      <section className="panou">
+        <h2>Ultima încercare de preluare</h2>
+        {ultimaIncercare ? (
+          <p>
+            <strong>{ultimaIncercare.reusit ? "reușită" : "eșuată"}</strong> · {new Date(ultimaIncercare.la).toLocaleString("ro-RO")} · sursa: {ultimaIncercare.sursa}
+            {ultimaIncercare.reusit ? ` · ${ultimaIncercare.salvate} cursuri salvate` : ""}
+            {ultimaIncercare.mesaj ? <span className="mic text-secundar"> · {ultimaIncercare.mesaj}</span> : null}
+          </p>
+        ) : (
+          <p className="text-secundar">Nicio încercare de la pornirea serverului.</p>
+        )}
+      </section>
 
       {azi && (
         <div className="grila-totaluri">
@@ -134,9 +148,10 @@ export function CursBnr() {
 
       <Ajutor>
         <ul>
-          <li>Cursul se preia automat zilnic după 13:00 din nbrfxrates.xml (BNR), cu cursbnr.ro ca rezervă. Până la 13:00 cursul zilei e cel din ziua precedentă.</li>
+          <li>Cursul se preia automat zilnic după 13:00 din nbrfxrates.xml (BNR), cu cursbnr.ro ca rezervă. Până la 13:00 cursul zilei e cel din ziua precedentă. De la 28.10.2026 site-ul BNR refuză cererile automate (răspunde cu o pagină HTML, nu cu XML) — cursul vine din rezerva cursbnr.ro, iar când BNR redeschide XML-ul se revine singur la sursa oficială.</li>
+          <li>„Ultima încercare” arată când s-a încercat, ce sursă a răspuns și, la eșec, mesajul fiecărei surse — de acolo se vede dacă e internetul, site-ul BNR sau pagina de rezervă.</li>
           <li>„Preia și istoricul” aduce și fișierele anuale BNR (anul curent și cel precedent), ca tabelul să aibă cursurile trecute.</li>
-          <li>Cursul manual e pentru zilele fără internet; sursa rămâne notată pe fiecare curs și pe ofertele create cu el.</li>
+          <li>Cursul manual e plasa de siguranță pentru zilele în care nicio sursă nu răspunde: se scrie cursul BNR al zilei (4 zecimale) cu data publicării; sursa „manual” rămâne notată pe fiecare curs și pe ofertele create cu el.</li>
         </ul>
       </Ajutor>
     </>

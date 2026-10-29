@@ -42,6 +42,8 @@ export interface ProdusOferta {
   grup?: string;
   familie?: string;
   optiune?: string;
+  // sistemul pluvial din catalog ("125 / 90", "150 / 100", "125 / 90 și 150 / 100") - M2, R10
+  sistem?: string;
 }
 
 // o pozitie: lungime x bucati (FISA-OFERTARE 3.2, 5, 8)
@@ -326,6 +328,7 @@ const schemaProdus = zod.object({
   grup: zod.string().optional(),
   familie: zod.string().optional(),
   optiune: zod.string().optional(),
+  sistem: zod.string().optional(),
 });
 
 const schemaPozitie = zod.object({ lungimeM: sumaPozitiva, bucati: zod.number().int().min(1) });

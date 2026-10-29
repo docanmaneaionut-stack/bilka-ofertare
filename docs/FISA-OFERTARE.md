@@ -1,6 +1,6 @@
 # Fișa de modul — OFERTARE (OFE + DOC)
 
-Versiunea 1.1 · 23 octombrie 2026 (MODIFICARE la cap. 11 și 13 — cele două cursuri, totalul în lei, prețul fix „achiziție + x %"; completare la cap. 19 — vânzările colaboratorilor, la 11.3 — procedura grupei, la 11.8 — totalul în lei la abatere, la cap. 9 — liniile zonei B integral manuale, cu UM și opțiuni pe linie (27.10); deciziile lui Ionuț din 23 și 27.10.2026 pe ofertele-model E01–E08, `docs/ETALON.md`) · Status: ÎNCHISĂ pentru oferta clasică (capitolele 0–16, 2b, 19, 21). Rămân deschise, deliberat: 17 Ferestre (când există listele), 18 Offline (după punerea în funcțiune), 20 Pazie și Gard (după oferta clasică), 22 Aviz de marfă (odată cu fișa COMENZI). Se reia doar printr-o cerere explicită de MODIFICARE.
+Versiunea 1.2 · 28 octombrie 2026 (MODIFICARE la 3.5, cap. 6 și cap. 8 — **formularele Bilka**: șase locuri de pluvial pe formular (finisaj × dimensiune, o culoare pe loc), o singură variantă de șipcă pe formular, sistemele și șipcile în plus umplu întâi formularele existente; precizarea lui Ionuț din 28.10.2026, după prima verificare în ecran — cerere MODIFICARE M2 la motor) · v1.1 · 23 octombrie 2026 (MODIFICARE la cap. 11 și 13 — cele două cursuri, totalul în lei, prețul fix „achiziție + x %"; completare la cap. 19 — vânzările colaboratorilor, la 11.3 — procedura grupei, la 11.8 — totalul în lei la abatere, la cap. 9 — liniile zonei B integral manuale, cu UM și opțiuni pe linie (27.10); deciziile lui Ionuț din 23 și 27.10.2026 pe ofertele-model E01–E08, `docs/ETALON.md`) · Status: ÎNCHISĂ pentru oferta clasică (capitolele 0–16, 2b, 19, 21). Rămân deschise, deliberat: 17 Ferestre (când există listele), 18 Offline (după punerea în funcțiune), 20 Pazie și Gard (după oferta clasică), 22 Aviz de marfă (odată cu fișa COMENZI). Se reia doar printr-o cerere explicită de MODIFICARE.
 Se sprijină pe: FISA-CONTURI (cine ce poate), FISA-CATALOG-PRETURI (ce produse, ce prețuri, cascada model → finisaj → grosime → culoare).
 
 Fiecare capitol are statusul lui: **PROPUS** (schița mea din descrierea ta) → **ÎNCHIS** (ok-ul tău). Un capitol închis nu se mai reia.
@@ -147,10 +147,10 @@ Butonul **„Adaugă învelitoare"**: a doua, a treia (ex. țiglă + Retro pe ga
 - Un **pachet** = o învelitoare + secțiunile ei cu conținut. Reguli: a doua învelitoare cu **aceeași culoare** (finisaj, grosime, culoare) rămâne în același pachet; a doua învelitoare cu alte caracteristici, dar **fără accesorii sau auxiliare proprii**, rămâne tot în același pachet; a doua învelitoare cu alte caracteristici **și** cu accesorii / auxiliare proprii → **pachet separat**.
 
 ### 3.5 Exportul în formularul Bilka — limitările devin reguli
-Formularul Bilka acceptă: o învelitoare principală, o învelitoare secundară, șipcă de gard; **auxiliarele și tinichigeria iau automat culoarea învelitorii principale** (deci nu se pot adăuga produse în altă culoare / grosime); la pluvial, **o singură culoare pe finisaj** (nu două culori de lucios 125/90). De aceea:
+Formularul Bilka acceptă: o învelitoare principală, o învelitoare secundară; **auxiliarele și tinichigeria iau automat culoarea învelitorii principale** (deci nu se pot adăuga produse în altă culoare / grosime); **pluvialul are șase locuri pe formular** — câte unul pentru fiecare finisaj × dimensiune (colorat lucios, mat, Aluzinc / Magnelis × 125/90, 150/100), **o singură culoare pe loc**, culorile pluvialului fiind independente de restul formularului; **șipca: o singură variantă pe formular** (model = profil + tip de capăt, finisaj, grosime, culoare); accesoriile speciale la lungimi au foaia lor, cu finisaj, grosime și culoare **pe fiecare rând** (precizarea lui Ionuț, 28.10.2026). De aceea:
 1. Softul generează **un formular per pachet**: învelitoarea pachetului ca principală, accesoriile și auxiliarele ei, iar o învelitoare fără accesorii proprii poate intra ca secundară pe formularul altui pachet.
-2. **Pluvialul**: un formular per (finisaj + culoare); două culori de lucios → două formulare.
-3. Accesoriile speciale la lungimi au foaia lor cu culoare pe rând; șipca are blocul ei; zona B, ferestrele, Stocul nu intră în formular.
+2. **Pluvialul**: un sistem (finisaj + dimensiune + culoare) intră pe **primul formular existent care are liber locul lui**, în ordinea formularelor; două sisteme cu același finisaj și aceeași dimensiune, dar culori diferite, nu încap pe același formular — al doilea merge pe următorul formular cu locul liber sau, dacă nu există, pe un **formular nou, doar cu pluvial**. Exemple: casă + pluvial mat 125/90 8017 → 1 formular; + pluvial lucios 125/90 9005 sau + pluvial mat 150/100 → tot 1; + pluvial mat 125/90 7016 → 2 (al doilea sistem pe formularul garajului, dacă există unul, altfel singur). Până la 28.10.2026 fișa spunea „un formular per finisaj + culoare", citit greșit ca „pluvialul mereu pe formular separat".
+3. **Șipca**: prima variantă în blocul de șipcă al primului formular; fiecare variantă în plus (alt model **sau** altă culoare / finisaj / grosime) pe **primul formular fără șipcă**, altfel pe formular nou. **Accesoriile speciale la lungimi** stau pe foaia lor a primului formular, în oricâte culori — nu adaugă formulare. Zona B, ferestrele, Stocul nu intră în formular.
 4. **Agentul nu decide nimic**: împachetarea și numărul de formulare le stabilește softul, după regulile de mai sus; el vede doar „se vor genera 2 formulare" și de ce.
 5. Legătura de nume: rubrica din soft **„Fixare și etanșare"** = lista Bilka „Auxiliare" — softul păstrează corespondența, ca să se știe de unde vin produsele.
 
@@ -189,7 +189,7 @@ Suprafața la **3 zecimale** (ca la facturarea Bilka și în formular); prețuri
 
 - Presetat pe furnizorul Bilka (alții mai târziu) și pe sistemul **125 / 90**; se aleg finisajul și culoarea; clic pe „125 / 90" deschide lista pentru **150 / 100**. Denumirile produselor preiau automat dimensiunea sistemului (125 sau 150).
 - Apar direct: jgheab 4 m · 3 m · 2 m · burlan 3 m · cârlig 210 mm · cârlig combi · colier burlan · capac jgheab · element îmbinare jgheab · racord jgheab – burlan · cot 60° · prelungitor intermediar 1 m · colțar exterior 90° · colțar interior 90° · cot de evacuare. Restul sub „+".
-- **„+ Adaugă sistem pluvial"** pentru altă variantă (altă culoare sau alt sistem); la export, un formular de pluvial per (finisaj + culoare). Cantități manuale, fără calcul.
+- **„+ Adaugă sistem pluvial"** pentru altă variantă (altă culoare sau alt sistem); la export, regula din 3.5: sistemul intră pe formularul care are liber locul finisaj × dimensiune; două culori pe același loc → două formulare (precizat 28.10.2026). Cantități manuale, fără calcul.
 
 ## Capitolul 7 — Fixare și etanșare — ÎNCHIS (14.09.2026)
 
@@ -208,7 +208,7 @@ Rubrică proprie pe ofertă. **Produsul** = profilul (Haga, Oslo, Berna, Sofia) 
 
 **Pe ofertă**, în ambele variante: produsul, metrii liniari, prețul.
 
-**Export**: formularul Bilka acceptă **un singur model de șipcă** (profil + tip de capăt) pe comandă. O rubrică de șipcă = un model; pentru al doilea model pe aceeași ofertă: **„+ Adaugă rubrică șipcă"** → formular separat la export (ca la pluvialul în două culori). La Calcul, tronsoanele sunt poziții: 5 presetate + „Adaugă poziție".
+**Export**: formularul Bilka acceptă **o singură variantă de șipcă** (profil + tip de capăt, finisaj, grosime, culoare) pe comandă (precizat 28.10.2026: și același profil în altă culoare e altă variantă). O rubrică de șipcă = o variantă; pentru a doua: **„+ Adaugă rubrică șipcă"** → la export, pe primul formular fără șipcă, altfel formular nou (regula din 3.5). La Calcul, tronsoanele sunt poziții: 5 presetate + „Adaugă poziție".
 
 ## Capitolul 9 — Zona B — ÎNCHIS (14.09.2026)
 

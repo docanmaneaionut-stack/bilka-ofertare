@@ -31,6 +31,7 @@ export interface ProdusCatalog {
   familie?: string;
   varianta?: string;
   optiune?: string;
+  sistem?: string;
   latimeTotalaM?: string;
   latimeTotalaMm?: string;
   tablaPlana?: "mp" | "coala";
@@ -66,6 +67,7 @@ export class CatalogCsv {
         if (r.familie) baza.familie = r.familie.trim();
         if (r.varianta) baza.varianta = r.varianta.trim();
         if (r.optiune) baza.optiune = r.optiune.trim();
+        if (r.sistem) baza.sistem = r.sistem.trim();
         if (r.latime_totala_m) baza.latimeTotalaM = r.latime_totala_m.trim();
         if (r.latime_totala_mm) baza.latimeTotalaMm = r.latime_totala_mm.trim();
         const esteTablaPlana = /coal/i.test(baza.categorieOferta);

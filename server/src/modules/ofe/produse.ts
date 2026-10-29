@@ -169,7 +169,7 @@ export async function salveazaProduse(ofertaId: string, date: DateProduse, u: Ut
     let ordine = 0;
     for (const i of date.invelitori) {
       const p = ia(i.produsId, "Învelitoarea");
-      await tx.ofertaLinie.create({ data: { ofertaId, ordine: ++ordine, rubrica: "Învelitori", ...snapshot(p.editor, p.pret), cantitate: "1", invelitoareId: idInvelitoare.get(i.cheie)! } });
+      await tx.ofertaLinie.create({ data: { ofertaId, ordine: ++ordine, rubrica: "Învelitori", ...snapshot(p.editor, p.pret), sistem: p.editor.sistem, cantitate: "1", invelitoareId: idInvelitoare.get(i.cheie)! } });
     }
     const idLinie = new Map<string, string>();
     for (const [idx, l] of date.linii.entries()) {
@@ -180,6 +180,8 @@ export async function salveazaProduse(ofertaId: string, date: DateProduse, u: Ut
           ordine: ++ordine,
           rubrica: l.rubrica,
           ...snapshot(p.editor, p.pret),
+          // sistemul pluvial din catalog (M2): locul de pe formularul Bilka
+          sistem: p.editor.sistem,
           cantitate: nr(l.cantitate),
           invelitoareId: l.invelitoare ? idInvelitoare.get(l.invelitoare)! : null,
           culoareRal: l.culoare?.ral ?? null,

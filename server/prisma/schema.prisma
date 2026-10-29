@@ -746,6 +746,8 @@ model OfertaLinie {
   grup        String?
   familie     String?
   optiune     String?
+  // sistemul pluvial din catalog (M2, migrarea 10): locurile de pe formularul Bilka
+  sistem      String?
   pretBazaEur Decimal @db.Decimal(12, 4)
 
   cantitate Decimal @db.Decimal(12, 3)

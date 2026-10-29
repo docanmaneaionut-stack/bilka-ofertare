@@ -2,7 +2,7 @@ import { Router } from "express";
 import { z } from "zod";
 import { prisma } from "../../db/prisma.js";
 import { cereAutentificare, cereRol } from "../accounts/middleware.js";
-import { cursuriDinTabel, cursulZilei, EroareCurs, preiaCursuri, salveazaCursuri } from "./serviciu.js";
+import { cursuriDinTabel, cursulZilei, EroareCurs, preiaCursuri, salveazaCursuri, ultimaIncercareCurs } from "./serviciu.js";
 
 // /api/curs: cursul valabil acum (regula 13:00), ultimele cursuri, preluare
 // manuala si introducere manuala (Admin general, Zona tehnica - "Curs BNR")
@@ -11,12 +11,13 @@ cursRouter.use(cereAutentificare);
 
 cursRouter.get("/", async (_req, res) => {
   const ultimele = await cursuriDinTabel(15);
+  const ultimaIncercare = ultimaIncercareCurs();
   try {
     const azi = await cursulZilei(new Date(), null);
-    res.json({ azi, ultimele });
+    res.json({ azi, ultimele, ultimaIncercare });
   } catch (e) {
     if (e instanceof EroareCurs) {
-      res.json({ azi: null, ultimele, eroare: e.message });
+      res.json({ azi: null, ultimele, ultimaIncercare, eroare: e.message });
       return;
     }
     throw e;
@@ -27,9 +28,9 @@ cursRouter.post("/preia", cereRol("ADMIN_GENERAL"), async (req, res) => {
   const { istoric } = z.object({ istoric: z.boolean().optional() }).parse(req.body ?? {});
   const rezultat = await preiaCursuri({ istoric: istoric ?? false });
   await prisma.jurnalIntrare.create({
-    data: { utilizatorId: req.utilizator!.id, numeUtilizatorLaMoment: req.utilizator!.nume, entitate: "CursValutar", entitateId: "EUR", actiune: "preluare", valoareDupa: `${rezultat.salvate} cursuri (${rezultat.sursa})` },
+    data: { utilizatorId: req.utilizator!.id, numeUtilizatorLaMoment: req.utilizator!.nume, entitate: "CursValutar", entitateId: "EUR", actiune: "preluare", valoareDupa: `${rezultat.salvate} cursuri (${rezultat.sursa})${rezultat.mesaj ? ` - ${rezultat.mesaj}` : ""}` },
   });
-  res.json(rezultat);
+  res.json({ ...rezultat, ultimaIncercare: ultimaIncercareCurs() });
 });
 
 cursRouter.post("/manual", cereRol("ADMIN_GENERAL"), async (req, res) => {

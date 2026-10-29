@@ -744,6 +744,7 @@ export type AntetOferta = { data?: string; sursaClient?: string | null; note?: s
 
 export type CursAzi = { cursBnr: string; cursAchizitie: string; dataCurs: string; sursaCurs: string; avertizareCurs: string | null };
 export type CursZi = { data: string; curs: string; sursa: string };
+export type IncercareCurs = { la: string; sursa: string; reusit: boolean; salvate: number; mesaj: string };
 
 const BAZA_OFE = "/api/oferte";
 
@@ -779,8 +780,8 @@ export const apiClienti = {
 };
 
 export const apiCurs = {
-  azi: () => cerere<{ azi: CursAzi | null; ultimele: CursZi[]; eroare?: string }>("/api/curs"),
-  preia: (istoric: boolean) => cerere<{ salvate: number; sursa: string }>("/api/curs/preia", { method: "POST", body: JSON.stringify({ istoric }) }),
+  azi: () => cerere<{ azi: CursAzi | null; ultimele: CursZi[]; ultimaIncercare: IncercareCurs | null; eroare?: string }>("/api/curs"),
+  preia: (istoric: boolean) => cerere<{ salvate: number; sursa: string; mesaj: string; ultimaIncercare: IncercareCurs | null }>("/api/curs/preia", { method: "POST", body: JSON.stringify({ istoric }) }),
   manual: (data: string, curs: string) => cerere<{ ok: true }>("/api/curs/manual", { method: "POST", body: JSON.stringify({ data, curs }) }),
 };
 

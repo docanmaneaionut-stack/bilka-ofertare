@@ -23,6 +23,7 @@ export interface ProdusCatalogEtalon {
   familie?: string;
   varianta?: string;
   optiune?: string;
+  sistem?: string;
   latimeTotalaM?: string;
   latimeTotalaMm?: string;
   tablaPlana?: "mp" | "coala";
@@ -155,6 +156,7 @@ function produsDinCatalog(p: ProdusCatalogEtalon, umEtalon?: string): LinieOfert
   if (p.grup) produs.grup = p.grup;
   if (p.familie) produs.familie = p.familie;
   if (p.optiune) produs.optiune = p.optiune;
+  if (p.sistem) produs.sistem = p.sistem;
   return produs;
 }
 
