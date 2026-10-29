@@ -512,7 +512,8 @@ export type RezultatProba = {
   abatereEur: string;
   garda: { respectata: boolean; liniiSubAchizitie: string[]; aplicata: boolean };
   pachete: { id: string; nume: string; tip: string; linii: string[]; achizitieEur: string }[];
-  formulareBilka: { nr: number; pachete: string[]; continut: string }[];
+  // M3 (S17a): pe langa text, continutul structurat (id-uri) - folosit de generatorul formularului
+  formulareBilka: { nr: number; pachete: string[]; continut: string; invelitoarePrincipala?: string; invelitoriSecundare: string[]; linii: string[]; pluvial: { finisaj: string; sistem: string; ral: string; linii: string[] }[]; sipca?: { id: string; linii: string[] }; lungimi: string[] }[];
   textFormulare: string;
   avertizari: string[];
 };
@@ -973,7 +974,8 @@ export type StructuraOferta = {
   comandabil: { da: boolean; motive: string[] };
   linii: { id: string; cod: string; um: string; cantitate: string; pachet?: string }[];
   pachete: { id: string; nume: string; tip: string; linii: string[] }[];
-  formulareBilka: { nr: number; pachete: string[]; continut: string }[];
+  // M3 (S17a): pe langa text, continutul structurat (id-uri) - folosit de generatorul formularului
+  formulareBilka: { nr: number; pachete: string[]; continut: string; invelitoarePrincipala?: string; invelitoriSecundare: string[]; linii: string[]; pluvial: { finisaj: string; sistem: string; ral: string; linii: string[] }[]; sipca?: { id: string; linii: string[] }; lungimi: string[] }[];
   textFormulare: string;
   avertizari: string[];
 };

@@ -164,9 +164,11 @@ export function umpleFormulare(intrare: IntrareUmplere): FormularUmplut[] {
   const calcDupaId = new Map(rezultat.linii.map((c) => [c.id, c]));
   const cantitateLiniei = (l: Linie) => numar(calcDupaId.get(l.id)?.cantitate ?? l.cantitate);
   const formulareLiniilorPluvial = pluvialPeFormulare(oferta, rezultat);
-  const liniiLungimi = oferta.linii.filter((l) => esteRubricaLungimi(l.rubrica));
+  // G6: numele din tabela de corespondenta care lipsesc din sablonul incarcat -
+  // tabela si formularul nu se mai potrivesc; generarea se opreste (nu avertizare)
+  const numeLipsa = new Set<string>();
 
-  return rezultat.formulareBilka.map((f) => {
+  const formulare = rezultat.formulareBilka.map((f) => {
     const scrieri = new Map<string, ValoareCelula>();
     const avertizari: string[] = [];
     const faraLoc: string[] = [];
@@ -192,19 +194,23 @@ export function umpleFormulare(intrare: IntrareUmplere): FormularUmplut[] {
     if (antet.localitate) pune(comanda, harta.antet.localitate, antet.localitate);
     if (antet.telefon) pune(comanda, harta.antet.telefon, antet.telefon);
 
-    // 2. pachetele si liniile formularului
+    // 2. continutul formularului: structurat (M3) - id-urile invelitorilor, liniile,
+    //    locurile de pluvial, sipca, lungimile; pentru rezultatele salvate la "Comandat"
+    //    inainte de M3 (fara structura), rezerva: derivarea din pachete
     const pachete = rezultat.pachete.filter((p) => f.pachete.includes(p.id));
-    const pachetPrincipal = pachete.find((p) => p.tip === "invelitoare" && p.invelitoarePrincipala);
-    const idLinii = new Set<string>();
-    for (const p of pachete) {
-      if (p.tip === "pluvial") continue;
-      for (const id of p.linii) idLinii.add(id);
+    let continut: ContinutFormular;
+    if (f.linii !== undefined && f.pluvial !== undefined) {
+      continut = { principala: f.invelitoarePrincipala, secundare: f.invelitoriSecundare ?? [], linii: f.linii, pluvial: f.pluvial.flatMap((l) => l.linii), sipca: f.sipca?.id, lungimi: f.lungimi ?? [] };
+    } else {
+      continut = continutDinPachete(f, pachete, oferta, formulareLiniilorPluvial, sipcaPeLinie);
+      avertizari.push("Rezultatul a fost salvat înainte de M3 (fără conținutul structurat al formularelor): formularul s-a compus din pachete");
     }
-    for (const [id, nr] of formulareLiniilorPluvial) if (nr === f.nr) idLinii.add(id);
-    const linii = [...idLinii].map((id) => linieDupaId.get(id)).filter((l): l is Linie => l !== undefined);
+    const linii = [...new Set([...continut.linii, ...continut.pluvial, ...(continut.sipca ? oferta.linii.filter((l) => sipcaPeLinie.get(l.id)?.id === continut.sipca).map((l) => l.id) : [])])]
+      .map((id) => linieDupaId.get(id))
+      .filter((l): l is Linie => l !== undefined);
 
     // 3. cheia formularului: a invelitorii principale sau a primului pachet (formular fara invelitoare)
-    const principala = pachetPrincipal ? oferta.invelitori.find((i) => i.id === pachetPrincipal.invelitoarePrincipala) : undefined;
+    const principala = continut.principala ? oferta.invelitori.find((i) => i.id === continut.principala) : undefined;
     // formular fara invelitoare: cheia primului pachet, dupa text (fara cod de ierarhie)
     const cheieFormular: Cheie = principala ? cheieInvelitoare(principala) : { ral: pachete[0]?.cheie.ral ?? "", finisaj: pachete[0]?.cheie.finisaj ?? "", grosime: pachete[0]?.cheie.grosime ?? null };
     const codCheie = principala?.cod ?? "";
@@ -229,7 +235,7 @@ export function umpleFormulare(intrare: IntrareUmplere): FormularUmplut[] {
       } else {
         if (/^T \d+$/.test(model)) model = `${model} ${inv.montaj === "perete" ? "P" : "A"}`;
         const tip = [...liste.modelePeTip.entries()].find(([, modele]) => modele.some((m) => normNume(m) === normNume(model!)))?.[0];
-        if (!tip) avertizari.push(`${eticheta}: modelul „${model}” nu e în listele de modele ale șablonului`);
+        if (!tip) numeLipsa.add(model);
         else {
           if (bloc.tip) pune(comanda, bloc.tip, tip);
           const exact = liste.modelePeTip.get(tip)!.find((m) => normNume(m) === normNume(model!))!;
@@ -262,17 +268,21 @@ export function umpleFormulare(intrare: IntrareUmplere): FormularUmplut[] {
     };
 
     scrieBlocInvelitoare(harta.principala, principala, cheieFormular, codCheie, "Învelitoarea principală", Boolean(principala));
-    const secundare = (pachetPrincipal?.invelitoriSecundare ?? []).map((id) => oferta.invelitori.find((i) => i.id === id)).filter((i): i is Invelitoare => i !== undefined);
+    const secundare = continut.secundare.map((id) => oferta.invelitori.find((i) => i.id === id)).filter((i): i is Invelitoare => i !== undefined);
     if (secundare[0]) scrieBlocInvelitoare(harta.secundara, secundare[0], cheieInvelitoare(secundare[0]), secundare[0].cod, "Învelitoarea secundară", true);
     for (const s of secundare.slice(1)) faraLoc.push(`${s.denumire} (a ${secundare.indexOf(s) + 1}-a învelitoare secundară; formularul are un singur loc)`);
 
     // 4. liniile: tinichigerie / auxiliare pe randurile cu nume, speciale 2 ML pe treapta, pluvial, sipca, lungimi
     const randuriFolosite = new Set<string>();
-    const plaseaza = (nume: string, cantitate: number, descriere: string) => {
+    // dinTabela: numele vine fix din tabela de corespondenta (sau din treapta) - daca lipseste
+    // din sablon, tabela si formularul nu se potrivesc (G6: oprire); un nume cu culoarea in el
+    // ({RAL}) care lipseste inseamna ca formularul n-are culoarea aceea - produs fara loc
+    const plaseaza = (nume: string, cantitate: number, descriere: string, dinTabela: boolean) => {
       const k = normNume(nume);
       const exact = harta.numeAcceptate.get(k);
       if (!exact) {
-        faraLoc.push(`${descriere} — numele „${nume}” nu există în șablonul firmei`);
+        if (dinTabela) numeLipsa.add(nume);
+        else faraLoc.push(`${descriere} — formularul nu are „${nume}” (culoarea aceasta nu e în listele lui)`);
         return;
       }
       const libere = harta.accesorii.filter((r) => !randuriFolosite.has(`${r.coloanaNume}${r.rand}`));
@@ -322,7 +332,7 @@ export function umpleFormulare(intrare: IntrareUmplere): FormularUmplut[] {
       if (esteRubricaSpeciale(l.rubrica)) {
         const treapta = treaptaLiniei(l, produse);
         if (!treapta) faraLoc.push(`${descriere} — fără treaptă D01–D25`);
-        else plaseaza(`ACCESORIU SPECIAL ${treapta}`, cantitate, descriere);
+        else plaseaza(`ACCESORIU SPECIAL ${treapta}`, cantitate, descriere, true);
         continue;
       }
       const cheie = cheieLinie(l, oferta.invelitori);
@@ -331,12 +341,14 @@ export function umpleFormulare(intrare: IntrareUmplere): FormularUmplut[] {
         faraLoc.push(`${descriere} — fără corespondență în tabela „Formular Bilka” din Referințe`);
         continue;
       }
-      if (nume.includes("{RAL}")) nume = nume.replace("{RAL}", numarRal(cheie.ral));
-      plaseaza(nume, cantitate, descriere);
+      const cuCuloare = nume.includes("{RAL}");
+      if (cuCuloare) nume = nume.replace("{RAL}", numarRal(cheie.ral));
+      plaseaza(nume, cantitate, descriere, !cuCuloare);
     }
 
     // 5. accesoriile la lungimi: foaia lor, pe primul formular, un rand per pozitie
-    if (f.nr === 1 && liniiLungimi.length > 0) {
+    const liniiLungimi = continut.lungimi.map((id) => linieDupaId.get(id)).filter((l): l is Linie => l !== undefined);
+    if (liniiLungimi.length > 0) {
       const randuri = [...harta.speciale.randuri];
       const col = harta.speciale.coloane;
       for (const l of liniiLungimi) {
@@ -393,7 +405,7 @@ export function umpleFormulare(intrare: IntrareUmplere): FormularUmplut[] {
         const model = numeDinCorespondenta(corespondente, linie.cod, [sipca.model, linie.denumire]);
         const exact = model ? liste.modeleSipca.find((m) => normNume(m) === normNume(model)) : undefined;
         if (!model) avertizari.push(`${eticheta}: produsul ${linie.cod} (${sipca.model}) nu are corespondență în tabela „Formular Bilka”`);
-        else if (!exact) avertizari.push(`${eticheta}: modelul „${model}” nu e în lista de modele de șipcă a șablonului`);
+        else if (!exact) numeLipsa.add(model);
         else pune(comanda, bloc.model, exact);
         let pozitii: { lungimeM: number; bucati: number }[];
         if (sipca.varianta === "CALCUL") {
@@ -422,6 +434,46 @@ export function umpleFormulare(intrare: IntrareUmplere): FormularUmplut[] {
       avertizari,
     };
   });
+  if (numeLipsa.size > 0) throw new EroareNumeLipsa([...numeLipsa]);
+  return formulare;
+}
+
+// tabela de corespondenta si sablonul firmei nu se mai potrivesc (alta versiune a
+// formularului): generarea se opreste, cu numele care lipsesc si unde se corecteaza
+export class EroareNumeLipsa extends Error {
+  constructor(readonly nume: string[]) {
+    super(
+      `Tabela de corespondență nu se potrivește cu șablonul firmei: numele ${nume.map((n) => `„${n}”`).join(", ")} nu există în formularul încărcat. Corectează în Zona tehnică → Referințe → „Formular Bilka” sau încarcă șablonul potrivit (Zona tehnică → Firme).`,
+    );
+  }
+}
+
+interface ContinutFormular {
+  principala?: string;
+  secundare: string[];
+  linii: string[];
+  pluvial: string[];
+  sipca?: string;
+  lungimi: string[];
+}
+
+// rezerva pentru rezultatele salvate inainte de M3: liniile din pachetele formularului,
+// pluvialul impartit dupa textul motorului cand un pachet e pe mai multe formulare
+function continutDinPachete(f: RezultatOferta["formulareBilka"][number], pachete: RezultatOferta["pachete"], oferta: OfertaCuProduse, formulareLiniilorPluvial: Map<string, number>, sipcaPeLinie: Map<string, { id: string }>): ContinutFormular {
+  const pachetPrincipal = pachete.find((p) => p.tip === "invelitoare" && p.invelitoarePrincipala);
+  const linii: string[] = [];
+  let sipca: string | undefined;
+  for (const p of pachete) {
+    if (p.tip === "pluvial") continue;
+    for (const id of p.linii) {
+      const s = sipcaPeLinie.get(id);
+      if (s) sipca = sipca ?? s.id;
+      else if (!oferta.linii.some((l) => l.id === id && esteLinieInvelitoare(l.rubrica))) linii.push(id);
+    }
+  }
+  const pluvial = [...formulareLiniilorPluvial.entries()].filter(([, nr]) => nr === f.nr).map(([id]) => id);
+  const lungimi = f.nr === 1 ? oferta.linii.filter((l) => esteRubricaLungimi(l.rubrica)).map((l) => l.id) : [];
+  return { principala: pachetPrincipal?.invelitoarePrincipala, secundare: pachetPrincipal?.invelitoriSecundare ?? [], linii, pluvial, sipca, lungimi };
 }
 
 // pe ce formular merge fiecare linie de pluvial (R10): pachetul de pluvial care e pe un

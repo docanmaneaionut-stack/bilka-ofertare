@@ -10,7 +10,7 @@ import { includeProduse } from "../intrareMot.js";
 import { scrieIstoric } from "../istoric.js";
 import { rezultatSauSalvat } from "../preturi.js";
 import { poateVedeaOferta } from "../vizibilitate.js";
-import { umpleFormulare, type FormularUmplut } from "./continut.js";
+import { EroareNumeLipsa, umpleFormulare, type FormularUmplut } from "./continut.js";
 import { citesteSablon, EroareSablon, type Sablon } from "./sablon.js";
 import { activeazaRecalcul, EroareScriere, scrieCelule } from "./scrie.js";
 import { EroareZip, rescrieZip } from "./zip.js";
@@ -72,14 +72,21 @@ export async function genereazaFormulareBilka(ofertaId: string, u: Utilizator) {
   const ids = [...new Set([...o.invelitori, ...o.linii].map((x) => x.produsId).filter((x): x is string => Boolean(x)))];
   const produse = new Map((ids.length ? await prisma.produs.findMany({ where: { id: { in: ids } }, select: { id: true, modulCm: true, treapta: true } }) : []).map((p) => [p.id, { modulCm: p.modulCm?.toString() ?? null, treapta: p.treapta }]));
   const nrComplet = numarComplet(o.serie, o.numar);
-  const formulare = umpleFormulare({
-    harta: sablon.harta,
-    oferta: o,
-    rezultat,
-    corespondente,
-    produse,
-    antet: { numarComplet: nrComplet, localitate: o.localitate ?? o.client.localitate, telefon: o.client.telefon },
-  });
+  let formulare: FormularUmplut[];
+  try {
+    formulare = umpleFormulare({
+      harta: sablon.harta,
+      oferta: o,
+      rezultat,
+      corespondente,
+      produse,
+      antet: { numarComplet: nrComplet, localitate: o.localitate ?? o.client.localitate, telefon: o.client.telefon },
+    });
+  } catch (e) {
+    // G6: tabela de corespondenta si sablonul nu se potrivesc - oprire cu mesaj, nu formular gresit
+    if (e instanceof EroareNumeLipsa) throw new EroareDocument(e.message, 409);
+    throw e;
+  }
   let fisiere: ReturnType<typeof fisiereDinUmplere>;
   try {
     fisiere = fisiereDinUmplere(sablon, formulare);

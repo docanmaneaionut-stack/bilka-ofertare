@@ -59,6 +59,8 @@ export async function restaureaza(prisma: PrismaClient, caleZip: string, dateDir
   const versiuneSoft = /Versiune soft:\s*(\S+)/.exec(textReadme)?.[1] ?? "?";
   if (!format) throw new EroareRestaurare("README-ul nu conține versiunea formatului de export");
   if (format > FORMAT_EXPORT) throw new EroareRestaurare(`Exportul e dintr-o versiune mai nouă a softului (format ${format} > ${FORMAT_EXPORT}); actualizează softul întâi`);
+  // exportul de firma (Administrator) e o copie a datelor firmei, nu o baza intreaga
+  if (/^Tip export:\s*firm/m.test(textReadme)) throw new EroareRestaurare("ZIP-ul e un export de firmă (doar datele unei firme, fără parole); restaurarea se face numai dintr-un export complet, al Admin-ului general");
 
   // baza trebuie sa fie goala
   for (const model of MODELE_EXPORT) {
@@ -116,6 +118,15 @@ export async function restaureaza(prisma: PrismaClient, caleZip: string, dateDir
           }));
           for (const lot of loturi(randuri)) await t.utilizator.createMany({ data: lot });
           for (const l of legaturi) await t.utilizator.update({ where: { id: l.id }, data: { administratorId: l.administratorId } });
+          continue;
+        }
+
+        if (model === "Oferta") {
+          // legaturile ofertei catre ea insasi (completarea, preluarea preturilor) se pun dupa
+          // ce exista toate ofertele, ca la administrator -> subordonat
+          const legaturi = randuri.filter((r) => r.completareLaId || r.preluataDinId).map((r) => ({ id: r.id as string, completareLaId: (r.completareLaId as string | null) ?? null, preluataDinId: (r.preluataDinId as string | null) ?? null }));
+          for (const lot of loturi(randuri.map((r) => ({ ...r, completareLaId: null, preluataDinId: null })))) await t.oferta.createMany({ data: lot });
+          for (const l of legaturi) await t.oferta.update({ where: { id: l.id }, data: { completareLaId: l.completareLaId, preluataDinId: l.preluataDinId } });
           continue;
         }
 

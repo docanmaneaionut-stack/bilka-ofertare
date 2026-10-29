@@ -1,5 +1,5 @@
 import { esteLinieInvelitoare } from "./cantitati.js";
-import type { CheieCuloare, FormularBilka, IntrareOferta, Invelitoare, LinieOferta, Pachet, ProdusOferta } from "./tipuri.js";
+import type { CheieCuloare, FormularBilka, IntrareOferta, Invelitoare, LinieOferta, LocPluvialFormular, Pachet, ProdusOferta } from "./tipuri.js";
 
 // Pachetele si formularele Bilka (FISA-OFERTARE 3.3-3.5, 3.8; ETALON E11).
 // Impachetarea o decide softul; agentul vede doar "se vor genera N formulare" si de ce.
@@ -172,7 +172,8 @@ export function impacheteaza(intrare: IntrareOferta): Impachetare {
 
   // 3. sectiunile de sine statatoare (cheie proprie, fara invelitoare); accesoriile
   //    la lungimi raman pe foaia lor, nu formeaza pachet
-  const laLungimi = linii.filter((x) => esteRubricaLungimi(x.rubrica) || (x.pozitii !== undefined && x.pozitii.length > 0 && !esteLinieInvelitoare(x.rubrica)));
+  // M3: linia unei sipci "comanda" are si ea pozitii, dar sta in blocul de sipca, nu pe foaia de lungimi
+  const laLungimi = linii.filter((x) => !esteLinieSipca(x) && (esteRubricaLungimi(x.rubrica) || (x.pozitii !== undefined && x.pozitii.length > 0 && !esteLinieInvelitoare(x.rubrica))));
   for (const l of linii.filter((x) => !pachetPeLinie.has(x.id) && x.culoare && !laLungimi.includes(x) && !esteLinieSipca(x))) {
     const cheie = cheieLinie(l);
     let p = pachete.find((x) => x.tip === "de_sine_statatoare" && aceeasiCheie(x.cheie, cheie));
@@ -246,11 +247,18 @@ export function impacheteaza(intrare: IntrareOferta): Impachetare {
     pachete: string[];
     parti: string[];
     locuri: Map<string, string>;
-    sipca?: string;
+    variantaSipca?: string;
+    // M3 (S17a): continutul structurat, pe id-uri
+    invelitoarePrincipala?: string;
+    invelitoriSecundare: string[];
+    linii: string[];
+    pluvial: LocPluvialFormular[];
+    sipca?: { id: string; linii: string[] };
+    lungimi: string[];
   }
   const formulare: FormularInLucru[] = [];
   const formularNou = (pachetId: string | null, descriere: string): FormularInLucru => {
-    const f: FormularInLucru = { nr: formulare.length + 1, pachete: pachetId ? [pachetId] : [], parti: [descriere], locuri: new Map() };
+    const f: FormularInLucru = { nr: formulare.length + 1, pachete: pachetId ? [pachetId] : [], parti: [descriere], locuri: new Map(), invelitoriSecundare: [], linii: [], pluvial: [], lungimi: [] };
     formulare.push(f);
     return f;
   };
@@ -267,14 +275,17 @@ export function impacheteaza(intrare: IntrareOferta): Impachetare {
 
   // 5a. un formular per pachet de invelitoare
   for (const p of pachete.filter((x) => x.tip === "invelitoare" && x.invelitoarePrincipala)) {
-    const accesorii = p.linii.filter((id) => !linii.find((l) => l.id === id && esteLinieInvelitoare(l.rubrica))).length;
+    const idAccesorii = p.linii.filter((id) => !linii.find((l) => l.id === id && esteLinieInvelitoare(l.rubrica)));
     const secundare = p.invelitoriSecundare.map((id) => `${numeInvelitoare(id)} ca învelitoare secundară`);
     const motiv = formulare.length > 0 ? " — pachet separat: altă cheie și accesorii proprii" : "";
-    formularNou(p.id, [`${numeInvelitoare(p.invelitoarePrincipala!)} ca învelitoare principală`, ...secundare, `${accesorii} linii de accesorii și fixare (cheie ${textCheie(p.cheie)})`].join(" + ") + motiv);
+    const f = formularNou(p.id, [`${numeInvelitoare(p.invelitoarePrincipala!)} ca învelitoare principală`, ...secundare, `${idAccesorii.length} linii de accesorii și fixare (cheie ${textCheie(p.cheie)})`].join(" + ") + motiv);
+    f.invelitoarePrincipala = p.invelitoarePrincipala;
+    f.invelitoriSecundare = [...p.invelitoriSecundare];
+    f.linii = idAccesorii;
   }
   // 5b. sectiunile de sine statatoare: formular fara invelitoare, unul per cheie
   for (const p of pachete.filter((x) => x.tip === "de_sine_statatoare")) {
-    formularNou(p.id, `Formular fără învelitoare: doar finisaj, grosime și culoare (${textCheie(p.cheie)}), ${p.linii.length} linii`);
+    formularNou(p.id, `Formular fără învelitoare: doar finisaj, grosime și culoare (${textCheie(p.cheie)}), ${p.linii.length} linii`).linii = [...p.linii];
   }
 
   // 5c. pluvialul pe locurile finisaj x sistem
@@ -307,20 +318,25 @@ export function impacheteaza(intrare: IntrareOferta): Impachetare {
     const pachetId = pachete.find((p) => p.nume === g.pachet)?.id ?? null;
     const descriere = `pluvial ${finisajScurt(g.finisaj)} ${g.sistem} RAL ${numarRal(g.ral)} (${g.linii.length} poziții) pe locul „${finisajScurt(g.finisaj)} ${g.sistem}”`;
     const liber = formulare.find((f) => !f.locuri.has(g.loc) || f.locuri.get(g.loc) === g.ral);
+    const locStructurat: LocPluvialFormular = { finisaj: g.finisaj, sistem: g.sistem, ral: g.ral, linii: [...g.linii] };
     if (liber) {
       liber.locuri.set(g.loc, g.ral);
       if (pachetId) adaugaPachet(liber, pachetId);
       liber.parti.push(descriere);
+      liber.pluvial.push(locStructurat);
     } else {
       const f = formularNou(pachetId, `Formular doar cu pluvial (locul „${finisajScurt(g.finisaj)} ${g.sistem}” e ocupat de altă culoare pe formularele dinainte)`);
       f.locuri.set(g.loc, g.ral);
       f.parti.push(descriere);
+      f.pluvial.push(locStructurat);
     }
   }
 
   // 5d. accesoriile la lungimi: foaia primului formular, oricate culori
   if (laLungimi.length > 0) {
-    primulFormular().parti.push(`accesorii speciale la lungimi pe foaia lor, cu culoarea pe rând (${laLungimi.length} rânduri)`);
+    const f = primulFormular();
+    f.parti.push(`accesorii speciale la lungimi pe foaia lor, cu culoarea pe rând (${laLungimi.length} rânduri)`);
+    f.lungimi = laLungimi.map((l) => l.id);
   }
 
   // 5e. sipca: o varianta pe formular
@@ -329,18 +345,30 @@ export function impacheteaza(intrare: IntrareOferta): Impachetare {
     const varianta = [sipca?.model ?? "", p.cheie.finisaj, p.cheie.grosime ?? "", p.cheie.ral].map((x) => x.trim().toLowerCase()).join("|");
     const descriere = `blocul de șipcă ${p.id.replace(/^SIP/, "")} (${p.nume.replace(/^Șipcă \S+ — /, "")})`;
     // fara niciun formular (sipca singura): formularul fara invelitoare, cu blocul ei
-    const liber = formulare.length === 0 ? primulFormular() : formulare.find((f) => f.sipca === undefined || f.sipca === varianta);
+    const liber = formulare.length === 0 ? primulFormular() : formulare.find((f) => f.variantaSipca === undefined || f.variantaSipca === varianta);
     if (liber) {
-      liber.sipca = varianta;
+      liber.variantaSipca = varianta;
+      if (sipca) liber.sipca = { id: sipca.id, linii: [...p.linii] };
       adaugaPachet(liber, p.id);
       liber.parti.push(descriere + (liber.nr > 1 ? " — primul formular fără șipcă" : ""));
     } else {
       const f = formularNou(p.id, `Formular doar cu ${descriere} (formularul Bilka acceptă o singură variantă de șipcă)`);
-      f.sipca = varianta;
+      f.variantaSipca = varianta;
+      if (sipca) f.sipca = { id: sipca.id, linii: [...p.linii] };
     }
   }
 
-  const rezultatFormulare: FormularBilka[] = formulare.map((f) => ({ nr: f.nr, pachete: f.pachete, continut: f.parti.join(" + ") }));
+  const rezultatFormulare: FormularBilka[] = formulare.map((f) => ({
+    nr: f.nr,
+    pachete: f.pachete,
+    continut: f.parti.join(" + "),
+    ...(f.invelitoarePrincipala ? { invelitoarePrincipala: f.invelitoarePrincipala } : {}),
+    invelitoriSecundare: f.invelitoriSecundare,
+    linii: f.linii,
+    pluvial: f.pluvial,
+    ...(f.sipca ? { sipca: f.sipca } : {}),
+    lungimi: f.lungimi,
+  }));
   const n = rezultatFormulare.length;
   const text =
     n === 0

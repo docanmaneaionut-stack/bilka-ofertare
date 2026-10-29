@@ -14,7 +14,9 @@ import { env } from "../../env.js";
 // versiunea si numaratorile. Coloanele vin din schema Prisma (DMMF), deci un
 // tabel nou intra automat in export cand e adaugat in lista de mai jos.
 
-export const FORMAT_EXPORT = 1;
+// 2 (S17a): tabelele ofertarii (clienti, oferte si copiii lor, documente, comenzi,
+// cursuri, montatori) si exportul de firma pentru Administratori
+export const FORMAT_EXPORT = 2;
 
 // ordinea = ordinea de restaurare (parintii inaintea copiilor)
 export const MODELE_EXPORT = [
@@ -35,6 +37,24 @@ export const MODELE_EXPORT = [
   "TreaptaDesfasurata",
   "OptiuneLista",
   "CorespondentaFormularBilka",
+  // S17a: ofertarea (parintii inaintea copiilor; Oferta are doua legaturi catre ea
+  // insasi - completareLaId, preluataDinId - restaurate in doi pasi)
+  "Client",
+  "CursValutar",
+  "ContorSerie",
+  "Montator",
+  "Oferta",
+  "OfertaInvelitoare",
+  "OfertaLinie",
+  "OfertaPozitie",
+  "OfertaSipca",
+  "OfertaTronson",
+  "OfertaZonaB",
+  "OfertaIstoric",
+  "OfertaAtasament",
+  "OfertaNotita",
+  "OfertaDocument",
+  "Comanda",
   "ImportPropunere",
   "JurnalIntrare",
   "JurnalAutentificare",
@@ -48,6 +68,51 @@ const COLOANE_EXCLUSE: Record<string, string[]> = {
 };
 
 export type ModelExport = (typeof MODELE_EXPORT)[number];
+
+// exportul de firma (Administrator, fisa CONTURI §8.4, S17a): doar datele firmei lui -
+// firma, utilizatorii ei, jurnalul lor, clientii si montatorii ofertelor ei, ofertele
+// cu copiii lor, documentele, comenzile - plus tabelele comune fara secrete
+// (catalog, referinte, cursuri, contoare); fara parole, fara propunerile de import
+// si jurnalul de autentificare; din fisiere doar ale firmei
+const FARA_IN_EXPORTUL_DE_FIRMA: ModelExport[] = ["ImportPropunere", "JurnalAutentificare"];
+
+function filtruFirma(model: ModelExport, firmaId: string): Record<string, unknown> | null {
+  const oferta = { oferta: { firmaId } };
+  switch (model) {
+    case "Firma":
+      return { id: firmaId };
+    case "Utilizator":
+    case "UtilizatorFirma":
+    case "Oferta":
+    case "Comanda":
+      return { firmaId };
+    case "JurnalIntrare":
+    case "Montator":
+      return { utilizator: { firmaId } };
+    case "Client":
+      return { oferte: { some: { firmaId } } };
+    case "OfertaInvelitoare":
+    case "OfertaLinie":
+    case "OfertaSipca":
+    case "OfertaZonaB":
+    case "OfertaIstoric":
+    case "OfertaAtasament":
+    case "OfertaNotita":
+    case "OfertaDocument":
+      return oferta;
+    case "OfertaPozitie":
+      return { OR: [{ invelitoare: oferta }, { linie: oferta }] };
+    case "OfertaTronson":
+      return { sipca: oferta };
+    default:
+      return null;
+  }
+}
+
+export interface OptiuniExport {
+  // exportul de firma: doar datele firmei date (Administrator)
+  firmaId?: string;
+}
 
 export function modelDmmf(nume: string) {
   const m = Prisma.dmmf.datamodel.models.find((x) => x.name === nume);
@@ -118,8 +183,10 @@ export async function versiuneSoft(): Promise<string> {
 }
 
 // scrie ZIP-ul in fisierul dat; intoarce numaratorile
-export async function scrieExport(caleZip: string): Promise<{ numaratori: Record<string, number>; fisiere: number }> {
+export async function scrieExport(caleZip: string, optiuni: OptiuniExport = {}): Promise<{ numaratori: Record<string, number>; fisiere: number }> {
   const numaratori: Record<string, number> = {};
+  const firmaId = optiuni.firmaId;
+  const firma = firmaId ? await prisma.firma.findUniqueOrThrow({ where: { id: firmaId }, select: { denumire: true } }) : null;
   const arhiva = archiver("zip", { zlib: { level: 6 } });
   const iesire = createWriteStream(caleZip);
   const gata = new Promise<void>((resolve, reject) => {
@@ -130,17 +197,31 @@ export async function scrieExport(caleZip: string): Promise<{ numaratori: Record
   arhiva.pipe(iesire);
 
   for (const model of MODELE_EXPORT) {
+    if (firmaId && FARA_IN_EXPORTUL_DE_FIRMA.includes(model)) continue;
     const coloane = coloaneModel(model);
-    const randuri = await delegat(model).findMany({ orderBy: coloaneModel(model).some((c) => c.name === "createdAt") ? { createdAt: "asc" } : undefined });
+    const where = firmaId ? (filtruFirma(model, firmaId) ?? undefined) : undefined;
+    const randuri = await delegat(model).findMany({ where, orderBy: coloaneModel(model).some((c) => c.name === "createdAt") ? { createdAt: "asc" } : undefined });
     numaratori[numeTabel(model)] = randuri.length;
     arhiva.append(randuriLaCsv(coloane, randuri), { name: `date/${numeTabel(model)}.csv` });
   }
 
-  // hash-urile parolelor (nu parole): doar pentru restaurare
-  const parole = await prisma.utilizator.findMany({ select: { id: true, parolaHash: true } });
-  arhiva.append(randuriLaCsv([{ name: "id", type: "String" }, { name: "parolaHash", type: "String" }], parole), { name: "_sistem/parole.csv" });
+  // hash-urile parolelor (nu parole): doar pentru restaurare - nu in exportul de firma
+  if (!firmaId) {
+    const parole = await prisma.utilizator.findMany({ select: { id: true, parolaHash: true } });
+    arhiva.append(randuriLaCsv([{ name: "id", type: "String" }, { name: "parolaHash", type: "String" }], parole), { name: "_sistem/parole.csv" });
+  }
 
-  const fisiere = await fisiereDin(env.dateDir);
+  let fisiere = await fisiereDin(env.dateDir);
+  if (firmaId) {
+    // doar fisierele firmei: sigla, sablonul Bilka, documentele si atasamentele ofertelor ei
+    const oferte = new Set((await prisma.oferta.findMany({ where: { firmaId }, select: { id: true } })).map((o) => o.id));
+    fisiere = fisiere.filter((f) => {
+      const parti = f.split(path.sep);
+      if (parti[0] === "sigle" || parti[0] === "sabloane-bilka") return parti[1]?.startsWith(firmaId) ?? false;
+      if (parti[0] === "oferte") return oferte.has(parti[1] ?? "");
+      return false;
+    });
+  }
   for (const f of fisiere) arhiva.file(path.join(env.dateDir, f), { name: `fisiere/${f.split(path.sep).join("/")}` });
 
   const data = new Date();
@@ -150,12 +231,14 @@ export async function scrieExport(caleZip: string): Promise<{ numaratori: Record
     `Data: ${data.toISOString()}`,
     `Format export: ${FORMAT_EXPORT}`,
     `Versiune soft: ${await versiuneSoft()}`,
+    `Tip export: ${firma ? `firmă (${firma.denumire})` : "complet"}`,
     "",
     "## Conținut",
     "",
     "- `date/<tabel>.csv` — câte un fișier per tabel (UTF-8 cu BOM, separator „;”, prima linie = coloanele). `utilizator.csv` e fără parole.",
     "- `_sistem/parole.csv` — hash-urile parolelor (nu parole; nu se pot inversa), folosite doar la restaurare.",
-    "- `fisiere/` — folderul de date al serverului: siglele firmelor și fișierele brute ale importurilor (sursa versiunilor de preț).",
+    "- `fisiere/` — folderul de date al serverului: siglele firmelor, șabloanele formularului Bilka, documentele generate și atașamentele ofertelor, fișierele brute ale importurilor (sursa versiunilor de preț).",
+    ...(firma ? ["", `Export de firmă (${firma.denumire}): doar datele firmei, fără parole, fără propunerile de import și jurnalul de autentificare; din fișiere doar ale firmei. Nu se restaurează cu npm run restore (restaurarea cere exportul complet).`] : []),
     "",
     "## Numărători",
     "",

@@ -370,6 +370,29 @@ describe("formularele Bilka (S16b)", () => {
     await colab.post(`/api/oferte/${idc}/formulare-bilka`).send({}).expect(403);
   }, 120_000);
 
+  it("G6: un nume din tabela de corespondenta care lipseste din sablon opreste generarea, cu numele si unde se corecteaza; Aluzinc ramane avertizare", async () => {
+    const agent = await autentificaAgent(app, EMAIL.agent1);
+    const id = await ofertaNoua(agent);
+    await construieste(agent, id, citesteEtalon("E01"));
+    await deComandat(agent, id);
+    const rand = await prisma.corespondentaFormularBilka.findFirstOrThrow({ where: { cheie: "ACMIC" } });
+    await prisma.corespondentaFormularBilka.update({ where: { id: rand.id }, data: { numeFormular: "COAMA MICA DIN ALTA VERSIUNE" } });
+    try {
+      const r = await agent.post(`/api/oferte/${id}/formulare-bilka`).send({});
+      expect(r.status).toBe(409);
+      expect(r.body.eroare).toContain("„COAMA MICA DIN ALTA VERSIUNE”");
+      expect(r.body.eroare).toContain("Referințe → „Formular Bilka”");
+      expect(r.body.eroare).toContain("Zona tehnică → Firme");
+      // niciun document nu s-a creat
+      const lista = await agent.get(`/api/oferte/${id}/documente`).expect(200);
+      expect(lista.body.documente).toEqual([]);
+    } finally {
+      await prisma.corespondentaFormularBilka.update({ where: { id: rand.id }, data: { numeFormular: rand.numeFormular } });
+    }
+    const dupa = await genereaza(agent, id);
+    expect(dupa.avertizari).toEqual([]);
+  }, 120_000);
+
   it("un fisier care nu e formularul Bilka e refuzat la incarcare", async () => {
     const ag = await autentificaAgent(app, EMAIL.adminGeneral);
     const r = await ag.post(`/api/adm/con/firme/${firma2}/sablon-bilka`).attach("sablon", Buffer.from("nu e zip"), "altceva.xlsm");

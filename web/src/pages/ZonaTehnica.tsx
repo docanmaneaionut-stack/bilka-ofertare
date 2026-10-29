@@ -41,11 +41,11 @@ export function ZonaTehnica({ utilizator, onLogout }: { utilizator: Utilizator; 
           <NavLink to="/zona-tehnica/utilizatori" className={clasa}>
             Utilizatori
           </NavLink>
+          <NavLink to="/zona-tehnica/export" className={clasa}>
+            Export
+          </NavLink>
           {adminGeneral && (
             <>
-              <NavLink to="/zona-tehnica/export" className={clasa}>
-                Export
-              </NavLink>
               <NavLink to="/zona-tehnica/calcul-proba" className={clasa}>
                 Calcul de probă
               </NavLink>

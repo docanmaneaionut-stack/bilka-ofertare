@@ -250,10 +250,29 @@ export interface Pachet {
   achizitieEur: Suma;
 }
 
+// un loc de pluvial ocupat pe formular (R10): finisaj x sistem, o culoare, liniile lui
+export interface LocPluvialFormular {
+  finisaj: string;
+  sistem: string;
+  ral: string;
+  linii: string[];
+}
+
 export interface FormularBilka {
   nr: number;
   pachete: string[];
+  // textul pentru agent ("Clasic 8017 mat 0,50 ca invelitoare principala + ...")
   continut: string;
+  // M3 (S17a): continutul structurat - id-urile din oferta, nu text
+  invelitoarePrincipala?: string;
+  invelitoriSecundare: string[];
+  // liniile de tinichigerie, fixare, speciale 2 ML (fara pluvial, sipca, lungimi)
+  linii: string[];
+  pluvial: LocPluvialFormular[];
+  // rubrica de sipca a formularului (o varianta pe formular) si liniile ei
+  sipca?: { id: string; linii: string[] };
+  // accesoriile la lungimi: foaia primului formular
+  lungimi: string[];
 }
 
 // cantitatile derivate din panotaj / tronsoane / pozitii (FISA-OFERTARE 3.2, 5, 8)

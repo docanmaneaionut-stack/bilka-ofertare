@@ -384,3 +384,20 @@ Fiecare intrare: data, obiectivul sesiunii, rezultatul, următorul pas propus.
 **Fără loc în formular (avertizare, de completat manual în Excel):** pluvialul Aluzinc (37 de coduri), holțșuruburile zincate pe un formular cu învelitoare colorată, corectorul colorat, banda de etanșare expandabilă, a doua învelitoare secundară, peste 28 de lungimi sau 35 de rânduri la lungimi.
 
 **Următorul pas propus:** după verificarea lui Ionuț în Excel: corecturile din Referințe (nu în cod); eventual MODIFICAREA M3 la motor (locurile de pluvial structurate pe formular); apoi Etapa 4 / 5 după PLAN.
+
+## 2026-10-29 — S17a: pregătirea înghețării Etapei 3 (M3, exportul, lista de acceptare)
+
+**Obiectiv:** PLAN v0.23 S17a — MODIFICAREA M3 la motor (conținutul structurat al formularelor), exportul cu toate tabelele noi și exportul de firmă pentru Administratori, rândurile „Code (S17)” din lista de acceptare; fără etichetă (vine la S17b, după verificările lui Ionuț).
+
+**Rezultat:**
+- **M3**, după §8: întâi testul pe structură (`mot-m3.test.ts`, 7 cazuri), apoi codul — fiecare formular Bilka poartă acum învelitorile, liniile, locurile de pluvial cu liniile lor, blocul de șipcă și foaia de lungimi, pe id-uri; textul rămâne pentru agent, etaloanele neschimbate. Generatorul formularului citește structura; împărțirea după text a rămas doar ca rezervă pentru rezultatele salvate la „Comandat” înainte de M3 (cu avertizare). Găsit cu ocazia asta și reparat în M3: linia unei șipci comandate pe lungimi era numărată la „accesorii la lungimi” în textul formularului.
+- **G6 reparat** (cum ai hotărât): un nume din tabela de corespondență care lipsește din șablonul încărcat oprește generarea cu mesaj — numele lipsă și unde se corectează (Referințe → „Formular Bilka” sau șablonul potrivit în Zona tehnică → Firme); niciun fișier nu se creează. „Nu au loc în formularul Bilka” rămâne doar pentru produsele care prin natura lor n-au loc. Test pentru amândouă.
+- **Exportul, formatul 2**: clienții, cursurile, contoarele, montatorii, ofertele cu toți copiii, documentele și comenzile intră în „descarcă tot” și în restaurare (legăturile ofertei către ea însăși în doi pași). Testul export → bază goală → restaurare → comparație acoperă toate tabelele noi, pe două firme.
+- **Exportul de firmă** pentru Administratori: Zona tehnică → Export → „Descarcă datele firmei (ZIP)” — doar firma lor, fără parole, fără propunerile de import și jurnalul de autentificare, din fișiere doar ale firmei; restaurarea îl refuză (e copie de siguranță a firmei, nu a softului).
+- **Lista de acceptare**: 31 de rânduri „Code (S17)” completate în coloana Status (✔ cu testul sau citirea care le acoperă); rândurile „Ionuț” neatinse; H6 rămâne pentru S17b. Nimic nu a picat în afară de G6, reparat în sesiune.
+- Testul nou `migrari-aditive.test.ts` (H1): SQL-ul migrărilor 6–13 fără instrucțiuni distructive; seed-ul idempotent.
+- Teste: `npm test` — **297 verzi**; etalon — 12 la zero.
+
+**De verificat de Ionuț (rândurile lui din lista de acceptare):** G3 (formularul în Excel, celulă cu celulă, validarea codurilor fără trimitere), G6 (cele 46 de corespondențe în Referințe), H5 (3–5 oferte reale), documentele (F1–F4), restul rândurilor „Ionuț”. Dacă un nume din tabelă nu se potrivește cu formularul, generarea spune acum exact ce lipsește.
+
+**Următorul pas propus:** S17b — remedierile găsite de Ionuț (ca cereri BUG), ARH §4.3 → ÎNGHEȚAT, eticheta `v0.3-ofertare` (și eticheta motorului pentru M3).
