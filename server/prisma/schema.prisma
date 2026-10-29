@@ -109,9 +109,10 @@ model Utilizator {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  montatori      Montator[]     @relation("MontatoriiAgentului")
-  comenziTrimise Comanda[]      @relation("ComenziTrimise")
-  notiteScrise   OfertaNotita[] @relation("NotiteScrise")
+  montatori         Montator[]       @relation("MontatoriiAgentului")
+  documenteGenerate OfertaDocument[] @relation("DocumenteGenerate")
+  comenziTrimise    Comanda[]        @relation("ComenziTrimise")
+  notiteScrise      OfertaNotita[]   @relation("NotiteScrise")
 
   firmeAcces          UtilizatorFirma[]
   listePretCreate     ListaPret[]
@@ -688,6 +689,7 @@ model Oferta {
   atasamente OfertaAtasament[]
   notite     OfertaNotita[]
   comanda    Comanda?
+  documente  OfertaDocument[]
 
   @@unique([serie, numar, versiune])
   @@index([firmaId, data])
@@ -978,4 +980,42 @@ model OfertaNotita {
 
   @@index([ofertaId, moment])
   @@map("oferta_notita")
+}
+
+// ---------------------------------------------------------------- S16 (migrarea 12)
+
+enum TipDocument {
+  OFERTA
+  REZUMAT
+  DETALIATA
+  TABEL_FACTURARE
+}
+
+enum CanalTransmitere {
+  WHATSAPP
+  EMAIL
+  PRINT
+}
+
+// documentele generate ale ofertei (cap. 13.6, 14): fiecare generare = un
+// document cu tipul, varianta ofertei, data-ora si fisierul din folderul de date
+// (oferte/<id>/documente/); "marcheaza ca transmis" noteaza canalul si scrie in istoric
+model OfertaDocument {
+  id          String            @id @default(uuid())
+  ofertaId    String
+  oferta      Oferta            @relation(fields: [ofertaId], references: [id])
+  tip         TipDocument
+  versiune    Int
+  nume        String
+  fisier      String
+  marime      Int
+  pagini      Int?
+  generatDeId String?
+  generatDe   Utilizator?       @relation("DocumenteGenerate", fields: [generatDeId], references: [id])
+  generatLa   DateTime          @default(now())
+  transmisLa  DateTime?
+  canal       CanalTransmitere?
+
+  @@index([ofertaId, generatLa])
+  @@map("oferta_document")
 }

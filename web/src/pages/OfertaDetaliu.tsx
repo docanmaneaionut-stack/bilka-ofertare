@@ -1,9 +1,10 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
-import { apiOferte, apiOptiuni, apiPreturi, apiStatus, dataRo, ETICHETA_STATUS, type ClientDate, type OfertaDetaliu as Oferta, type SursaPreluare } from "../api";
+import { apiDocumente, apiOferte, apiOptiuni, apiPreturi, apiStatus, dataRo, ETICHETA_STATUS, type ClientDate, type OfertaDetaliu as Oferta, type SursaPreluare, type TipDocument } from "../api";
 import { clientGol, dinClient, FormularClient } from "../components/FormularClient";
 import { MeniuActiuni } from "../components/MeniuActiuni";
 import { Ajutor, Camp, Mesaj, textEroare } from "../components/ui";
+import { Documente, ETICHETA_TIP } from "./oferta/Documente";
 import { Istoric, NotiteAtasamente } from "./oferta/IstoricNotite";
 import { Montator } from "./oferta/Montator";
 import { Preturi } from "./oferta/Preturi";
@@ -38,6 +39,22 @@ export function OfertaDetaliu() {
   const [lucru, setLucru] = useState<string | null>(null);
   const [reincarcaIstoric, setReincarcaIstoric] = useState(0);
   const navigate = useNavigate();
+
+  // "PDF ▾": genereaza documentul si il deschide; ramane in lista documentelor ofertei
+  async function pdf(tip: TipDocument) {
+    if (!oferta) return;
+    setEroare(null);
+    setLucru(`pdf-${tip}`);
+    try {
+      const { document } = await apiDocumente.genereaza(oferta.id, tip);
+      window.open(apiDocumente.cale(oferta.id, document.id), "_blank", "noopener");
+      setReincarcaIstoric((n) => n + 1);
+    } catch (err) {
+      setEroare(textEroare(err));
+    } finally {
+      setLucru(null);
+    }
+  }
 
   useEffect(() => {
     apiOptiuni.lista("sursa_client").then((r) => setSurseClient(r.optiuni.map((o) => o.valoare))).catch(() => setSurseClient([]));
@@ -152,13 +169,13 @@ export function OfertaDetaliu() {
             Află preț
           </Link>
           <MeniuActiuni
-            eticheta="PDF ▾"
-            actiuni={[
-              { eticheta: "Ofertă (PDF)", dezactivat: "vine în S16 — documentele" },
-              { eticheta: "Rezumat (PDF)", dezactivat: "vine în S16 — documentele" },
-              { eticheta: "Ofertă detaliată (PDF)", dezactivat: "vine în S16 — documentele" },
-              { eticheta: "Tabel de facturare (PDF)", dezactivat: "vine în S16 — documentele" },
-            ]}
+            eticheta={lucru?.startsWith("pdf-") ? "se generează…" : "PDF ▾"}
+            actiuni={(["OFERTA", "REZUMAT", "DETALIATA", "TABEL_FACTURARE"] as TipDocument[]).map((tip) => ({
+              eticheta: `${ETICHETA_TIP[tip]} (PDF)`,
+              explicatie: tip === "TABEL_FACTURARE" ? "intern, în lei" : undefined,
+              onClick: () => void pdf(tip),
+              dezactivat: oferta.invelitori.length === 0 && oferta.linii.length === 0 ? "oferta nu are încă produse" : lucru ? "se generează alt document" : undefined,
+            }))}
           />
           <MeniuActiuni
             actiuni={[
@@ -389,6 +406,7 @@ export function OfertaDetaliu() {
         </section>
       )}
 
+      <Documente oferta={oferta} reincarca={reincarcaIstoric} mentiuni={mentiuni} onSchimbare={() => setReincarcaIstoric((n) => n + 1)} />
       <NotiteAtasamente oferta={oferta} />
       <Istoric oferta={oferta} reincarca={reincarcaIstoric} />
 
@@ -398,6 +416,7 @@ export function OfertaDetaliu() {
           <li>Istoricul pornește la „Transmisă”: fiecare modificare (status, produs, cantitate, preț, sumă, client, antet) se notează cu cine, când, înainte / după și mențiunile scrise sus. Sumele modificate poartă asteriscul roșu.</li>
           <li>Numărul, firma, agentul și cursurile sunt fixate la salvare; cât e „În lucru”, cursurile se reîmprospătează din zona de prețuri.</li>
           <li>Meniul ⋯: copiază oferta, creează variantă, completare, legare ca completare, preia prețurile în altă ofertă, istoric, notițe și atașamente.</li>
+          <li>„PDF ▾” generează documentul (ofertă, rezumat, ofertă detaliată, tabel de facturare) și îl deschide; fiecare generare rămâne în panoul „Documente”, de unde se marchează ca transmis.</li>
         </ul>
       </Ajutor>
     </>

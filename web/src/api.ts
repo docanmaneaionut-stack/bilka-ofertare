@@ -630,7 +630,7 @@ export type OfertaDetaliu = {
   rezultatSalvatLa?: string | null;
   areIstoric?: boolean;
   sumeModificate?: string[];
-  numaratori?: { notite: number; atasamente: number; istoric: number };
+  numaratori?: { notite: number; atasamente: number; istoric: number; documente: number };
   poateModificaSume?: boolean;
   poateModifica: boolean;
   createdAt: string;
@@ -768,6 +768,16 @@ export const apiStatus = {
   leaga: (id: string, ofertaId: string, motiv: string, text: string | null, mentiuni: string | null) =>
     cerere<{ oferta: OfertaDetaliu }>(`/api/oferte/${id}/completare-la`, { method: "PUT", body: JSON.stringify({ ofertaId, motiv, text, mentiuni }) }),
   copie: (id: string, client?: ClientDate) => cerere<{ oferta: OfertaDetaliu }>(`/api/oferte/${id}/copie`, { method: "POST", body: JSON.stringify(client ? { client } : {}) }),
+};
+
+export type TipDocument = "OFERTA" | "REZUMAT" | "DETALIATA" | "TABEL_FACTURARE";
+export type DocumentOferta = { id: string; tip: TipDocument; eticheta: string; versiune: number; nume: string; marime: number; pagini: number | null; generatLa: string; generatDe: string | null; transmisLa: string | null; canal: string | null };
+
+export const apiDocumente = {
+  lista: (id: string) => cerere<{ documente: DocumentOferta[]; tipuriPermise: TipDocument[] }>(`/api/oferte/${id}/documente`),
+  genereaza: (id: string, tip: TipDocument) => cerere<{ document: DocumentOferta }>(`/api/oferte/${id}/documente`, { method: "POST", body: JSON.stringify({ tip }) }),
+  transmis: (id: string, did: string, canal: "WHATSAPP" | "EMAIL" | "PRINT", mentiuni: string | null) => cerere<{ document: DocumentOferta }>(`/api/oferte/${id}/documente/${did}/transmis`, { method: "PUT", body: JSON.stringify({ canal, mentiuni }) }),
+  cale: (id: string, did: string) => `${BAZA_API}/api/oferte/${id}/documente/${did}`,
 };
 
 export const apiMontatori = {

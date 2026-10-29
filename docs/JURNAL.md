@@ -345,3 +345,19 @@ Fiecare intrare: data, obiectivul sesiunii, rezultatul, următorul pas propus.
 **De verificat de Ionuț:** pe o ofertă cu produse: pune „Transmisă” cu o mențiune → apare istoricul; schimbă o cantitate → intrarea cu înainte / după; „Avans luat” cere suma; „Comandat” pe o ofertă cu mp direct → mesajul cu motivele; pe una panotată → oferta devine doar citire, cu rezumatul comenzii; în listă, meniul ⋯ și avansul pe rând; în zona produselor, săgețile ↑ ↓ între cantități.
 
 **Următorul pas propus:** S16 — documentele (cap. 13): PDF-ul de ofertă, rezumatul, oferta detaliată, tabelul de facturare, din rezultatul motorului (sau din cel salvat la „Comandat”), cu machetele din `docs/design/`; istoricul documentelor transmise.
+
+## 2026-10-29 — S16: documentele PDF (ofertă, rezumat, detaliată, tabel de facturare, anexa „Supliment la ofertă”)
+
+**Obiectiv:** PLAN v0.19 S16 — cele patru documente + anexa, după machetele aprobate și cap. 13, generate pe server din rezultatul motorului (sau din cel salvat la „Comandat”), păstrate ca documente ale ofertei, cu „Marchează ca transmis” în istoric. Motorul neatins; formularul Bilka rămâne S16b.
+
+**Rezultat:**
+- Motorul de PDF: Chrome-ul lui puppeteer (25.16.0, pinned), descărcat o dată la instalare; pe Windows fără descărcare, Edge-ul din sistem ca rezervă. Fonturile vin din proiect (Arimo, OFL, în `server/fonturi`), încorporate în șabloane — randare identică pe orice aparat, diacriticele nu depind de sistem.
+- Migrarea 12 (aditivă): tabelul documentelor (tip, variantă, fișier, mărime, pagini, cine / când, transmis / canal). Fișierele în folderul de date al ofertei.
+- Cele patru documente și anexa, după machete: antetul cu sigle, firma, agentul, clientul, SERIE-NR / DATA, fără valabilitate; benzile pe rubrică + cheie de culoare cu subtotal; coloanele după modul de prezentare; totalurile cu „Total în lei” (R6); subsolul cu garanțiile compuse din tabelul de garanții și „Curs EURO”; zona B doar în anexă, pe pagină nouă numerotată în continuare; detaliata cu panotaj și „Primit”; rezumatul pe blocuri; tabelul de facturare intern în lei cu liniile preluate și totalul din motor (E07: 19.238,50). Fără coduri, fără semnătură, fără ștampilă.
+- Ecran: panoul „Documente” pe ofertă (generare, listă, descărcare, „Marchează ca transmis”), „PDF ▾” funcțional pe listă și pe ofertă.
+- README și ARH §9: pasul `npx puppeteer browsers install chrome` la instalare și bibliotecile de sistem ale serverului Linux pentru Faza 3 (doar scrise).
+- Teste: `npm test` — **277 verzi**; etalon — 12 la zero. Documentele verificate pe textul extras din PDF (totaluri, pagini, „Pagina x din y”, lipsa codurilor, anexa, rezultatul salvat, permisiunile).
+
+**De verificat de Ionuț:** pe o ofertă cu produse, „PDF ▾” → Ofertă: se deschide PDF-ul (sigla firmei dacă e încărcată, benzile, totalurile, garanțiile în subsol); Rezumat; Ofertă detaliată (panotajul și căsuțele „Primit”); Tabel de facturare; pe o ofertă cu zona B, anexa pe ultima pagină; în panoul „Documente”, „WhatsApp” la un document → intrarea în istoric. Sigla furnizorului apare când există `docs/design/sigle/bilka.png` (sau .jpg).
+
+**Următorul pas propus:** S16b — formularul de comandă Bilka (XLSM completat din pachetele și formularele motorului, cu macro-urile păstrate), după analiza hărții celulelor.

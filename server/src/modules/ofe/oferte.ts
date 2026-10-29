@@ -12,6 +12,7 @@ import { finisajScurt, numarRal, numeModel } from "../mot/pachete.js";
 import { campuriCuIstoric, diferenteCampuri, diferenteProduse, istoricRouter, produsePentruIstoric, scrieIstoric } from "./istoric.js";
 import { EroareMontator, schemaMontatorOferta, seteazaMontatorOferta } from "./montatori.js";
 import { notiteRouter } from "./notite.js";
+import { documenteRouter } from "./documente/index.js";
 import { EroareStatus, schemaStatus, schimbaStatus } from "./statusuri.js";
 import { catalogEditorRouter } from "./catalog.js";
 import {
@@ -53,6 +54,7 @@ oferteRouter.use("/catalog", catalogEditorRouter);
 
 // istoricul (cap. 14), notitele si atasamentele (S15)
 oferteRouter.use("/:id/istoric", istoricRouter);
+oferteRouter.use("/:id/documente", documenteRouter);
 oferteRouter.use("/:id", notiteRouter);
 
 // listele de optiuni configurabile (S14): motivele completarii, sursa clientului
@@ -364,7 +366,7 @@ async function detaliu(id: string, u: Utilizator) {
       preluataDin: { select: { id: true, serie: true, numar: true } },
       montator: true,
       comanda: { select: { id: true, rezumat: true, totalCuTvaEur: true, totalLei: true, avansLei: true, restLei: true, statusLogistic: true, data: true, responsabil: { select: { nume: true } } } },
-      _count: { select: { notite: true, atasamente: true, istoric: true } },
+      _count: { select: { notite: true, atasamente: true, istoric: true, documente: true } },
       completari: { where: { curenta: true }, select: { id: true, serie: true, numar: true, motivCompletare: true, status: true } },
       listaPret: { select: { id: true, denumire: true, status: true } },
       invelitori: { orderBy: { ordine: "asc" }, include: { panotaj: { orderBy: { ordine: "asc" } } } },
@@ -418,7 +420,7 @@ async function detaliu(id: string, u: Utilizator) {
     rezultatSalvatLa: o.rezultatSalvatLa,
     areIstoric: o.status !== "IN_LUCRU",
     sumeModificate: await campuriCuIstoric(o.id),
-    numaratori: { notite: o._count.notite, atasamente: o._count.atasamente, istoric: o._count.istoric },
+    numaratori: { notite: o._count.notite, atasamente: o._count.atasamente, istoric: o._count.istoric, documente: o._count.documente },
     versiuni: await versiunile(o.serie, o.numar),
     grupaPct: o.grupaPct.toString(),
     completareLa: o.completareLa ? { id: o.completareLa.id, numarComplet: numarComplet(o.completareLa.serie, o.completareLa.numar) } : null,

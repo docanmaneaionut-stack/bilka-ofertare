@@ -8,8 +8,10 @@ import {
   ETICHETA_STATUS,
   momentRelativ,
   STATUSURI_OFERTA,
+  apiDocumente,
   apiPreturi,
   apiStatus,
+  type TipDocument,
   type FiltreOferte,
   type Firma,
   type ListaOferte,
@@ -252,7 +254,7 @@ export function Oferte() {
           </li>
           <li>„+ Ofertă nouă” cere antetul și clientul și salvează oferta „În lucru”. Prețurile și „Află preț” sunt gata; PDF-urile vin în S16.</li>
           <li>Nimic nu se șterge: o ofertă făcută din greșeală trece la „Neacceptată”.</li>
-          <li>La „Avans luat” rândul arată și suma avansului. Meniul ⋯ de pe rând: copiază oferta, creează variantă, completare, legare ca completare, preia prețurile în altă ofertă, istoric, notițe. „PDF ▾” vine în S16.</li>
+          <li>La „Avans luat” rândul arată și suma avansului. Meniul ⋯ de pe rând: copiază oferta, creează variantă, completare, legare ca completare, preia prețurile în altă ofertă, istoric, notițe. „PDF ▾” generează și deschide documentul (rămâne atașat ofertei).</li>
         </ul>
       </Ajutor>
     </>
@@ -312,7 +314,18 @@ function RandOfertaTr({ oferta: o, vedeAgent, adminGeneral, onDeschide, completa
           <button className="buton secundar mic" onClick={() => onDeschide(o.id)}>
             Deschide
           </button>
-          <MeniuActiuni eticheta="PDF ▾" actiuni={[{ eticheta: "Ofertă", dezactivat: "vine în S16" }, { eticheta: "Rezumat", dezactivat: "vine în S16" }, { eticheta: "Ofertă detaliată", dezactivat: "vine în S16" }, { eticheta: "Tabel de facturare", dezactivat: "vine în S16" }]} />
+          <MeniuActiuni
+            eticheta="PDF ▾"
+            actiuni={(["OFERTA", "REZUMAT", "DETALIATA", "TABEL_FACTURARE"] as TipDocument[]).map((tip) => ({
+              eticheta: { OFERTA: "Ofertă", REZUMAT: "Rezumat", DETALIATA: "Ofertă detaliată", TABEL_FACTURARE: "Tabel de facturare" }[tip],
+              onClick: () =>
+                void apiDocumente
+                  .genereaza(o.id, tip)
+                  .then((r) => window.open(apiDocumente.cale(o.id, r.document.id), "_blank", "noopener"))
+                  .catch((e) => window.alert(textEroare(e))),
+              dezactivat: tip === "TABEL_FACTURARE" && eu.rol === "COLABORATOR" ? "nu e disponibil colaboratorilor" : undefined,
+            }))}
+          />
           <MeniuActiuni
             actiuni={[
               { eticheta: "Copiază oferta", onClick: () => onDeschide(`${o.id}?actiune=copie`), dezactivat: faceOferte ? undefined : "doar conturile care fac oferte" },
