@@ -22,3 +22,11 @@ La **restaurarea unui export** (`npm run restore -- <zip>`): baza trebuie să fi
 ## Teste
 - `cd server && npm test` — testele pe baza de test (`DATABASE_URL_TEST`, numele bazei sau al schemei trebuie să conțină „test”).
 - `npm run test:etalon` — ofertele-model din `docs/etalon/` (fără bază de date); trebuie să fie toate la zero.
+
+## Verificarea formularului Bilka cu Excel ca arbitru (S17c)
+`cd server && npm run verifica:formular` — pe calculatorul cu Excel, când nu lucrează nimeni în Excel. Scriptul rulează **doar pe schema de test** (`DATABASE_URL_TEST`, folderul `data-test`), cu firmă, agent și catalog proprii; nu atinge baza de dezvoltare. Pentru fiecare produs activ din catalog face o ofertă de test, generează formularul, îl deschide într-o instanță Excel invizibilă (macro-urile active doar pe acea instanță, nicio setare permanentă), îl **salvează** (abia la salvare macro-ul Bilka umple foaia „Portal”), citește prețurile pe rânduri și foaia Portal și le compară cu catalogul. Niciun macro nu e apelat explicit și nimic nu pleacă nicăieri (vezi secțiunea „Ce rulează automat în Excel” din raport).
+- Raportul: `docs/verificari/formular-bilka-raport.md` (rezumat pe categorii + excepțiile); starea pe produs: `docs/verificari/formular-bilka-stare.json`, scrisă după fiecare formular — o rulare întreruptă se reia de unde a rămas.
+- `-- --proba` — doar trei formulare (E01, Retro Plus Double Line lucios 0,50, T 35 acoperiș / perete); raport separat `formular-bilka-proba.md`.
+- `-- --de-la-zero` — **la fiecare șablon nou de la Bilka**: încarcă șablonul la firmă (Zona tehnică → Firme), apoi rulează cu `--de-la-zero` (sau `--sablon <cale.xlsm>` pentru un fișier anume); starea veche se șterge și raportul se reface pentru noul șablon.
+- `-- --toate-culorile` (fiecare culoare a cheii, nu doar prima), `-- --limita N` (cel mult N oferte în rularea curentă).
+- Nu se rulează în același timp cu `npm test` (aceeași schemă de test). Șablonul implicit: primul fișier din `server/data/sabloane-bilka/`.

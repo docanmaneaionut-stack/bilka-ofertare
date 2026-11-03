@@ -1,0 +1,543 @@
+{
+ "sablon": {
+  "fisier": "70eb8c14-4cf8-4866-a5c8-bf3026f6ca88.xlsm",
+  "versiune": "70eb8c14-4cf8-4866-a5c8-bf3026f6ca88.xlsm (modificat 2026-10-20)"
+ },
+ "pornit": "2026-11-03T11:20:37.021Z",
+ "actualizat": "2026-11-03T11:21:59.467Z",
+ "oferte": {
+  "PROBA|E01": {
+   "numar": "VF-0013",
+   "produse": [],
+   "formulare": [
+    "VF-0013-F1.xlsm"
+   ],
+   "avertizari": [],
+   "durataMs": 49171,
+   "portalNefolosit": []
+  },
+  "PROBA|RETRO-DL": {
+   "numar": "VF-0014",
+   "produse": [],
+   "formulare": [
+    "VF-0014-F1.xlsm"
+   ],
+   "avertizari": [],
+   "durataMs": 11307,
+   "portalNefolosit": []
+  },
+  "PROBA|T35|acoperis": {
+   "numar": "VF-0015",
+   "produse": [],
+   "formulare": [
+    "VF-0015-F1.xlsm"
+   ],
+   "avertizari": [
+    "Nu au loc în formularul Bilka: Coamă unghiulară industrială – 417 mm / 2 m – lucios – 0,50 mm (ACI41LUC050) — același rând în formular („COAMA UNG. INDUSTRIALA 417MM”) e deja folosit de alt produs al ofertei"
+   ],
+   "durataMs": 10607,
+   "portalNefolosit": []
+  },
+  "PROBA|T35|perete": {
+   "numar": "VF-0016",
+   "produse": [],
+   "formulare": [
+    "VF-0016-F1.xlsm"
+   ],
+   "avertizari": [
+    "Nu au loc în formularul Bilka: Coamă unghiulară industrială – 417 mm / 2 m – lucios – 0,50 mm (ACI41LUC050) — același rând în formular („COAMA UNG. INDUSTRIALA 417MM”) e deja folosit de alt produs al ofertei"
+   ],
+   "durataMs": 10276,
+   "portalNefolosit": []
+  }
+ },
+ "produse": {
+  "TMIBEMAT050|PROBA|E01": {
+   "cod": "TMIBEMAT050",
+   "denumire": "Țiglă metalică Iberic – mat – 0,50 mm",
+   "rubrica": "Învelitori",
+   "cheie": "PROBA | E01",
+   "oferta": "PROBA|E01",
+   "formular": "VF-0013-F1.xlsm",
+   "categorie": "ok",
+   "detalii": [],
+   "pretCatalog": "6.79",
+   "pretExcel": "6.79",
+   "portal": "Invelitoare · TMIBEMAT050 · 180.481 · 4.2×15,3.1×20,2.75×8,1.19×5"
+  },
+  "TCT08MAT050|PROBA|E01": {
+   "cod": "TCT08MAT050",
+   "denumire": "Tablă cutată T8 (perete) – mat – 0,50 mm",
+   "rubrica": "Învelitori",
+   "cheie": "PROBA | E01",
+   "oferta": "PROBA|E01",
+   "formular": "VF-0013-F1.xlsm",
+   "categorie": "ok",
+   "detalii": [],
+   "pretCatalog": "6.54",
+   "pretExcel": "6.54",
+   "portal": "Invelitoare_Secundara · TCT08MAT050 · 6 · 2.5×2"
+  },
+  "ACMICMAT050|PROBA|E01": {
+   "cod": "ACMICMAT050",
+   "denumire": "Coamă mică – mat – 0,50 mm",
+   "rubrica": "Accesorii standard",
+   "cheie": "PROBA | E01",
+   "oferta": "PROBA|E01",
+   "formular": "VF-0013-F1.xlsm",
+   "categorie": "ok",
+   "detalii": [],
+   "pretCatalog": "4.90",
+   "pretExcel": "4.90",
+   "portal": "Accesorii_Tinichigerie · ACMICMAT050 · 13"
+  },
+  "ABF36MAT050|PROBA|E01": {
+   "cod": "ABF36MAT050",
+   "denumire": "Bordură fronton – 360 mm / 2 m – mat – 0,50 mm",
+   "rubrica": "Accesorii standard",
+   "cheie": "PROBA | E01",
+   "oferta": "PROBA|E01",
+   "formular": "VF-0013-F1.xlsm",
+   "categorie": "ok",
+   "detalii": [],
+   "pretCatalog": "6.54",
+   "pretExcel": "6.54",
+   "portal": "Accesorii_Tinichigerie · ABF36MAT050 · 17"
+  },
+  "ACF15MAT050|PROBA|E01": {
+   "cod": "ACF15MAT050",
+   "denumire": "Colector fronton – 156 mm / 2 m – mat – 0,50 mm",
+   "rubrica": "Accesorii standard",
+   "cheie": "PROBA | E01",
+   "oferta": "PROBA|E01",
+   "formular": "VF-0013-F1.xlsm",
+   "categorie": "ok",
+   "detalii": [],
+   "pretCatalog": "2.45",
+   "pretExcel": "2.45",
+   "portal": "Accesorii_Tinichigerie · ACF15MAT050 · 16"
+  },
+  "AST20MAT050|PROBA|E01": {
+   "cod": "AST20MAT050",
+   "denumire": "Bordură streașină – 208 mm / 2 m – mat – 0,50 mm",
+   "rubrica": "Accesorii standard",
+   "cheie": "PROBA | E01",
+   "oferta": "PROBA|E01",
+   "formular": "VF-0013-F1.xlsm",
+   "categorie": "ok",
+   "detalii": [],
+   "pretCatalog": "3.27",
+   "pretExcel": "3.27",
+   "portal": "Accesorii_Tinichigerie · AST20MAT050 · 21"
+  },
+  "AFP25MAT050|PROBA|E01": {
+   "cod": "AFP25MAT050",
+   "denumire": "Fixarea plăcilor pe zid – 250 mm / 2 m – mat – 0,50 mm",
+   "rubrica": "Accesorii standard",
+   "cheie": "PROBA | E01",
+   "oferta": "PROBA|E01",
+   "formular": "VF-0013-F1.xlsm",
+   "categorie": "ok",
+   "detalii": [],
+   "pretCatalog": "3.92",
+   "pretExcel": "3.92",
+   "portal": "Accesorii_Tinichigerie · AFP25MAT050 · 7"
+  },
+  "ADO41MAT050|PROBA|E01": {
+   "cod": "ADO41MAT050",
+   "denumire": "Dolie – 417 mm / 2 m – mat – 0,50 mm",
+   "rubrica": "Accesorii standard",
+   "cheie": "PROBA | E01",
+   "oferta": "PROBA|E01",
+   "formular": "VF-0013-F1.xlsm",
+   "categorie": "ok",
+   "detalii": [],
+   "pretCatalog": "6.54",
+   "pretExcel": "6.54",
+   "portal": "Accesorii_Tinichigerie · ADO41MAT050 · 4"
+  },
+  "AOZ20MAT050|PROBA|E01": {
+   "cod": "AOZ20MAT050",
+   "denumire": "Opritor zăpadă – 208 mm / 2 m – mat – 0,50 mm",
+   "rubrica": "Accesorii standard",
+   "cheie": "PROBA | E01",
+   "oferta": "PROBA|E01",
+   "formular": "VF-0013-F1.xlsm",
+   "categorie": "ok",
+   "detalii": [],
+   "pretCatalog": "3.27",
+   "pretExcel": "3.27",
+   "portal": "Accesorii_Tinichigerie · AOZ20MAT050 · 12"
+  },
+  "ASCF4MAT050|PROBA|E01": {
+   "cod": "ASCF4MAT050",
+   "denumire": "Set coș fum (4 piese × 1,25 m) – 4 piese × 1,25 m – mat – 0,50 mm",
+   "rubrica": "Accesorii standard",
+   "cheie": "PROBA | E01",
+   "oferta": "PROBA|E01",
+   "formular": "VF-0013-F1.xlsm",
+   "categorie": "d_bilka",
+   "detalii": [
+    "în Portal sub codul (gol — macro-ul Bilka nu dă cod pentru numele „SET COS FUM ( 4 PIESE  )”), în catalog ASCF4MAT050"
+   ],
+   "pretCatalog": "19.62",
+   "pretExcel": "19.62",
+   "portal": "Accesorii_Tinichigerie ·  · 1"
+  },
+  "ASP05MAT050|PROBA|E01": {
+   "cod": "ASP05MAT050",
+   "denumire": "Accesoriu special 2 ML – D05 (201–250 mm) – mat – 0,50 mm",
+   "rubrica": "Accesorii speciale (2 ML)",
+   "cheie": "PROBA | E01",
+   "oferta": "PROBA|E01",
+   "formular": "VF-0013-F1.xlsm",
+   "categorie": "ok",
+   "detalii": [],
+   "pretCatalog": "4.41",
+   "pretExcel": "4.41",
+   "portal": "Accesorii_Speciale_Standard · ASP05MAT050 · 2"
+  },
+  "SUCLE408035|PROBA|E01": {
+   "cod": "SUCLE408035",
+   "denumire": "Holțșuruburi în culoare, lemn – 4,8 × 35 mm",
+   "rubrica": "Fixare și etanșare",
+   "cheie": "PROBA | E01",
+   "oferta": "PROBA|E01",
+   "formular": "VF-0013-F1.xlsm",
+   "categorie": "ok",
+   "detalii": [],
+   "pretCatalog": "6.25",
+   "pretExcel": "6.25",
+   "portal": "Accesorii_Auxiliare · SUCLE408035 · 9"
+  },
+  "SUCLE408020|PROBA|E01": {
+   "cod": "SUCLE408020",
+   "denumire": "Holțșuruburi în culoare, lemn – 4,8 × 20 mm",
+   "rubrica": "Fixare și etanșare",
+   "cheie": "PROBA | E01",
+   "oferta": "PROBA|E01",
+   "formular": "VF-0013-F1.xlsm",
+   "categorie": "ok",
+   "detalii": [],
+   "pretCatalog": "6.25",
+   "pretExcel": "6.25",
+   "portal": "Accesorii_Auxiliare · SUCLE408020 · 1"
+  },
+  "AXSPRMAT400|PROBA|E01": {
+   "cod": "AXSPRMAT400",
+   "denumire": "Spray corector 400 ml – mat",
+   "rubrica": "Fixare și etanșare",
+   "cheie": "PROBA | E01",
+   "oferta": "PROBA|E01",
+   "formular": "VF-0013-F1.xlsm",
+   "categorie": "d_bilka",
+   "detalii": [
+    "în Portal sub codul AXSPRMAT000, în catalog AXSPRMAT400"
+   ],
+   "pretCatalog": "4.50",
+   "pretExcel": "4.50",
+   "portal": "Accesorii_Auxiliare · AXSPRMAT000 · 3"
+  },
+  "AXCAPMAT000|PROBA|E01": {
+   "cod": "AXCAPMAT000",
+   "denumire": "Capac coamă – mat",
+   "rubrica": "Fixare și etanșare",
+   "cheie": "PROBA | E01",
+   "oferta": "PROBA|E01",
+   "formular": "VF-0013-F1.xlsm",
+   "categorie": "ok",
+   "detalii": [],
+   "pretCatalog": "3.94",
+   "pretExcel": "3.94",
+   "portal": "Accesorii_Auxiliare · AXCAPMAT000 · 4"
+  },
+  "BANDABIT150|PROBA|E01": {
+   "cod": "BANDABIT150",
+   "denumire": "Bandă bituminoasă – 15 cm × 10 m",
+   "rubrica": "Fixare și etanșare",
+   "cheie": "PROBA | E01",
+   "oferta": "PROBA|E01",
+   "formular": "VF-0013-F1.xlsm",
+   "categorie": "ok",
+   "detalii": [],
+   "pretCatalog": "11.35",
+   "pretExcel": "11.35",
+   "portal": "Accesorii_Auxiliare · BANDABIT150 · 3"
+  },
+  "AXMAS300PRE|PROBA|E01": {
+   "cod": "AXMAS300PRE",
+   "denumire": "Mastic etanșare premium Bilka – 300 ml",
+   "rubrica": "Fixare și etanșare",
+   "cheie": "PROBA | E01",
+   "oferta": "PROBA|E01",
+   "formular": "VF-0013-F1.xlsm",
+   "categorie": "ok",
+   "detalii": [],
+   "pretCatalog": "6.05",
+   "pretExcel": "6.05",
+   "portal": "Accesorii_Auxiliare · AXMAS300PRE · 3"
+  },
+  "SPJGH1254ML|PROBA|E01": {
+   "cod": "SPJGH1254ML",
+   "denumire": "Jgheab 125 / 4m – pluvial colorat (lucios)",
+   "rubrica": "Sistem pluvial",
+   "cheie": "PROBA | E01",
+   "oferta": "PROBA|E01",
+   "formular": "VF-0013-F1.xlsm",
+   "categorie": "ok",
+   "detalii": [],
+   "pretCatalog": "8.71",
+   "pretExcel": "8.71",
+   "portal": "Sistem_Pluvial · SPJGH1254ML · 10"
+  },
+  "SPJGH1252ML|PROBA|E01": {
+   "cod": "SPJGH1252ML",
+   "denumire": "Jgheab 125 / 2m – pluvial colorat (lucios)",
+   "rubrica": "Sistem pluvial",
+   "cheie": "PROBA | E01",
+   "oferta": "PROBA|E01",
+   "formular": "VF-0013-F1.xlsm",
+   "categorie": "ok",
+   "detalii": [],
+   "pretCatalog": "4.36",
+   "pretExcel": "4.36",
+   "portal": "Sistem_Pluvial · SPJGH1252ML · 1"
+  },
+  "SPBUR0903ML|PROBA|E01": {
+   "cod": "SPBUR0903ML",
+   "denumire": "Burlan 90 / 3m – pluvial colorat (lucios)",
+   "rubrica": "Sistem pluvial",
+   "cheie": "PROBA | E01",
+   "oferta": "PROBA|E01",
+   "formular": "VF-0013-F1.xlsm",
+   "categorie": "ok",
+   "detalii": [],
+   "pretCatalog": "8.07",
+   "pretExcel": "8.07",
+   "portal": "Sistem_Pluvial · SPBUR0903ML · 6"
+  },
+  "SPC21125000|PROBA|E01": {
+   "cod": "SPC21125000",
+   "denumire": "Cârlig jgheab 125 / 210 mm – pluvial colorat (lucios)",
+   "rubrica": "Sistem pluvial",
+   "cheie": "PROBA | E01",
+   "oferta": "PROBA|E01",
+   "formular": "VF-0013-F1.xlsm",
+   "categorie": "ok",
+   "detalii": [],
+   "pretCatalog": "1.46",
+   "pretExcel": "1.46",
+   "portal": "Sistem_Pluvial · SPC21125000 · 56"
+  },
+  "SPBRIDA0000|PROBA|E01": {
+   "cod": "SPBRIDA0000",
+   "denumire": "Brida jgheab – pluvial colorat (lucios)",
+   "rubrica": "Sistem pluvial",
+   "cheie": "PROBA | E01",
+   "oferta": "PROBA|E01",
+   "formular": "VF-0013-F1.xlsm",
+   "categorie": "ok",
+   "detalii": [],
+   "pretCatalog": "0.68",
+   "pretExcel": "0.68",
+   "portal": "Sistem_Pluvial · SPBRIDA0000 · 50"
+  },
+  "SPCOL090000|PROBA|E01": {
+   "cod": "SPCOL090000",
+   "denumire": "Colier burlan 90 – pluvial colorat (lucios)",
+   "rubrica": "Sistem pluvial",
+   "cheie": "PROBA | E01",
+   "oferta": "PROBA|E01",
+   "formular": "VF-0013-F1.xlsm",
+   "categorie": "ok",
+   "detalii": [],
+   "pretCatalog": "0.86",
+   "pretExcel": "0.86",
+   "portal": "Sistem_Pluvial · SPCOL090000 · 12"
+  },
+  "SPCAP125000|PROBA|E01": {
+   "cod": "SPCAP125000",
+   "denumire": "Capac jgheab 125 – pluvial colorat (lucios)",
+   "rubrica": "Sistem pluvial",
+   "cheie": "PROBA | E01",
+   "oferta": "PROBA|E01",
+   "formular": "VF-0013-F1.xlsm",
+   "categorie": "ok",
+   "detalii": [],
+   "pretCatalog": "0.86",
+   "pretExcel": "0.86",
+   "portal": "Sistem_Pluvial · SPCAP125000 · 12"
+  },
+  "SPELI125000|PROBA|E01": {
+   "cod": "SPELI125000",
+   "denumire": "Element îmbinare jgheab 125 – pluvial colorat (lucios)",
+   "rubrica": "Sistem pluvial",
+   "cheie": "PROBA | E01",
+   "oferta": "PROBA|E01",
+   "formular": "VF-0013-F1.xlsm",
+   "categorie": "ok",
+   "detalii": [],
+   "pretCatalog": "1.38",
+   "pretExcel": "1.38",
+   "portal": "Sistem_Pluvial · SPELI125000 · 8"
+  },
+  "SPRAC125000|PROBA|E01": {
+   "cod": "SPRAC125000",
+   "denumire": "Racord jgheab – burlan 125 / 90 – pluvial colorat (lucios)",
+   "rubrica": "Sistem pluvial",
+   "cheie": "PROBA | E01",
+   "oferta": "PROBA|E01",
+   "formular": "VF-0013-F1.xlsm",
+   "categorie": "ok",
+   "detalii": [],
+   "pretCatalog": "2.31",
+   "pretExcel": "2.31",
+   "portal": "Sistem_Pluvial · SPRAC125000 · 6"
+  },
+  "SPCOT090000|PROBA|E01": {
+   "cod": "SPCOT090000",
+   "denumire": "Cot de 60 grade 90 – pluvial colorat (lucios)",
+   "rubrica": "Sistem pluvial",
+   "cheie": "PROBA | E01",
+   "oferta": "PROBA|E01",
+   "formular": "VF-0013-F1.xlsm",
+   "categorie": "ok",
+   "detalii": [],
+   "pretCatalog": "2.31",
+   "pretExcel": "2.31",
+   "portal": "Sistem_Pluvial · SPCOT090000 · 18"
+  },
+  "SPPRE09010M|PROBA|E01": {
+   "cod": "SPPRE09010M",
+   "denumire": "Prelungitor intermediar 90 / 1 m – pluvial colorat (lucios)",
+   "rubrica": "Sistem pluvial",
+   "cheie": "PROBA | E01",
+   "oferta": "PROBA|E01",
+   "formular": "VF-0013-F1.xlsm",
+   "categorie": "ok",
+   "detalii": [],
+   "pretCatalog": "2.69",
+   "pretExcel": "2.69",
+   "portal": "Sistem_Pluvial · SPPRE09010M · 6"
+  },
+  "REPROLUC050|PROBA|RETRO-DL": {
+   "cod": "REPROLUC050",
+   "denumire": "Retro Plus (Standard, Micro-Ribs, Flat, Double Line) – lucios – 0,50 mm",
+   "rubrica": "Învelitori",
+   "cheie": "PROBA | RETRO-DL",
+   "oferta": "PROBA|RETRO-DL",
+   "formular": "VF-0014-F1.xlsm",
+   "categorie": "ok",
+   "detalii": [],
+   "pretCatalog": "7.78",
+   "pretExcel": "7.78",
+   "portal": "Invelitoare · REPROLUC050 · 9.539 · 4.2×3,2.5×2"
+  },
+  "AFR31LUC050|PROBA|RETRO-DL": {
+   "cod": "AFR31LUC050",
+   "denumire": "Bordură fronton Retro – 312 mm / 2 m – lucios – 0,50 mm",
+   "rubrica": "Accesorii standard",
+   "cheie": "PROBA | RETRO-DL",
+   "oferta": "PROBA|RETRO-DL",
+   "formular": "VF-0014-F1.xlsm",
+   "categorie": "ok",
+   "detalii": [],
+   "pretCatalog": "4.71",
+   "pretExcel": "4.71",
+   "portal": "Accesorii_Tinichigerie · AFR31LUC050 · 3"
+  },
+  "ABPL2LUC050|PROBA|RETRO-DL": {
+   "cod": "ABPL2LUC050",
+   "denumire": "Bordură perete laterală Retro – 250 mm / 2 m – lucios – 0,50 mm",
+   "rubrica": "Accesorii standard",
+   "cheie": "PROBA | RETRO-DL",
+   "oferta": "PROBA|RETRO-DL",
+   "formular": "VF-0014-F1.xlsm",
+   "categorie": "ok",
+   "detalii": [],
+   "pretCatalog": "3.77",
+   "pretExcel": "3.77",
+   "portal": "Accesorii_Tinichigerie · ABPL2LUC050 · 3"
+  },
+  "TCT35LUC050|PROBA|T35|acoperis": {
+   "cod": "TCT35LUC050",
+   "denumire": "Tablă cutată T35 (acoperiș / perete) – lucios – 0,50 mm",
+   "rubrica": "Învelitori",
+   "cheie": "PROBA | T35 | acoperis",
+   "oferta": "PROBA|T35|acoperis",
+   "formular": "VF-0015-F1.xlsm",
+   "categorie": "ok",
+   "detalii": [],
+   "pretCatalog": "6.68",
+   "pretExcel": "6.68",
+   "portal": "Invelitoare · TCT35LUC050 · 19.096 · 4.2×3,2.5×2"
+  },
+  "ACI31LUC050|PROBA|T35|acoperis": {
+   "cod": "ACI31LUC050",
+   "denumire": "Coamă unghiulară industrială – 312 mm / 2 m – lucios – 0,50 mm",
+   "rubrica": "Accesorii standard",
+   "cheie": "PROBA | T35 | acoperis",
+   "oferta": "PROBA|T35|acoperis",
+   "formular": "VF-0015-F1.xlsm",
+   "categorie": "ok",
+   "detalii": [],
+   "pretCatalog": "4.71",
+   "pretExcel": "4.71",
+   "portal": "Accesorii_Tinichigerie · ACI31LUC050 · 2"
+  },
+  "ACI41LUC050|PROBA|T35|acoperis": {
+   "cod": "ACI41LUC050",
+   "denumire": "Coamă unghiulară industrială – 417 mm / 2 m – lucios – 0,50 mm",
+   "rubrica": "Accesorii standard",
+   "cheie": "PROBA | T35 | acoperis",
+   "oferta": "PROBA|T35|acoperis",
+   "formular": "VF-0015-F1.xlsm",
+   "categorie": "c_fara_loc",
+   "detalii": [
+    "două produse pe același rând al formularului (M4 la S17d)"
+   ],
+   "pretCatalog": "6.28"
+  },
+  "TCT35LUC050|PROBA|T35|perete": {
+   "cod": "TCT35LUC050",
+   "denumire": "Tablă cutată T35 (acoperiș / perete) – lucios – 0,50 mm",
+   "rubrica": "Învelitori",
+   "cheie": "PROBA | T35 | perete",
+   "oferta": "PROBA|T35|perete",
+   "formular": "VF-0016-F1.xlsm",
+   "categorie": "ok",
+   "detalii": [],
+   "pretCatalog": "6.68",
+   "pretExcel": "6.68",
+   "portal": "Invelitoare · TCT35LUC050 · 19.096 · 4.2×3,2.5×2"
+  },
+  "ACI31LUC050|PROBA|T35|perete": {
+   "cod": "ACI31LUC050",
+   "denumire": "Coamă unghiulară industrială – 312 mm / 2 m – lucios – 0,50 mm",
+   "rubrica": "Accesorii standard",
+   "cheie": "PROBA | T35 | perete",
+   "oferta": "PROBA|T35|perete",
+   "formular": "VF-0016-F1.xlsm",
+   "categorie": "ok",
+   "detalii": [],
+   "pretCatalog": "4.71",
+   "pretExcel": "4.71",
+   "portal": "Accesorii_Tinichigerie · ACI31LUC050 · 2"
+  },
+  "ACI41LUC050|PROBA|T35|perete": {
+   "cod": "ACI41LUC050",
+   "denumire": "Coamă unghiulară industrială – 417 mm / 2 m – lucios – 0,50 mm",
+   "rubrica": "Accesorii standard",
+   "cheie": "PROBA | T35 | perete",
+   "oferta": "PROBA|T35|perete",
+   "formular": "VF-0016-F1.xlsm",
+   "categorie": "c_fara_loc",
+   "detalii": [
+    "două produse pe același rând al formularului (M4 la S17d)"
+   ],
+   "pretCatalog": "6.28"
+  }
+ },
+ "deReluat": [],
+ "planificat": 4
+}
