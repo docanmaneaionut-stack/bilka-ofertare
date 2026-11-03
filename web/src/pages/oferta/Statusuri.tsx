@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { apiStatus, ETICHETA_STATUS, STATUSURI_OFERTA, type OfertaDetaliu, type StatusOferta } from "../../api";
-import { Camp, Mesaj, textEroare } from "../../components/ui";
+import { Camp, eroareCamp, Mesaj, textEroare } from "../../components/ui";
 
 // Statusurile ofertei (FISA-OFERTARE cap. 14): cele 8, in orice ordine, cu
 // revenire, totul cu istoric; doar "Comandat" e ireversibil. "Avans luat" cere
@@ -8,6 +8,7 @@ import { Camp, Mesaj, textEroare } from "../../components/ui";
 // ingheata oferta si creeaza randul de comanda (cap. 16).
 export function Statusuri({ oferta, onOferta, mentiuni }: { oferta: OfertaDetaliu; onOferta: (o: OfertaDetaliu) => void; mentiuni: string }) {
   const [eroare, setEroare] = useState<string | null>(null);
+  const [eroareCerere, setEroareCerere] = useState<unknown>(null);
   const [motive, setMotive] = useState<string[]>([]);
   const [lucru, setLucru] = useState(false);
   const [avansPentru, setAvansPentru] = useState<StatusOferta | null>(null);
@@ -17,6 +18,7 @@ export function Statusuri({ oferta, onOferta, mentiuni }: { oferta: OfertaDetali
 
   async function schimba(status: StatusOferta, avansLei?: string) {
     setEroare(null);
+    setEroareCerere(null);
     setMotive([]);
     if (status === "COMANDAT" && !window.confirm("„Comandat” e ireversibil: oferta se îngheață (produse, cantități, prețuri), rezultatul se salvează și se creează rândul de comandă. Continui?")) return;
     setLucru(true);
@@ -27,6 +29,7 @@ export function Statusuri({ oferta, onOferta, mentiuni }: { oferta: OfertaDetali
     } catch (e) {
       const err = e as Error & { motive?: string[] };
       setEroare(textEroare(e));
+      setEroareCerere(e);
       if (Array.isArray(err.motive)) setMotive(err.motive);
     } finally {
       setLucru(false);
@@ -66,7 +69,7 @@ export function Statusuri({ oferta, onOferta, mentiuni }: { oferta: OfertaDetali
           {!poate && <p className="explicatie-buton">Statusul îl schimbă cine a făcut oferta și Administratorul firmei.</p>}
           {avansPentru && (
             <div className="rand-campuri" style={{ marginTop: 8 }}>
-              <Camp eticheta="Suma avansului (lei, poate fi 0)" obligatoriu>
+              <Camp eticheta="Suma avansului (lei, poate fi 0)" obligatoriu eroare={eroareCamp(eroareCerere, "avansLei")}>
                 <input type="text" inputMode="decimal" value={avans} onChange={(e) => setAvans(e.target.value)} autoFocus />
               </Camp>
               <div className="actiuni" style={{ alignSelf: "end" }}>

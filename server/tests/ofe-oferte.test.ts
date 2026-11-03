@@ -130,6 +130,29 @@ describe("crearea ofertei", () => {
     await agent.post("/api/oferte").send({ client: { nume: "X Y", telefon: "0728 192 569" } }).expect(400);
     await agent.post("/api/oferte").send({ client: { nume: "X Y", telefon: "12", adresa: "a" } }).expect(400);
   });
+
+  // S17b BUG-4: validarea spune campul si motivul, in romana, si intoarce campurile pentru ecran
+  it("BUG-4: raspunsul 400 poarta campul si motivul ('Client · Telefon: conține litere'), nu 'Date invalide'", async () => {
+    const agent = await autentificaAgent(app, EMAIL.agent1);
+    const r = await agent.post("/api/oferte").send({ client: { nume: "X Y", telefon: "07ab55555x", adresa: "Str. Lungă 1" } }).expect(400);
+    expect(r.body.eroare).toBe("Client · Telefon: conține litere");
+    expect(r.body.campuri).toEqual([{ camp: "client.telefon", eticheta: "Client · Telefon", mesaj: "conține litere" }]);
+    const r2 = await agent.post("/api/oferte").send({ client: { nume: "X", telefon: "12", adresa: "a", email: "nu-e-email" }, antet: { data: "3 noiembrie" } }).expect(400);
+    expect(r2.body.eroare).not.toMatch(/Date invalide/);
+    const campuri = r2.body.campuri as { camp: string; eticheta: string; mesaj: string }[];
+    expect(campuri.map((c) => `${c.eticheta}: ${c.mesaj}`)).toEqual([
+      "Client · Nume: prea scurt (minim 2 caractere)",
+      "Client · Telefon: prea scurt (minim 6 caractere)",
+      "Client · Telefon: trebuie să aibă cel puțin 6 cifre",
+      "Client · Adresă: prea scurt (minim 2 caractere)",
+      "Client · E-mail: nu e o adresă de e-mail validă",
+      "Antet · Data ofertei: format invalid",
+    ]);
+    expect(r2.body.eroare).toBe(campuri.map((c) => `${c.eticheta}: ${c.mesaj}`).join("; "));
+    // un camp lipsa
+    const r3 = await agent.post("/api/oferte").send({ client: { nume: "X Y", telefon: "0728192569" } }).expect(400);
+    expect(r3.body.campuri).toEqual([{ camp: "client.adresa", eticheta: "Client · Adresă", mesaj: "lipsește" }]);
+  });
 });
 
 describe("cursul la creare: offline", () => {

@@ -66,6 +66,8 @@ export interface HartaFormular {
     modelePeTip: Map<string, string[]>;
     modeleSipca: string[];
     modulePeModel: (model: string) => string[];
+    // cel mai mic modul din listele sablonului (ex. "35 cm"); undefined daca sablonul n-are nicio lista
+    modulImplicit: string | undefined;
     culoriPeFinisaj: (finisaj: string) => string[];
   };
 }
@@ -463,6 +465,16 @@ export class Sablon {
     const modelePeTip = new Map(tipuri.map((t) => [t, this.rezolvaLista(t)]));
     const grosimiVal = this.validareaCelulei(comanda, principala.grosime);
     const membraneVal = principala.membrana ? this.validareaCelulei(comanda, principala.membrana) : undefined;
+    // S17b BUG-2: macro-ul Bilka compune cheia modelului din model + modul la toate
+    // modelele (AUX!B23 -> model() -> MapModelToPrefix), inclusiv la cele fara lista de
+    // modul (plate, tabla cutata, faltuita); modulul implicit = cel mai mic din listele
+    // sablonului, scris cand modelul n-are lista sau modulul catalogului nu e in ea
+    const numarModul = (m: string) => Number(m.replace(/[^\d.,]/g, "").replace(",", "."));
+    const modulImplicit = [...modelePeTip.values()]
+      .flat()
+      .flatMap((m) => (this.numeDefinite.has(m) ? this.rezolvaLista(m) : []))
+      .filter((m) => numarModul(m) > 0)
+      .sort((a, b) => numarModul(a) - numarModul(b))[0];
     return {
       foaie: { comanda, pluvial: pluvialFile, magnelis: magnelisFile, speciale: specialeFile },
       antet: { numarOferta: numar.adresa, localitate: adresaIn("_OFERTA_LOCALITATE"), telefon: adresaIn("_OFERTA_CONTACT_LIVRARE"), mesajProductie: adresaIn("_OFERTA_TEXT_PRODUCTIE") },
@@ -482,6 +494,7 @@ export class Sablon {
         modelePeTip,
         modeleSipca: this.rezolvaLista("Listamodelsipca"),
         modulePeModel: (model) => (this.numeDefinite.has(model) ? this.rezolvaLista(model) : []),
+        modulImplicit,
         culoriPeFinisaj: (finisaj) => (this.numeDefinite.has(finisaj) ? this.rezolvaLista(finisaj) : []),
       },
     };

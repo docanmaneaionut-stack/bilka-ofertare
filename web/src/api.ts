@@ -12,6 +12,23 @@ export type Utilizator = {
   parolaTrebuieSchimbata?: boolean;
 };
 
+// S17b BUG-4: un raspuns 400 de validare poarta campurile invalide (camp, eticheta,
+// motiv), ca formularele sa le arate la camp; mesajul general ramane "Câmp: motiv"
+export type CampInvalid = { camp: string; eticheta: string; mesaj: string };
+export class EroareCerere extends Error {
+  readonly status: number;
+  readonly campuri: CampInvalid[];
+  constructor(message: string, status: number, campuri: CampInvalid[] = []) {
+    super(message);
+    this.status = status;
+    this.campuri = campuri;
+  }
+}
+
+export function eroareDinRaspuns(status: number, corp: { eroare?: string; campuri?: CampInvalid[] }): EroareCerere {
+  return new EroareCerere(corp.eroare ?? `Cerere esuata (${status})`, status, Array.isArray(corp.campuri) ? corp.campuri : []);
+}
+
 async function cerere<T>(cale: string, optiuni?: RequestInit): Promise<T> {
   const raspuns = await fetch(`${BAZA_API}${cale}`, {
     credentials: "include",
@@ -20,7 +37,7 @@ async function cerere<T>(cale: string, optiuni?: RequestInit): Promise<T> {
   });
   if (!raspuns.ok) {
     const corp = await raspuns.json().catch(() => ({}));
-    throw new Error(corp.eroare ?? `Cerere esuata (${raspuns.status})`);
+    throw eroareDinRaspuns(raspuns.status, corp);
   }
   if (raspuns.status === 204) {
     return undefined as T;
@@ -288,7 +305,7 @@ async function cerereFormular<T>(cale: string, formular: FormData): Promise<T> {
   const raspuns = await fetch(`${BAZA_API}${cale}`, { method: "POST", credentials: "include", body: formular });
   if (!raspuns.ok) {
     const corp = await raspuns.json().catch(() => ({}));
-    throw new Error(corp.eroare ?? `Cerere esuata (${raspuns.status})`);
+    throw eroareDinRaspuns(raspuns.status, corp);
   }
   return raspuns.json() as Promise<T>;
 }
@@ -735,7 +752,7 @@ async function cererePreturi<T>(cale: string, optiuni?: RequestInit): Promise<T>
   if (!raspuns.ok) {
     const corp = await raspuns.json().catch(() => ({}));
     if (raspuns.status === 409 && Array.isArray(corp.liniiSubAchizitie)) throw new EroareGarda(corp.eroare ?? "Sub achiziție", corp.liniiSubAchizitie);
-    throw new Error(corp.eroare ?? `Cerere esuata (${raspuns.status})`);
+    throw eroareDinRaspuns(raspuns.status, corp);
   }
   return raspuns.json() as Promise<T>;
 }

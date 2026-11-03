@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { apiCatalogEditor, type ProdusEditor, type StructuraOferta } from "../../api";
 import { Camp, Mesaj, textEroare } from "../../components/ui";
 import type { Catalog } from "./Produse";
-import { cheieInvelitoare, cheieNoua, culoriPentru, ral, sectiuneaLiniei, textCheie, type LinieUI, type StareEditor } from "./editor";
+import { categorieInvelitoare, cheieInvelitoare, cheieNoua, culoriPentru, ral, sectiuneaLiniei, textCheie, type LinieUI, type StareEditor } from "./editor";
 
 type Cheie = { finisaj: string; grosime: string | null; ral: string };
 
@@ -25,6 +25,10 @@ export function Rubrica({ rubrica, titlu, catalog, stare, set, poate, categorieP
   const principala = stare.invelitori[0];
   const produsPrincipal = principala?.produsId ? catalog.invelitori.find((p) => p.id === principala.produsId) : null;
   const [deSine, setDeSine] = useState<Cheie | null>(null);
+  // S17b BUG-3: sectiunea unei invelitori secundare are lista categoriei ei (la plate,
+  // suruburile Retro Panel), nu a principalei
+  const categoriiListe = [...new Set(catalog.ref.categoriiListe.map((c) => c.categorieInvelitoare))];
+  const categoriaInvelitorii = (produsId: string | null) => categorieInvelitoare(produsId ? (catalog.invelitori.find((p) => p.id === produsId) ?? null) : null, categoriiListe);
 
   const sectiuniSecundare = cuSecundare
     ? stare.invelitori.slice(1).filter((i) => i.produsId && (textCheie(cheieInvelitoare(i)) !== textCheie(cheieInvelitoare(principala)) || stare.linii.some((l) => l.invelitoare === i.cheie && l.rubrica === rubrica)))
@@ -44,7 +48,7 @@ export function Rubrica({ rubrica, titlu, catalog, stare, set, poate, categorieP
       )}
       {sectiuniSecundare.map((inv) =>
         secundareDeschise.includes(inv.cheie) || stare.linii.some((l) => l.invelitoare === inv.cheie && l.rubrica === rubrica) ? (
-          <Sectiune key={inv.cheie} rubrica={rubrica} categorie={categoriePrincipala} cheie={cheieInvelitoare(inv)} invelitoare={inv.cheie} titlu={`pentru învelitoarea secundară ${inv.model} · ${textCheie(cheieInvelitoare(inv))}`} stare={stare} set={set} poate={poate} catalog={catalog} />
+          <Sectiune key={inv.cheie} rubrica={rubrica} categorie={categoriaInvelitorii(inv.produsId) ?? categoriePrincipala} cheie={cheieInvelitoare(inv)} invelitoare={inv.cheie} titlu={`pentru învelitoarea secundară ${inv.model} · ${textCheie(cheieInvelitoare(inv))}`} stare={stare} set={set} poate={poate} catalog={catalog} />
         ) : (
           poate && (
             <button key={inv.cheie} className="buton secundar mic" type="button" onClick={() => setSecundareDeschise((d) => [...d, inv.cheie])} style={{ marginRight: 8 }}>

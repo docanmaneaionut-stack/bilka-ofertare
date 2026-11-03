@@ -56,15 +56,17 @@ interface Cheie {
 
 const faraDiacritice = (s: string) => s.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
 
-// potrivirea din tabela de corespondenta: codul intreg, apoi prefixul familiei (5);
+// potrivirea din tabela de corespondenta: codul intreg, apoi prefixul familiei (5),
+// apoi numele familiei (S17b BUG-1: produsele fara cod Bilka, ex. corectorul colorat,
+// au doar cod intern - cheia tabelei e atunci numele familiei, fara diacritice / majuscule);
 // cuvantul de deosebire se cauta in contextele date, in ordinea lor (varianta de
 // profil / modelul sipcii inaintea denumirii); la egalitate castiga cuvantul mai lung,
 // iar randul fara cuvant e rezerva
-export function numeDinCorespondenta(corespondente: Corespondenta[], cod: string, contexte: string[]): string | undefined {
+export function numeDinCorespondenta(corespondente: Corespondenta[], cod: string, contexte: string[], familie?: string | null): string | undefined {
   const ctx = contexte.map((c) => faraDiacritice(c ?? ""));
-  const potrivite = (cheie: string) =>
+  const potrivite = (cheie: string, egal: (a: string, b: string) => boolean = (a, b) => a.toUpperCase() === b.toUpperCase()) =>
     corespondente
-      .filter((c) => c.cheie.toUpperCase() === cheie.toUpperCase())
+      .filter((c) => egal(c.cheie, cheie))
       .map((c) => {
         const cuvant = faraDiacritice(c.cuvant.trim());
         const unde = cuvant === "" ? ctx.length : ctx.findIndex((t) => t !== "" && t.includes(cuvant));
@@ -72,7 +74,8 @@ export function numeDinCorespondenta(corespondente: Corespondenta[], cod: string
       })
       .filter((x) => x.unde >= 0)
       .sort((a, b) => a.unde - b.unde || b.c.cuvant.length - a.c.cuvant.length);
-  return (potrivite(cod)[0] ?? potrivite(cod.slice(0, 5))[0])?.c.numeFormular;
+  const peFamilie = familie?.trim() ? potrivite(familie, (a, b) => faraDiacritice(a).trim() === faraDiacritice(b).trim()) : [];
+  return (potrivite(cod)[0] ?? potrivite(cod.slice(0, 5))[0] ?? peFamilie[0])?.c.numeFormular;
 }
 
 // finisajul din codul de ierarhie (pozitiile 6-8) sau din textul finisajului -> textul listei sablonului
@@ -241,12 +244,17 @@ export function umpleFormulare(intrare: IntrareUmplere): FormularUmplut[] {
           const exact = liste.modelePeTip.get(tip)!.find((m) => normNume(m) === normNume(model!))!;
           pune(comanda, bloc.model, exact);
           if (bloc.modul) {
+            // S17b BUG-2: celula modulului nu ramane niciodata goala cand e scris un model -
+            // macro-ul Bilka compune cheia "MODEL modul" la toate modelele (si la plate / tabla
+            // cutata, care n-au lista de modul); fara modul, pretul si clasificarea SAP se pierd
             const module = liste.modulePeModel(exact);
-            if (module.length > 0) {
-              const modulCm = Number(String(inv.produsId ? (produse.get(inv.produsId)?.modulCm ?? "") : "").replace(",", "."));
-              const gasit = modulCm > 0 ? module.find((m) => Math.abs(Number(m.replace(/[^\d.,]/g, "").replace(",", ".")) - modulCm) < 0.01) : undefined;
-              if (gasit) pune(comanda, bloc.modul, gasit);
-              else avertizari.push(`${eticheta}: modulul ${modulCm > 0 ? `${modulCm} cm` : "(lipsă în catalog)"} nu e în lista șablonului (${module.join(", ")})`);
+            const modulCm = Number(String(inv.produsId ? (produse.get(inv.produsId)?.modulCm ?? "") : "").replace(",", "."));
+            const gasit = module.length > 0 && modulCm > 0 ? module.find((m) => Math.abs(Number(m.replace(/[^\d.,]/g, "").replace(",", ".")) - modulCm) < 0.01) : undefined;
+            if (gasit) pune(comanda, bloc.modul, gasit);
+            else {
+              if (liste.modulImplicit) pune(comanda, bloc.modul, liste.modulImplicit);
+              if (module.length > 0) avertizari.push(`${eticheta}: modulul ${modulCm > 0 ? `${modulCm} cm` : "(lipsă în catalog)"} nu e în lista șablonului (${module.join(", ")}) — s-a scris ${liste.modulImplicit ?? "nimic"}`);
+              else if (!liste.modulImplicit) avertizari.push(`${eticheta}: șablonul nu are nicio listă de modul — celula modulului rămâne goală, macro-ul Bilka nu va găsi prețul`);
             }
           }
           if (bloc.membrana && liste.membrane.length > 0) {
@@ -288,7 +296,11 @@ export function umpleFormulare(intrare: IntrareUmplere): FormularUmplut[] {
       const libere = harta.accesorii.filter((r) => !randuriFolosite.has(`${r.coloanaNume}${r.rand}`));
       const rand = libere.find((r) => normNume(r.numeImplicit) === k) ?? libere.find((r) => r.numeImplicit === "" && r.lista.includes(k)) ?? libere.find((r) => r.lista.includes(k));
       if (!rand) {
-        faraLoc.push(`${descriere} — niciun rând liber pentru „${exact}”`);
+        // S17b BUG-1: doua produse ale ofertei pe acelasi rand al formularului (ex. spray-ul de
+        // retus si corectorul, ambele pe randul "SPRAY RETUS") - al doilea nu are loc pe acest
+        // formular; regula "al doilea pe alt formular" vine ca MODIFICAREA M4 (S17d)
+        const ocupat = harta.accesorii.some((r) => randuriFolosite.has(`${r.coloanaNume}${r.rand}`) && (normNume(r.numeImplicit) === k || r.lista.includes(k)));
+        faraLoc.push(ocupat ? `${descriere} — același rând în formular („${exact}”) e deja folosit de alt produs al ofertei` : `${descriere} — niciun rând liber pentru „${exact}”`);
         return;
       }
       randuriFolosite.add(`${rand.coloanaNume}${rand.rand}`);
@@ -336,7 +348,7 @@ export function umpleFormulare(intrare: IntrareUmplere): FormularUmplut[] {
         continue;
       }
       const cheie = cheieLinie(l, oferta.invelitori);
-      let nume = numeDinCorespondenta(corespondente, l.cod, [l.optiune ?? "", l.um, l.denumire, l.familie ?? ""]);
+      let nume = numeDinCorespondenta(corespondente, l.cod, [l.optiune ?? "", l.um, l.denumire, l.familie ?? ""], l.familie);
       if (!nume) {
         faraLoc.push(`${descriere} — fără corespondență în tabela „Formular Bilka” din Referințe`);
         continue;

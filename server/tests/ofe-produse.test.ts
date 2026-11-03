@@ -192,7 +192,8 @@ describe("catalogul pentru editor", () => {
     expect(ref.culori.length).toBeGreaterThan(100);
     expect(ref.trepte).toHaveLength(25);
     const perechi = ref.categoriiListe as { rubrica: string; categorieInvelitoare: string }[];
-    expect(perechi).toHaveLength(6);
+    // S17b BUG-3: CSV-ul din 30.10 - 81 de randuri, a 7-a pereche e Fixare / Învelitori plate (suruburile Retro Panel)
+    expect(perechi).toHaveLength(7);
     let total = 0;
     for (const p of perechi) {
       const cheie = p.rubrica === "Sistem pluvial" ? { finisaj: "mat", sistem: "125 / 90" } : { finisaj: "mat", grosime: "0,50 mm" };
@@ -201,12 +202,46 @@ describe("catalogul pentru editor", () => {
       total += body.produse.length;
       for (const pr of body.produse) expect(pr).not.toHaveProperty("pret");
     }
-    expect(total).toBe(86);
+    // 81 de randuri din CSV, din care cele 16 generale ale rubricii Fixare apar de doua ori (o data cu fiecare categorie a ei)
+    expect(total).toBe(81 + 16);
     // Grande Mat: spray-ul si corectorul exista doar mat / lucios -> varianta mat
     const { body: fix } = await agent.get("/api/oferte/catalog/liste-implicite").query({ rubrica: "Fixare și etanșare", finisaj: "Grande Mat", grosime: "0,50 mm" }).expect(200);
     expect(fix.nerezolvate).toEqual([]);
     expect(fix.produse.find((p: { numeLista: string }) => /Spray/.test(p.numeLista)).denumire).toMatch(/– mat$/);
     expect(fix.produse.find((p: { numeLista: string }) => p.numeLista === "Capac coamă").denumire).toBe("Capac coamă – Grande Mat");
+  });
+
+  // S17b BUG-3 (FISA-OFERTARE cap. 7, v1.3): la invelitorile plate lista Fixare incepe cu suruburile
+  // Retro Panel (SURLINOX000); holtsuruburile colorate in ordinea 35 / 20 / 55 / 70 lemn, 19 / 35 metal;
+  // zincatele nu mai apar in lista initiala (stau sub "+ Adauga")
+  it("BUG-3: Fixare la plate incepe cu suruburile Retro Panel -> SURLINOX000; fara zincate; la tigla lista incepe cu lemn 4,8 x 35", async () => {
+    const agent = await autentificaAgent(app, EMAIL.agent1);
+    const { body: ref } = await agent.get("/api/oferte/catalog/referinte").expect(200);
+    const perechi = ref.categoriiListe as { rubrica: string; categorieInvelitoare: string }[];
+    const plate = perechi.find((p) => p.rubrica === "Fixare și etanșare" && /^Învelitori plate/.test(p.categorieInvelitoare))!;
+    expect(plate).toBeTruthy();
+    const { body: fixPlate } = await agent.get("/api/oferte/catalog/liste-implicite").query({ rubrica: "Fixare și etanșare", categorieInvelitoare: plate.categorieInvelitoare, finisaj: "lucios", grosime: "0,50 mm" }).expect(200);
+    expect(fixPlate.nerezolvate).toEqual([]);
+    const nume = fixPlate.produse.map((p: { numeLista: string; cod: string }) => `${p.numeLista} -> ${p.cod}`);
+    expect(nume[0]).toBe("Șuruburi Retro Panel fixare panou – lemn -> SURLINOX000");
+    expect(nume.slice(1, 7).map((n: string) => n.split(" -> ")[0])).toEqual([
+      "Holțșuruburi în culoare, lemn 4,8 × 35",
+      "Holțșuruburi în culoare, lemn 4,8 × 20",
+      "Holțșuruburi în culoare, lemn 4,8 × 55",
+      "Holțșuruburi în culoare, lemn 4,8 × 70",
+      "Holțșuruburi în culoare, metal 4,8 × 19",
+      "Holțșuruburi în culoare, metal 4,8 × 35",
+    ]);
+    expect(nume.some((n: string) => /zincat/i.test(n))).toBe(false);
+    expect(fixPlate.produse).toHaveLength(17);
+    // la tigla (categoria "Țiglă metalică (fără Romanic)") suruburile Retro Panel nu apar; fara categorie, doar randurile generale
+    const tigla = perechi.find((p) => p.rubrica === "Accesorii standard" && /^Țiglă metalică \(fără/.test(p.categorieInvelitoare))!;
+    const { body: fixTigla } = await agent.get("/api/oferte/catalog/liste-implicite").query({ rubrica: "Fixare și etanșare", categorieInvelitoare: tigla.categorieInvelitoare, finisaj: "mat", grosime: "0,50 mm" }).expect(200);
+    expect(fixTigla.produse.map((p: { cod: string }) => p.cod)).not.toContain("SURLINOX000");
+    expect(fixTigla.produse[0].numeLista).toBe("Holțșuruburi în culoare, lemn 4,8 × 35");
+    expect(fixTigla.produse).toHaveLength(16);
+    const { body: fixFara } = await agent.get("/api/oferte/catalog/liste-implicite").query({ rubrica: "Fixare și etanșare", finisaj: "mat", grosime: "0,50 mm" }).expect(200);
+    expect(fixFara.produse).toHaveLength(16);
   });
 
   it("invelitorile (fara pret), cautarea pe rubrica si cheie, treptele, pluvialul, sipca", async () => {

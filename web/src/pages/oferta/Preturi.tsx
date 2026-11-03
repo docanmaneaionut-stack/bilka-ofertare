@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { apiPreturi, EroareGarda, type DatePreturi, type LiniePret, type OfertaDetaliu, type SursaPreluare, type TipPretFixIntrare } from "../../api";
-import { Ajutor, Camp, Mesaj, textEroare } from "../../components/ui";
+import { Ajutor, Camp, eroareCamp, Mesaj, textEroare } from "../../components/ui";
 
 // Zona de preturi (FISA-OFERTARE cap. 11, 11.9): modul de prezentare, "Preia preturi
 // din oferta ...", cursul; tabelul liniilor cu achizitia contului in lei cu TVA,
@@ -28,6 +28,7 @@ export function Preturi({ oferta, onOferta, mentiuni = "" }: { oferta: OfertaDet
   const r = oferta.preturi?.rezultat ?? null;
   const poate = oferta.poateModifica;
   const [eroare, setEroare] = useState<string | null>(null);
+  const [eroareCerere, setEroareCerere] = useState<unknown>(null);
   const [vinovate, setVinovate] = useState<{ id: string; denumire: string }[]>([]);
   const [lucru, setLucru] = useState(false);
   // campurile editabile, din oferta; la refuzul gardei revin
@@ -53,6 +54,7 @@ export function Preturi({ oferta, onOferta, mentiuni = "" }: { oferta: OfertaDet
 
   async function salveaza(date: DatePreturi) {
     setEroare(null);
+    setEroareCerere(null);
     setLucru(true);
     try {
       const { oferta: dupa } = await apiPreturi.salveaza(oferta.id, { ...date, mentiuni: mentiuni.trim() || null });
@@ -63,7 +65,10 @@ export function Preturi({ oferta, onOferta, mentiuni = "" }: { oferta: OfertaDet
       if (e instanceof EroareGarda) {
         setVinovate(e.linii);
         setEroare(`${e.message}: ${e.linii.map((l) => l.denumire).join(", ")}`);
-      } else setEroare(textEroare(e));
+      } else {
+        setEroare(textEroare(e));
+        setEroareCerere(e);
+      }
       // valorile revin la cele salvate
       setAdaos(oferta.tinta.tip === "ADAOS_PCT" || oferta.tinta.tip === "ADAOS_PCT_PASTRAT" ? oferta.tinta.valoare : "");
       setTotal(oferta.tinta.tip === "TOTAL_CU_TVA_LEI" ? oferta.tinta.valoare : "");
@@ -191,12 +196,12 @@ export function Preturi({ oferta, onOferta, mentiuni = "" }: { oferta: OfertaDet
           </select>
         </Camp>
         {mod === "LISTA_DISCOUNT_GENERAL" && (
-          <Camp eticheta="Discount general afișat %">
+          <Camp eticheta="Discount general afișat %" eroare={eroareCamp(eroareCerere, "discountGeneralPct")}>
             <input type="text" inputMode="decimal" value={discountGeneral} onChange={(e) => setDiscountGeneral(e.target.value)} onBlur={() => discountGeneral.trim() && discountGeneral !== (oferta.discountGeneralPct ?? "") && void salveaza({ discountGeneralPct: discountGeneral.trim() })} disabled={!poate || lucru} />
           </Camp>
         )}
         {mod === "DISCOUNT_PER_LINIE" && (
-          <Camp eticheta="Discount implicit pe linie %">
+          <Camp eticheta="Discount implicit pe linie %" eroare={eroareCamp(eroareCerere, "discountImplicitPct")}>
             <input type="text" inputMode="decimal" value={discountImplicit} onChange={(e) => setDiscountImplicit(e.target.value)} onBlur={() => discountImplicit.trim() && discountImplicit !== (oferta.discountImplicitPct ?? "") && void salveaza({ discountImplicitPct: discountImplicit.trim() })} disabled={!poate || lucru} />
           </Camp>
         )}
@@ -246,10 +251,10 @@ export function Preturi({ oferta, onOferta, mentiuni = "" }: { oferta: OfertaDet
         </p>
       ) : (
         <div className="rand-campuri">
-          <Camp eticheta="Adaos țintă %">
+          <Camp eticheta="Adaos țintă %" eroare={eroareCamp(eroareCerere, "tinta.valoare", "tinta")}>
             <input type="text" inputMode="decimal" value={adaos} onChange={(e) => setAdaos(e.target.value)} onBlur={() => aplicaTinta("ADAOS_PCT", adaos)} onKeyDown={(e) => e.key === "Enter" && aplicaTinta("ADAOS_PCT", adaos)} disabled={!poate || lucru} />
           </Camp>
-          <Camp eticheta="sau total cu TVA (lei)">
+          <Camp eticheta="sau total cu TVA (lei)" eroare={eroareCamp(eroareCerere, "tinta.valoare", "tinta")}>
             <input type="text" inputMode="decimal" value={total} onChange={(e) => setTotal(e.target.value)} onBlur={() => aplicaTinta("TOTAL_CU_TVA_LEI", total)} onKeyDown={(e) => e.key === "Enter" && aplicaTinta("TOTAL_CU_TVA_LEI", total)} disabled={!poate || lucru} />
           </Camp>
           {oferta.tinta.tip === "ADAOS_PCT_PASTRAT" && (

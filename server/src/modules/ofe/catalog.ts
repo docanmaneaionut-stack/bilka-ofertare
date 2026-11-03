@@ -119,13 +119,23 @@ export function potrivesteCheia(p: ProdusEditor, cheie: CheieEditor, strict = tr
 
 // categoria invelitorii pentru listele implicite (coloana categorie_invelitoare din
 // liste-implicite-oferta.csv), dedusa din grupul si familia produsului
+// prefixele categoriilor "specifice" (legate de un tip de invelitoare); orice alta
+// categorie din CSV ("toate învelitorile", "orice sistem …") e generala: randurile ei
+// apar la orice invelitoare (S17b BUG-3: la Fixare, suruburile Retro Panel stau pe
+// categoria "Învelitori plate (…)", restul pe "toate învelitorile")
+const PREFIXE_CATEGORII_SPECIFICE = ["țiglă metalică romanic", "țiglă metalică (fără", "învelitori plate", "tablă cutată"];
+export function esteCategorieSpecifica(categorie: string): boolean {
+  const c = categorie.toLowerCase();
+  return PREFIXE_CATEGORII_SPECIFICE.some((p) => c.startsWith(p));
+}
+
 export function categorieInvelitoare(p: { grup: string; familie: string | null }, categoriiListe: string[]): string | null {
   const grup = p.grup.toLowerCase();
   const familie = (p.familie ?? "").toLowerCase();
   let prefix: string;
-  if (grup.startsWith("țiglă metalică") || grup.startsWith("tigla metalica")) prefix = familie.includes("romanic") ? "țiglă metalică romanic" : "țiglă metalică (fără";
-  else if (grup.startsWith("învelitori plate")) prefix = "învelitori plate";
-  else if (grup.startsWith("tablă cutată") || grup.startsWith("tablă plană")) prefix = "tablă cutată";
+  if (grup.startsWith("țiglă metalică") || grup.startsWith("tigla metalica")) prefix = familie.includes("romanic") ? PREFIXE_CATEGORII_SPECIFICE[0] : PREFIXE_CATEGORII_SPECIFICE[1];
+  else if (grup.startsWith("învelitori plate")) prefix = PREFIXE_CATEGORII_SPECIFICE[2];
+  else if (grup.startsWith("tablă cutată") || grup.startsWith("tablă plană")) prefix = PREFIXE_CATEGORII_SPECIFICE[3];
   else return null;
   return categoriiListe.find((c) => c.toLowerCase().startsWith(prefix)) ?? null;
 }
@@ -197,7 +207,8 @@ export interface RezultatListaImplicita {
 
 export async function listaImplicita(rubrica: string, categorieInv: string | null, cheie: CheieEditor): Promise<RezultatListaImplicita> {
   const randuri = await prisma.listaImplicitaOferta.findMany({ where: { activ: true, rubrica }, orderBy: { ordine: "asc" } });
-  const deCategorie = categorieInv ? randuri.filter((r) => r.categorieInvelitoare === categorieInv) : randuri.filter((r, _i, toate) => toate.every((x) => x.categorieInvelitoare === r.categorieInvelitoare));
+  // randurile generale (categorie nespecifica) + cele ale categoriei invelitorii, in ordinea din CSV
+  const deCategorie = randuri.filter((r) => !esteCategorieSpecifica(r.categorieInvelitoare) || (categorieInv !== null && r.categorieInvelitoare === categorieInv));
   // candidatii: toate produsele active (lista decide rubrica randului, catalogul categoria)
   const toate = (await prisma.produs.findMany({ where: { activ: true }, select: selectProdusEditor })).map(spreProdusEditor);
   const pluvial = /pluvial/i.test(rubrica);

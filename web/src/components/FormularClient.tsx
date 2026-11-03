@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { apiClienti, type Client, type ClientDate } from "../api";
-import { Camp } from "./ui";
+import { Camp, eroareCamp } from "./ui";
 
 // formularul clientului (FISA-OFERTARE cap. 2), cu autocompletare dupa telefon:
 // la un telefon existent softul propune clientul existent
@@ -18,10 +18,13 @@ function cifreTelefon(t: string): string {
   return t.replace(/\D/g, "").replace(/^(0040|40)(?=\d{9})/, "0");
 }
 
-export function FormularClient({ client, onSchimba, onAlegeExistent }: { client: ClientDate; onSchimba: (c: ClientDate) => void; onAlegeExistent: (c: Client) => void }) {
+// `eroare`: eroarea cererii de salvare (BUG-4) - motivele apar sub campurile lor;
+// `prefix`: calea campurilor clientului in corpul cererii ("client." la "Oferta noua")
+export function FormularClient({ client, onSchimba, onAlegeExistent, eroare, prefix = "client." }: { client: ClientDate; onSchimba: (c: ClientDate) => void; onAlegeExistent: (c: Client) => void; eroare?: unknown; prefix?: string }) {
   const [sugestii, setSugestii] = useState<Client[]>([]);
   const set = (k: keyof ClientDate, v: string) => onSchimba({ ...client, [k]: v });
   const cifre = cifreTelefon(client.telefon);
+  const la = (camp: keyof ClientDate) => eroareCamp(eroare, `${prefix}${camp}`, camp);
 
   useEffect(() => {
     if (cifre.length < 4) return;
@@ -44,7 +47,7 @@ export function FormularClient({ client, onSchimba, onAlegeExistent }: { client:
   return (
     <>
       <div className="rand-campuri">
-        <Camp eticheta="Telefon" obligatoriu>
+        <Camp eticheta="Telefon" obligatoriu eroare={la("telefon")}>
           <input type="tel" value={client.telefon} onChange={(e) => set("telefon", e.target.value)} required autoComplete="off" />
           {vizibile.length > 0 && !(exact && exact.nume === client.nume) && (
             <ul className="lista-sugestii" aria-label="Clienți existenți">
@@ -57,19 +60,19 @@ export function FormularClient({ client, onSchimba, onAlegeExistent }: { client:
             </ul>
           )}
         </Camp>
-        <Camp eticheta="Nume" obligatoriu>
+        <Camp eticheta="Nume" obligatoriu eroare={la("nume")}>
           <input type="text" value={client.nume} onChange={(e) => set("nume", e.target.value)} required />
         </Camp>
-        <Camp eticheta="Adresa lucrării" obligatoriu>
+        <Camp eticheta="Adresa lucrării" obligatoriu eroare={la("adresa")}>
           <input type="text" value={client.adresa} onChange={(e) => set("adresa", e.target.value)} required />
         </Camp>
-        <Camp eticheta="Localitate">
+        <Camp eticheta="Localitate" eroare={la("localitate")}>
           <input type="text" value={client.localitate ?? ""} onChange={(e) => set("localitate", e.target.value)} />
         </Camp>
-        <Camp eticheta="E-mail">
+        <Camp eticheta="E-mail" eroare={la("email")}>
           <input type="email" value={client.email ?? ""} onChange={(e) => set("email", e.target.value)} />
         </Camp>
-        <Camp eticheta="Observații">
+        <Camp eticheta="Observații" eroare={la("observatii")}>
           <input type="text" value={client.observatii ?? ""} onChange={(e) => set("observatii", e.target.value)} />
         </Camp>
       </div>

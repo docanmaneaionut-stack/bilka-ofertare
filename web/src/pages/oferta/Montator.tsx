@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { apiMontatori, apiStatus, type Montator as MontatorTip, type OfertaDetaliu } from "../../api";
-import { Camp, Mesaj, textEroare } from "../../components/ui";
+import { Camp, eroareCamp, Mesaj, textEroare } from "../../components/ui";
 
 // Montatorul / recomandarea (FISA-OFERTARE cap. 12): o singura persoana pe oferta,
 // din lista agentului (autocompletare) sau noua; comisionul ca suma fixa, cu
@@ -13,6 +13,7 @@ export function Montator({ oferta, onOferta, mentiuni }: { oferta: OfertaDetaliu
   const [nou, setNou] = useState<{ nume: string; telefon: string; localitate: string; tip: "MONTATOR" | "CONSTRUCTOR" } | null>(null);
   const [comision, setComision] = useState(oferta.comisionRecomandareLei ?? "");
   const [eroare, setEroare] = useState<string | null>(null);
+  const [eroareCerere, setEroareCerere] = useState<unknown>(null);
   const [lucru, setLucru] = useState(false);
 
   useEffect(() => setComision(oferta.comisionRecomandareLei ?? ""), [oferta.comisionRecomandareLei]);
@@ -27,6 +28,7 @@ export function Montator({ oferta, onOferta, mentiuni }: { oferta: OfertaDetaliu
 
   async function salveaza(date: Parameters<typeof apiStatus.montator>[1]) {
     setEroare(null);
+    setEroareCerere(null);
     setLucru(true);
     try {
       const { oferta: dupa } = await apiStatus.montator(oferta.id, { ...date, mentiuni: mentiuni.trim() || null });
@@ -36,6 +38,7 @@ export function Montator({ oferta, onOferta, mentiuni }: { oferta: OfertaDetaliu
       setNou(null);
     } catch (e) {
       setEroare(textEroare(e));
+      setEroareCerere(e);
     } finally {
       setLucru(false);
     }
@@ -82,7 +85,7 @@ export function Montator({ oferta, onOferta, mentiuni }: { oferta: OfertaDetaliu
             </>
           )}
         </Camp>
-        <Camp eticheta="Comision recomandare (lei, sumă fixă)">
+        <Camp eticheta="Comision recomandare (lei, sumă fixă)" eroare={eroareCamp(eroareCerere, "comisionRecomandareLei")}>
           <div className="actiuni" style={{ justifyContent: "flex-start" }}>
             <input
               type="text"
@@ -100,13 +103,13 @@ export function Montator({ oferta, onOferta, mentiuni }: { oferta: OfertaDetaliu
       </div>
       {nou && (
         <div className="rand-campuri" style={{ marginTop: 8 }}>
-          <Camp eticheta="Nume" obligatoriu>
+          <Camp eticheta="Nume" obligatoriu eroare={eroareCamp(eroareCerere, "montatorNou.nume")}>
             <input type="text" value={nou.nume} onChange={(e) => setNou({ ...nou, nume: e.target.value })} />
           </Camp>
-          <Camp eticheta="Telefon" obligatoriu>
+          <Camp eticheta="Telefon" obligatoriu eroare={eroareCamp(eroareCerere, "montatorNou.telefon")}>
             <input type="text" value={nou.telefon} onChange={(e) => setNou({ ...nou, telefon: e.target.value })} />
           </Camp>
-          <Camp eticheta="Localitate">
+          <Camp eticheta="Localitate" eroare={eroareCamp(eroareCerere, "montatorNou.localitate")}>
             <input type="text" value={nou.localitate} onChange={(e) => setNou({ ...nou, localitate: e.target.value })} />
           </Camp>
           <Camp eticheta="Tip">

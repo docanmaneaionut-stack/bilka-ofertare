@@ -3,7 +3,7 @@ import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom"
 import { apiDocumente, apiFormulareBilka, apiOferte, apiOptiuni, apiPreturi, apiStatus, dataRo, ETICHETA_STATUS, type ClientDate, type OfertaDetaliu as Oferta, type SursaPreluare, type TipDocument } from "../api";
 import { clientGol, dinClient, FormularClient } from "../components/FormularClient";
 import { MeniuActiuni } from "../components/MeniuActiuni";
-import { Ajutor, Camp, Mesaj, textEroare } from "../components/ui";
+import { Ajutor, Camp, eroareCamp, Mesaj, textEroare } from "../components/ui";
 import { Documente, ETICHETA_TIP } from "./oferta/Documente";
 import { Istoric, NotiteAtasamente } from "./oferta/IstoricNotite";
 import { Montator } from "./oferta/Montator";
@@ -20,6 +20,8 @@ export function OfertaDetaliu() {
   const [parametri, setParametri] = useSearchParams();
   const [oferta, setOferta] = useState<Oferta | null>(null);
   const [eroare, setEroare] = useState<string | null>(null);
+  // eroarea cererii de salvare a antetului / clientului: motivele la camp (BUG-4)
+  const [eroareFormular, setEroareFormular] = useState<unknown>(null);
   const [mesaj, setMesaj] = useState<string | null>(null);
   const [client, setClient] = useState<ClientDate>(clientGol());
   const [data, setData] = useState("");
@@ -57,7 +59,7 @@ export function OfertaDetaliu() {
     setLucru("formulare");
     try {
       const r = await apiFormulareBilka.genereaza(oferta.id);
-      setMesaj(`Formulare Bilka generate: ${r.documente.map((d) => d.nume).join(", ")} — le găsești în panoul „Documente” (descarcă, deschide în Excel, trimite în SAP).`);
+      setMesaj(`Formulare Bilka generate: ${r.documente.map((d) => d.nume).join(", ")} — le găsești în panoul „Documente”. Deschide fișierul în Excel, verifică-l și salvează-l înainte de a-l trimite.`);
       setAvertizariFormulare(r.avertizari);
       setReincarcaIstoric((n) => n + 1);
       document.getElementById("documente")?.scrollIntoView({ behavior: "smooth" });
@@ -145,6 +147,7 @@ export function OfertaDetaliu() {
     e.preventDefault();
     if (!oferta) return;
     setEroare(null);
+    setEroareFormular(null);
     setMesaj(null);
     setSeSalveaza(true);
     try {
@@ -155,6 +158,7 @@ export function OfertaDetaliu() {
       setMesaj("Antetul și clientul au fost salvate.");
     } catch (err) {
       setEroare(textEroare(err));
+      setEroareFormular(err);
     } finally {
       setSeSalveaza(false);
     }
@@ -198,7 +202,7 @@ export function OfertaDetaliu() {
             Află preț
           </Link>
           {(oferta.status === "DE_COMANDAT" || comandata) && (
-            <button className="buton" type="button" disabled={lucru !== null} onClick={() => void formulareBilka()} title="Generează formularele de comandă Bilka (.xlsm) din șablonul firmei; la „Comandat” din rezultatul salvat">
+            <button className="buton" type="button" disabled={lucru !== null} onClick={() => void formulareBilka()} title="Generează formularele de comandă Bilka (.xlsm) din șablonul firmei; la „Comandat” din rezultatul salvat. Deschide fișierul în Excel, verifică-l și salvează-l înainte de a-l trimite.">
               {lucru === "formulare" ? "se generează…" : `Formulare Bilka${oferta.structura?.rezultat ? ` (${oferta.structura.rezultat.formulareBilka.length})` : ""}`}
             </button>
           )}
@@ -369,7 +373,7 @@ export function OfertaDetaliu() {
         <section className="panou">
           <h2>Antet</h2>
           <div className="rand-campuri">
-            <Camp eticheta="Data ofertei" obligatoriu>
+            <Camp eticheta="Data ofertei" obligatoriu eroare={eroareCamp(eroareFormular, "data")}>
               <input type="date" value={data} onChange={(e) => setData(e.target.value)} required disabled={!oferta.poateModifica} />
             </Camp>
             <Camp eticheta="Curs BNR (documentul)">
@@ -378,13 +382,13 @@ export function OfertaDetaliu() {
             <Camp eticheta="Curs de achiziție (BNR × 1,01)">
               <input type="text" value={c.cursAchizitie} readOnly />
             </Camp>
-            <Camp eticheta="Adresa lucrării">
+            <Camp eticheta="Adresa lucrării" eroare={eroareCamp(eroareFormular, "adresaLucrarii")}>
               <input type="text" value={adresaLucrarii} onChange={(e) => setAdresaLucrarii(e.target.value)} disabled={!oferta.poateModifica} />
             </Camp>
-            <Camp eticheta="Localitatea lucrării">
+            <Camp eticheta="Localitatea lucrării" eroare={eroareCamp(eroareFormular, "localitate")}>
               <input type="text" value={localitate} onChange={(e) => setLocalitate(e.target.value)} disabled={!oferta.poateModifica} />
             </Camp>
-            <Camp eticheta="Sursa clientului">
+            <Camp eticheta="Sursa clientului" eroare={eroareCamp(eroareFormular, "sursaClient")}>
               <input type="text" list="surse-client" value={sursaClient} onChange={(e) => setSursaClient(e.target.value)} disabled={!oferta.poateModifica} />
               <datalist id="surse-client">
                 {surseClient.map((s) => (
@@ -392,7 +396,7 @@ export function OfertaDetaliu() {
                 ))}
               </datalist>
             </Camp>
-            <Camp eticheta="Note">
+            <Camp eticheta="Note" eroare={eroareCamp(eroareFormular, "note")}>
               <input type="text" value={note} onChange={(e) => setNote(e.target.value)} disabled={!oferta.poateModifica} />
             </Camp>
             <Camp eticheta="Lista de preț">
@@ -409,7 +413,7 @@ export function OfertaDetaliu() {
             </Link>
           </h2>
           {oferta.poateModifica ? (
-            <FormularClient client={client} onSchimba={setClient} onAlegeExistent={(cl) => setClient(dinClient(cl))} />
+            <FormularClient client={client} onSchimba={setClient} onAlegeExistent={(cl) => setClient(dinClient(cl))} eroare={eroareFormular} prefix="" />
           ) : (
             <p>
               <strong>{oferta.client.nume}</strong> · {oferta.client.telefon} · {oferta.client.adresa}

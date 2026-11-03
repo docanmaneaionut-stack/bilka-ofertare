@@ -25,7 +25,8 @@ export const schemaClient = z.object({
     .string()
     .trim()
     .min(6)
-    .refine((t) => normalizeazaTelefon(t).length >= 6, "Telefonul trebuie să aibă cel puțin 6 cifre"),
+    .refine((t) => !/[a-zA-Z]/.test(t), "conține litere")
+    .refine((t) => normalizeazaTelefon(t).length >= 6, "trebuie să aibă cel puțin 6 cifre"),
   adresa: z.string().trim().min(2),
   localitate: z.string().trim().nullish(),
   email: z.string().trim().email().nullish().or(z.literal("")),

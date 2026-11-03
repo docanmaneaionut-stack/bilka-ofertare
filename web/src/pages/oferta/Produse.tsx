@@ -133,7 +133,7 @@ export function Produse({ oferta, onOferta, mentiuni = "" }: { oferta: OfertaDet
 
       <Rubrica rubrica={RUBRICI.standard} titlu="Accesorii standard" catalog={catalog} stare={stare} set={set} poate={poate} categoriePrincipala={categoriePrincipala} structura={structura?.rezultat ?? null} cuSecundare />
       <Speciale2ML catalog={catalog} stare={stare} set={set} poate={poate} structura={structura?.rezultat ?? null} />
-      <Rubrica rubrica={RUBRICI.fixare} titlu="Fixare și etanșare" catalog={catalog} stare={stare} set={set} poate={poate} categoriePrincipala={null} structura={structura?.rezultat ?? null} cuSecundare />
+      <Rubrica rubrica={RUBRICI.fixare} titlu="Fixare și etanșare" catalog={catalog} stare={stare} set={set} poate={poate} categoriePrincipala={categoriePrincipala} structura={structura?.rezultat ?? null} cuSecundare />
       <Pluvial catalog={catalog} stare={stare} set={set} poate={poate} structura={structura?.rezultat ?? null} />
       <Sipca catalog={catalog} stare={stare} set={set} poate={poate} structura={structura?.rezultat ?? null} />
       <Lungimi catalog={catalog} stare={stare} set={set} poate={poate} structura={structura?.rezultat ?? null} />

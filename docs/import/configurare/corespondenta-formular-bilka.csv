@@ -213,3 +213,4 @@ Bilka;AXCOSVENIBE;;COS VENTILARE IBERIC {RAL};de_verificat;culoarea in nume: {RA
 Bilka;AXCOSVENGOT;;COS VENTILARE GOTIC {RAL};de_verificat;culoarea in nume: {RAL} = culoarea liniei
 Bilka;AXCOSVENROM;;COS VENTILARE ROMANIC {RAL};de_verificat;culoarea in nume: {RAL} = culoarea liniei
 Bilka;AXCOSVENPLT;;COS VENTILARE RETROPANEL {RAL};de_verificat;culoarea in nume: {RAL} = culoarea liniei
+Bilka;Corector colorat pentru acoperiș;;CORECTOR;automat;S17b BUG-1: cheia e numele familiei (produs fara cod Bilka, doua randuri lucios / mat in catalog) - acelasi rand cu SPRAY RETUS pe formular; cand sunt amandoua pe oferta, al doilea merge la avertizari

@@ -273,6 +273,18 @@ input[type="checkbox"] {
   background: #fff;
 }
 
+/* validarea la camp (BUG-4): motivul sub camp, campul cu chenar rosu */
+.camp.cu-eroare > input,
+.camp.cu-eroare > select,
+.camp.cu-eroare > textarea {
+  border-color: var(--eroare);
+}
+
+.eroare-camp {
+  color: var(--eroare);
+  font-size: 0.9em;
+}
+
 .mesaj.ok {
   border-color: var(--ok);
   color: var(--ok);

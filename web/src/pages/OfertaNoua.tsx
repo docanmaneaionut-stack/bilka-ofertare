@@ -2,7 +2,7 @@ import { useEffect, useState, type FormEvent } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { apiCurs, apiOfertare, apiOferte, dataRo, type ClientDate, type CursAzi } from "../api";
 import { clientGol, dinClient, FormularClient } from "../components/FormularClient";
-import { Ajutor, Camp, Mesaj, textEroare } from "../components/ui";
+import { Ajutor, Camp, eroareCamp, Mesaj, textEroare } from "../components/ui";
 import { useUtilizator } from "../contextUtilizator";
 
 // "+ Oferta noua" (FISA-OFERTARE cap. 1, 2): antetul (firma si agentul contului,
@@ -15,7 +15,8 @@ export function OfertaNoua() {
   const [client, setClient] = useState<ClientDate>(clientGol());
   const [data, setData] = useState(new Date().toISOString().slice(0, 10));
   const [sursaClient, setSursaClient] = useState("");
-  const [eroare, setEroare] = useState<string | null>(null);
+  // eroarea cererii, nu doar textul: motivele validarii se arata la camp (BUG-4)
+  const [eroare, setEroare] = useState<unknown>(null);
   const [seSalveaza, setSeSalveaza] = useState(false);
 
   useEffect(() => {
@@ -37,7 +38,7 @@ export function OfertaNoua() {
       const { oferta } = await apiOferte.creeaza(client, { data, sursaClient: sursaClient || null });
       navigate(`/oferte/${oferta.id}`);
     } catch (err) {
-      setEroare(textEroare(err));
+      setEroare(err);
     } finally {
       setSeSalveaza(false);
     }
@@ -59,7 +60,7 @@ export function OfertaNoua() {
             <Camp eticheta="Agent">
               <input type="text" value={eu.nume} readOnly />
             </Camp>
-            <Camp eticheta="Data ofertei" obligatoriu>
+            <Camp eticheta="Data ofertei" obligatoriu eroare={eroareCamp(eroare, "antet.data")}>
               <input type="date" value={data} onChange={(e) => setData(e.target.value)} required />
             </Camp>
             <Camp eticheta="Curs BNR (documentul)">
@@ -68,7 +69,7 @@ export function OfertaNoua() {
             <Camp eticheta="Curs de achiziție (BNR × 1,01)">
               <input type="text" value={curs?.azi ? curs.azi.cursAchizitie : "…"} readOnly />
             </Camp>
-            <Camp eticheta="Sursa clientului">
+            <Camp eticheta="Sursa clientului" eroare={eroareCamp(eroare, "antet.sursaClient")}>
               <input type="text" value={sursaClient} onChange={(e) => setSursaClient(e.target.value)} placeholder="recomandare montator, client vechi, online…" />
             </Camp>
           </div>
@@ -88,10 +89,10 @@ export function OfertaNoua() {
 
         <section className="panou">
           <h2>Client</h2>
-          <FormularClient client={client} onSchimba={setClient} onAlegeExistent={(c) => setClient(dinClient(c))} />
+          <FormularClient client={client} onSchimba={setClient} onAlegeExistent={(c) => setClient(dinClient(c))} eroare={eroare} prefix="client." />
         </section>
 
-        {eroare && <Mesaj tip="eroare">{eroare}</Mesaj>}
+        {eroare !== null && <Mesaj tip="eroare">{textEroare(eroare)}</Mesaj>}
         <div className="actiuni">
           <button className="buton" type="submit" disabled={seSalveaza || !curs?.azi}>
             {seSalveaza ? "Se salvează…" : "Salvează oferta (În lucru)"}

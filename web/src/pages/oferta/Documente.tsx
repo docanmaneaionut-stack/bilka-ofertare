@@ -143,7 +143,7 @@ export function Documente({ oferta, reincarca, mentiuni, onSchimbare }: { oferta
           </table>
         </div>
       )}
-      <p className="mic text-secundar">Fiecare generare rămâne atașată ofertei (tip, variantă, dată-oră). „Marchează ca transmis” notează canalul în istoric; trimiterea efectivă pe e-mail / WhatsApp vine după punerea în funcțiune. Formularele de comandă Bilka (.xlsm, cu macro-urile Bilka) se generează din „Formulare Bilka” de sus, de la „De comandat”; se deschid în Excel și se trimit în SAP ca până acum.</p>
+      <p className="mic text-secundar">Fiecare generare rămâne atașată ofertei (tip, variantă, dată-oră). „Marchează ca transmis” notează canalul în istoric; trimiterea efectivă pe e-mail / WhatsApp vine după punerea în funcțiune. Formularele de comandă Bilka (.xlsm, cu macro-urile Bilka) se generează din „Formulare Bilka” de sus, de la „De comandat”. Deschide fișierul în Excel, verifică-l și salvează-l înainte de a-l trimite: foaia de import a Bilka („Portal”) se completează abia la salvarea din Excel, cu macro-urile active.</p>
     </section>
   );
 }

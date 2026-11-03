@@ -91,7 +91,7 @@ describe("Import Bilka - cele 14 fisiere reale, pe un compartiment gol", () => {
     expect(d.referinte["variante-profil"]?.aparute).toHaveLength(13);
     expect(d.referinte["culori-finisaj-grosime"]?.aparute).toHaveLength(118);
     expect(d.referinte["garantii-finisaj-grosime"]?.aparute).toHaveLength(22);
-    expect(d.referinte["liste-implicite-oferta"]?.aparute).toHaveLength(86);
+    expect(d.referinte["liste-implicite-oferta"]?.aparute).toHaveLength(81); // S17b BUG-3: CSV-ul din 30.10
     expect(d.referinte["trepte-desfasurata"]?.aparute).toHaveLength(25);
 
     const pePerFisier = Object.fromEntries(raport.fisiere.map((f) => [f.nume, f.randuri]));

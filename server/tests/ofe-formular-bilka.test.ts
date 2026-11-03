@@ -293,7 +293,7 @@ describe("formularele Bilka (S16b)", () => {
     const s = fisiere[0].s;
     expect(v(s, "comanda", "H22")).toBe("TABLA_CUTATA");
     expect(v(s, "comanda", "E23")).toBe("T 35 A"); // implicit acoperis
-    expect(v(s, "comanda", "O22")).toBeUndefined();
+    expect(v(s, "comanda", "O22")).toBe("35 cm"); // S17b BUG-2: tabla cutata n-are lista de modul, primeste modulul implicit al sablonului
     expect(v(s, "comanda", "I24")).toBe("9005");
     expect([v(s, "comanda", "D27"), v(s, "comanda", "E27")]).toEqual(["5.7", "6"]);
     expect(v(s, "comanda", "F67")).toBe("4"); // BORDURA FRONTON 312 MM
@@ -392,6 +392,104 @@ describe("formularele Bilka (S16b)", () => {
     const dupa = await genereaza(agent, id);
     expect(dupa.avertizari).toEqual([]);
   }, 120_000);
+
+  // S17b BUG-2: macro-ul Bilka compune cheia modelului din model + modul la toate modelele
+  // (R23 = neopret_wrapper(_FC_MODEL, …) -> AUX1!E1 = model(E2) -> E2 = AUX!B23 -> B23 lipeste
+  // B19 (= E23, modelul) de C20 (din B20 = O22, modulul)); la plate si la tabla cutata, care n-au
+  // lista de modul, celula modulului primea gol si cheia nu se mai gasea (nici la alegerea manuala)
+  it("BUG-2: modulul nu ramane gol la invelitorile fara lista de modul (Retro Plus, T 8 P) - lantul formulei pretului trece prin O22", async () => {
+    const agent = await autentificaAgent(app, EMAIL.agent1);
+    const id = await ofertaNoua(agent);
+    await construieste(agent, id, citesteEtalon("E11"));
+    await deComandat(agent, id);
+    const { fisiere, avertizari } = await genereaza(agent, id);
+    expect(avertizari).toEqual([]);
+    const retro = fisiere[1].s;
+    expect(v(retro, "comanda", "E23")).toBe("RETRO PLUS STANDARD");
+    // modulul implicit al sablonului: cel mai mic din listele de modul (35 cm la v10); Retro n-are lista proprie
+    expect(retro.harta.liste.modulePeModel("RETRO PLUS STANDARD")).toEqual([]);
+    expect(retro.harta.liste.modulImplicit).toBe("35 cm");
+    expect(v(retro, "comanda", retro.harta.principala.modul!)).toBe("35 cm");
+    // lantul formulei: pretul citeste _FC_MODEL, care vine din AUX1!E1 = model(E2), E2 = AUX!B23,
+    // iar B23 e compus din B19 (FORMULAR COMANDA!E23) si C20 (din B20 = FORMULAR COMANDA!O22)
+    const comanda = retro.celule(retro.harta.foaie.comanda);
+    expect(comanda.get("R23")?.f).toMatch(/neopret_wrapper\(_FC_MODEL,/);
+    const refModel = retro.numeDefinite.get("_FC_MODEL")!;
+    const [foaieAux1, celE1] = refModel.replace(/\$/g, "").replace(/'/g, "").split("!");
+    const aux1 = retro.celule(retro.fisierFoaie(foaieAux1));
+    const fE1 = aux1.get(celE1)?.f ?? "";
+    const celE2 = /model\(([A-Z]+\d+)\)/.exec(fE1)?.[1];
+    expect(celE2, fE1).toBeTruthy();
+    const refB23 = (aux1.get(celE2!)?.f ?? "").replace(/^=/, "").replace(/\$/g, "").replace(/'/g, "");
+    const [foaieAux, celB23] = refB23.split("!");
+    const aux = retro.celule(retro.fisierFoaie(foaieAux));
+    const fB23 = aux.get(celB23)?.f ?? "";
+    const surse = [...fB23.matchAll(/\b([A-Z]+\d+)\b/g)].map((m) => m[1]);
+    const spreComanda = (f: string | undefined) => (f ?? "").replace(/\$/g, "").replace(/'/g, "");
+    const tinteFinale = surse.flatMap((c) => {
+      const f = spreComanda(aux.get(c)?.f);
+      // C20 deriva din B20; B19 / B20 trimit direct la FORMULAR COMANDA
+      const directe = [...f.matchAll(/\b([A-Z]+\d+)\b/g)].map((m) => m[1]).flatMap((d) => (aux.get(d)?.f ? [spreComanda(aux.get(d)?.f)] : []));
+      return [f, ...directe];
+    });
+    expect(tinteFinale.some((t) => t.includes("FORMULAR COMANDA!E23"))).toBe(true);
+    expect(tinteFinale.some((t) => t.includes(`FORMULAR COMANDA!${retro.harta.principala.modul}`))).toBe(true);
+    // si secundara: T 8 P (tabla cutata, fara lista de modul) primeste tot modulul implicit
+    const e01 = await ofertaNoua(agent);
+    await construieste(agent, e01, citesteEtalon("E01"));
+    await deComandat(agent, e01);
+    const g = await genereaza(agent, e01);
+    expect(v(g.fisiere[0].s, "comanda", "E36")).toBe("T 8 P");
+    expect(v(g.fisiere[0].s, "comanda", g.fisiere[0].s.harta.secundara.modul!)).toBe("35 cm");
+  }, 180_000);
+
+  // S17b BUG-1: corectorul colorat n-are cod Bilka (doua randuri in catalog, lucios / mat); tabela
+  // de corespondenta il gaseste pe numele familiei si il pune pe randul "SPRAY RETUS" (lista
+  // SPRAY RETUS / CORECTOR); spray-ul si corectorul pe aceeasi oferta -> al doilea la avertizari
+  it("BUG-1: corectorul lucios si cel mat ajung pe acelasi rand (CORECTOR), fara avertizare; cu spray pe oferta, al doilea e 'acelasi rand in formular'", async () => {
+    const agent = await autentificaAgent(app, EMAIL.agent1);
+    const e01 = citesteEtalon("E01");
+    const corp = await corpDinEtalon(e01);
+    const spray = await produsDupaCod("AXSPRMAT400");
+    const faraSpray = { ...corp, linii: corp.linii.filter((l) => l.produsId !== spray.id) };
+    expect(faraSpray.linii.length).toBe(corp.linii.length - 1);
+    const corector = async (finisaj: string) => {
+      const p = await prisma.produs.findFirstOrThrow({ where: { denumire: `Corector colorat pentru acoperiș – ${finisaj}`, activ: true } });
+      expect(p.codFurnizor).toBeNull();
+      return { cheie: `LCOR`, rubrica: "Fixare și etanșare", produsId: p.id, cantitate: "2", invelitoare: "I1", culoare: null };
+    };
+    const randSpray = (s: Sablon) => s.harta.accesorii.find((r) => r.lista.includes("CORECTOR"))!;
+    // fara pasul preturilor din etalon (liniile difera de E01); formularul nu depinde de preturi
+    const construiesteFaraPreturi = async (id: string, c: Corp) => {
+      const rp = await agent.put(`/api/oferte/${id}/produse`).send(c);
+      expect(rp.status, JSON.stringify(rp.body)).toBe(200);
+      await puneCursulEtalonului(id, e01);
+    };
+    for (const finisaj of ["lucios", "mat"]) {
+      const id = await ofertaNoua(agent);
+      await construiesteFaraPreturi(id, { ...faraSpray, linii: [...faraSpray.linii, await corector(finisaj)] });
+      await deComandat(agent, id);
+      const { fisiere, avertizari } = await genereaza(agent, id);
+      expect(avertizari.filter((a) => /orector/.test(a)), finisaj).toEqual([]);
+      const s = fisiere[0].s;
+      const rand = randSpray(s);
+      expect(rand, "randul cu lista SPRAY RETUS / CORECTOR").toBeTruthy();
+      expect(v(s, "comanda", `${rand.coloanaNume}${rand.rand}`), finisaj).toBe("CORECTOR");
+      expect(v(s, "comanda", `${rand.coloanaCantitate}${rand.rand}`), finisaj).toBe("2");
+    }
+    // spray + corector: spray-ul (primul in ordinea liniilor) ia randul, corectorul merge la avertizari
+    const id = await ofertaNoua(agent);
+    await construiesteFaraPreturi(id, { ...corp, linii: [...corp.linii, await corector("lucios")] });
+    await deComandat(agent, id);
+    const { fisiere, avertizari } = await genereaza(agent, id);
+    const s = fisiere[0].s;
+    const rand = randSpray(s);
+    expect(v(s, "comanda", `${rand.coloanaNume}${rand.rand}`)).toBe("SPRAY RETUS");
+    expect(v(s, "comanda", `${rand.coloanaCantitate}${rand.rand}`)).toBe("3");
+    const a = avertizari.find((x) => /Corector colorat/.test(x));
+    expect(a).toMatch(/același rând în formular/);
+    expect(a).toMatch(/Nu au loc în formularul Bilka/);
+  }, 180_000);
 
   it("un fisier care nu e formularul Bilka e refuzat la incarcare", async () => {
     const ag = await autentificaAgent(app, EMAIL.adminGeneral);
