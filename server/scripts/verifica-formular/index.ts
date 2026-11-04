@@ -19,6 +19,7 @@
 // raportul: docs/verificari/formular-bilka-raport.md (rescris din stare).
 import { config as incarcaEnv } from "dotenv";
 import { spawn } from "node:child_process";
+import { createHash } from "node:crypto";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
@@ -43,7 +44,7 @@ const { incarcaCorespondentaFormularBilka } = await import("../../src/modules/ad
 const { citesteSablon } = await import("../../src/modules/ofe/formularBilka/sablon.js");
 const { normNume } = await import("../../src/modules/ofe/formularBilka/sablon.js");
 const { asiguraCatalogBilka } = await import("../../tests/catalogTest.js");
-const { creeazaUtilizatorTest, autentificaAgent } = await import("../../tests/helpers.js");
+const { creeazaUtilizatorTest, autentificaAgent, PAROLA_TEST } = await import("../../tests/helpers.js");
 const { citesteEtalon } = await import("../../tests/etalon/incarcaEtalon.js");
 const { corpDinEtalon } = await import("../../tests/etalonApi.js");
 
@@ -91,6 +92,7 @@ interface Stare {
   produse: Record<string, RezultatProdus>;
   deReluat: string[]; // chei de produs care merg singure la trecerea a doua
   planificat: number;
+  rulate?: number; // ofertele din planul curent rulate fara eroare (starea tine si loturi din planuri vechi)
 }
 interface LinieOferta {
   cheie: string;
@@ -106,7 +108,6 @@ interface Sipca {
   model: string;
   culoare: string;
   varianta: "comanda";
-  pozitii: { lungimeM: string; bucati: number }[];
 }
 interface Invelitoare {
   cheie: string;
@@ -327,11 +328,13 @@ async function planComplet(produse: ProdusCatalog[], sablon: Sablon): Promise<Of
     const ral = rale[0];
     const purtator = purtatorPeCheie.get(`${p.finisaj}|${p.grosime}`) ?? purtatorPeCheie.get(cheieImplicita)!;
     const familie = p.familie.replace(/^Șipcă\s+/i, "");
-    const modele = /oslo/i.test(familie) ? [`${familie}, capăt drept`, `${familie}, capăt rotund`] : [familie];
+    // FISA-OFERTARE 3.x: modelul de sipca = profil x tip de capat (8 modele); tabela de
+    // corespondenta are „drept” / „rotund” pentru toate cele patru profile
+    const modele = [`${familie}, capăt drept`, `${familie}, capăt rotund`];
     for (const model of modele) {
       const o: OfertaPlan = { id: `SIPCA|${cheiaProdusului(p)}|${model}`, descriere: `șipcă ${model} ${p.finisaj} ${p.grosime} · ${ral}`, invelitori: [{ ...purtator }], linii: [], sipci: [], produse: [`${cheiaProdusului(p)}|${cheieText(p.finisaj, p.grosime, ral)}|${model}`] };
-      o.linii.push({ cheie: "L1", rubrica: p.rubrica, produsId: p.id, cantitate: "12", culoare: { ral, finisaj: p.finisaj, grosime: p.grosime } });
-      o.sipci.push({ linie: "L1", model, culoare: ral, varianta: "comanda", pozitii: [{ lungimeM: "1.50", bucati: 4 }, { lungimeM: "1.20", bucati: 5 }] });
+      o.linii.push({ cheie: "L1", rubrica: p.rubrica, produsId: p.id, cantitate: "12", culoare: { ral, finisaj: p.finisaj, grosime: p.grosime }, pozitii: [{ lungimeM: "1.50", bucati: 4 }, { lungimeM: "1.20", bucati: 5 }] });
+      o.sipci.push({ linie: "L1", model, culoare: ral, varianta: "comanda" });
       plan.push(o);
     }
   }
@@ -381,6 +384,12 @@ interface CitireExcel {
   durataMs: number;
 }
 
+const CAMPURI_BLOC = ["tip", "model", "modul", "membrana", "finisaj", "culoare", "grosime"] as const;
+function celuleBloc(bloc: object): string[] {
+  const b = bloc as Record<string, unknown>;
+  return CAMPURI_BLOC.map((n) => b[n]).filter((a): a is string => typeof a === "string");
+}
+
 function citiriPentru(sablon: Sablon): { foaie: string; interval: string }[] {
   const h = sablon.harta;
   const numeFoaie = (fisier: string) => [...sablon.foi.entries()].find(([, f]) => f === fisier)?.[0] ?? fisier;
@@ -396,6 +405,10 @@ function citiriPentru(sablon: Sablon): { foaie: string; interval: string }[] {
     { foaie: comanda, interval: "R49" },
     { foaie: comanda, interval: "E23" },
     { foaie: comanda, interval: "O22" },
+    // celulele blocurilor de invelitoare (tip, model, modul, membrana, finisaj, culoare, grosime):
+    // ca sa spunem in raport CE s-a scris pe formular atunci cand macro-ul Bilka nu da pret
+    ...celuleBloc(h.principala).map((interval) => ({ foaie: comanda, interval })),
+    ...celuleBloc(h.secundara).map((interval) => ({ foaie: comanda, interval })),
     { foaie: comanda, interval: `C${r0}:R${r1}` },
     { foaie: "AUX1", interval: "E1" },
     { foaie: "AUX1", interval: "E4" },
@@ -484,9 +497,21 @@ const PATTERNS_FARA_LOC: [RegExp, string][] = [
   [/zincat/i, "holțșuruburi zincate pe un formular colorat"],
 ];
 
-function categorizeazaAvertizare(a: string): { categorie: Categorie; detaliu: string; propunere?: string } {
-  for (const [re, text] of PATTERNS_FARA_LOC) if (re.test(a)) return { categorie: "c_fara_loc", detaliu: text };
-  if (/fără corespondență/i.test(a)) return { categorie: "a_referinte", detaliu: "fără rând în tabela de corespondență" };
+// randul cerut de un anumit produs: avertizarea „Nu au loc…” e un singur text cu toate
+// produsele, deci randul se citeste din segmentul produsului, nu din primul segment
+function randulDinAvertizare(a: string, cod: string | undefined): string | undefined {
+  if (!cod) return /același rând în formular \(„([^”]+)”\)/.exec(a)?.[1];
+  const re = new RegExp(`\\(${cod.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\)[^;]*?același rând în formular \\(„([^”]+)”\\)`);
+  return re.exec(a)?.[1];
+}
+
+function categorizeazaAvertizare(a: string, cod?: string): { categorie: Categorie; detaliu: string; propunere?: string } {
+  for (const [re, text] of PATTERNS_FARA_LOC) {
+    if (!re.test(a)) continue;
+    const rand = randulDinAvertizare(a, cod);
+    return { categorie: "c_fara_loc", detaliu: rand ? `${text} — rândul „${rand}”` : text };
+  }
+  if (/fără corespondență|nu are corespondență/i.test(a)) return { categorie: "a_referinte", detaliu: "fără rând în tabela de corespondență" };
   if (/nu există în formularul încărcat|nu are corespondent în listele|nu e în lista șablonului|nu se poate scrie pe formular/i.test(a)) return { categorie: "a_referinte", detaliu: a };
   return { categorie: "b_cod", detaliu: a };
 }
@@ -576,7 +601,7 @@ function comparaFormular(linii: LinieSalvata[], citire: CitireExcel, avertizari:
     let propunere: string | undefined;
     const avertizareLiniei = avertizari.filter((a) => a.includes(`(${l.cod})`) || (a.includes(l.denumire) && !/^Rezultatul/.test(a)));
     if (avertizareLiniei.length > 0) {
-      const c = categorizeazaAvertizare(avertizareLiniei.join(" ; "));
+      const c = categorizeazaAvertizare(avertizareLiniei.join(" ; "), l.cod);
       categorie = c.categorie;
       detalii.push(c.detaliu);
       if (c.categorie === "a_referinte") propunere = propuneNume(l.denumire, sablon);
@@ -603,8 +628,24 @@ function comparaFormular(linii: LinieSalvata[], citire: CitireExcel, avertizari:
     if (l.rubrica === "Învelitori") {
       nrInvelitoare++;
       pretExcel = nrInvelitoare === 1 ? pretR23 : pretR36;
-      if (!p) detalii.push("nu apare în Portal");
-      else {
+      if (!p) {
+        // (d): macro-ul a scos invelitoarea in Portal, dar sub alt cod decat al catalogului
+        const i = portal.findIndex((r, k) => !folosite.has(k) && /invelitoare/i.test(r.grup));
+        if (i >= 0) {
+          folosite.add(i);
+          p = portal[i];
+          codBilka = p.id || "(gol)";
+        }
+      }
+      if (!p) {
+        // ce s-a scris efectiv in blocul de invelitoare (ca sa se vada de ce macro-ul n-a dat pret)
+        const bloc = (nrInvelitoare === 1 ? sablon.harta.principala : sablon.harta.secundara) as unknown as Record<string, unknown>;
+        const scris = CAMPURI_BLOC.filter((n) => typeof bloc[n] === "string")
+          .map((n) => `${n} „${String(citire.celule[`${comanda}!${bloc[n] as string}`]?.[0]?.[0] ?? "")}”`)
+          .join(", ");
+        const modelAux = String(citire.celule["AUX1!E1"]?.[0]?.[0] ?? "");
+        detalii.push(`nu apare în Portal — preț Excel ${Number.isFinite(pretExcel) ? pretExcel.toFixed(2) : "—"}; scris pe formular: ${scris}; modelul compus de șablon (AUX1!E1) „${modelAux}”`);
+      } else {
         if (!/invelitoare/i.test(p.grup)) detalii.push(`grup Portal „${p.grup}”`);
         const mp = l.cantitate; // mp-ul motorului (panotaj × lățime, 3 zecimale)
         if (!aprox(p.cant, mp, 0.002)) detalii.push(`cantitate Portal ${Math.round(p.cant * 1000) / 1000} ≠ ${mp} mp`);
@@ -657,7 +698,13 @@ type Agent = Awaited<ReturnType<typeof autentificaAgent>>;
 
 async function ruleazaOferta(o: OfertaPlan, agent: Agent, sablon: Sablon, citiri: { foaie: string; interval: string }[], stare: Stare, produseDupaId: Map<string, ProdusCatalog>) {
   const t0 = Date.now();
-  const { body: creata } = await agent.post("/api/oferte").send({ client: { nume: "Verificare formular", telefon: "0700000001", adresa: "Str. Probă 1", localitate: "Focșani" } });
+  const client = { nume: "Verificare formular", telefon: "0700000001", adresa: "Str. Probă 1", localitate: "Focșani" };
+  let { body: creata } = await agent.post("/api/oferte").send({ client });
+  if (!creata.oferta && creata.eroare === "Autentificare necesara") {
+    // sesiunea expira dupa multe ore (sau dupa repausul calculatorului): re-autentificare pe acelasi agent
+    await agent.post("/api/auth/login").send({ email: EMAIL_AGENT, parola: PAROLA_TEST });
+    ({ body: creata } = await agent.post("/api/oferte").send({ client }));
+  }
   if (!creata.oferta) throw new Error(`oferta nu s-a creat: ${JSON.stringify(creata)}`);
   const id = creata.oferta.id as string;
   const rp = await agent.put(`/api/oferte/${id}/produse`).send({ grupaPct: "0", invelitori: o.invelitori, linii: o.linii, sipci: o.sipci, zonaB: [] });
@@ -733,9 +780,10 @@ async function ruleazaOferta(o: OfertaPlan, agent: Agent, sablon: Sablon, citiri
   }
   // liniile care n-au ajuns pe niciun formular (motorul nu le-a pus) - categoria (c) cu motivul din avertizari
   const notate = new Set(Object.values(stare.produse).filter((p) => p.oferta === o.id).map((p) => p.cod));
-  for (const l of toateLiniile) if (!notate.has(l.cod)) noteaza(stare, o, l, { categorie: avertizari.some((a) => a.includes(l.cod)) ? categorizeazaAvertizare(avertizari.filter((a) => a.includes(l.cod)).join(";")).categorie : "b_cod", detalii: [avertizari.filter((a) => a.includes(l.cod)).join("; ") || "linia nu a ajuns pe niciun formular"] }, undefined, produseDupaId);
+  for (const l of toateLiniile) if (!notate.has(l.cod)) noteaza(stare, o, l, { categorie: avertizari.some((a) => a.includes(l.cod)) ? categorizeazaAvertizare(avertizari.filter((a) => a.includes(l.cod)).join(";"), l.cod).categorie : "b_cod", detalii: [avertizari.filter((a) => a.includes(l.cod)).join("; ") || "linia nu a ajuns pe niciun formular"] }, undefined, produseDupaId);
   rezultatOferta.durataMs = Date.now() - t0;
   stare.oferte[o.id] = rezultatOferta;
+  reclasifica(stare);
 }
 
 function noteaza(stare: Stare, o: OfertaPlan, l: LinieSalvata, r: Partial<RezultatProdus> & { categorie: Categorie; detalii: string[] }, formular: string | undefined, produseDupaId: Map<string, ProdusCatalog>) {
@@ -761,6 +809,26 @@ function noteaza(stare: Stare, o: OfertaPlan, l: LinieSalvata, r: Partial<Rezult
   void produseDupaId;
 }
 
+// (b) inseamna „scris pe formular, dar Portal / pretul nu-l confirma” - doua situatii nu sunt
+// ale codului nostru si trec la (d): macro-ul Bilka da pret 0 (combinatia lipseste din tabelele
+// COMBCUL / PreturiTbl ale sablonului; formularul e completat din listele sablonului) si
+// produsele fara cod Bilka in catalog (BIL-…), al caror rand din Portal nu se poate potrivi dupa cod
+function reclasifica(stare: Stare) {
+  for (const p of Object.values(stare.produse)) {
+    if (p.categorie !== "b_cod") continue;
+    const text = p.detalii.join("; ");
+    if (!/^nu apare în Portal/.test(text)) continue;
+    if (p.pretExcel === "0.00") {
+      p.categorie = "d_bilka";
+      p.detalii = [`macro-ul Bilka dă preț 0 și nu scrie rândul în Portal (combinația model / finisaj / grosime / culoare lipsește din tabelele COMBCUL sau PreturiTbl ale șablonului) — ${text}`];
+    } else if (/^BIL-/.test(p.cod)) {
+      const nefolosit = (stare.oferte[p.oferta]?.portalNefolosit ?? []).map((r) => r.replace(/^[^:]+: /, "")).join("; ");
+      p.categorie = "d_bilka";
+      p.detalii = [`produsul n-are cod Bilka în catalog, deci rândul lui din Portal nu se poate potrivi după cod${nefolosit ? `; rânduri din Portal rămase nepotrivite: ${nefolosit}` : ""}`];
+    }
+  }
+}
+
 // ------------------------------------------------------------------ raportul
 const TITLU: Record<Categorie, string> = {
   ok: "Corecte",
@@ -777,7 +845,7 @@ function scrieRaport(stare: Stare) {
   const linii: string[] = [];
   linii.push(`# Formularul de comandă Bilka — Excel ca arbitru${PROBA ? " (proba pe trei formulare)" : ""}`);
   linii.push("");
-  linii.push(`Scris de \`npm run verifica:formular\` (S17c). Șablon: **${stare.sablon?.versiune ?? "?"}**. Pornit ${stare.pornit.slice(0, 16).replace("T", " ")}, actualizat ${stare.actualizat.slice(0, 16).replace("T", " ")}. Oferte rulate: ${Object.keys(stare.oferte).length} din ${stare.planificat} planificate; produse verificate: ${produse.length}.`);
+  linii.push(`Scris de \`npm run verifica:formular\` (S17c). Șablon: **${stare.sablon?.versiune ?? "?"}**. Pornit ${stare.pornit.slice(0, 16).replace("T", " ")}, actualizat ${stare.actualizat.slice(0, 16).replace("T", " ")}. Oferte rulate: ${stare.rulate ?? Object.keys(stare.oferte).length} din ${stare.planificat} planificate; produse verificate: ${produse.length}.`);
   linii.push("");
   linii.push("## Ce rulează automat în Excel (verificat în codul VBA, S17b / S17c)");
   linii.push("");
@@ -790,6 +858,13 @@ function scrieRaport(stare: Stare) {
   for (const c of ["ok", "a_referinte", "b_cod", "c_fara_loc", "d_bilka", "eroare"] as Categorie[]) linii.push(`| ${TITLU[c]} | ${pe(c).length} |`);
   linii.push("");
   if (stare.deReluat.length > 0) linii.push(`Produse de reluat singure (trecerea a doua, nerulate încă): ${stare.deReluat.length}.`);
+  // concluziile scrise de mana dupa citirea raportului stau in fisierul lor si intra aici,
+  // ca raportul sa poata fi rescris de script fara sa le piarda
+  const caleConcluzii = path.join(DOCS_VERIFICARI, "formular-bilka-concluzii.md");
+  if (!PROBA && fs.existsSync(caleConcluzii)) {
+    linii.push("");
+    linii.push(fs.readFileSync(caleConcluzii, "utf8").trim());
+  }
   const oferteCuEroare = Object.entries(stare.oferte).filter(([, o]) => o.eroare);
   if (oferteCuEroare.length > 0) {
     linii.push("");
@@ -832,23 +907,69 @@ async function main() {
   const produse = await catalog();
   const produseDupaId = new Map(produse.map((p) => [p.id, p]));
   let plan = PROBA ? await planProba(produse) : await planComplet(produse, sablon);
-  // trecerea a doua: produsele de la avertizari, singure pe oferta lor
+  // ofertele primei treceri care nu mai sunt in plan (alta impartire, ex. sipca pe tip de capat)
+  // ies din stare impreuna cu produsele lor, ca sa se verifice din nou
+  const inPrimaTrecere = new Set(plan.map((o) => o.id));
+  for (const [id] of Object.entries(stare.oferte)) {
+    if (inPrimaTrecere.has(id) || id.startsWith("SINGUR|")) continue;
+    for (const [k, p] of Object.entries(stare.produse)) if (p.oferta === id) delete stare.produse[k];
+    delete stare.oferte[id];
+  }
+  reclasifica(stare);
+  // trecerea a doua: produsele ajunse la avertizari (a / b / c) in loturile primei treceri se
+  // reiau pe aceeasi invelitoare purtatoare, in loturi in care niciun rand al formularului nu e
+  // cerut de doua produse (randul cerut se citeste din avertizarea „același rând în formular”);
+  // „niciun rând liber” merge singur pe oferta lui
   if (!PROBA) {
-    const singure: OfertaPlan[] = [];
+    const LOT_A_DOUA = 20;
+    const randulCerut = (o: OfertaPlan, cod: string): string | null => {
+      const a = (stare.oferte[o.id]?.avertizari ?? []).find((x) => x.includes(`(${cod})`) && /același rând în formular/.test(x));
+      return a ? (randulDinAvertizare(a, cod) ?? null) : null;
+    };
+    // produsele se strang pe cheia lor (finisaj | grosime | RAL), indiferent din ce oferta a
+    // primei treceri vin: purtatoarea e invelitoarea primei oferte a cheii
+    const grupuri = new Map<string, { invelitori: Invelitoare[]; produse: { k: string; linie: LinieOferta; rand: string; singur: boolean }[] }>();
+    const vazute = new Set<string>();
     for (const o of plan) {
+      if (o.linii.length <= 1) continue;
       for (const k of o.produse) {
         const r = stare.produse[k];
-        if (r && (r.categorie === "a_referinte" || r.categorie === "c_fara_loc" || r.categorie === "b_cod") && !r.singur && o.linii.length > 1) {
-          const linie = o.linii.find((l) => produseDupaId.get(l.produsId) && cheiaProdusului(produseDupaId.get(l.produsId)!) === r.cod);
-          if (linie) singure.push({ id: `SINGUR|${k}`, descriere: `singur: ${r.denumire}`, invelitori: o.invelitori, linii: [{ ...linie, cheie: "L1" }], sipci: o.sipci.filter((s) => s.linie === linie.cheie).map((s) => ({ ...s, linie: "L1" })), produse: [k], singur: true });
-        }
+        if (!r || vazute.has(k) || !["a_referinte", "b_cod", "c_fara_loc"].includes(r.categorie)) continue;
+        // un produs incercat deja singur nu se mai reia - cu o exceptie: „același rând” se mai
+        // incearca o data in loturi noi (id-ul lotului poarta continutul, deci un lot deja rulat nu se repeta)
+        if (r.singur && !/același rând/.test(r.detalii.join(" "))) continue;
+        const linie = o.linii.find((l) => produseDupaId.get(l.produsId) && cheiaProdusului(produseDupaId.get(l.produsId)!) === r.cod);
+        if (!linie) continue;
+        vazute.add(k);
+        const g = k.split("|").slice(1).join("|");
+        if (!grupuri.has(g)) grupuri.set(g, { invelitori: o.invelitori, produse: [] });
+        grupuri.get(g)!.produse.push({ k, linie, rand: randulCerut(o, r.cod) ?? `*${k}`, singur: /niciun rând liber/.test(r.detalii.join(" ")) });
       }
     }
-    plan = [...plan, ...singure];
+    const aDoua: OfertaPlan[] = [];
+    for (const [g, grup] of grupuri) {
+      const loturi: { randuri: Set<string>; linii: LinieOferta[]; produse: string[] }[] = [];
+      for (const p of grup.produse) {
+        let lot = p.singur ? undefined : loturi.find((x) => !x.randuri.has("*singur") && !x.randuri.has(p.rand) && x.linii.length < LOT_A_DOUA);
+        if (!lot) {
+          lot = { randuri: new Set(p.singur ? ["*singur"] : []), linii: [], produse: [] };
+          loturi.push(lot);
+        }
+        lot.randuri.add(p.rand);
+        lot.linii.push({ ...p.linie, cheie: `L${lot.linii.length + 1}` });
+        lot.produse.push(p.k);
+      }
+      loturi.forEach((lot, n) => aDoua.push({ id: `SINGUR|${g}|${n + 1}|${createHash("sha1").update([...lot.produse].sort().join("\n")).digest("hex").slice(0, 8)}`, descriere: `trecerea a doua ${n + 1}/${loturi.length} pe cheia ${g}`, invelitori: grup.invelitori, linii: lot.linii, sipci: [], produse: lot.produse, singur: true }));
+    }
+    plan = [...plan, ...aDoua];
   }
   stare.planificat = plan.length;
+  // loturile cu eroare dintr-un plan vechi (alta impartire a trecerii a doua) nu se mai reiau: ies din stare
+  const inPlan = new Set(plan.map((o) => o.id));
+  for (const [id, o] of Object.entries(stare.oferte)) if (o.eroare && !inPlan.has(id)) delete stare.oferte[id];
   const citiri = citiriPentru(sablon);
   const deRulat = plan.filter((o) => !stare.oferte[o.id] || stare.oferte[o.id].eroare);
+  stare.rulate = plan.length - deRulat.length;
   log(`plan: ${plan.length} oferte, ${plan.reduce((s, o) => s + o.produse.length, 0)} verificări de produs; de rulat acum: ${Math.min(deRulat.length, LIMITA)}`);
   scrieStare(stare);
   scrieRaport(stare);
@@ -864,10 +985,11 @@ async function main() {
       log(`[${n}/${deRulat.length}] ${o.descriere} → EROARE: ${mesaj.slice(0, 200)}`);
       stare.oferte[o.id] = { numar: "?", produse: o.produse, formulare: [], avertizari: [], eroare: mesaj };
     }
+    stare.rulate = plan.filter((x) => stare.oferte[x.id] && !stare.oferte[x.id].eroare).length;
     scrieStare(stare);
     scrieRaport(stare);
   }
-  log(`gata: ${Object.keys(stare.oferte).length}/${plan.length} oferte rulate; raport: ${CALE_RAPORT}`);
+  log(`gata: ${stare.rulate ?? 0}/${plan.length} oferte rulate; raport: ${CALE_RAPORT}`);
   await prisma.$disconnect();
 }
 
