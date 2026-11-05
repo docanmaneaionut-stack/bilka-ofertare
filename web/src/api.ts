@@ -1113,14 +1113,20 @@ export type RandComanda = {
   livratLa: string | null;
   livrare: { indicatii: string | null; nume: string | null; la: string | null; data: string | null };
   facturare: { firma: string | null; cui: string | null; adresa: string | null } | null;
+  // S20
+  incasare: { status: StatusIncasare; eticheta: string; incasatLei: string; restLei: string; propuseLei: string; propuse: number; confirmate: number };
+  comision: { lei: string; achitat: boolean; achitatLa: string | null; achitatDe: string | null } | null;
   inchisa: boolean;
 };
+export type StatusIncasare = "NEINCASAT" | "PARTIAL" | "INCASAT";
+export type IncasareComanda = { id: string; sumaLei: string; data: string; ceReprezinta: string; stare: "PROPUSA" | "CONFIRMATA" | "ANULATA"; notatDe: string; moment: string; confirmatLa: string | null; confirmatDe: string | null; anulatLa: string | null; anulatDe: string | null; motivAnulare: string | null };
 export type IntrareIstoricComanda = { id: string; moment: string; numeUtilizatorLaMoment: string; tip: string; camp: string | null; valoareInainte: string | null; valoareDupa: string | null; mentiuni: string | null };
 export type ObservatieComanda = { id: string; moment: string; numeUtilizatorLaMoment: string; text: string };
 export type AtasamentComanda = { id: string; nume: string; tipMime: string | null; marime: number | null; moment: string; incarcatDe: string | null };
 export type DocumentComanda = { id: string; tip: string; eticheta: string; versiune: number; nume: string; marime: number; generatLa: string; generatDe: string | null; transmisLa: string | null; canal: string | null; formularNr: number | null };
 export type ComandaDetaliu = RandComanda & {
-  drepturi: { logistic: boolean; detalii: boolean; livrare: boolean; alocare: boolean };
+  drepturi: { logistic: boolean; detalii: boolean; livrare: boolean; alocare: boolean; bani: boolean; comision: boolean };
+  incasari: IncasareComanda[];
   istoric: IntrareIstoricComanda[];
   observatii: ObservatieComanda[];
   atasamente: AtasamentComanda[];
@@ -1129,7 +1135,7 @@ export type ComandaDetaliu = RandComanda & {
   notiteOferta: ObservatieComanda[];
   atasamenteOferta: AtasamentComanda[];
 };
-export type FiltreComenzi = { q?: string; status?: StatusLogistic | ""; deLa?: string; panaLa?: string; agent?: string; firmaId?: string; inchise?: boolean; page?: number; pageSize?: number };
+export type FiltreComenzi = { q?: string; status?: StatusLogistic | ""; incasare?: "" | "neincasat" | "partial" | "incasat"; deLa?: string; panaLa?: string; agent?: string; firmaId?: string; inchise?: boolean; page?: number; pageSize?: number };
 export type ListaComenzi = {
   comenzi: RandComanda[];
   total: number;
@@ -1180,4 +1186,10 @@ export const apiComenzi = {
   caleAtasament: (id: string, aid: string) => `${BAZA_API}${BAZA_COM}/${id}/atasamente/${aid}`,
   caleAtasamentOferta: (id: string, aid: string) => `${BAZA_API}${BAZA_COM}/${id}/atasamente-oferta/${aid}`,
   caleDocument: (id: string, did: string) => `${BAZA_API}${BAZA_COM}/${id}/documente/${did}`,
+  // S20
+  incasare: (id: string, i: { sumaLei: string; data: string; ceReprezinta: string }) => cerere<{ incasare: IncasareComanda; comanda: RandComanda }>(`${BAZA_COM}/${id}/incasari`, { method: "POST", body: JSON.stringify(i) }),
+  confirmaIncasare: (id: string, iid: string) => cerere<{ incasare: IncasareComanda; comanda: RandComanda }>(`${BAZA_COM}/${id}/incasari/${iid}/confirma`, { method: "PUT", body: "{}" }),
+  anuleazaIncasare: (id: string, iid: string, motiv: string) => cerere<{ incasare: IncasareComanda; comanda: RandComanda }>(`${BAZA_COM}/${id}/incasari/${iid}/anuleaza`, { method: "PUT", body: JSON.stringify({ motiv }) }),
+  comision: (id: string, comisionLei: string | null, mentiuni: string | null) => cerere<{ comanda: RandComanda }>(`${BAZA_COM}/${id}/comision`, { method: "PUT", body: JSON.stringify({ comisionLei, mentiuni }) }),
+  comisionAchitat: (id: string, achitat: boolean) => cerere<{ comanda: RandComanda }>(`${BAZA_COM}/${id}/comision/achitat`, { method: "PUT", body: JSON.stringify({ achitat }) }),
 };

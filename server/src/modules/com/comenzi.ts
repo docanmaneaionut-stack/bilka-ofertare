@@ -10,7 +10,7 @@ import { env } from "../../env.js";
 import { gasesteSauCreeazaClient, normalizeazaTelefon, numarComplet, schemaClient } from "../ofe/clienti.js";
 import { ETICHETA_ORICE_DOCUMENT } from "../ofe/documente/index.js";
 import { urmatorulNumar } from "../ofe/numerotare.js";
-import { filtruVizibilitateComenzi, poateAloca, poateCreaComandaManuala, poateModificaDetalii, poateOperaLogistic, poateVedeaComanda, vedeDocumentulComenzii } from "./vizibilitate.js";
+import { filtruVizibilitateComenzi, poateAloca, poateCreaComandaManuala, poateModificaComision, poateModificaDetalii, poateOperaLogistic, poateScrieBani, poateVedeaComanda, vedeDocumentulComenzii } from "./vizibilitate.js";
 
 // Tabelul de comenzi (S19; FISA-COMENZI cap. 1, 3, 4b, 6; FISA-OFERTARE cap. 16):
 // lista comuna cu numaratorile din cap, cautarea, filtrele, ordinea (invers cronologic
@@ -66,6 +66,8 @@ const dataIso = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "dată în forma AAAA-LL
 const schemaFiltre = z.object({
   q: z.string().trim().max(100).optional(),
   status: z.enum(["COMANDAT", "RECEPTIONAT", "RECEPTIONAT_PARTIAL", "LIVRAT"]).optional(),
+  // S20: statusul incasarii (derivat din incasarile confirmate)
+  incasare: z.enum(["neincasat", "partial", "incasat"]).optional(),
   deLa: dataIso.optional(),
   panaLa: dataIso.optional(),
   agent: z.string().trim().max(400).optional(),
@@ -101,6 +103,24 @@ const schemaFacturare = z.object({ firma: textOptional, cui: z.string().trim().m
 const schemaContacte = z.object({ clientTelefon: z.string().trim().min(6).max(50).optional(), montatorNume: z.string().trim().max(200).nullish(), montatorTelefon: z.string().trim().max(50).nullish() });
 const schemaAlocare = z.object({ contAlocatId: z.string().trim().min(1).nullable(), mentiuni: textOptional });
 const schemaObservatie = z.object({ text: z.string().trim().min(1, "observația e goală").max(4000) });
+// S20
+const schemaIncasare = z.object({ sumaLei: suma, data: dataIso, ceReprezinta: z.string().trim().min(1, "scrie ce reprezintă încasarea").max(500) });
+const schemaAnulare = z.object({ motiv: z.string().trim().min(1, "anularea cere un motiv").max(500) });
+const schemaComision = z.object({ comisionLei: suma.nullable(), mentiuni: textOptional });
+const schemaAchitat = z.object({ achitat: z.boolean() });
+
+export type StatusIncasare = "NEINCASAT" | "PARTIAL" | "INCASAT";
+export const ETICHETA_STATUS_INCASARE: Record<StatusIncasare, string> = { NEINCASAT: "neîncasat", PARTIAL: "încasat parțial", INCASAT: "încasat" };
+
+// statusul incasarii si restul: din incasarile CONFIRMATE (cap. 2); propusele se arata separat
+function rezumatIncasari(c: { totalLei: Prisma.Decimal; incasari: { sumaLei: Prisma.Decimal; stare: string }[] }) {
+  const confirmate = c.incasari.filter((i) => i.stare === "CONFIRMATA");
+  const incasat = confirmate.reduce((s, i) => s.plus(i.sumaLei), new Prisma.Decimal(0));
+  const propuse = c.incasari.filter((i) => i.stare === "PROPUSA").reduce((s, i) => s.plus(i.sumaLei), new Prisma.Decimal(0));
+  const rest = c.totalLei.minus(incasat);
+  const status: StatusIncasare = incasat.lte(0) ? "NEINCASAT" : rest.lte(0) ? "INCASAT" : "PARTIAL";
+  return { status, eticheta: ETICHETA_STATUS_INCASARE[status], incasatLei: incasat.toFixed(2), restLei: rest.toFixed(2), propuseLei: propuse.toFixed(2), propuse: c.incasari.filter((i) => i.stare === "PROPUSA").length, confirmate: confirmate.length };
+}
 
 const dataLocala = (d: Date) => new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Bucharest", year: "numeric", month: "2-digit", day: "2-digit" }).format(d);
 const dataDoar = (d: Date) => d.toISOString().slice(0, 10);
@@ -131,12 +151,14 @@ const includeRand = {
   responsabil: { select: { id: true, nume: true, rol: true } },
   contAlocat: { select: { id: true, nume: true, rol: true } },
   oferta: { select: { id: true, utilizatorId: true, localitate: true, completareLa: { select: { serie: true, numar: true } }, motivCompletare: true } },
+  incasari: { orderBy: [{ data: "asc" as const }, { moment: "asc" as const }] },
 } satisfies Prisma.ComandaInclude;
 
 type ComandaCuRelatii = Prisma.ComandaGetPayload<{ include: typeof includeRand }>;
 
 function spreRand(c: ComandaCuRelatii) {
   const manuala = c.tip === "MANUALA";
+  const incasare = rezumatIncasari(c);
   return {
     id: c.id,
     numarComplet: numarComplet(c.serie, c.numar),
@@ -165,10 +187,28 @@ function spreRand(c: ComandaCuRelatii) {
     livratLa: c.livratLa,
     livrare: { indicatii: c.indicatiiLivrare, nume: c.indicatiiLivrareNume, la: c.indicatiiLivrareLa, data: c.dataLivrarii ? dataDoar(c.dataLivrarii) : null },
     facturare: c.facturareFirma || c.facturareCui || c.facturareAdresa ? { firma: c.facturareFirma, cui: c.facturareCui, adresa: c.facturareAdresa } : null,
-    // S20: incasarile; pana atunci statusul incasarii nu e derivat din nimic
-    inchisa: c.statusLogistic === "LIVRAT",
+    // S20: statusul incasarii din incasarile confirmate; comisionul montatorului / recomandarii
+    incasare,
+    comision: c.comisionLei !== null ? { lei: c.comisionLei.toFixed(2), achitat: c.comisionAchitat, achitatLa: c.comisionAchitatLa, achitatDe: c.comisionAchitatDeNume } : null,
+    // "inchisa" = Livrat si incasat (cap. 1): la sfarsitul listei, ascunsa implicit
+    inchisa: c.statusLogistic === "LIVRAT" && incasare.status === "INCASAT",
   };
 }
+
+const spreIncasare = (i: ComandaCuRelatii["incasari"][number]) => ({
+  id: i.id,
+  sumaLei: i.sumaLei.toFixed(2),
+  data: dataDoar(i.data),
+  ceReprezinta: i.ceReprezinta,
+  stare: i.stare,
+  notatDe: i.numeNotatLaMoment,
+  moment: i.moment,
+  confirmatLa: i.confirmatLa,
+  confirmatDe: i.confirmatDeNume,
+  anulatLa: i.anulatLa,
+  anulatDe: i.anulatDeNume,
+  motivAnulare: i.motivAnulare,
+});
 
 // ------------------------------------------------------------------ lista
 
@@ -205,25 +245,25 @@ comenziRouter.get("/", async (req, res) => {
   }
   if (f.firmaId && (u.rol === "ADMIN_GENERAL" || u.rol === "ADMINISTRATOR" || u.rol === "CONTABILITATE" || u.rol === "GESTIUNE")) conditii.push({ firmaId: f.firmaId });
 
-  const whereBaza: Prisma.ComandaWhereInput = { AND: conditii };
-  const where: Prisma.ComandaWhereInput = f.status ? { AND: [...conditii, { statusLogistic: f.status }] } : whereBaza;
-  const [toate, peStatus, neidentificate] = await Promise.all([
-    prisma.comanda.findMany({ where, include: includeRand }),
-    prisma.comanda.groupBy({ by: ["statusLogistic"], where: whereBaza, _count: { _all: true } }),
-    prisma.comanda.count({ where: { AND: [...conditii, { tip: "MANUALA", contAlocatId: null }] } }),
-  ]);
-  const numar = (s: StatusLogistic) => peStatus.find((n) => n.statusLogistic === s)?._count._all ?? 0;
+  // toate comenzile vizibile din perioada; statusul incasarii e derivat, deci filtrele pe
+  // status / incasare si numaratorile se fac aici, nu in SQL
+  const toate = (await prisma.comanda.findMany({ where: { AND: conditii }, include: includeRand })).map((c) => ({ c, r: spreRand(c) }));
+  const numar = (s: StatusLogistic) => toate.filter((x) => x.c.statusLogistic === s).length;
+  let filtrate = toate;
+  if (f.status) filtrate = filtrate.filter((x) => x.c.statusLogistic === f.status);
+  const statusIncasareCerut = f.incasare ? ({ neincasat: "NEINCASAT", partial: "PARTIAL", incasat: "INCASAT" } as const)[f.incasare] : undefined;
+  if (statusIncasareCerut) filtrate = filtrate.filter((x) => x.r.incasare.status === statusIncasareCerut);
 
-  // ordinea (cap. 1): invers cronologic dupa intrarea in tabel; comenzile inchise la sfarsit,
-  // in aceeasi ordine, ascunse implicit ("Arata si comenzile inchise")
-  const dupaIntrare = (a: ComandaCuRelatii, b: ComandaCuRelatii) => b.createdAt.getTime() - a.createdAt.getTime();
-  const deschise = toate.filter((c) => c.statusLogistic !== "LIVRAT").sort(dupaIntrare);
-  const inchise = f.inchise === "da" || f.status === "LIVRAT" ? toate.filter((c) => c.statusLogistic === "LIVRAT").sort(dupaIntrare) : [];
+  // ordinea (cap. 1): invers cronologic dupa intrarea in tabel; comenzile inchise (Livrat si
+  // incasat) la sfarsit, in aceeasi ordine, ascunse implicit ("Arata si comenzile inchise")
+  const dupaIntrare = (a: { c: ComandaCuRelatii }, b: { c: ComandaCuRelatii }) => b.c.createdAt.getTime() - a.c.createdAt.getTime();
+  const deschise = filtrate.filter((x) => !x.r.inchisa).sort(dupaIntrare);
+  const inchise = f.inchise === "da" || f.status === "LIVRAT" || f.incasare === "incasat" ? filtrate.filter((x) => x.r.inchisa).sort(dupaIntrare) : [];
   const ordonate = [...deschise, ...inchise];
   const pagina = ordonate.slice((f.page - 1) * f.pageSize, f.page * f.pageSize);
 
   res.json({
-    comenzi: pagina.map(spreRand),
+    comenzi: pagina.map((x) => x.r),
     total: ordonate.length,
     page: f.page,
     pageSize: f.pageSize,
@@ -231,10 +271,10 @@ comenziRouter.get("/", async (req, res) => {
       active: numar("COMANDAT") + numar("RECEPTIONAT") + numar("RECEPTIONAT_PARTIAL"),
       deReceptionat: numar("COMANDAT") + numar("RECEPTIONAT_PARTIAL"),
       livrate: numar("LIVRAT"),
-      // S20: incasarile si comisioanele
-      neincasate: 0,
-      comisioaneNeachitate: 0,
-      neidentificate,
+      // S20: "neincasate complet" = statusul incasarii diferit de "incasat"; comisioane > 0 neachitate
+      neincasate: toate.filter((x) => x.r.incasare.status !== "INCASAT").length,
+      comisioaneNeachitate: toate.filter((x) => x.c.comisionLei !== null && x.c.comisionLei.gt(0) && !x.c.comisionAchitat).length,
+      neidentificate: toate.filter((x) => x.r.neidentificata).length,
     },
     perioada: { deLa, panaLa },
   });
@@ -286,6 +326,9 @@ function drepturi(u: Utilizator, c: ComandaCuRelatii) {
     detalii: poateModificaDetalii(u, c),
     livrare: poateOperaLogistic(u) || (u.rol === "AGENT" && c.contAlocatId === u.id),
     alocare: poateAloca(u) && c.tip === "MANUALA",
+    // S20: banii - doar Administratorul firmei; comisionul ca suma - contul ofertei si Administratorul lui
+    bani: poateScrieBani(u, c),
+    comision: poateModificaComision(u, c),
   };
 }
 
@@ -309,6 +352,7 @@ comenziRouter.get("/:id", async (req, res) => {
     comanda: {
       ...spreRand(c),
       drepturi: drepturi(u, c),
+      incasari: c.incasari.map(spreIncasare),
       istoric: istoric.map((i) => ({ id: i.id, moment: i.moment, numeUtilizatorLaMoment: i.numeUtilizatorLaMoment, tip: i.tip, camp: i.camp, valoareInainte: i.valoareInainte, valoareDupa: i.valoareDupa, mentiuni: i.mentiuni })),
       observatii: observatii.map((o) => ({ id: o.id, moment: o.moment, numeUtilizatorLaMoment: o.numeUtilizatorLaMoment, text: o.text })),
       atasamente: atasamente.map((a) => ({ id: a.id, nume: a.nume, tipMime: a.tipMime, marime: a.marime, moment: a.moment, incarcatDe: a.incarcatDe?.nume ?? null })),
@@ -658,4 +702,116 @@ comenziRouter.get("/:id/documente/:did", async (req, res) => {
   res.setHeader("Content-Type", TIP_CONTINUT[extensie] ?? "application/octet-stream");
   res.setHeader("Content-Disposition", `${req.query.descarca === "da" || extensie !== ".pdf" ? "attachment" : "inline"}; filename="${d.nume}"`);
   res.sendFile(path.resolve(env.dateDir, d.fisier));
+});
+
+// ------------------------------------------------------------------ S20: incasarile (cap. 2)
+
+// restul comenzii se actualizeaza la fiecare miscare, din incasarile confirmate
+async function actualizeazaRestul(tx: Tx, comandaId: string) {
+  const c = await tx.comanda.findUniqueOrThrow({ where: { id: comandaId }, include: { incasari: true } });
+  const r = rezumatIncasari(c);
+  await tx.comanda.update({ where: { id: comandaId }, data: { restLei: new Prisma.Decimal(r.restLei) } });
+}
+
+comenziRouter.post("/:id/incasari", async (req, res) => {
+  const u = req.utilizator!;
+  const date = schemaIncasare.parse(req.body);
+  try {
+    const c = await cuDrepturi(req, u, (x) => poateScrieBani(u, x), "Încasările le notează doar Administratorul firmei comenzii");
+    const sumaLei = new Prisma.Decimal(date.sumaLei);
+    if (sumaLei.lte(0)) throw new EroareComanda("Suma încasată trebuie să fie mai mare ca zero", 400);
+    const acum = new Date();
+    const dupa = await prisma.$transaction(async (tx) => {
+      const i = await tx.comandaIncasare.create({
+        data: { comandaId: c.id, sumaLei, data: new Date(`${date.data}T00:00:00Z`), ceReprezinta: date.ceReprezinta, stare: "CONFIRMATA", notatDeId: u.id, numeNotatLaMoment: u.nume, confirmatLa: acum, confirmatDeNume: u.nume },
+      });
+      await scrieIstoricComanda(tx, c.id, u, [{ tip: "incasare", camp: "incasare", inainte: null, dupa: `${sumaLei.toFixed(2)} lei · ${date.data} · ${date.ceReprezinta}` }]);
+      await actualizeazaRestul(tx, c.id);
+      return i;
+    });
+    res.status(201).json({ incasare: spreIncasare(dupa), comanda: spreRand((await comandaVizibila(u, c.id))!) });
+  } catch (e) {
+    raspunde(res, e);
+  }
+});
+
+// avansul propus (sau orice incasare propusa) devine confirmata cand banii ajung la birou
+comenziRouter.put("/:id/incasari/:iid/confirma", async (req, res) => {
+  const u = req.utilizator!;
+  try {
+    const c = await cuDrepturi(req, u, (x) => poateScrieBani(u, x), "Încasările le confirmă doar Administratorul firmei comenzii");
+    const i = c.incasari.find((x) => x.id === String(req.params.iid));
+    if (!i) throw new EroareComanda("Încasarea nu există", 404);
+    if (i.stare !== "PROPUSA") throw new EroareComanda(`Încasarea e deja ${i.stare === "CONFIRMATA" ? "confirmată" : "anulată"}`, 409);
+    const acum = new Date();
+    const dupa = await prisma.$transaction(async (tx) => {
+      const d = await tx.comandaIncasare.update({ where: { id: i.id }, data: { stare: "CONFIRMATA", confirmatLa: acum, confirmatDeNume: u.nume } });
+      await scrieIstoricComanda(tx, c.id, u, [{ tip: "incasare", camp: "confirmare", inainte: "propusă", dupa: `confirmată · ${i.sumaLei.toFixed(2)} lei · ${i.ceReprezinta}` }]);
+      await actualizeazaRestul(tx, c.id);
+      return d;
+    });
+    res.json({ incasare: spreIncasare(dupa), comanda: spreRand((await comandaVizibila(u, c.id))!) });
+  } catch (e) {
+    raspunde(res, e);
+  }
+});
+
+// o incasare gresita se anuleaza cu motiv - nu se sterge; ramane in lista, taiata, cu istoric
+comenziRouter.put("/:id/incasari/:iid/anuleaza", async (req, res) => {
+  const u = req.utilizator!;
+  const date = schemaAnulare.parse(req.body);
+  try {
+    const c = await cuDrepturi(req, u, (x) => poateScrieBani(u, x), "Încasările le corectează doar Administratorul firmei comenzii");
+    const i = c.incasari.find((x) => x.id === String(req.params.iid));
+    if (!i) throw new EroareComanda("Încasarea nu există", 404);
+    if (i.stare === "ANULATA") throw new EroareComanda("Încasarea e deja anulată", 409);
+    const acum = new Date();
+    const dupa = await prisma.$transaction(async (tx) => {
+      const d = await tx.comandaIncasare.update({ where: { id: i.id }, data: { stare: "ANULATA", anulatLa: acum, anulatDeNume: u.nume, motivAnulare: date.motiv } });
+      await scrieIstoricComanda(tx, c.id, u, [{ tip: "incasare", camp: "anulare", inainte: `${i.stare === "PROPUSA" ? "propusă" : "confirmată"} · ${i.sumaLei.toFixed(2)} lei · ${i.ceReprezinta}`, dupa: "anulată", mentiuni: date.motiv }]);
+      await actualizeazaRestul(tx, c.id);
+      return d;
+    });
+    res.json({ incasare: spreIncasare(dupa), comanda: spreRand((await comandaVizibila(u, c.id))!) });
+  } catch (e) {
+    raspunde(res, e);
+  }
+});
+
+// ------------------------------------------------------------------ S20: comisionul montatorului / recomandarii (cap. 4)
+
+comenziRouter.put("/:id/comision", async (req, res) => {
+  const u = req.utilizator!;
+  const date = schemaComision.parse(req.body);
+  try {
+    const c = await cuDrepturi(req, u, (x) => poateModificaComision(u, x), "Comisionul îl modifică contul ofertei și Administratorul firmei");
+    const nou = date.comisionLei === null ? null : new Prisma.Decimal(date.comisionLei);
+    if (nou !== null && nou.lt(0)) throw new EroareComanda("Comisionul nu poate fi negativ", 400);
+    const dupa = await prisma.$transaction(async (tx) => {
+      const d = await tx.comanda.update({ where: { id: c.id }, data: { comisionLei: nou }, include: includeRand });
+      if ((nou?.toFixed(2) ?? null) !== (c.comisionLei?.toFixed(2) ?? null)) await scrieIstoricComanda(tx, c.id, u, [{ tip: "suma", camp: "comisionLei", inainte: c.comisionLei?.toFixed(2) ?? null, dupa: nou?.toFixed(2) ?? null, mentiuni: date.mentiuni }]);
+      return d;
+    });
+    res.json({ comanda: spreRand(dupa) });
+  } catch (e) {
+    raspunde(res, e);
+  }
+});
+
+comenziRouter.put("/:id/comision/achitat", async (req, res) => {
+  const u = req.utilizator!;
+  const date = schemaAchitat.parse(req.body);
+  try {
+    const c = await cuDrepturi(req, u, (x) => poateScrieBani(u, x), "„Achitat” îl bifează doar Administratorul firmei comenzii");
+    if (c.comisionLei === null || c.comisionLei.lte(0)) throw new EroareComanda("Comanda nu are comision de achitat", 409);
+    const acum = new Date();
+    const dupa = await prisma.$transaction(async (tx) => {
+      const d = await tx.comanda.update({ where: { id: c.id }, data: { comisionAchitat: date.achitat, comisionAchitatLa: date.achitat ? acum : null, comisionAchitatDeNume: date.achitat ? u.nume : null }, include: includeRand });
+      if (date.achitat !== c.comisionAchitat) await scrieIstoricComanda(tx, c.id, u, [{ tip: "comision", camp: "comisionAchitat", inainte: c.comisionAchitat ? "achitat" : "neachitat", dupa: date.achitat ? "achitat" : "neachitat" }]);
+      return d;
+    });
+    res.json({ comanda: spreRand(dupa) });
+  } catch (e) {
+    raspunde(res, e);
+  }
 });

@@ -893,3 +893,61 @@ table.tabel tr.detaliu-comanda td {
     max-width: none;
   }
 }
+
+/* --- S20: incasari si comision --- */
+
+.status-incasare {
+  display: inline-block;
+  padding: 2px 9px;
+  border-radius: 999px;
+  font-size: 12.5px;
+  font-weight: 600;
+  white-space: nowrap;
+  background: #f1e4e4;
+  color: #7a2e2e;
+}
+
+.status-incasare.PARTIAL { background: var(--avertizare-bg); color: var(--avertizare-text); }
+.status-incasare.INCASAT { background: #e2f3e6; color: #1e6b33; }
+
+.tabel-incasari {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.tabel-incasari td {
+  padding: 4px 6px 4px 0;
+  border-bottom: 1px dotted var(--border);
+  vertical-align: top;
+}
+
+.tabel-incasari td.suma {
+  text-align: right;
+  white-space: nowrap;
+  font-weight: 600;
+}
+
+.tabel-incasari tr.anulata td {
+  text-decoration: line-through;
+  color: var(--text-secundar);
+}
+
+.tabel-incasari tr.propusa td.suma {
+  color: var(--text-secundar);
+}
+
+.eticheta-propusa {
+  display: inline-block;
+  margin-left: 6px;
+  padding: 1px 7px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 700;
+  background: var(--avertizare-bg);
+  color: var(--avertizare-text);
+}
+
+.rest-incasat {
+  margin-top: 8px;
+}

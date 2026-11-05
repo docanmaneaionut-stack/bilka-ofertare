@@ -132,6 +132,9 @@ export async function schimbaStatus(ofertaId: string, date: z.infer<typeof schem
           contAlocatId: o.utilizatorId,
           clientId: o.clientId,
           statusLogisticLa: acum,
+          // S20: comisionul montatorului / recomandarii - copia vie pe comanda
+          comisionLei: o.comisionRecomandareLei,
+          comisionAchitat: o.comisionAchitat,
           serie: o.serie,
           numar: o.numar,
           data: new Date(`${new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Bucharest", year: "numeric", month: "2-digit", day: "2-digit" }).format(acum)}T00:00:00Z`),
@@ -148,6 +151,13 @@ export async function schimbaStatus(ofertaId: string, date: z.infer<typeof schem
         },
       });
       await tx.comandaIstoric.create({ data: { comandaId: comanda.id, utilizatorId: u.id, numeUtilizatorLaMoment: u.nume, tip: "status", camp: "statusLogistic", valoareInainte: null, valoareDupa: "Comandat" } });
+      // S20 (cap. 2): avansul de la "Avans luat" intra ca incasare PROPUSA, confirmata de
+      // Administratorul firmei cand banii ajung la birou; pana atunci nu intra in suma incasata
+      if (avans.gt(0)) {
+        await tx.comandaIncasare.create({
+          data: { comandaId: comanda.id, sumaLei: avans, data: comanda.data, ceReprezinta: "avans luat de agent (la „Avans luat”)", stare: "PROPUSA", notatDeId: u.id, numeNotatLaMoment: u.nume },
+        });
+      }
     }
   });
 }

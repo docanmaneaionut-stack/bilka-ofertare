@@ -19,7 +19,8 @@
     "restore": "tsx scripts/restore.ts",
     "verifica:catalog": "tsx scripts/verifica-catalog.ts",
     "verifica:formular": "tsx scripts/verifica-formular/index.ts",
-    "date:activ": "tsx scripts/sincronizeaza-activ.ts"
+    "date:activ": "tsx scripts/sincronizeaza-activ.ts",
+    "date:comenzi": "tsx scripts/corecteaza-comenzi.ts"
   },
   "keywords": [],
   "author": "",

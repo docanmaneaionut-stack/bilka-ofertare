@@ -90,3 +90,14 @@ export function vedeDocumentulComenzii(u: Utilizator, tip: string): boolean {
   if (u.rol === "COLABORATOR" && (tip === "TABEL_FACTURARE" || tip === "FORMULAR_BILKA")) return false;
   return true;
 }
+
+// S20 - banii raman pe firma (CONTURI §3): incasarile (notare, confirmare, anulare) si bifa
+// "achitat" la comision - doar Administratorul firmei comenzii; Admin general vede, nu scrie
+export function poateScrieBani(u: Utilizator, c: ComandaPentruDrepturi): boolean {
+  return u.rol === "ADMINISTRATOR" && u.firmaId !== null && u.firmaId === c.firmaId;
+}
+
+// comisionul ca suma (OFERTARE cap. 12): contul ofertei (contul alocat) si Administratorul lui
+export function poateModificaComision(u: Utilizator, c: ComandaPentruDrepturi): boolean {
+  return poateScrieBani(u, c) || ((u.rol === "AGENT" || u.rol === "COLABORATOR") && c.contAlocatId === u.id);
+}

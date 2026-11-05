@@ -49,6 +49,7 @@ export function Comenzi() {
 
   const [q, setQ] = useState("");
   const [status, setStatus] = useState<StatusLogistic | "">("");
+  const [incasareFiltru, setIncasareFiltru] = useState<"" | "neincasat" | "partial" | "incasat">("");
   const [perioada, setPerioada] = useState<Perioada>("90");
   const [deLa, setDeLa] = useState("");
   const [panaLa, setPanaLa] = useState("");
@@ -71,7 +72,7 @@ export function Comenzi() {
   }, [vedeAgent, vedeFirma]);
 
   useEffect(() => {
-    const filtre: FiltreComenzi = { q: q.trim() || undefined, status: status || undefined, ...perioadaInDate(perioada, deLa, panaLa), inchise, page, pageSize: 25 };
+    const filtre: FiltreComenzi = { q: q.trim() || undefined, status: status || undefined, incasare: incasareFiltru || undefined, ...perioadaInDate(perioada, deLa, panaLa), inchise, page, pageSize: 25 };
     if (vedeAgent && agent) filtre.agent = agent;
     if (vedeFirma && firmaId) filtre.firmaId = firmaId;
     const t = setTimeout(() => {
@@ -84,7 +85,7 @@ export function Comenzi() {
         .catch((e) => setEroare(textEroare(e)));
     }, q ? 250 : 0);
     return () => clearTimeout(t);
-  }, [q, status, perioada, deLa, panaLa, agent, firmaId, inchise, page, vedeAgent, vedeFirma, versiune]);
+  }, [q, status, incasareFiltru, perioada, deLa, panaLa, agent, firmaId, inchise, page, vedeAgent, vedeFirma, versiune]);
 
   const n = rezultat?.numaratori;
   const totalPagini = rezultat ? Math.max(1, Math.ceil(rezultat.total / rezultat.pageSize)) : 1;
@@ -151,8 +152,17 @@ export function Comenzi() {
 
       <div className="rand-campuri" style={{ marginBottom: 20 }}>
         <Camp eticheta="Încasare">
-          <select disabled title="Încasările vin la S20">
-            <option>toate</option>
+          <select
+            value={incasareFiltru}
+            onChange={(e) => {
+              setIncasareFiltru(e.target.value as typeof incasareFiltru);
+              setPage(1);
+            }}
+          >
+            <option value="">toate</option>
+            <option value="neincasat">neîncasat</option>
+            <option value="partial">încasat parțial</option>
+            <option value="incasat">încasat</option>
           </select>
         </Camp>
         <Camp eticheta="Perioadă">
@@ -200,7 +210,7 @@ export function Comenzi() {
         )}
         <label className="camp-bifa">
           <input type="checkbox" checked={inchise} onChange={(e) => setInchise(e.target.checked)} />
-          <span>Arată și comenzile închise (livrate)</span>
+          <span>Arată și comenzile închise (livrate și încasate)</span>
         </label>
       </div>
 
@@ -248,8 +258,8 @@ export function Comenzi() {
 
       <Ajutor>
         <ul>
-          <li>Ordinea: după data intrării în tabel, cele mai noi sus; comenzile livrate trec la sfârșitul listei și sunt ascunse până bifezi „Arată și comenzile închise” (la S20: livrate și încasate).</li>
-          <li>„Deschide ▾” desfășoară rândul: livrarea și facturarea, statusurile cu istoric, observațiile cu istoric și atașamentele, documentele ofertei (formularele Bilka, detaliata, tabelul de facturare). Încasările și comisioanele vin la S20, fișa șoferului la S23.</li>
+          <li>Ordinea: după data intrării în tabel, cele mai noi sus; comenzile livrate trec la sfârșitul listei și sunt ascunse până bifezi „Arată și comenzile închise” (livrate și încasate).</li>
+          <li>„Deschide ▾” desfășoară rândul: livrarea și facturarea, statusurile cu istoric, observațiile cu istoric și atașamentele, documentele ofertei (formularele Bilka, detaliata, tabelul de facturare). Încasările (doar Administratorul firmei le notează, confirmă și anulează) și comisionul montatorului cu „achitat” sunt în rândul desfășurat; fișa șoferului vine la S23.</li>
           <li>Responsabilul e contul care a trimis comanda la furnizor; comenzile manuale (seria CM) arată „adăugat de … pentru: …” sau „neidentificată” până se află a cui e — alocarea o schimbă doar Administratorii.</li>
           <li>Statusul logistic, livrarea și nota lipsurilor le schimbă orice Administrator și Gestiunea; agentul modifică doar detaliile comenzilor lui (contacte, observații, livrarea); Contabilitatea doar vede și deschide documentele.</li>
         </ul>
@@ -323,15 +333,21 @@ function RandComandaTr({ comanda: c, vedeAgent, deschisa, selectata, onSelecteaz
           ) : (
             <span className="text-secundar">—</span>
           )}
+          {c.comision && (
+            <div className="mic text-secundar">
+              comision {lei(c.comision.lei)} · {c.comision.achitat ? "☑ achitat" : "☐ neachitat"}
+            </div>
+          )}
         </td>
         <td className="total-oferta" onClick={onComuta}>
           <span className="numar-mare">{lei(c.totalLei)}</span>
           <div className="mic text-secundar">{euro(c.totalCuTvaEur)}</div>
         </td>
         <td className="col-optional" onClick={onComuta}>
-          <strong>{lei(c.avansLei)}</strong>
-          <div className="mic text-secundar">rest {lei(c.restLei)}</div>
-          <div className="mic text-secundar">(încasările: S20)</div>
+          <strong>{lei(c.incasare.incasatLei)}</strong>
+          <div className="mic text-secundar">rest {lei(c.incasare.restLei)}</div>
+          <span className={`status-incasare ${c.incasare.status}`}>{c.incasare.eticheta}</span>
+          {c.incasare.propuse > 0 && <div className="mic text-secundar">avans propus {lei(c.incasare.propuseLei)} — de confirmat</div>}
         </td>
         <td onClick={onComuta}>
           <span className={`status-logistic ${c.statusLogistic}`}>
@@ -432,10 +448,7 @@ function DetaliuComanda({ id, onSchimbat }: { id: string; onSchimbat: () => void
           <Mesaj tip="eroare">{eroare}</Mesaj>
         </div>
       )}
-      <section className="caseta">
-        <h4>Încasări</h4>
-        <p className="text-secundar mic">Încasările, restul de încasat și „+ Notează încasare” vin la S20. Până atunci: avans {lei(c.avansLei)}, rest {lei(c.restLei)}.</p>
-      </section>
+      <CasetaIncasari c={c} ocupat={ocupat} ruleaza={ruleaza} />
 
       <section className="caseta">
         <h4>Livrare și facturare</h4>
@@ -598,12 +611,7 @@ function DetaliuComanda({ id, onSchimbat }: { id: string; onSchimbat: () => void
             </button>
           </form>
         )}
-        {c.montator && (
-          <p className="mic text-secundar">
-            Comision montator: vine la S20 ({c.montator.nume}
-            {c.montator.telefon ? `, ${c.montator.telefon}` : ""}).
-          </p>
-        )}
+        <Comision c={c} ocupat={ocupat} ruleaza={ruleaza} />
         {altIstoric.length > 0 && (
           <details>
             <summary className="mic">Istoric complet ({c.istoric.length})</summary>
@@ -832,6 +840,183 @@ function FormularComandaManuala({ firme, conturi, onInchide, onCreata }: { firme
           </button>
         </div>
       </form>
+    </div>
+  );
+}
+
+// ------------------------------------------------------------------ S20: caseta Incasari (cap. 2)
+
+function CasetaIncasari({ c, ocupat, ruleaza }: { c: ComandaDetaliu; ocupat: boolean; ruleaza: (f: () => Promise<unknown>) => Promise<void> }) {
+  const [suma, setSuma] = useState("");
+  const [data, setData] = useState(new Date().toISOString().slice(0, 10));
+  const [ce, setCe] = useState("");
+  const [motivId, setMotivId] = useState<string | null>(null);
+  const [motiv, setMotiv] = useState("");
+  const poate = c.drepturi.bani;
+  return (
+    <section className="caseta">
+      <h4>Încasări</h4>
+      {c.incasari.length === 0 && <p className="text-secundar mic">nicio încasare notată</p>}
+      <table className="tabel-incasari">
+        <tbody>
+          {c.incasari.map((i) => (
+            <tr key={i.id} className={i.stare === "ANULATA" ? "anulata" : i.stare === "PROPUSA" ? "propusa" : undefined}>
+              <td className="mic">{dataRo(i.data)}</td>
+              <td className="mic">
+                {i.ceReprezinta}
+                {i.stare === "PROPUSA" && <span className="eticheta-propusa">propusă — de confirmat</span>}
+                {i.stare === "ANULATA" && (
+                  <span className="mic text-secundar">
+                    {" "}
+                    · anulată: {i.motivAnulare} ({i.anulatDe})
+                  </span>
+                )}
+                <div className="text-secundar">
+                  notată de {i.notatDe}
+                  {i.confirmatDe && i.stare === "CONFIRMATA" && i.confirmatDe !== i.notatDe ? ` · confirmată de ${i.confirmatDe}` : ""}
+                </div>
+              </td>
+              <td className="suma">{lei(i.sumaLei)}</td>
+              {poate && (
+                <td className="mic" style={{ whiteSpace: "nowrap" }}>
+                  {i.stare === "PROPUSA" && (
+                    <button className="buton mic" disabled={ocupat} onClick={() => void ruleaza(() => apiComenzi.confirmaIncasare(c.id, i.id))}>
+                      Confirmă
+                    </button>
+                  )}
+                  {i.stare !== "ANULATA" && (
+                    <button className="buton secundar mic" disabled={ocupat} onClick={() => setMotivId(motivId === i.id ? null : i.id)}>
+                      Anulează
+                    </button>
+                  )}
+                  {motivId === i.id && (
+                    <form
+                      className="formular-mic"
+                      onSubmit={(e: FormEvent) => {
+                        e.preventDefault();
+                        if (!motiv.trim()) return;
+                        void ruleaza(() => apiComenzi.anuleazaIncasare(c.id, i.id, motiv.trim())).then(() => {
+                          setMotivId(null);
+                          setMotiv("");
+                        });
+                      }}
+                    >
+                      <input value={motiv} onChange={(e) => setMotiv(e.target.value)} placeholder="motivul anulării" aria-label="Motivul anulării" />
+                      <button className="buton mic" disabled={ocupat || !motiv.trim()}>
+                        Anulează cu motiv
+                      </button>
+                    </form>
+                  )}
+                </td>
+              )}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+      <p className="rest-incasat">
+        <strong>Rest de încasat: {lei(c.incasare.restLei)}</strong> <span className={`status-incasare ${c.incasare.status}`}>{c.incasare.eticheta}</span>
+        <span className="mic text-secundar">
+          {" "}
+          · încasat {lei(c.incasare.incasatLei)} din {lei(c.totalLei)}
+        </span>
+      </p>
+      {poate ? (
+        <form
+          className="formular-mic"
+          onSubmit={(e: FormEvent) => {
+            e.preventDefault();
+            if (!suma.trim() || !ce.trim()) return;
+            void ruleaza(() => apiComenzi.incasare(c.id, { sumaLei: suma.trim(), data, ceReprezinta: ce.trim() })).then(() => {
+              setSuma("");
+              setCe("");
+            });
+          }}
+        >
+          <Camp eticheta="Suma (lei)" obligatoriu>
+            <input value={suma} onChange={(e) => setSuma(e.target.value)} inputMode="decimal" style={{ minWidth: 110 }} />
+          </Camp>
+          <Camp eticheta="Data" obligatoriu>
+            <input type="date" value={data} onChange={(e) => setData(e.target.value)} />
+          </Camp>
+          <Camp eticheta="Ce reprezintă" obligatoriu>
+            <input value={ce} onChange={(e) => setCe(e.target.value)} placeholder="ex. tranșa 2, numerar la birou; 600 € la 5,05" />
+          </Camp>
+          <button className="buton mic" disabled={ocupat || !suma.trim() || !ce.trim()}>
+            + Notează încasare
+          </button>
+        </form>
+      ) : (
+        <p className="mic text-secundar">Încasările le notează și le confirmă doar Administratorul firmei.</p>
+      )}
+    </section>
+  );
+}
+
+// ------------------------------------------------------------------ S20: comisionul montatorului / recomandarii (cap. 4)
+
+function Comision({ c, ocupat, ruleaza }: { c: ComandaDetaliu; ocupat: boolean; ruleaza: (f: () => Promise<unknown>) => Promise<void> }) {
+  const [edit, setEdit] = useState(false);
+  const [suma, setSuma] = useState(c.comision?.lei ?? "");
+  const [mentiuni, setMentiuni] = useState("");
+  const modificat = c.istoric.some((i) => i.tip === "suma" && i.camp === "comisionLei");
+  return (
+    <div className="comision">
+      <p>
+        <strong>Comision montator / recomandare:</strong>{" "}
+        {c.comision ? (
+          <>
+            {lei(c.comision.lei)}
+            {modificat && (
+              <span className="asterisc" title="modificat — vezi istoricul">
+                *
+              </span>
+            )}
+            {c.montator ? ` (${c.montator.nume})` : ""}
+            {c.drepturi.bani && Number(c.comision.lei) > 0 ? (
+              <label className="mic" style={{ marginLeft: 8 }}>
+                <input type="checkbox" checked={c.comision.achitat} disabled={ocupat} onChange={(e) => void ruleaza(() => apiComenzi.comisionAchitat(c.id, e.target.checked))} /> achitat
+              </label>
+            ) : (
+              <span className="mic text-secundar"> · {c.comision.achitat ? "achitat" : "neachitat"}</span>
+            )}
+            {c.comision.achitat && c.comision.achitatDe && (
+              <span className="mic text-secundar">
+                {" "}
+                ({c.comision.achitatDe}, {dataRo(c.comision.achitatLa)})
+              </span>
+            )}
+          </>
+        ) : (
+          <span className="text-secundar">fără comision</span>
+        )}
+      </p>
+      {c.drepturi.comision && !edit && (
+        <button className="buton secundar mic" onClick={() => setEdit(true)}>
+          Modifică comisionul
+        </button>
+      )}
+      {edit && (
+        <form
+          className="formular-mic"
+          onSubmit={(e: FormEvent) => {
+            e.preventDefault();
+            void ruleaza(() => apiComenzi.comision(c.id, suma.trim() === "" ? null : suma.trim(), mentiuni.trim() || null)).then(() => setEdit(false));
+          }}
+        >
+          <Camp eticheta="Comision (lei)">
+            <input value={suma} onChange={(e) => setSuma(e.target.value)} inputMode="decimal" style={{ minWidth: 110 }} />
+          </Camp>
+          <Camp eticheta="Mențiuni">
+            <input value={mentiuni} onChange={(e) => setMentiuni(e.target.value)} />
+          </Camp>
+          <button className="buton mic" disabled={ocupat}>
+            Salvează
+          </button>
+          <button type="button" className="buton secundar mic" onClick={() => setEdit(false)}>
+            Renunță
+          </button>
+        </form>
+      )}
     </div>
   );
 }

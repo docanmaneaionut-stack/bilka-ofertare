@@ -24,13 +24,14 @@ const MIGRARI_ETAPA_3 = [
   // S17d, S19 (Etapa 5): coloana „atentie”, comanda completa
   "20261105090000_corespondenta_atentie",
   "20261105140434_comenzi_complete",
+  "20261105144911_incasari_comisioane",
 ];
 
 afterAll(async () => {
   await prisma.$disconnect();
 });
 
-describe("migrarile Etapei 3 si 5 (6-15) sunt aditive", () => {
+describe("migrarile Etapei 3 si 5 (6-16) sunt aditive", () => {
   it("fiecare SQL exista si nu contine instructiuni distructive", () => {
     const existente = fs.readdirSync(FOLDER).filter((d) => /^\d{14}_/.test(d));
     for (const m of MIGRARI_ETAPA_3) expect(existente, m).toContain(m);

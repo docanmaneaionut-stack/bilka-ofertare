@@ -478,3 +478,16 @@ Fiecare intrare: data, obiectivul sesiunii, rezultatul, următorul pas propus.
 - Decizii notate în ARH §13: „închis” = Livrat până la S20; comenzile dinainte de S19 n-au cont alocat (corecție de date la S20, cu jurnal).
 
 **Următorul pas propus:** S20 — încasările și comisioanele (cap. 2, 4): „+ Notează încasare”, statusul încasării derivat, avansul ca prima încasare propusă, comisionul montatorului / recomandării cu istoric și „achitat”, „închis” = Livrat și încasat, contul alocat la comenzile vechi.
+
+## 2026-11-05 — S20: încasările și comisioanele pe comandă (Etapa 5)
+
+**Obiectiv:** PLAN v0.30 S20 — încasările cu statusul derivat, avansul propus, anularea cu motiv; comisionul montatorului / recomandării pe comandă cu istoric și „achitat”; drepturile din CONTURI §3; ecranul; corecția de date pentru comenzile vechi; teste, export, ARH §4.4. Motorul, oferta (ÎNGHEȚATĂ) și tabelul de vânzări neatinse. Aprobat de Ionuț cu cele șase decizii (restul din încasările confirmate și `restLei` actualizat la fiecare mișcare; avansul propus în afara sumei până la confirmare; definițiile numărătorilor; la manuale Administratorul firmei alese; corecția de date cu contul alocat + comisionul + avansul propus; Admin general vede banii, nu-i scrie).
+
+**Rezultat:**
+- **Migrarea 16** (aditivă): `comanda_incasare` (sumă, dată, ce reprezintă, stare propusă / confirmată / anulată, cine și când a notat / confirmat / anulat, motivul anulării); pe comandă comisionul cu „achitat”, cine și când. Aplicată pe baza de lucru.
+- **Regulile**: statusul încasării (neîncasat · parțial · încasat) și restul din încasările **confirmate**; la „Comandat” avansul intră ca încasare **propusă**, confirmată de Administratorul firmei când banii ajung la birou; anularea cu motiv, nimic șters, totul în istoric; comisionul copiat din ofertă la „Comandat” (comanda e copia vie, oferta rămâne neschimbată), modificat de contul ofertei și Administratorul lui cu istoric și asterisc, „achitat” doar de Administratorul firmei; **„închis” = Livrat și încasat**; numărătorile „neîncasate complet” și „comisioane neachitate” reale; filtrul pe încasare funcțional.
+- **Ecranul**: caseta „Încasări” (lista cu stări, „Confirmă” / „Anulează” cu motiv, „+ Notează încasare”, restul de încasat), coloana „Încasat” reală, comisionul cu „achitat” în coloana Montator și în caseta Statusuri.
+- **Corecția de date** `npm run date:comenzi -- --aplica` pe baza de lucru: comenzile din ofertă mai vechi primesc contul alocat și clientul din ofertă, comisionul copiat și avansul ca încasare propusă, cu jurnal; idempotentă (pe baza de lucru era o singură comandă veche: cont alocat + client).
+- **Teste**: `com-incasari.test.ts` (10 cazuri), testul S19 adus la regula „închis”, migrarea 16 în testul migrărilor, exportul cu `comanda_incasare`; `npm test` verde — 32 de fișiere, 332 de teste; 12 etaloane la zero. Ecranul verificat prin tipuri și build, nu în browser.
+
+**Următorul pas propus:** S21 — tabelul de vânzări (OFERTARE cap. 19): coloanele și definițiile, lucrările cu completări, comisionul agentului scris de Administrator cu „achitat”, filtrul încasat / neîncasat, statisticile; colaboratorii ca vânzare în tabelul Administratorului.

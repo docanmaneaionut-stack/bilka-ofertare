@@ -157,7 +157,8 @@ describe("comenzile din oferta si lista comuna", () => {
     const livrat = await gestiune.put(`/api/comenzi/${c1.comandaId}/status-logistic`).send({ status: "LIVRAT" });
     expect(livrat.status).toBe(200);
     expect(livrat.body.comanda.livratLa).not.toBeNull();
-    expect(livrat.body.comanda.inchisa).toBe(true);
+    // S20: "inchisa" = Livrat SI incasat - avansul e doar propus, deci ramane deschisa
+    expect(livrat.body.comanda.inchisa).toBe(false);
     await gestiune.put(`/api/comenzi/${c1.comandaId}/status-logistic`).send({ status: "RECEPTIONAT" }).expect(409);
     const d = await gestiune.get(`/api/comenzi/${c1.comandaId}`).expect(200);
     const statusuri = (d.body.comanda.istoric as { tip: string; valoareInainte: string | null; valoareDupa: string | null; numeUtilizatorLaMoment: string; mentiuni: string | null }[]).filter((i) => i.tip === "status");
@@ -180,8 +181,9 @@ describe("comenzile din oferta si lista comuna", () => {
   it("ordinea si 'Arata si comenzile inchise': cele mai noi sus; Livrat la sfarsit, ascuns implicit; filtrul pe status; numaratorile din cap", async () => {
     const agent = await autentificaAgent(app, EMAIL.agent1);
     const implicit = await lista(agent);
-    expect(implicit.comenzi.map((c) => c.numarComplet)).toEqual([cColab.numarComplet, c2.numarComplet]); // c1 e livrata -> ascunsa
-    expect(implicit.numaratori).toMatchObject({ active: 2, deReceptionat: 1, livrate: 1, neincasate: 0, comisioaneNeachitate: 0, neidentificate: 0 });
+    // S20: c1 e livrata, dar neincasata (avansul doar propus) -> nu e "inchisa", ramane in lista
+    expect(implicit.comenzi.map((c) => c.numarComplet)).toEqual([cColab.numarComplet, c2.numarComplet, c1.numarComplet]);
+    expect(implicit.numaratori).toMatchObject({ active: 2, deReceptionat: 1, livrate: 1, neincasate: 3, comisioaneNeachitate: 3, neidentificate: 0 });
     const cuInchise = await lista(agent, { inchise: "da" });
     expect(cuInchise.comenzi.map((c) => c.numarComplet)).toEqual([cColab.numarComplet, c2.numarComplet, c1.numarComplet]);
     expect((await lista(agent, { status: "LIVRAT" })).comenzi.map((c) => c.numarComplet)).toEqual([c1.numarComplet]);
@@ -220,7 +222,7 @@ describe("comenzile din oferta si lista comuna", () => {
     expect(d.body.comanda.observatii.map((o: { text: string }) => o.text)).toEqual(["confirmat telefonic", "clientul vrea marfa pe paleți"]);
     expect(d.body.comanda.notiteOferta.map((o: { text: string }) => o.text)).toEqual(["notiță de pe ofertă"]);
     expect(d.body.comanda.client.telefon).toBe("0730 000 499");
-    expect(d.body.comanda.drepturi).toEqual({ logistic: false, detalii: false, livrare: false, alocare: false });
+    expect(d.body.comanda.drepturi).toEqual({ logistic: false, detalii: false, livrare: false, alocare: false, bani: false, comision: false });
     expect(d.body.comanda.istoric.filter((i: { tip: string }) => i.tip === "contact").map((i: { camp: string }) => i.camp).sort()).toEqual(["clientTelefon", "montatorTelefon"]);
     expect(d.body.comanda.istoric.filter((i: { tip: string }) => i.tip === "facturare")).toHaveLength(3);
   });

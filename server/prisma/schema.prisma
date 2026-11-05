@@ -123,6 +123,7 @@ model Utilizator {
   comandaIstoric    ComandaIstoric[]    @relation("ComandaIstoricScris")
   comandaObservatii ComandaObservatie[] @relation("ComandaObservatiiScrise")
   comandaAtasamente ComandaAtasament[]  @relation("ComandaAtasamenteIncarcate")
+  incasariNotate    ComandaIncasare[]   @relation("IncasariNotate")
   notiteScrise      OfertaNotita[]      @relation("NotiteScrise")
 
   firmeAcces          UtilizatorFirma[]
@@ -1037,9 +1038,18 @@ model Comanda {
   facturareCui         String?
   facturareAdresa      String?
 
+  // S20 (migrarea 16): comisionul montatorului / recomandarii - copia vie pe comanda
+  // (persoana si suma vin din oferta la "Comandat"; oferta inghetata nu se mai schimba),
+  // cu istoric si asterisc rosu; "achitat" doar de Administratorul firmei, cu cine si cand
+  comisionLei           Decimal?  @db.Decimal(14, 2)
+  comisionAchitat       Boolean   @default(false)
+  comisionAchitatLa     DateTime?
+  comisionAchitatDeNume String?
+
   istoric    ComandaIstoric[]
   observatii ComandaObservatie[]
   atasamente ComandaAtasament[]
+  incasari   ComandaIncasare[]
 
   @@index([firmaId, data])
   @@index([contAlocatId])
@@ -1079,6 +1089,41 @@ model ComandaObservatie {
 
   @@index([comandaId, moment])
   @@map("comanda_observatie")
+}
+
+// S20 (migrarea 16; FISA-COMENZI cap. 2, CONTURI §3): incasarile comenzii - suma in lei, data,
+// "ce reprezinta", cine si cand a notat. Doar Administratorul firmei comenzii le noteaza,
+// confirma si anuleaza; o incasare gresita se ANULEAZA cu motiv (nu se sterge). Avansul de la
+// "Avans luat" intra la "Comandat" ca incasare PROPUSA, confirmata cand banii ajung la birou
+// (bifa "avans incasat" din CONTURI). Statusul incasarii (neincasat / partial / incasat) si
+// restul de incasat se calculeaza din incasarile CONFIRMATE; `restLei` al comenzii se
+// actualizeaza la fiecare miscare. Incasarile in euro se noteaza ca echivalent in lei, cu textul lamuritor.
+enum StareIncasare {
+  PROPUSA
+  CONFIRMATA
+  ANULATA
+}
+
+model ComandaIncasare {
+  id                String        @id @default(uuid())
+  comandaId         String
+  comanda           Comanda       @relation(fields: [comandaId], references: [id])
+  sumaLei           Decimal       @db.Decimal(14, 2)
+  data              DateTime      @db.Date
+  ceReprezinta      String
+  stare             StareIncasare @default(CONFIRMATA)
+  notatDeId         String?
+  notatDe           Utilizator?   @relation("IncasariNotate", fields: [notatDeId], references: [id])
+  numeNotatLaMoment String
+  moment            DateTime      @default(now())
+  confirmatLa       DateTime?
+  confirmatDeNume   String?
+  anulatLa          DateTime?
+  anulatDeNume      String?
+  motivAnulare      String?
+
+  @@index([comandaId, data])
+  @@map("comanda_incasare")
 }
 
 // atasamentele comenzii (necesarul primit, formularul trimis, poze), in folderul de date (comenzi/<id>/)
