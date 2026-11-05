@@ -9,6 +9,7 @@ import { motRouter } from "./modules/mot/routes.js";
 import { cursRouter } from "./modules/curs/routes.js";
 import { clientiRouter } from "./modules/ofe/clienti.js";
 import { oferteRouter } from "./modules/ofe/oferte.js";
+import { comenziRouter } from "./modules/com/comenzi.js";
 import { pretRapidRouter } from "./modules/ofe/pretRapid.js";
 import { montatoriRouter } from "./modules/ofe/montatori.js";
 import { gestioneazaErori } from "./middleware/erori.js";
@@ -38,6 +39,7 @@ export function creeazaApp() {
   app.use("/api/curs", cursRouter);
   app.use("/api/clienti", clientiRouter);
   app.use("/api/oferte", oferteRouter);
+  app.use("/api/comenzi", comenziRouter);
   app.use("/api/pret-rapid", pretRapidRouter);
   app.use("/api/montatori", montatoriRouter);
 

@@ -4,9 +4,12 @@ import { BaseSequencer, type TestSpecification } from "vitest/node";
 // fisierele ruleaza in ordine alfabetica, nu dupa durata din cache: testele
 // editorului de oferta (ofe-*) folosesc catalogul Bilka importat de testul de
 // import (imp-import), care trebuie sa ruleze primul pe un compartiment gol
+// S19: testul de import ruleaza explicit primul (nu doar alfabetic) - testele comenzilor
+// (com-*) sorteaza inaintea lui si folosesc si ele catalogul Bilka
 class OrdineAlfabetica extends BaseSequencer {
   override async sort(files: TestSpecification[]): Promise<TestSpecification[]> {
-    return [...files].sort((a, b) => a.moduleId.localeCompare(b.moduleId));
+    const prioritate = (f: TestSpecification) => (/imp-import\.test\.ts$/.test(f.moduleId) ? 0 : 1);
+    return [...files].sort((a, b) => prioritate(a) - prioritate(b) || a.moduleId.localeCompare(b.moduleId));
   }
 }
 import { config as incarcaEnv } from "dotenv";

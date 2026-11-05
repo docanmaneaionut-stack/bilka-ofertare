@@ -82,7 +82,13 @@ beforeAll(async () => {
   await prisma.ofertaAtasament.create({ data: { ofertaId: o1.id, nume: "poza.jpg", fisier: `oferte/${o1.id}/atasamente/poza.jpg`, marime: 4, incarcatDeId: adminFirma.id } });
   await prisma.ofertaNotita.create({ data: { ofertaId: o1.id, utilizatorId: adminFirma.id, numeUtilizatorLaMoment: adminFirma.nume, text: "notiță de test" } });
   await prisma.ofertaDocument.create({ data: { ofertaId: o1.id, tip: "FORMULAR_BILKA", versiune: 1, nume: "EXF-0001-F1.xlsm", fisier: `oferte/${o1.id}/documente/EXF-0001-F1.xlsm`, marime: 3, generatDeId: adminFirma.id, formularNr: 1, avertizari: "Nu au loc în formularul Bilka: x" } });
-  await prisma.comanda.create({ data: { ofertaId: o1.id, firmaId: firmaA, responsabilId: adminFirma.id, serie: "EXF", numar: 1, data: azi, clientNume: client.nume, clientTelefon: client.telefon, rezumat: "Clasic 8017", totalCuTvaEur: "3178.46", totalLei: "17000", avansLei: "1000", restLei: "16000" } });
+  const comandaA = await prisma.comanda.create({ data: { ofertaId: o1.id, firmaId: firmaA, responsabilId: adminFirma.id, contAlocatId: adminFirma.id, clientId: client.id, serie: "EXF", numar: 1, data: azi, clientNume: client.nume, clientTelefon: client.telefon, rezumat: "Clasic 8017", totalCuTvaEur: "3178.46", totalLei: "17000", avansLei: "1000", restLei: "16000" } });
+  // S19: istoricul, observatiile si atasamentele comenzii
+  await prisma.comandaIstoric.create({ data: { comandaId: comandaA.id, utilizatorId: adminFirma.id, numeUtilizatorLaMoment: adminFirma.nume, tip: "status", camp: "statusLogistic", valoareDupa: "Comandat" } });
+  await prisma.comandaObservatie.create({ data: { comandaId: comandaA.id, utilizatorId: adminFirma.id, numeUtilizatorLaMoment: adminFirma.nume, text: "Clientul vrea marfa pe paleți" } });
+  await prisma.comandaAtasament.create({ data: { comandaId: comandaA.id, nume: "necesar.txt", fisier: path.join("comenzi", comandaA.id, "necesar.txt"), tipMime: "text/plain", marime: 4, incarcatDeId: adminFirma.id } });
+  await mkdir(path.join(env.dateDir, "comenzi", comandaA.id), { recursive: true });
+  await writeFile(path.join(env.dateDir, "comenzi", comandaA.id, "necesar.txt"), "test");
   await prisma.ofertaLinie.create({ data: { ofertaId: oB.id, ordine: 1, rubrica: "Accesorii standard", cod: "ACMICMAT050", denumire: "Coamă mică", um: "BUC", pretBazaEur: "4.9", cantitate: "3" } });
   // fisierele firmelor: sigla, sablonul Bilka, documentul si atasamentul ofertei
   for (const [folder, nume] of [["sigle", `${firmaA}.png`], ["sigle", `${firmaB}.png`], ["sabloane-bilka", `${firmaA}.xlsm`], [`oferte/${o1.id}/documente`, "EXF-0001-F1.xlsm"], [`oferte/${o1.id}/atasamente`, "poza.jpg"], [`oferte/${oB.id}/documente`, "EXB-0001-oferta.pdf"]]) {
@@ -136,7 +142,7 @@ describe("Export 'descarca tot' si restaurare", () => {
     expect(readme).toContain("Tip export: complet");
     expect(intrari).toContain(`fisiere/sabloane-bilka/${firmaA}.xlsm`);
     expect(intrari).toContain(`fisiere/oferte/${ofertaA1}/documente/EXF-0001-F1.xlsm`);
-    for (const tabel of ["client", "curs_valutar", "contor_serie", "montator", "oferta", "oferta_invelitoare", "oferta_linie", "oferta_pozitie", "oferta_sipca", "oferta_tronson", "oferta_zona_b", "oferta_istoric", "oferta_atasament", "oferta_notita", "oferta_document", "comanda", "corespondenta_formular_bilka"]) {
+    for (const tabel of ["client", "curs_valutar", "contor_serie", "montator", "oferta", "oferta_invelitoare", "oferta_linie", "oferta_pozitie", "oferta_sipca", "oferta_tronson", "oferta_zona_b", "oferta_istoric", "oferta_atasament", "oferta_notita", "oferta_document", "comanda", "comanda_istoric", "comanda_observatie", "comanda_atasament", "corespondenta_formular_bilka"]) {
       expect(numaratori[tabel], tabel).toBeGreaterThanOrEqual(tabel === "corespondenta_formular_bilka" ? 0 : 1);
     }
     expect(readme).toContain(`- produs: ${numaratori.produs}`);
@@ -202,6 +208,9 @@ describe("Export 'descarca tot' si restaurare", () => {
     expect(numaratori.oferta).toBe(2);
     expect(numaratori.client).toBe(1);
     expect(numaratori.comanda).toBe(1);
+    expect(numaratori.comanda_istoric).toBe(1);
+    expect(numaratori.comanda_observatie).toBe(1);
+    expect(numaratori.comanda_atasament).toBe(1);
     expect(numaratori.montator).toBe(1);
     expect(numaratori.oferta_linie).toBe(1); // linia firmei B nu intra
     expect(numaratori.produs).toBe(await prisma.produs.count()); // catalogul e comun

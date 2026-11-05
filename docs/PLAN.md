@@ -1,6 +1,6 @@
 # PLAN — foaia de parcurs a construcției
 
-Versiunea 0.28 · 5 noiembrie 2026 · Se citește împreună cu `docs/ARH.md` și cu fișele de specificație din `docs/` (FISA-CONTURI, FISA-CATALOG-PRETURI, FISA-OFERTARE, FISA-COMENZI). **Unde ARH și o fișă spun lucruri diferite, fișa are prioritate** (e mai nouă și e aprobată de Ionuț); diferența se notează în ARH §13 în aceeași sesiune.
+Versiunea 0.30 · 5 noiembrie 2026 · Se citește împreună cu `docs/ARH.md` și cu fișele de specificație din `docs/` (FISA-CONTURI, FISA-CATALOG-PRETURI, FISA-OFERTARE, FISA-COMENZI). **Unde ARH și o fișă spun lucruri diferite, fișa are prioritate** (e mai nouă și e aprobată de Ionuț); diferența se notează în ARH §13 în aceeași sesiune.
 Claude Code actualizează statusul sesiunilor la finalul fiecărei sesiuni.
 
 ## Cum se folosește
@@ -61,7 +61,7 @@ Claude Code actualizează statusul sesiunilor la finalul fiecărei sesiuni.
 
 ## Etapa 3 — Ofertare și documente (OFE + DOC)
 
-**Rezultat:** agenții lucrează în aplicație în locul prototipului v4.1. Testele manuale ale lui Ionuț încep aici, pe ecranele reale, după testele automate ale fiecărei sesiuni.
+**Rezultat:** agenții lucrează în aplicație în locul prototipului v4.1. Testele manuale ale lui Ionuț încep aici, pe ecranele reale, după testele automate ale fiecărei sesiuni. **✔ Construcția încheiată (05.11.2026, eticheta `v0.3-ofertare`, commit c636e65):** 312 teste, 12 etaloane la zero, formularul Bilka verificat cu Excel ca arbitru pe tot catalogul (4.318 verificări, zero greșeli în generator), ARH §4.3 și §5 ÎNGHEȚATE. Rămân deschise în `ACCEPTARE-ETAPA-3.md` rândurile „Ionuț" (H5 — ofertele reale — înainte de punerea în funcțiune) și întrebările pentru Bilka din `INTREBARI-BILKA.md` (răspunsurile intră în date, nu în cod).
 
 **Re-împărțită pe 28.10.2026** (după închiderea motorului): fiecare sesiune are un singur obiectiv; sursele au prioritatea din cap: FISA-OFERTARE v1.1 (cap. 0–16, 19, 21) și FISA-CONTURI peste ARH §4.3 (PROPUS, depășit — se rescrie la S12); motorul se apelează prin harta ARH §5.9 și nu se modifică (ÎNGHEȚAT — orice nevoie nouă = cerere MODIFICARE, întâi etalonul, apoi codul).
 
@@ -79,6 +79,23 @@ Claude Code actualizează statusul sesiunilor la finalul fiecărei sesiuni.
 
 | S18 | **Finisaj vizual** (după `v0.3-ofertare`, înainte de Faza 3): observațiile lui Ionuț despre ecrane — adunate de Claude chat în `docs/OBSERVATII-ECRAN.md`, pe ecrane și priorități, din notițele și capturile lui — se aplică într-o singură trecere, fără schimbări de funcționalitate; machetele și Capitolul 0 rămân referința; verificarea lui Ionuț pe fiecare ecran | NEÎNCEPUT (observațiile se strâng de acum) |
 
+## Etapa 5 — Comenzile (COM) — după „Comandat": comenzi, livrări, încasări, comisioane, vânzări, retururi, documente
+
+**Decizie (05.11.2026):** funcționalitatea înaintea finisajului vizual (S18) și a punerii în funcțiune (Faza 3); testează Ionuț și cel mult 1–2 persoane, pe conturi de probă. Sursele: **FISA-COMENZI v1.2** (cap. 1–9, machete `docs/design/ecran-tabel-comenzi`, `macheta-aviz`, `macheta-fisa-soferului`), FISA-OFERTARE cap. 16 și 19, FISA-CONTURI §2–3; ARH §4.4 (COM) se rescrie la S19 și se îngheață la S24. Motorul (§5) rămâne ÎNGHEȚAT; rândul minim de comandă din S15 se extinde aditiv.
+
+**Rezultat:** softul merge cap-coadă — ofertă → comandă → recepție → livrare → încasare → comision — iar tabelul de vânzări e ecranul de lucru al Administratorului.
+
+| Sesiune | Obiectiv | Status |
+|---|---|---|
+| S19 | **Tabelul de comenzi** (cap. 1, 3, 4b): modelul complet al comenzii (extinderea aditivă a rândului minim din S15: responsabil, statusul logistic cu istoric — Comandat → Recepționat / Recepționat parțial cu nota lipsurilor → Livrat —, indicațiile și data livrării, datele de facturare dacă diferă, observații cu istoric, atașamente, formularele Bilka trimise cu data); **comenzile manuale** („+ Comandă manuală", serie CM, contul alocat sau „neidentificată", marcajul „manuală", alocarea schimbată doar de Administratori); ecranul „Comenzi" după machetă: capul cu numărători, căutare, filtre, coloanele, **rândul desfășurat** cu cele patru casete, ordinea (invers cronologic; Livrat și încasat la sfârșit, ascunse implicit), cine vede / cine face (Contabilitate și Gestiune primesc acces: pe firmele setării lor), varianta pe telefon; „Doc. ▾" cu documentele existente (formulare Bilka, detaliata, tabel de facturare) | **S19 GATA (05.11.2026)** — migrarea 15 aditivă (legătura cu oferta opțională, contul alocat, livrarea, facturarea, statusul logistic cu istoric, observațiile, atașamentele), modulul `com` cu drepturile din CONTURI §2–3 (lista comună; statusul logistic de orice Administrator și Gestiune; banii la S20), comenzile manuale CM, ecranul după machetă cu rândul desfășurat, „Doc. ▾” prin ruta comenzii, Contabilitatea și Gestiunea cu meniul „Comenzi”; teste pe roluri, tranziții, manuale, numerotare, ordine, filtre, numărători; exportul cu tabelele noi; ARH §4.4 rescris |
+| S20 | **Încasările și comisioanele** (cap. 2, 4; CONTURI §3): „+ Notează încasare" (sumă, dată, ce reprezintă; doar Administratorul agentului; corectare doar cu istoric), statusul încasării derivat (neîncasat · parțial · încasat, cu suma și restul), avansul de la „Avans luat" ca prima încasare propusă, încasările în euro notate ca echivalent; comisionul montatorului / recomandării pe comandă cu istoric, asterisc roșu, „achitat" doar de Administrator; Gestiunea vede sumele | NEÎNCEPUT |
+| S21 | **Tabelul de vânzări** (OFERTARE cap. 19, COMENZI cap. 7): ecran de lucru pe comenzi — coloanele în ordinea lui Ionuț, lucrările cu completări una sub alta și adaosul pe lucrare, **comisionul agentului** scris manual de Administrator cu „achitat", filtrele (încasat / neîncasat traversând lunile; lună / an / interval; agent, mai mulți agenți), statisticile (totaluri, procent de adaos), cine vede ce (agentul tabelul lui fără statistici; Administratorul toate + combinații; colaboratorul → rândul Administratorului, cap. 19), comenzile manuale fără sume (completate de Administratorul contului alocat) | NEÎNCEPUT |
+| S22 | **Retururi și paleți** (cap. 5, 8): calculul returului din comandă la prețurile ofertei comandate (orice cont), **nota de retur** (PDF pe șablonul ofertei), efectul în vânzări (rând separat, legat; minus și neachitat dacă comisionul era plătit); **nota de palet** pe comandă (Gestiune / Administrator, cu istoric) și ecranul **„Evidența paleților"** (nerecuperat / recuperat — doar Administratorul, filtre, numărătorul din capul tabelului) | NEÎNCEPUT |
+| S23 | **Documentele comenzii** (cap. 4c, 6, 9): **avizul de însoțire a mărfii** după machetă (dublu exemplar, fără valori, căsuțe pe rând și pe lungime, semnături, un aviz per livrare cu cantități ajustabile la livrări parțiale, identificat prin numărul comenzii), **fișa șoferului** după machetă (selecția de comenzi, PDF cu telefoanele apelabile `tel:` și linkul la locație, ordinea traseului, nereținută de soft), tipărirea avizului / tabelului de facturare din fișă; trimiterea pe WhatsApp rămâne manuală (descărcare + atașare) până la Faza 3 | NEÎNCEPUT |
+| S24 | **Verificare și înghețare**: lista de acceptare Etapa 5 (`docs/ACCEPTARE-ETAPA-5.md`), Ionuț + testerii pe comenzi reale (inclusiv o comandă manuală și un retur), ARH §4.4 (COM) → ÎNGHEȚAT, etichetă `v0.4-comenzi` | NEÎNCEPUT |
+
+**Ce NU face Etapa 5:** FGO (după contul cu API), stocul propriu (Etapa 6), ferestrele, trimiterea automată pe e-mail / WhatsApp (Faza 3).
+
 **Faza 3 — Punere în funcțiune** vine imediat după Etapa 3: VPS, domeniu, backup automat, restaurare de probă, conturile reale.
 Decizii (17.10.2026): **domeniul aplicației este `roofdata.ro`** — separat de site-ul firmei (roofshop.ro), ca nimic de la site să nu atingă aplicația și invers; verificat liber, înregistrat de Ionuț pe Roofshop DMI SRL (luni, 19.10). DNS-ul domeniului se administrează pe Cloudflare (gratuit): certificat HTTPS, protecție de bază, control independent de registrar. Aplicația va rula la `app.roofdata.ro` (sau direct `roofdata.ro`), iar notificările prin e-mail, când vor exista, de pe acest domeniu. De aici înainte etapele următoare se livrează pe sistemul în funcțiune, prin migrări aditive.
 
@@ -88,7 +105,7 @@ Decizii (17.10.2026): **domeniul aplicației este `roofdata.ro`** — separat de
 
 - **Etapa 4 — CON complet**: colaboratori, permisiuni fine, jurnal complet (rolul „director zonal" nu mai există — FISA-CONTURI).
 - **Ferestre (Fakro, Velux)** — al doilea și al treilea compartiment de catalog, pe modul „catalog public cu discount"; intră când Ionuț are listele complete cu discounturile (17.10.2026). **Pazie și gard** (tipuri de ofertă separate, cu calcul pe metraj) — amânate fără termen, la decizia lui Ionuț (17.10.2026).
-- **Etapa 5 — COM**: comenzi către furnizor, export în formatul Bilka (IMP), încasări, avansuri.
+- **Etapa 5 — COM**: mutată înaintea finisajului vizual și a punerii în funcțiune (decizia lui Ionuț, 05.11.2026: funcționalitate întâi, testată de el și 1–2 persoane; agenții intră după vizual și VPS) — vezi secțiunea ei de mai sus.
 - **Etapa 6 — STO**: stoc propriu per firmă, livrări.
 - **Etapa 7 — NOT**: notițe text / voce, offline pe telefon, sincronizare.
 - **Etapa 8 — SCH / GEO / PAN**: schiță 2D, geometrie, panotaj — în cele cinci sub-etape din ARH §7; motorul (GEO, PAN) se construiește și se testează pe acoperișuri reale înaintea interfeței de desen.

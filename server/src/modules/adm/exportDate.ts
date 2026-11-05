@@ -55,6 +55,10 @@ export const MODELE_EXPORT = [
   "OfertaNotita",
   "OfertaDocument",
   "Comanda",
+  // S19: istoricul, observatiile si atasamentele comenzii
+  "ComandaIstoric",
+  "ComandaObservatie",
+  "ComandaAtasament",
   "ImportPropunere",
   "JurnalIntrare",
   "JurnalAutentificare",
@@ -86,6 +90,10 @@ function filtruFirma(model: ModelExport, firmaId: string): Record<string, unknow
     case "Oferta":
     case "Comanda":
       return { firmaId };
+    case "ComandaIstoric":
+    case "ComandaObservatie":
+    case "ComandaAtasament":
+      return { comanda: { firmaId } };
     case "JurnalIntrare":
     case "Montator":
       return { utilizator: { firmaId } };
@@ -215,10 +223,13 @@ export async function scrieExport(caleZip: string, optiuni: OptiuniExport = {}):
   if (firmaId) {
     // doar fisierele firmei: sigla, sablonul Bilka, documentele si atasamentele ofertelor ei
     const oferte = new Set((await prisma.oferta.findMany({ where: { firmaId }, select: { id: true } })).map((o) => o.id));
+    // S19: si atasamentele comenzilor firmei (comenzi/<id>/)
+    const comenzi = new Set((await prisma.comanda.findMany({ where: { firmaId }, select: { id: true } })).map((c) => c.id));
     fisiere = fisiere.filter((f) => {
       const parti = f.split(path.sep);
       if (parti[0] === "sigle" || parti[0] === "sabloane-bilka") return parti[1]?.startsWith(firmaId) ?? false;
       if (parti[0] === "oferte") return oferte.has(parti[1] ?? "");
+      if (parti[0] === "comenzi") return comenzi.has(parti[1] ?? "");
       return false;
     });
   }

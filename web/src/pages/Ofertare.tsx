@@ -7,13 +7,20 @@ import { ETICHETA_ROL } from "./ContulMeu";
 export function Ofertare({ utilizator, onLogout }: { utilizator: Utilizator; onLogout: () => void }) {
   const clasa = ({ isActive }: { isActive: boolean }) => (isActive ? "activ" : undefined);
   const areZonaTehnica = utilizator.rol === "ADMIN_GENERAL" || utilizator.rol === "ADMINISTRATOR";
+  // S19: Contabilitatea si Gestiunea au doar Comenzi (si contul); restul au si Oferte
+  const areOferte = utilizator.rol !== "CONTABILITATE" && utilizator.rol !== "GESTIUNE";
   return (
     <>
       <header className="bara-sus">
         <div className="titlu">Ofertare</div>
         <nav className="meniu" aria-label="Ofertare">
-          <NavLink to="/oferte" className={clasa}>
-            Oferte
+          {areOferte && (
+            <NavLink to="/oferte" className={clasa}>
+              Oferte
+            </NavLink>
+          )}
+          <NavLink to="/comenzi" className={clasa}>
+            Comenzi
           </NavLink>
           <NavLink to="/cont" className={clasa}>
             Contul meu

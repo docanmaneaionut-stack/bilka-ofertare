@@ -19,6 +19,7 @@ import { CalculProba } from "./pages/CalculProba";
 import { CursBnr } from "./pages/CursBnr";
 import { Ofertare } from "./pages/Ofertare";
 import { Oferte } from "./pages/Oferte";
+import { Comenzi } from "./pages/Comenzi";
 import { OfertaNoua } from "./pages/OfertaNoua";
 import { AflaPret } from "./pages/AflaPret";
 import { OfertaDetaliu } from "./pages/OfertaDetaliu";
@@ -60,6 +61,8 @@ export default function App() {
   // conturile care lucreaza in zona de ofertare (FISA-CONTURI §2): Admin general vede tot
   const faceOferte = administrator || utilizator.rol === "AGENT" || utilizator.rol === "COLABORATOR";
   const areOfertare = adminGeneral || faceOferte;
+  // S19: Contabilitatea si Gestiunea lucreaza in tabelul de comenzi (FISA-CONTURI §2)
+  const lucreazaComenzi = utilizator.rol === "CONTABILITATE" || utilizator.rol === "GESTIUNE";
 
   return (
     <UtilizatorContext.Provider value={utilizator}>
@@ -102,12 +105,15 @@ export default function App() {
             <Route path=":id" element={<ClientFisa />} />
           </Route>
         )}
+        <Route path="/comenzi" element={<Ofertare utilizator={utilizator} onLogout={iesiDinCont} />}>
+          <Route index element={<Comenzi />} />
+        </Route>
         <Route
           path="/cont"
           element={
             adminGeneral ? (
               <ZonaTehnica utilizator={utilizator} onLogout={iesiDinCont} />
-            ) : faceOferte ? (
+            ) : faceOferte || lucreazaComenzi ? (
               <Ofertare utilizator={utilizator} onLogout={iesiDinCont} />
             ) : (
               <PaginaSimpla utilizator={utilizator} onLogout={iesiDinCont} />
@@ -116,7 +122,7 @@ export default function App() {
         >
           <Route index element={<ContulMeu />} />
         </Route>
-        <Route path="*" element={<Navigate to={adminGeneral ? "/zona-tehnica" : faceOferte ? "/oferte" : "/cont"} replace />} />
+        <Route path="*" element={<Navigate to={adminGeneral ? "/zona-tehnica" : faceOferte ? "/oferte" : lucreazaComenzi ? "/comenzi" : "/cont"} replace />} />
       </Routes>
     </BrowserRouter>
     </UtilizatorContext.Provider>

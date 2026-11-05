@@ -752,3 +752,144 @@ table.tabel td.total-oferta .numar-mare {
     display: none;
   }
 }
+
+/* --- Comenzi (S19; FISA-COMENZI cap. 1, macheta docs/design/ecran-tabel-comenzi) --- */
+
+table.tabel-comenzi td.rezumat-comanda {
+  font-size: 14px;
+  line-height: 1.4;
+  max-width: 320px;
+}
+
+table.tabel tr.deschisa td {
+  background: var(--bg-secundar);
+  border-bottom: none;
+}
+
+table.tabel tr.detaliu-comanda td {
+  background: var(--bg-secundar);
+  padding: 4px 12px 18px;
+  border-bottom: 2px solid var(--border);
+}
+
+.casete-comanda {
+  display: grid;
+  grid-template-columns: 1fr 1.2fr 1fr 1.2fr;
+  gap: 16px;
+}
+
+.caseta {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 12px;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.caseta h4 {
+  margin: 0 0 6px;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-secundar);
+}
+
+.caseta p {
+  margin: 6px 0;
+}
+
+.formular-mic {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: flex-end;
+  margin: 8px 0;
+}
+
+.formular-mic input,
+.formular-mic select {
+  min-width: 160px;
+}
+
+.lista-istoric,
+.lista-documente {
+  margin: 4px 0;
+  padding-left: 18px;
+}
+
+.lista-istoric li,
+.lista-documente li {
+  margin-bottom: 4px;
+}
+
+.status-logistic {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 999px;
+  font-size: 14px;
+  font-weight: 600;
+  white-space: nowrap;
+  background: var(--bg-secundar);
+  color: var(--text);
+}
+
+.status-logistic.RECEPTIONAT { background: #e4ecff; color: #1a3d9c; }
+.status-logistic.RECEPTIONAT_PARTIAL { background: var(--avertizare-bg); color: var(--avertizare-text); }
+.status-logistic.LIVRAT { background: #e2f3e6; color: #1e6b33; }
+
+.asterisc {
+  color: #d12e2e;
+  font-weight: 700;
+  margin-left: 2px;
+}
+
+.eticheta-manuala,
+.eticheta-neidentificata {
+  display: inline-block;
+  padding: 1px 7px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 700;
+  margin-left: 6px;
+  vertical-align: middle;
+}
+
+.eticheta-manuala { background: #efe9ff; color: #4b2fb3; }
+.eticheta-neidentificata { background: #fdecec; color: #a12a2a; }
+
+.fundal-dialog {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 40px 16px;
+  overflow: auto;
+  z-index: 50;
+}
+
+.dialog {
+  background: var(--bg);
+  border-radius: 10px;
+  padding: 20px 24px;
+  width: min(760px, 100%);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.dialog h2 {
+  margin: 0;
+}
+
+@media (max-width: 720px) {
+  /* pe telefon: numar, client, rezumat, total, status; restul la desfasurare */
+  .casete-comanda {
+    grid-template-columns: 1fr;
+  }
+  table.tabel-comenzi td.rezumat-comanda {
+    max-width: none;
+  }
+}

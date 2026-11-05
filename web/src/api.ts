@@ -1078,3 +1078,106 @@ export const apiCatalogEditor = {
 export const apiProduseOferta = {
   salveaza: (id: string, stare: StareProduse) => cerere<{ oferta: OfertaDetaliu }>(`${BAZA_OFE}/${id}/produse`, { method: "PUT", body: JSON.stringify(stare) }),
 };
+
+// ---------------------------------------------------------------- S19: comenzile (FISA-COMENZI cap. 1, 3, 4b, 6)
+
+export type StatusLogistic = "COMANDAT" | "RECEPTIONAT" | "RECEPTIONAT_PARTIAL" | "LIVRAT";
+export const STATUSURI_LOGISTICE: StatusLogistic[] = ["COMANDAT", "RECEPTIONAT", "RECEPTIONAT_PARTIAL", "LIVRAT"];
+export const ETICHETA_STATUS_LOGISTIC: Record<StatusLogistic, string> = { COMANDAT: "Comandat", RECEPTIONAT: "Recepționat", RECEPTIONAT_PARTIAL: "Recepționat parțial", LIVRAT: "Livrat" };
+
+export type ContScurt = { id: string; nume: string; rol: string };
+export type RandComanda = {
+  id: string;
+  numarComplet: string;
+  tip: "DIN_OFERTA" | "MANUALA";
+  manuala: boolean;
+  data: string;
+  intratLa: string;
+  firma: { id: string; denumire: string };
+  responsabil: ContScurt;
+  contAlocat: ContScurt | null;
+  neidentificata: boolean;
+  ofertaId: string | null;
+  completareLa: { numarComplet: string; motiv: string | null } | null;
+  client: { nume: string; telefon: string; localitate: string | null };
+  rezumat: string;
+  montator: { nume: string; telefon: string | null } | null;
+  totalLei: string;
+  totalCuTvaEur: string;
+  avansLei: string;
+  restLei: string;
+  statusLogistic: StatusLogistic;
+  statusLogisticEticheta: string;
+  statusLogisticLa: string | null;
+  notaLipsuri: string | null;
+  livratLa: string | null;
+  livrare: { indicatii: string | null; nume: string | null; la: string | null; data: string | null };
+  facturare: { firma: string | null; cui: string | null; adresa: string | null } | null;
+  inchisa: boolean;
+};
+export type IntrareIstoricComanda = { id: string; moment: string; numeUtilizatorLaMoment: string; tip: string; camp: string | null; valoareInainte: string | null; valoareDupa: string | null; mentiuni: string | null };
+export type ObservatieComanda = { id: string; moment: string; numeUtilizatorLaMoment: string; text: string };
+export type AtasamentComanda = { id: string; nume: string; tipMime: string | null; marime: number | null; moment: string; incarcatDe: string | null };
+export type DocumentComanda = { id: string; tip: string; eticheta: string; versiune: number; nume: string; marime: number; generatLa: string; generatDe: string | null; transmisLa: string | null; canal: string | null; formularNr: number | null };
+export type ComandaDetaliu = RandComanda & {
+  drepturi: { logistic: boolean; detalii: boolean; livrare: boolean; alocare: boolean };
+  istoric: IntrareIstoricComanda[];
+  observatii: ObservatieComanda[];
+  atasamente: AtasamentComanda[];
+  documente: DocumentComanda[];
+  formulareBilka: { generate: number; transmise: number; ultimaTrimitere: string | null };
+  notiteOferta: ObservatieComanda[];
+  atasamenteOferta: AtasamentComanda[];
+};
+export type FiltreComenzi = { q?: string; status?: StatusLogistic | ""; deLa?: string; panaLa?: string; agent?: string; firmaId?: string; inchise?: boolean; page?: number; pageSize?: number };
+export type ListaComenzi = {
+  comenzi: RandComanda[];
+  total: number;
+  page: number;
+  pageSize: number;
+  numaratori: { active: number; deReceptionat: number; livrate: number; neincasate: number; comisioaneNeachitate: number; neidentificate: number };
+  perioada: { deLa: string; panaLa: string };
+};
+export type ComandaManualaNoua = {
+  firmaId?: string;
+  client: { nume: string; telefon: string; localitate?: string | null; adresa?: string };
+  rezumat: string;
+  totalLei: string;
+  totalCuTvaEur?: string;
+  avansLei?: string;
+  montator?: { nume: string; telefon?: string | null } | null;
+  contAlocatId?: string | null;
+  indicatiiLivrare?: string | null;
+  dataLivrarii?: string | null;
+  observatie?: string | null;
+};
+
+const BAZA_COM = "/api/comenzi";
+export const apiComenzi = {
+  lista: (f: FiltreComenzi) => {
+    const p = new URLSearchParams();
+    for (const [k, v] of Object.entries(f)) {
+      if (v === undefined || v === "" || v === false) continue;
+      p.set(k, v === true ? "da" : String(v));
+    }
+    return cerere<ListaComenzi>(`${BAZA_COM}?${p.toString()}`);
+  },
+  firme: () => cerere<{ firme: { id: string; denumire: string }[] }>(`${BAZA_COM}/firme`),
+  conturi: () => cerere<{ conturi: (ContScurt & { firmaId: string | null })[] }>(`${BAZA_COM}/conturi`),
+  detaliu: (id: string) => cerere<{ comanda: ComandaDetaliu }>(`${BAZA_COM}/${id}`),
+  creeazaManuala: (date: ComandaManualaNoua) => cerere<{ comanda: RandComanda }>(BAZA_COM, { method: "POST", body: JSON.stringify(date) }),
+  statusLogistic: (id: string, status: StatusLogistic, notaLipsuri: string | null, mentiuni: string | null) => cerere<{ comanda: RandComanda }>(`${BAZA_COM}/${id}/status-logistic`, { method: "PUT", body: JSON.stringify({ status, notaLipsuri, mentiuni }) }),
+  livrare: (id: string, indicatii: string | null, dataLivrarii: string | null) => cerere<{ comanda: RandComanda }>(`${BAZA_COM}/${id}/livrare`, { method: "PUT", body: JSON.stringify({ indicatii, dataLivrarii }) }),
+  facturare: (id: string, f: { firma: string | null; cui: string | null; adresa: string | null }) => cerere<{ comanda: RandComanda }>(`${BAZA_COM}/${id}/facturare`, { method: "PUT", body: JSON.stringify(f) }),
+  contacte: (id: string, c: { clientTelefon?: string; montatorNume?: string | null; montatorTelefon?: string | null }) => cerere<{ comanda: RandComanda }>(`${BAZA_COM}/${id}/contacte`, { method: "PUT", body: JSON.stringify(c) }),
+  alocare: (id: string, contAlocatId: string | null, mentiuni: string | null) => cerere<{ comanda: RandComanda }>(`${BAZA_COM}/${id}/alocare`, { method: "PUT", body: JSON.stringify({ contAlocatId, mentiuni }) }),
+  observatie: (id: string, text: string) => cerere<{ observatie: ObservatieComanda }>(`${BAZA_COM}/${id}/observatii`, { method: "POST", body: JSON.stringify({ text }) }),
+  atasament: (id: string, fisier: File) => {
+    const f = new FormData();
+    f.append("fisier", fisier);
+    return cerereFormular<{ atasament: AtasamentComanda }>(`${BAZA_COM}/${id}/atasamente`, f);
+  },
+  caleAtasament: (id: string, aid: string) => `${BAZA_API}${BAZA_COM}/${id}/atasamente/${aid}`,
+  caleAtasamentOferta: (id: string, aid: string) => `${BAZA_API}${BAZA_COM}/${id}/atasamente-oferta/${aid}`,
+  caleDocument: (id: string, did: string) => `${BAZA_API}${BAZA_COM}/${id}/documente/${did}`,
+};

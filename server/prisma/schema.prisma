@@ -42,20 +42,20 @@ enum RezultatAutentificare {
 }
 
 model Firma {
-  id          String   @id @default(uuid())
-  denumire    String
-  cui         String
-  nrRegCom    String
-  adresa      String
-  telefon     String
-  email       String
-  contBancar  String?
-  banca       String?
-  platitorTva Boolean  @default(true)
-  localitate  String?
-  judet       String?
-  observatii  String?
-  logo        String?
+  id                    String    @id @default(uuid())
+  denumire              String
+  cui                   String
+  nrRegCom              String
+  adresa                String
+  telefon               String
+  email                 String
+  contBancar            String?
+  banca                 String?
+  platitorTva           Boolean   @default(true)
+  localitate            String?
+  judet                 String?
+  observatii            String?
+  logo                  String?
   // sablonul formularului de comanda Bilka al firmei (S16b, migrarea 13): fisierul
   // .xlsm din folderul de date (sabloane-bilka/<id>.xlsm), versiunea (numele
   // fisierului + data modificarii din arhiva), cand si cine l-a incarcat
@@ -63,9 +63,9 @@ model Firma {
   sablonBilkaVersiune   String?
   sablonBilkaIncarcatLa DateTime?
   sablonBilkaIncarcatDe String?
-  activ       Boolean  @default(true)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  activ                 Boolean   @default(true)
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
 
   utilizatori      Utilizator[]
   utilizatorFirmas UtilizatorFirma[]
@@ -116,10 +116,14 @@ model Utilizator {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  montatori         Montator[]       @relation("MontatoriiAgentului")
-  documenteGenerate OfertaDocument[] @relation("DocumenteGenerate")
-  comenziTrimise    Comanda[]        @relation("ComenziTrimise")
-  notiteScrise      OfertaNotita[]   @relation("NotiteScrise")
+  montatori         Montator[]          @relation("MontatoriiAgentului")
+  documenteGenerate OfertaDocument[]    @relation("DocumenteGenerate")
+  comenziTrimise    Comanda[]           @relation("ComenziTrimise")
+  comenziAlocate    Comanda[]           @relation("ComenziAlocate")
+  comandaIstoric    ComandaIstoric[]    @relation("ComandaIstoricScris")
+  comandaObservatii ComandaObservatie[] @relation("ComandaObservatiiScrise")
+  comandaAtasamente ComandaAtasament[]  @relation("ComandaAtasamenteIncarcate")
+  notiteScrise      OfertaNotita[]      @relation("NotiteScrise")
 
   firmeAcces          UtilizatorFirma[]
   listePretCreate     ListaPret[]
@@ -602,7 +606,8 @@ model Client {
   createdAt         DateTime    @default(now())
   updatedAt         DateTime    @updatedAt
 
-  oferte Oferta[]
+  oferte  Oferta[]
+  comenzi Comanda[]
 
   @@map("client")
 }
@@ -970,10 +975,24 @@ model Montator {
 // ofertei, responsabilul = contul care a trimis, clientul, montatorul, rezumatul
 // comenzii, sumele, statusul logistic initial; restul (incasari, livrare,
 // facturare, retururi) in Etapa 5
+// S19 (migrarea 15, aditiva): comanda completa (FISA-COMENZI cap. 1, 3, 4b). Comenzile
+// din oferta pastreaza legatura cu oferta (numarul = numarul ofertei); comenzile
+// MANUALE (cap. 4b) n-au oferta: seria CM (un contor pentru tot softul), cine le-a
+// adaugat, contul alocat (orice cont) sau niciunul = "neidentificata". Contul alocat
+// se completeaza si la comenzile din oferta (= contul ofertei), ca "ale lui" sa fie o
+// singura regula. Statusul logistic, livrarea, alocarea si facturarea au istoric
+// (ComandaIstoric); observatiile se adauga, nu se rescriu (ComandaObservatie);
+// atasamentele stau in folderul de date (ComandaAtasament). Incasarile, comisioanele,
+// retururile si paletii vin in S20-S23 cu tabelele lor.
+enum TipComanda {
+  DIN_OFERTA
+  MANUALA
+}
+
 model Comanda {
   id            String     @id @default(uuid())
-  ofertaId      String     @unique
-  oferta        Oferta     @relation(fields: [ofertaId], references: [id])
+  ofertaId      String?    @unique
+  oferta        Oferta?    @relation(fields: [ofertaId], references: [id], onDelete: Restrict)
   firmaId       String
   firma         Firma      @relation(fields: [firmaId], references: [id])
   responsabilId String
@@ -998,8 +1017,85 @@ model Comanda {
   createdAt      DateTime       @default(now())
   updatedAt      DateTime       @updatedAt
 
+  // S19
+  tip                  TipComanda  @default(DIN_OFERTA)
+  contAlocatId         String?
+  contAlocat           Utilizator? @relation("ComenziAlocate", fields: [contAlocatId], references: [id])
+  clientId             String?
+  client               Client?     @relation(fields: [clientId], references: [id])
+  // statusul logistic: cand s-a pus ultimul si nota lipsurilor la "Receptionat partial"
+  statusLogisticLa     DateTime?
+  notaLipsuri          String?
+  livratLa             DateTime?
+  // indicatiile de livrare (text liber), cu cine si cand le-a scris, si ziua livrarii
+  indicatiiLivrare     String?
+  indicatiiLivrareNume String?
+  indicatiiLivrareLa   DateTime?
+  dataLivrarii         DateTime?   @db.Date
+  // datele de facturare, doar daca difera de ale clientului
+  facturareFirma       String?
+  facturareCui         String?
+  facturareAdresa      String?
+
+  istoric    ComandaIstoric[]
+  observatii ComandaObservatie[]
+  atasamente ComandaAtasament[]
+
   @@index([firmaId, data])
+  @@index([contAlocatId])
   @@map("comanda")
+}
+
+// istoricul comenzii (FISA-CONTURI §5): statusul logistic, livrarea, alocarea,
+// facturarea, contactele - cine, cand, inainte / dupa, mentiuni
+model ComandaIstoric {
+  id                     String      @id @default(uuid())
+  comandaId              String
+  comanda                Comanda     @relation(fields: [comandaId], references: [id])
+  moment                 DateTime    @default(now())
+  utilizatorId           String?
+  utilizator             Utilizator? @relation("ComandaIstoricScris", fields: [utilizatorId], references: [id])
+  numeUtilizatorLaMoment String
+  tip                    String
+  camp                   String?
+  valoareInainte         String?
+  valoareDupa            String?
+  mentiuni               String?
+
+  @@index([comandaId, moment])
+  @@map("comanda_istoric")
+}
+
+// observatiile comenzii: se adauga, nu se rescriu (cap. 1, "cu istoric")
+model ComandaObservatie {
+  id                     String      @id @default(uuid())
+  comandaId              String
+  comanda                Comanda     @relation(fields: [comandaId], references: [id])
+  utilizatorId           String?
+  utilizator             Utilizator? @relation("ComandaObservatiiScrise", fields: [utilizatorId], references: [id])
+  numeUtilizatorLaMoment String
+  text                   String
+  moment                 DateTime    @default(now())
+
+  @@index([comandaId, moment])
+  @@map("comanda_observatie")
+}
+
+// atasamentele comenzii (necesarul primit, formularul trimis, poze), in folderul de date (comenzi/<id>/)
+model ComandaAtasament {
+  id           String      @id @default(uuid())
+  comandaId    String
+  comanda      Comanda     @relation(fields: [comandaId], references: [id])
+  nume         String
+  fisier       String
+  tipMime      String?
+  marime       Int?
+  incarcatDeId String?
+  incarcatDe   Utilizator? @relation("ComandaAtasamenteIncarcate", fields: [incarcatDeId], references: [id])
+  moment       DateTime    @default(now())
+
+  @@index([comandaId])
+  @@map("comanda_atasament")
 }
 
 // notitele de pe oferta (cap. 14): text liber, cine, cand; raman accesibile din comanda

@@ -121,11 +121,17 @@ export async function schimbaStatus(ofertaId: string, date: z.infer<typeof schem
     if (date.status === "COMANDAT" && rezultat) {
       const total = rezultat.totaluri.documentTotalLei;
       const avans = avansNou ?? new Prisma.Decimal(0);
-      await tx.comanda.create({
+      const comanda = await tx.comanda.create({
         data: {
           ofertaId,
           firmaId: o.firmaId,
           responsabilId: u.id,
+          // S19: contul alocat = contul ofertei (o singura regula pentru "ale lui"), clientul
+          // din baza comuna, momentul statusului logistic initial
+          tip: "DIN_OFERTA",
+          contAlocatId: o.utilizatorId,
+          clientId: o.clientId,
+          statusLogisticLa: acum,
           serie: o.serie,
           numar: o.numar,
           data: new Date(`${new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Bucharest", year: "numeric", month: "2-digit", day: "2-digit" }).format(acum)}T00:00:00Z`),
@@ -141,6 +147,7 @@ export async function schimbaStatus(ofertaId: string, date: z.infer<typeof schem
           restLei: new Prisma.Decimal(total).minus(avans),
         },
       });
+      await tx.comandaIstoric.create({ data: { comandaId: comanda.id, utilizatorId: u.id, numeUtilizatorLaMoment: u.nume, tip: "status", camp: "statusLogistic", valoareInainte: null, valoareDupa: "Comandat" } });
     }
   });
 }
