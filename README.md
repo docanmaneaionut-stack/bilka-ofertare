@@ -28,5 +28,8 @@ La **restaurarea unui export** (`npm run restore -- <zip>`): baza trebuie să fi
 - Raportul: `docs/verificari/formular-bilka-raport.md` (rezumat pe categorii + excepțiile; concluziile scrise de mână stau în `formular-bilka-concluzii.md` și scriptul le include la fiecare rescriere); starea pe produs: `docs/verificari/formular-bilka-stare.json`, scrisă după fiecare formular — o rulare întreruptă se reia de unde a rămas.
 - `-- --proba` — doar trei formulare (E01, Retro Plus Double Line lucios 0,50, T 35 acoperiș / perete); raport separat `formular-bilka-proba.md`.
 - `-- --de-la-zero` — **la fiecare șablon nou de la Bilka**: încarcă șablonul la firmă (Zona tehnică → Firme), apoi rulează cu `--de-la-zero` (sau `--sablon <cale.xlsm>` pentru un fișier anume); starea veche se șterge și raportul se reface pentru noul șablon.
-- `-- --toate-culorile` (fiecare culoare a cheii, nu doar prima), `-- --limita N` (cel mult N oferte în rularea curentă).
+- `-- --toate-culorile` (fiecare culoare a cheii, nu doar prima), `-- --limita N` (cel mult N oferte în rularea curentă), `-- --doar-acelasi-rand` (reia doar ofertele care au avut „același rând” — după M4 a doua variantă trebuie să ajungă pe alt formular; S17d).
 - Nu se rulează în același timp cu `npm test` (aceeași schemă de test). Șablonul implicit: primul fișier din `server/data/sabloane-bilka/`.
+
+## Corecții de date din CSV-urile de import (S17d)
+`cd server && npm run date:activ` — arată produsele marcate inactive în `docs/import/Bilka/*.csv` (coloana `activ` = nu) care sunt încă active în bază; `npm run date:activ -- --aplica` le dezactivează, cu câte o intrare în jurnal (nimic șters, nicio versiune nouă de prețuri — spre deosebire de reimport). Idempotent; produsele active în CSV dar inactive în bază se raportează doar. Rulează pe baza din `DATABASE_URL`.

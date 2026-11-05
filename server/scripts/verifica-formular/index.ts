@@ -14,6 +14,8 @@
 //   npm run verifica:formular -- --sablon <cale.xlsm>   alt sablon decat cel din data/sabloane-bilka
 //   npm run verifica:formular -- --toate-culorile       fiecare culoare a cheii, nu doar prima
 //   npm run verifica:formular -- --limita N             cel mult N oferte in aceasta rulare
+//   npm run verifica:formular -- --doar-acelasi-rand    reia doar ofertele care au avut „același rând”
+//                                                       (S17d, M4: a doua varianta trebuie sa ajunga pe alt formular)
 //
 // Starea: docs/verificari/formular-bilka-stare.json (scrisa dupa fiecare formular);
 // raportul: docs/verificari/formular-bilka-raport.md (rescris din stare).
@@ -58,6 +60,7 @@ const PROBA = are("--proba");
 const DE_LA_ZERO = are("--de-la-zero");
 const TOATE_CULORILE = are("--toate-culorile");
 const LIMITA = dupa("--limita") ? Number(dupa("--limita")) : Infinity;
+const DOAR_ACELASI_RAND = are("--doar-acelasi-rand");
 
 const RADACINA = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
 const DOCS_VERIFICARI = path.resolve(RADACINA, "../docs/verificari");
@@ -722,7 +725,8 @@ async function ruleazaOferta(o: OfertaPlan, agent: Agent, sablon: Sablon, citiri
     return;
   }
   const documente = rf.body.documente as { id: string; nume: string; fisier?: string; formularNr: number; avertizari: string | null }[];
-  const avertizari = (rf.body.avertizari as string[]) ?? [];
+  // avertizarile „Atenție la trimitere” (S17d) sunt informative, nu tin produsul departe de comparatie
+  const avertizari = ((rf.body.avertizari as string[]) ?? []).filter((a) => !/Atenție la trimitere/.test(a));
   // liniile salvate (snapshot cu pret de baza) - asteptarea
   const liniiDb = await prisma.ofertaLinie.findMany({ where: { ofertaId: id }, include: { pozitii: true, invelitoare: { include: { panotaj: true } } }, orderBy: { ordine: "asc" } });
   const liniiFormular = new Map<number, LinieSalvata[]>();
@@ -768,7 +772,7 @@ async function ruleazaOferta(o: OfertaPlan, agent: Agent, sablon: Sablon, citiri
       for (const l of liniile) noteaza(stare, o, l, { categorie: "eroare", detalii: [`Excel: ${citire.eroare}`] }, path.basename(w.cale), produseDupaId);
       continue;
     }
-    const avertizariFormular = [...avertizari, ...(w.doc.avertizari ? w.doc.avertizari.split("\n") : [])];
+    const avertizariFormular = [...avertizari, ...(w.doc.avertizari ? w.doc.avertizari.split("\n").filter((a) => !/Atenție la trimitere/.test(a)) : [])];
     const { rez, portalNefolosit } = comparaFormular(liniile, citire, avertizariFormular, sablon);
     rezultatOferta.portalNefolosit!.push(...portalNefolosit.map((r) => `${path.basename(w.cale)}: ${r}`));
     for (const l of liniile) {
@@ -906,6 +910,9 @@ async function main() {
   stare.sablon = { fisier: path.basename(caleSablon), versiune: versiuneSablon };
   const produse = await catalog();
   const produseDupaId = new Map(produse.map((p) => [p.id, p]));
+  // produsele iesite din catalog (inactive dupa o corectie de date) nu mai au ce cauta in stare
+  const coduriActive = new Set(produse.map((p) => p.cod ?? p.codIntern));
+  for (const [k, p] of Object.entries(stare.produse)) if (!coduriActive.has(p.cod)) delete stare.produse[k];
   let plan = PROBA ? await planProba(produse) : await planComplet(produse, sablon);
   // ofertele primei treceri care nu mai sunt in plan (alta impartire, ex. sipca pe tip de capat)
   // ies din stare impreuna cu produsele lor, ca sa se verifice din nou
@@ -968,7 +975,11 @@ async function main() {
   const inPlan = new Set(plan.map((o) => o.id));
   for (const [id, o] of Object.entries(stare.oferte)) if (o.eroare && !inPlan.has(id)) delete stare.oferte[id];
   const citiri = citiriPentru(sablon);
-  const deRulat = plan.filter((o) => !stare.oferte[o.id] || stare.oferte[o.id].eroare);
+  // --doar-acelasi-rand: ofertele din plan la care o rulare anterioara a avut „același rând”
+  // (M4 trebuie sa le dea acum doua formulare); altfel, ce nu s-a rulat inca sau a dat eroare
+  const deRulat = DOAR_ACELASI_RAND
+    ? plan.filter((o) => (stare.oferte[o.id]?.avertizari ?? []).some((a) => /același rând/.test(a)))
+    : plan.filter((o) => !stare.oferte[o.id] || stare.oferte[o.id].eroare);
   stare.rulate = plan.length - deRulat.length;
   log(`plan: ${plan.length} oferte, ${plan.reduce((s, o) => s + o.produse.length, 0)} verificări de produs; de rulat acum: ${Math.min(deRulat.length, LIMITA)}`);
   scrieStare(stare);

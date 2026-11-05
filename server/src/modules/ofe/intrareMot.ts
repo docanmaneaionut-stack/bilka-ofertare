@@ -1,5 +1,6 @@
 import type { Prisma } from "@prisma/client";
 import type { IntrareOferta, LinieOferta, ProdusOferta, RezultatOferta, TipTinta } from "../mot/tipuri.js";
+import { randuriFormularOferta } from "./formularBilka/randuri.js";
 
 // Oferta din baza de date -> intrarea motorului (ARH §4.3: transformare 1:1,
 // fara traduceri). M1 (R9): invelitorile si rubricile de sipca intra in motor cu
@@ -8,6 +9,8 @@ import type { IntrareOferta, LinieOferta, ProdusOferta, RezultatOferta, TipTinta
 
 export const includeProduse = {
   utilizator: { select: { rol: true, adaosProcent: true } },
+  // M4 (S17d): sablonul firmei da randurile formularului pentru liniile de accesorii
+  firma: { select: { sablonBilka: true } },
   invelitori: { orderBy: { ordine: "asc" as const }, include: { panotaj: { orderBy: { ordine: "asc" as const } } } },
   linii: { orderBy: { ordine: "asc" as const }, include: { pozitii: { orderBy: { ordine: "asc" as const } } } },
   sipci: { orderBy: { ordine: "asc" as const }, include: { tronsoane: { orderBy: { ordine: "asc" as const } } } },
@@ -40,7 +43,13 @@ function produsDinSnapshot(s: { cod: string; denumire: string; um: string; pretB
   return p;
 }
 
-export function spreIntrareMot(o: OfertaCuProduse): IntrareOferta {
+// M4 (S17d): intrarea motorului cu randul formularului Bilka pe fiecare linie de
+// accesorii (din sablonul firmei si tabela de corespondenta); fara sablon, ca la M3
+export async function intrareMot(o: OfertaCuProduse): Promise<IntrareOferta> {
+  return spreIntrareMot(o, await randuriFormularOferta(o));
+}
+
+export function spreIntrareMot(o: OfertaCuProduse, randuriFormular: Map<string, string> = new Map()): IntrareOferta {
   const idInvelitori = new Set(o.invelitori.map((i) => i.id));
   const sipcaPeLinie = new Map(o.sipci.map((s) => [s.linieId, s.id]));
   const intrare: IntrareOferta = {
@@ -79,6 +88,8 @@ export function spreIntrareMot(o: OfertaCuProduse): IntrareOferta {
         if (l.pretFixPreluat) linie.pretFix.preluat = true;
       }
       if (l.discountPct !== null) linie.discountPct = l.discountPct.toString();
+      const rand = randuriFormular.get(l.id);
+      if (rand) linie.randFormular = rand;
       return linie;
     }),
     zonaB: o.zonaB.map((z) => ({ denumire: z.denumire, um: z.um, cantitate: z.cantitate.toString(), sumaLei: z.sumaLei.toString(), contineTva: z.contineTva, preiaInFactura: z.preiaInFactura })),

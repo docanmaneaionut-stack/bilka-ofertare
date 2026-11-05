@@ -11,7 +11,7 @@ import type { IntrareOferta, RandVanzari, RezultatOferta, Tinta } from "../mot/t
 import { la2, la4, z as zec } from "../mot/zecimal.js";
 import { gasesteSauCreeazaClient, numarComplet, type DateClient } from "./clienti.js";
 import { scrieIstoric } from "./istoric.js";
-import { includeProduse, spreIntrareMot, type OfertaCuProduse } from "./intrareMot.js";
+import { includeProduse, intrareMot, type OfertaCuProduse } from "./intrareMot.js";
 import { urmatorulNumar } from "./numerotare.js";
 import { filtruVizibilitateOferte, poateVedeaOferta, vedePreturiDeBaza } from "./vizibilitate.js";
 
@@ -52,10 +52,10 @@ export interface RezultatPreturi extends Omit<RezultatOferta, "linii" | "vanzari
   lucrare: RandVanzari | null;
 }
 
-export function rezultatOfertei(o: OfertaCuProduse): { rezultat: RezultatOferta | null; eroare: string | null } {
+export async function rezultatOfertei(o: OfertaCuProduse): Promise<{ rezultat: RezultatOferta | null; eroare: string | null }> {
   if (o.invelitori.length === 0 && o.linii.length === 0) return { rezultat: null, eroare: null };
   try {
-    return { rezultat: calculeazaOferta(spreIntrareMot(o)), eroare: null };
+    return { rezultat: calculeazaOferta(await intrareMot(o)), eroare: null };
   } catch (e) {
     if (e instanceof ZodError) return { rezultat: null, eroare: e.issues.map((i) => `${i.path.join(".")}: ${i.message}`).join("; ") };
     return { rezultat: null, eroare: e instanceof Error ? e.message : String(e) };
@@ -78,20 +78,20 @@ export function filtreazaPeRol(r: RezultatOferta, o: OfertaCuProduse, u: Utiliza
 
 // la "Comandat" rezultatul motorului e cel salvat atunci (cap. 14, 16): o viitoare
 // MODIFICARE a motorului nu schimba o comanda facturata
-export function rezultatSauSalvat(o: OfertaCuProduse & { rezultatMotor?: unknown }): { rezultat: RezultatOferta | null; eroare: string | null } {
+export async function rezultatSauSalvat(o: OfertaCuProduse & { rezultatMotor?: unknown }): Promise<{ rezultat: RezultatOferta | null; eroare: string | null }> {
   if (o.status === "COMANDAT" && o.rezultatMotor) return { rezultat: o.rezultatMotor as unknown as RezultatOferta, eroare: null };
   return rezultatOfertei(o);
 }
 
 export async function blocPreturi(ofertaId: string, u: Utilizator): Promise<{ rezultat: RezultatPreturi | null; eroare: string | null }> {
   const o = await prisma.oferta.findUniqueOrThrow({ where: { id: ofertaId }, include: includeProduse });
-  const { rezultat, eroare } = rezultatSauSalvat(o);
+  const { rezultat, eroare } = await rezultatSauSalvat(o);
   if (!rezultat) return { rezultat: null, eroare };
   // lucrarea: oferta initiala + completarile ei curente (cap. 2b, 19)
   let lucrare: RandVanzari | null = null;
   if (!o.completareLaId) {
     const completari = await prisma.oferta.findMany({ where: { completareLaId: o.id, curenta: true }, include: includeProduse });
-    const rezultate = completari.map((c) => rezultatSauSalvat(c).rezultat).filter((x): x is RezultatOferta => x !== null);
+    const rezultate = (await Promise.all(completari.map((c) => rezultatSauSalvat(c)))).map((r) => r.rezultat).filter((x): x is RezultatOferta => x !== null);
     if (rezultate.length > 0) lucrare = agregaLucrare(rezultat, rezultate, Number(o.tvaPct));
   }
   return { rezultat: filtreazaPeRol(rezultat, o, u, lucrare), eroare: null };
@@ -140,10 +140,10 @@ export function normalizeazaPretFix(fix: { tip: string; valoare: string }, cursB
 }
 
 // ruleaza motorul pe oferta propusa; garda cazuta (si oferta nu e completare) = refuz
-function verificaGarda(o: OfertaCuProduse): RezultatOferta {
+async function verificaGarda(o: OfertaCuProduse): Promise<RezultatOferta> {
   let rezultat: RezultatOferta;
   try {
-    rezultat = calculeazaOferta(spreIntrareMot(o));
+    rezultat = calculeazaOferta(await intrareMot(o));
   } catch (e) {
     if (e instanceof ZodError) throw new EroarePreturi(e.issues.map((i) => `${i.path.join(".")}: ${i.message}`).join("; "));
     throw new EroarePreturi(e instanceof Error ? e.message : String(e));
@@ -198,7 +198,7 @@ export async function salveazaPreturi(ofertaId: string, date: DatePreturi, u: Ut
     liniiSchimbate.set(l.id, schimbare);
   }
 
-  verificaGarda(o);
+  await verificaGarda(o);
 
   await prisma.$transaction(async (tx) => {
     await tx.oferta.update({
@@ -224,7 +224,7 @@ export async function salveazaPreturi(ofertaId: string, date: DatePreturi, u: Ut
 // adaosul real al bazei pastrat cu 4 zecimale; produsele le schimba apoi agentul
 export async function creeazaVarianta(ofertaId: string, u: Utilizator): Promise<string> {
   const baza = await prisma.oferta.findUniqueOrThrow({ where: { id: ofertaId }, include: includeProduse });
-  const { rezultat } = rezultatOfertei(baza);
+  const { rezultat } = await rezultatOfertei(baza);
   const tinta: { tip: "ADAOS_PCT_PASTRAT" | "ADAOS_PCT" | "TOTAL_CU_TVA_LEI" | "PRELUATA"; valoare: Prisma.Decimal } = rezultat
     ? { tip: "ADAOS_PCT_PASTRAT", valoare: nr(rezultat.totaluri.adaosRealPctExact) }
     : { tip: baza.tintaTip === "PRELUATA" ? "ADAOS_PCT" : baza.tintaTip, valoare: baza.tintaTip === "PRELUATA" ? nr(env.adaosTintaImplicitPct) : baza.tintaValoare };
@@ -429,10 +429,10 @@ export async function preiaPreturiDinOferta(ofertaId: string, sursaId: string, u
   const o = await prisma.oferta.findUniqueOrThrow({ where: { id: ofertaId }, include: includeProduse });
   const sursa = await prisma.oferta.findUnique({ where: { id: sursaId }, include: includeProduse });
   if (!sursa || !poateVedeaOferta(u, sursa)) throw new EroarePreturi("Oferta-sursă nu există sau nu e vizibilă contului", 404);
-  const rezSursa = rezultatOfertei(sursa);
+  const rezSursa = await rezultatOfertei(sursa);
   if (!rezSursa.rezultat) throw new EroarePreturi(`Oferta-sursă nu are prețuri calculabile${rezSursa.eroare ? `: ${rezSursa.eroare}` : ""}`, 409);
   if (o.linii.length === 0) throw new EroarePreturi("Oferta nu are încă produse", 409);
-  const noua = preiaPreturiMot(spreIntrareMot(o), spreIntrareMot(sursa), rezSursa.rezultat, numarComplet(sursa.serie, sursa.numar));
+  const noua = preiaPreturiMot(await intrareMot(o), await intrareMot(sursa), rezSursa.rezultat, numarComplet(sursa.serie, sursa.numar));
 
   // garda se verifica si pe preturile preluate (alt cont poate avea alta achizitie);
   // propunerea se aplica pe obiectul incarcat (nu se scrie decat explicit, mai jos)
@@ -451,7 +451,7 @@ export async function preiaPreturiDinOferta(ofertaId: string, sursaId: string, u
     l.pretFixPreluat = n.pretFix?.preluat ?? false;
     l.discountPct = n.discountPct !== undefined ? nr(n.discountPct) : null;
   }
-  verificaGarda(propusa);
+  await verificaGarda(propusa);
 
   await prisma.$transaction(async (tx) => {
     await tx.oferta.update({
@@ -466,7 +466,7 @@ export async function renuntaLaPreluare(ofertaId: string, tinta: { tip: "ADAOS_P
   const o = await prisma.oferta.findUniqueOrThrow({ where: { id: ofertaId }, include: includeProduse });
   if (o.tintaTip !== "PRELUATA") throw new EroarePreturi("Oferta nu preia prețuri din altă ofertă", 409);
   const tintaMot: Tinta = { tip: tinta.tip === "ADAOS_PCT" ? "adaos_pct" : "total_cu_tva_lei", valoare: tinta.valoare.replace(",", ".") };
-  const noua = renuntaLaPreluareMot(spreIntrareMot(o), tintaMot);
+  const noua = renuntaLaPreluareMot(await intrareMot(o), tintaMot);
   const propusa = o;
   propusa.tintaTip = tinta.tip;
   propusa.tintaValoare = nr(tinta.valoare);
@@ -478,7 +478,7 @@ export async function renuntaLaPreluare(ofertaId: string, tinta: { tip: "ADAOS_P
     l.pretFixValoare = n.pretFix ? nr(n.pretFix.valoare) : null;
     l.pretFixPreluat = false;
   }
-  verificaGarda(propusa);
+  await verificaGarda(propusa);
   await prisma.$transaction(async (tx) => {
     await tx.oferta.update({ where: { id: ofertaId }, data: { tintaTip: tinta.tip, tintaValoare: nr(tinta.valoare), preluataDinId: null, modificatDeId: u.id } });
     await scrieLiniiDinIntrare(tx, noua);

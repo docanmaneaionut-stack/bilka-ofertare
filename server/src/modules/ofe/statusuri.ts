@@ -5,7 +5,7 @@ import { prisma } from "../../db/prisma.js";
 import { calculeazaOferta } from "../mot/calcul.js";
 import { finisajScurt, numarRal, numeModel } from "../mot/pachete.js";
 import type { RezultatOferta } from "../mot/tipuri.js";
-import { includeProduse, spreIntrareMot, type OfertaCuProduse } from "./intrareMot.js";
+import { includeProduse, intrareMot, type OfertaCuProduse } from "./intrareMot.js";
 import { scrieIstoric } from "./istoric.js";
 
 // Statusurile ofertei (FISA-OFERTARE cap. 14; FISA-CONTURI §3-4): cele 8, in orice
@@ -82,7 +82,7 @@ export async function schimbaStatus(ofertaId: string, date: z.infer<typeof schem
   if (date.status === "COMANDAT") {
     if (o.invelitori.length === 0 && o.linii.length === 0) throw new EroareStatus("Oferta nu are produse; nu se poate comanda");
     try {
-      rezultat = calculeazaOferta(spreIntrareMot(o));
+      rezultat = calculeazaOferta(await intrareMot(o));
     } catch (e) {
       const mesaj = e instanceof ZodError ? e.issues.map((i) => `${i.path.join(".")}: ${i.message}`).join("; ") : e instanceof Error ? e.message : String(e);
       throw new EroareStatus(`Oferta nu se poate calcula: ${mesaj}`);

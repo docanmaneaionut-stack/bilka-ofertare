@@ -82,7 +82,7 @@ describe("Import Bilka - cele 14 fisiere reale, pe un compartiment gol", () => {
     expect(raport.totaluri.coduriDistincte).toBe(3247);
     expect(raport.totaluri.faraCod).toBe(5);
     expect(raport.totaluri.perechiTablaPlana).toBe(26);
-    expect(raport.totaluri.inactive).toBe(2);
+    expect(raport.totaluri.inactive).toBe(38); // S17d: 2 + banda expandabila + 35 pluvial Aluzinc (CSV 02 si 04b din 05.11.2026)
 
     const d = propunere.diferente as unknown as Diferente;
     expect(d.produse.noi).toHaveLength(3425);
@@ -103,7 +103,7 @@ describe("Import Bilka - cele 14 fisiere reale, pe un compartiment gol", () => {
     primaLista = confirmata.listaPretId!;
 
     expect(await prisma.produs.count({ where: { compartimentId } })).toBe(3425);
-    expect(await prisma.produs.count({ where: { compartimentId, activ: false } })).toBe(2);
+    expect(await prisma.produs.count({ where: { compartimentId, activ: false } })).toBe(38);
     expect(await prisma.pretListaProdus.count({ where: { listaPretId: primaLista } })).toBe(3425);
     expect(await prisma.culoareFinisajGrosime.count({ where: { furnizor: "Bilka" } })).toBe(118);
     // toate cele 22 de garantii, cu cele 4 de pluvial (fara grosime; 2 fara garantie la culoare)

@@ -79,7 +79,7 @@ export async function contextDocument(o: { firmaId: string; utilizatorId: string
 export async function htmlPentru(ofertaId: string, tip: TipDocument): Promise<{ html: string; subsolStanga: string; versiune: number; numarComplet: string }> {
   const o = await prisma.oferta.findUniqueOrThrow({ where: { id: ofertaId }, include: includeProduse });
   if (o.invelitori.length === 0 && o.linii.length === 0) throw new EroareDocument("Oferta nu are produse; nu are ce să conțină documentul", 409);
-  const { rezultat, eroare } = rezultatSauSalvat(o);
+  const { rezultat, eroare } = await rezultatSauSalvat(o);
   if (!rezultat) throw new EroareDocument(`Oferta nu se poate calcula: ${eroare ?? "fără rezultat"}`, 409);
   const ctx = await contextDocument(o);
   const html = htmlDocument(tip, o, rezultat, ctx);

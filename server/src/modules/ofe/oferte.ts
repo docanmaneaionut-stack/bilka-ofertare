@@ -269,7 +269,7 @@ async function completeazaTotaluri(randuri: RandOferta[]): Promise<void> {
   for (const o of oferte) {
     const rand = randuri.find((r) => r.id === o.id);
     if (!rand || (o.invelitori.length === 0 && o.linii.length === 0)) continue;
-    const { rezultat } = rezultatSauSalvat(o);
+    const { rezultat } = await rezultatSauSalvat(o);
     if (!rezultat) continue;
     rand.totalCuTvaEur = rezultat.totaluri.documentCuTvaEur;
     rand.totalLei = rezultat.totaluri.documentTotalLei;

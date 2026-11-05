@@ -248,6 +248,10 @@ export function impacheteaza(intrare: IntrareOferta): Impachetare {
     parti: string[];
     locuri: Map<string, string>;
     variantaSipca?: string;
+    // M4 (S17d): cheia formularului (a invelitorii principale sau a sectiunii) si
+    // randurile cu lista deja ocupate de o linie
+    cheie?: CheieCuloare;
+    randuri: Set<string>;
     // M3 (S17a): continutul structurat, pe id-uri
     invelitoarePrincipala?: string;
     invelitoriSecundare: string[];
@@ -258,7 +262,7 @@ export function impacheteaza(intrare: IntrareOferta): Impachetare {
   }
   const formulare: FormularInLucru[] = [];
   const formularNou = (pachetId: string | null, descriere: string): FormularInLucru => {
-    const f: FormularInLucru = { nr: formulare.length + 1, pachete: pachetId ? [pachetId] : [], parti: [descriere], locuri: new Map(), invelitoriSecundare: [], linii: [], pluvial: [], lungimi: [] };
+    const f: FormularInLucru = { nr: formulare.length + 1, pachete: pachetId ? [pachetId] : [], parti: [descriere], locuri: new Map(), randuri: new Set(), invelitoriSecundare: [], linii: [], pluvial: [], lungimi: [] };
     formulare.push(f);
     return f;
   };
@@ -282,10 +286,52 @@ export function impacheteaza(intrare: IntrareOferta): Impachetare {
     f.invelitoarePrincipala = p.invelitoarePrincipala;
     f.invelitoriSecundare = [...p.invelitoriSecundare];
     f.linii = idAccesorii;
+    f.cheie = p.cheie;
   }
   // 5b. sectiunile de sine statatoare: formular fara invelitoare, unul per cheie
   for (const p of pachete.filter((x) => x.tip === "de_sine_statatoare")) {
-    formularNou(p.id, `Formular fără învelitoare: doar finisaj, grosime și culoare (${textCheie(p.cheie)}), ${p.linii.length} linii`).linii = [...p.linii];
+    const f = formularNou(p.id, `Formular fără învelitoare: doar finisaj, grosime și culoare (${textCheie(p.cheie)}), ${p.linii.length} linii`);
+    f.linii = [...p.linii];
+    f.cheie = p.cheie;
+  }
+
+  // 5b-bis. M4 (S17d; FISA-OFERTARE 3.5, INTREBARI-BILKA 7): un rand cu lista al
+  //    formularului tine o singura varianta pe formular. Randul il da ofertarea pe linie
+  //    (`randFormular`, din tabela de corespondenta si sablon); a doua linie care cere
+  //    acelasi rand pleaca pe primul formular existent cu aceeasi cheie si randul liber,
+  //    altfel pe un formular nou cu cheia sectiunii (care primeste apoi si el variantele
+  //    urmatoare). Liniile fara rand nu intra in regula; pachetele nu se schimba.
+  const liniaDupaId = new Map(linii.map((l) => [l.id, l]));
+  const pachetIdAlLiniei = (id: string) => pachete.find((p) => p.nume === pachetPeLinie.get(id))?.id ?? null;
+  // se judeca liniile de la inceput ale fiecarui formular; cele mutate aici de pe alt
+  // formular raman la locul lor (randul lor e deja notat la mutare)
+  for (const { f, deJudecat } of formulare.map((x) => ({ f: x, deJudecat: [...x.linii] }))) {
+    const ramase: string[] = [];
+    for (const id of deJudecat) {
+      const linie = liniaDupaId.get(id);
+      const rand = linie?.randFormular;
+      if (!linie || !rand || !f.randuri.has(rand)) {
+        if (rand) f.randuri.add(rand);
+        ramase.push(id);
+        continue;
+      }
+      const cheie = f.cheie ?? cheieLinie(linie);
+      const descriere = `${linie.produs.denumire} — a doua variantă pe același rând al formularului (cheia ${textCheie(cheie)})`;
+      const pachetId = pachetIdAlLiniei(id);
+      const liber = formulare.find((x) => x !== f && x.cheie !== undefined && aceeasiCheie(x.cheie, cheie) && !x.randuri.has(rand));
+      if (liber) {
+        liber.randuri.add(rand);
+        liber.linii.push(id);
+        if (pachetId) adaugaPachet(liber, pachetId);
+        liber.parti.push(`${descriere} — pe primul formular cu rândul liber`);
+      } else {
+        const nou = formularNou(pachetId, `Formular fără învelitoare — ${descriere}`);
+        nou.cheie = cheie;
+        nou.randuri.add(rand);
+        nou.linii.push(id);
+      }
+    }
+    f.linii = [...ramase, ...f.linii.filter((id) => !deJudecat.includes(id))];
   }
 
   // 5c. pluvialul pe locurile finisaj x sistem

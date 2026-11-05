@@ -12,7 +12,7 @@ import { rezultatSauSalvat } from "../preturi.js";
 import { poateVedeaOferta } from "../vizibilitate.js";
 import { EroareNumeLipsa, umpleFormulare, type FormularUmplut } from "./continut.js";
 import { citesteSablon, EroareSablon, type Sablon } from "./sablon.js";
-import { activeazaRecalcul, EroareScriere, scrieCelule } from "./scrie.js";
+import { activeazaRecalcul, EroareScriere, golesteRandurileDeDate, scrieCelule } from "./scrie.js";
 import { EroareZip, rescrieZip } from "./zip.js";
 
 // Formularele de comanda Bilka (S16b; FISA-OFERTARE 3.5, R10; docs/FORMULAR-BILKA-HARTA.md):
@@ -27,6 +27,8 @@ import { EroareZip, rescrieZip } from "./zip.js";
 export const formulareBilkaRouter = Router({ mergeParams: true });
 
 export const STATUSURI_FORMULAR = ["DE_COMANDAT", "COMANDAT"] as const;
+// foaia ascunsa pe care macro-ul Bilka o umple la salvare (S17b / S17c)
+export const FOAIA_PORTAL = "Portal";
 
 export function poateGeneraFormulare(u: Utilizator, oferta: { utilizatorId: string; firmaId: string }): boolean {
   return poateVedeaOferta(u, oferta) && u.rol !== "COLABORATOR";
@@ -47,6 +49,11 @@ export function fisiereDinUmplere(sablon: Sablon, formulare: FormularUmplut[]): 
     const inlocuiri = new Map<string, Buffer>();
     for (const [foaie, celule] of peFoaie) inlocuiri.set(foaie, Buffer.from(scrieCelule(sablon.xml(foaie), celule), "utf8"));
     inlocuiri.set("xl/workbook.xml", Buffer.from(activeazaRecalcul(sablon.xml("xl/workbook.xml")), "utf8"));
+    // S17d: foaia ascunsa "Portal" pleaca fara randurile de date (ramane antetul) - macro-ul
+    // Bilka o rescrie la salvarea din Excel; asa un fisier trimis fara salvare nu poarta
+    // comanda veche din sablon
+    const portal = sablon.foi.get(FOAIA_PORTAL);
+    if (portal) inlocuiri.set(portal, Buffer.from(golesteRandurileDeDate(sablon.xml(portal)), "utf8"));
     return { nr: f.nr, continut: rescrieZip(sablon.buf, sablon.intrari, inlocuiri), avertizari: f.avertizari };
   });
 }
@@ -64,11 +71,11 @@ export async function genereazaFormulareBilka(ofertaId: string, u: Utilizator) {
     if ((e as NodeJS.ErrnoException).code === "ENOENT") throw new EroareDocument("Fișierul șablonului Bilka lipsește din folderul de date; încarcă-l din nou din Zona tehnică → Firme", 409);
     throw e;
   }
-  const { rezultat, eroare } = rezultatSauSalvat(o);
+  const { rezultat, eroare } = await rezultatSauSalvat(o);
   if (!rezultat) throw new EroareDocument(`Oferta nu se poate calcula: ${eroare ?? "fără rezultat"}`, 409);
   if (rezultat.formulareBilka.length === 0) throw new EroareDocument("Oferta nu are produse pentru formularul Bilka", 409);
 
-  const corespondente = await prisma.corespondentaFormularBilka.findMany({ where: { activ: true }, select: { cheie: true, cuvant: true, numeFormular: true } });
+  const corespondente = await prisma.corespondentaFormularBilka.findMany({ where: { activ: true }, select: { cheie: true, cuvant: true, numeFormular: true, atentie: true } });
   const ids = [...new Set([...o.invelitori, ...o.linii].map((x) => x.produsId).filter((x): x is string => Boolean(x)))];
   const produse = new Map((ids.length ? await prisma.produs.findMany({ where: { id: { in: ids } }, select: { id: true, modulCm: true, treapta: true } }) : []).map((p) => [p.id, { modulCm: p.modulCm?.toString() ?? null, treapta: p.treapta }]));
   const nrComplet = numarComplet(o.serie, o.numar);

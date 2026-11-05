@@ -74,3 +74,12 @@ export function activeazaRecalcul(workbookXml: string): string {
   if (/<calcPr\b/.test(workbookXml)) return workbookXml.replace(/<calcPr\b([^>]*?)(\/?)>/, (_, a: string, slash: string) => `<calcPr${a.replace(/\s*fullCalcOnLoad="[^"]*"/, "")} fullCalcOnLoad="1"${slash}>`);
   return workbookXml.replace("</workbook>", '<calcPr fullCalcOnLoad="1"/></workbook>');
 }
+
+// S17d: foaia "Portal" fara randurile de date - ramane doar primul rand (antetul);
+// randurile 2+ (comanda veche ramasa in sablon) se scot, macro-ul Bilka le rescrie la salvare
+export function golesteRandurileDeDate(xml: string): string {
+  return xml.replace(/<row\b([^>]*?)(\/>|>[\s\S]*?<\/row>)/g, (intreg, atribute: string) => {
+    const r = /\br="(\d+)"/.exec(atribute)?.[1];
+    return r === "1" ? intreg : "";
+  });
+}

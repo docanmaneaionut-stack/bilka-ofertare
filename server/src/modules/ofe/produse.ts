@@ -4,7 +4,7 @@ import { ZodError } from "zod";
 import { prisma } from "../../db/prisma.js";
 import { calculeazaOferta } from "../mot/calcul.js";
 import { selectProdusEditor, spreProdusEditor, type ProdusEditor } from "./catalog.js";
-import { includeProduse, rezultatStructura, spreIntrareMot, type RezultatStructura } from "./intrareMot.js";
+import { includeProduse, intrareMot, rezultatStructura, type RezultatStructura } from "./intrareMot.js";
 
 // Salvarea zonei produselor (FISA-OFERTARE cap. 3-10): starea editorului vine
 // intreaga, serverul ia snapshot-ul fiecarui produs din catalog (cod, denumire,
@@ -231,7 +231,7 @@ export async function calculeazaStructura(ofertaId: string): Promise<{ rezultat:
   const o = await prisma.oferta.findUniqueOrThrow({ where: { id: ofertaId }, include: includeProduse });
   if (o.invelitori.length === 0 && o.linii.length === 0) return { rezultat: null, eroare: null };
   try {
-    return { rezultat: rezultatStructura(calculeazaOferta(spreIntrareMot(o))), eroare: null };
+    return { rezultat: rezultatStructura(calculeazaOferta(await intrareMot(o))), eroare: null };
   } catch (e) {
     if (e instanceof ZodError) return { rezultat: null, eroare: e.issues.map((i) => `${i.path.join(".")}: ${i.message}`).join("; ") };
     return { rezultat: null, eroare: e instanceof Error ? e.message : String(e) };

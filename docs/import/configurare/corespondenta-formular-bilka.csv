@@ -1,4 +1,4 @@
-﻿furnizor;cheie;cuvant;nume_formular;stare;observatie
+﻿furnizor;cheie;cuvant;nume_formular;stare;observatie;atentie
 Bilka;TMDAC;;DACIC;automat;
 Bilka;TMADR;;ADRIATIC;automat;
 Bilka;TMHEL;;HELLENIC;automat;
@@ -19,11 +19,11 @@ Bilka;TCT12;;T 12;de_verificat;montajul (A / P) vine de pe invelitoare
 Bilka;TCT18;;T 18;de_verificat;montajul (A / P) vine de pe invelitoare
 Bilka;TCT35;;T 35;de_verificat;montajul (A / P) vine de pe invelitoare
 Bilka;TCT45;;T 45;de_verificat;montajul (A / P) vine de pe invelitoare
-Bilka;TDT18;;T 18;de_verificat;dripstop: membrana „CU DRIPSTOP”; montajul de pe invelitoare
-Bilka;TDT35;;T 35;de_verificat;dripstop; montajul de pe invelitoare
-Bilka;TDT45;;T 45;de_verificat;dripstop; montajul de pe invelitoare
+Bilka;TDT18;;T 18;de_verificat;dripstop: membrana „CU DRIPSTOP” - montajul de pe invelitoare
+Bilka;TDT35;;T 35;de_verificat;dripstop - montajul de pe invelitoare
+Bilka;TDT45;;T 45;de_verificat;dripstop - montajul de pe invelitoare
 Bilka;SIN18;;S18 SINUS;automat;
-Bilka;TPLAN;BUC;TABLA PLANA 2.00*1.25;de_verificat;tabla plana ca accesoriu (la coala, um BUC) - randul C112; cuvantul se potriveste pe unitatea de masura
+Bilka;TPLAN;BUC;TABLA PLANA 2.00*1.25;de_verificat;tabla plana ca accesoriu (la coala, um BUC) - randul C112 - cuvantul se potriveste pe unitatea de masura
 Bilka;TPLAN;;TABLA PLANA;automat;tabla plana ca invelitoare (mp)
 Bilka;REPRO;Double Line;RETRO PLUS DOUBLE LINE;automat;cuvantul = varianta de profil
 Bilka;REPRO;Micro-Ribs;RETRO PLUS MICRO-RIBS;automat;cuvantul = varianta de profil
@@ -48,8 +48,8 @@ Bilka;RETSC;Standard;RETROPANEL;automat;cuvantul = varianta de profil
 Bilka;RETSC;Flat;RETROPANEL FLAT;automat;cuvantul = varianta de profil
 Bilka;REDUO;Duo Micro-Ribs;RETRO DUO MICRORIBS;automat;cuvantul = varianta de profil
 Bilka;REDUO;Duo;RETRODUO;automat;cuvantul = varianta de profil
-Bilka;RDDUO;Duo Micro-Ribs;RETRO DUO MICRORIBS;automat;cuvantul = varianta de profil
-Bilka;RDDUO;Duo;RETRODUO;automat;cuvantul = varianta de profil
+Bilka;RDDUO;Duo Micro-Ribs;RETRO DUO MICRORIBS;automat;cuvantul = varianta de profil;Formularul Bilka nu dă cod de ierarhie și preț pentru Retro Duo Micro-Ribs dripstop — confirmă cu Bilka înainte de trimitere (S17c, întrebarea 4)
+Bilka;RDDUO;Duo;RETRODUO;automat;cuvantul = varianta de profil;Formularul Bilka compune pentru Retro Duo dripstop codul Retro Panel dripstop (RETDR…), cu prețul lui — confirmă cu Bilka înainte de trimitere (S17c, întrebarea 5)
 Bilka;TFALT;;FALTUITA 560 MM;automat;
 Bilka;TFA36;;FALTUITA 360 MM;automat;
 Bilka;SIHAG;rotund;HAGA ROTUNDA;automat;
@@ -117,8 +117,8 @@ Bilka;ABPO3;;BORD. PER. ORIZ. RETRO 312MM;de_verificat;prescurtare Bilka
 Bilka;ABPL2;;BORD. PER. LATERAL RETRO 250MM;de_verificat;prescurtare Bilka
 Bilka;ADR41;;DOLIE RETRO 417MM;automat;
 Bilka;ADR62;;DOLIE RETRO 625MM;automat;
-Bilka;ARPR3;convex;RUP. PANTA CONV. RETRO 312MM;de_verificat;un cod, doua produse; prescurtare Bilka
-Bilka;ARPR3;concav;RUP. PANTA CONC. RETRO 312MM;de_verificat;un cod, doua produse; prescurtare Bilka
+Bilka;ARPR3;convex;RUP. PANTA CONV. RETRO 312MM;de_verificat;un cod, doua produse - prescurtare Bilka
+Bilka;ARPR3;concav;RUP. PANTA CONC. RETRO 312MM;de_verificat;un cod, doua produse - prescurtare Bilka
 Bilka;ASR31;;SEMICOAMA RETRO 370MM;automat;
 Bilka;ACR41;;COAMA RETRO 417MM;automat;
 Bilka;ASC12;;SUPORT COAMA RETRO 125MM;automat;
@@ -140,12 +140,12 @@ Bilka;SUCLE408055;;HOLTS. PT LEMN 100 BUC 4.8*55;automat;formula randului poarta
 Bilka;SUCLE408070;;HOLTS. PT LEMN 100 BUC 4.8*70;automat;formula randului poarta codul
 Bilka;SUCME408019;;HOLTS. PT METAL 250 BUC 4.8*19;automat;formula randului poarta codul
 Bilka;SUCME408035;;HOLTS. PT METAL 250 BUC 4.8*35;automat;formula randului poarta codul
-Bilka;AXSPRLUC400;;SPRAY RETUS;automat;formularul alege lucios / mat dupa finisajul invelitorii
+Bilka;AXSPRLUC400;;SPRAY RETUS;automat;formularul alege lucios / mat dupa finisajul invelitorii;Formularul ia finisajul învelitorii: pe un formular mat, spray-ul lucios pleacă cu codul și prețul spray-ului mat (AXSPRMAT000) — verifică finisajul dorit (S17c, întrebarea 7)
 Bilka;AXSPRMAT400;;SPRAY RETUS;de_verificat;formularul alege lucios / mat dupa finisajul invelitorii, nu dupa produs
 Bilka;AXMAS300PRE;;MASTIC ETANSARE PREMIUM;automat;
 Bilka;AXMAS300UNI;;MASTIC ETANSARE;automat;
 Bilka;AXMASPISTOL;;PISTOL MASTIC;automat;
-Bilka;AXPIESTRUNI;;PIEPTENE STREASINA {RAL};de_verificat;culoarea in nume: {RAL} = culoarea liniei; formularul are doar 8004 / 8017 / 9005
+Bilka;AXPIESTRUNI;;PIEPTENE STREASINA {RAL};de_verificat;culoarea in nume: {RAL} = culoarea liniei - formularul are doar 8004 / 8017 / 9005
 Bilka;AXPIESTRVEN;;PIEPTENE STREASINA VENTILATIE;automat;
 Bilka;AXSNR6MM8ML;;SNUR BUTILIC 6MM*8M;automat;
 Bilka;BANDAAER501;;BANDA AERISIRE STREASINA {RAL};de_verificat;culoarea in nume: 8004 / 8017 / 9005
@@ -213,4 +213,11 @@ Bilka;AXCOSVENIBE;;COS VENTILARE IBERIC {RAL};de_verificat;culoarea in nume: {RA
 Bilka;AXCOSVENGOT;;COS VENTILARE GOTIC {RAL};de_verificat;culoarea in nume: {RAL} = culoarea liniei
 Bilka;AXCOSVENROM;;COS VENTILARE ROMANIC {RAL};de_verificat;culoarea in nume: {RAL} = culoarea liniei
 Bilka;AXCOSVENPLT;;COS VENTILARE RETROPANEL {RAL};de_verificat;culoarea in nume: {RAL} = culoarea liniei
-Bilka;Corector colorat pentru acoperiș;;CORECTOR;automat;S17b BUG-1: cheia e numele familiei (produs fara cod Bilka, doua randuri lucios / mat in catalog) - acelasi rand cu SPRAY RETUS pe formular; cand sunt amandoua pe oferta, al doilea merge la avertizari
+Bilka;Corector colorat pentru acoperiș;;CORECTOR;automat;S17b BUG-1: cheia e numele familiei (produs fara cod Bilka, doua randuri lucios / mat in catalog) - acelasi rand cu SPRAY RETUS pe formular - cand sunt amandoua pe oferta, al doilea pleaca pe alt formular (M4, S17d)
+Bilka;AXINCLUC000;;INCHIDERE DE COAMA MARE;automat;S17d: rand pe codul intreg, pentru avertizare (prefixul AXINC ramane pentru mat);Formularul exportă codul MAT (AXINCMAT000) pentru închiderea de coamă lucios, iar prețurile diferă pe finisaj — de urmărit pe factură până lămurește Bilka (S17c, întrebarea 8)
+Bilka;AXINCLUCMIC;;INCHIDERE DE COAMA MICA;automat;S17d: rand pe codul intreg, pentru avertizare (prefixul AXINC ramane pentru mat);Formularul exportă codul MAT (AXINCMATMIC) pentru închiderea de coamă lucios, iar prețurile diferă pe finisaj — de urmărit pe factură până lămurește Bilka (S17c, întrebarea 8)
+Bilka;AXINCGDM000;;INCHIDERE DE COAMA MARE;automat;S17d: rand pe codul intreg, pentru avertizare (prefixul AXINC ramane pentru mat);Formularul exportă codul MAT (AXINCMAT000) pentru închiderea de coamă Grande Mat, iar prețurile diferă pe finisaj — de urmărit pe factură până lămurește Bilka (S17c, întrebarea 8)
+Bilka;AXINCGDMMIC;;INCHIDERE DE COAMA MICA;automat;S17d: rand pe codul intreg, pentru avertizare (prefixul AXINC ramane pentru mat);Formularul exportă codul MAT (AXINCMATMIC) pentru închiderea de coamă Grande Mat, iar prețurile diferă pe finisaj — de urmărit pe factură până lămurește Bilka (S17c, întrebarea 8)
+Bilka;BIL-4D720A7978;;BORDURA LA PERETE 178 MM;automat;S17d (raportul S17c, a): bordura la perete 178 mm SSAB 0,60 n-are cod Bilka - cheia e codul intern;
+Bilka;BIL-9C2EAA014D;;BORDURA LA PERETE 208 MM;automat;S17d (raportul S17c, a): bordura la perete 208 mm SSAB 0,60 n-are cod Bilka - cheia e codul intern;
+Bilka;BIL-433F545044;;BORDURA LA PERETE 250 MM;automat;S17d (raportul S17c, a): bordura la perete 250 mm SSAB 0,60 n-are cod Bilka - cheia e codul intern;

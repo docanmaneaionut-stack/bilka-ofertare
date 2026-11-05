@@ -121,7 +121,7 @@ export const corespondentaFormularBilkaRouter = creeazaRuterReferinta({
   entitate: "CorespondentaFormularBilka",
   model: prisma.corespondentaFormularBilka,
   orderBy: [{ furnizor: "asc" }, { cheie: "asc" }, { cuvant: "asc" }],
-  campuri: ["furnizor", "cheie", "cuvant", "numeFormular", "stare", "observatie", "activ"],
+  campuri: ["furnizor", "cheie", "cuvant", "numeFormular", "stare", "observatie", "atentie", "activ"],
   schema: z.object({
     furnizor: z.string().trim().min(1),
     cheie: z.string().trim().min(1),
@@ -129,6 +129,8 @@ export const corespondentaFormularBilkaRouter = creeazaRuterReferinta({
     numeFormular: z.string().trim().min(1),
     stare: z.enum(["automat", "de_verificat"]).optional().default("automat"),
     observatie: textOptional,
+    // S17d: avertizare pe produs, aratata la generarea formularului si in panoul Documente
+    atentie: textOptional,
     activ: z.boolean().optional().default(true),
   }),
 });

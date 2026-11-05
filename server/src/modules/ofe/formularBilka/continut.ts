@@ -15,6 +15,8 @@ export interface Corespondenta {
   cheie: string;
   cuvant: string;
   numeFormular: string;
+  // S17d: avertizare pe produs la trimitere (ex. cod compus gresit de macro-ul Bilka)
+  atentie?: string | null;
 }
 
 export interface DateProdus {
@@ -63,6 +65,10 @@ const faraDiacritice = (s: string) => s.normalize("NFD").replace(/[̀-ͯ]/g, "")
 // profil / modelul sipcii inaintea denumirii); la egalitate castiga cuvantul mai lung,
 // iar randul fara cuvant e rezerva
 export function numeDinCorespondenta(corespondente: Corespondenta[], cod: string, contexte: string[], familie?: string | null): string | undefined {
+  return randDinCorespondenta(corespondente, cod, contexte, familie)?.numeFormular;
+}
+
+export function randDinCorespondenta(corespondente: Corespondenta[], cod: string, contexte: string[], familie?: string | null): Corespondenta | undefined {
   const ctx = contexte.map((c) => faraDiacritice(c ?? ""));
   const potrivite = (cheie: string, egal: (a: string, b: string) => boolean = (a, b) => a.toUpperCase() === b.toUpperCase()) =>
     corespondente
@@ -75,7 +81,7 @@ export function numeDinCorespondenta(corespondente: Corespondenta[], cod: string
       .filter((x) => x.unde >= 0)
       .sort((a, b) => a.unde - b.unde || b.c.cuvant.length - a.c.cuvant.length);
   const peFamilie = familie?.trim() ? potrivite(familie, (a, b) => faraDiacritice(a).trim() === faraDiacritice(b).trim()) : [];
-  return (potrivite(cod)[0] ?? potrivite(cod.slice(0, 5))[0] ?? peFamilie[0])?.c.numeFormular;
+  return (potrivite(cod)[0] ?? potrivite(cod.slice(0, 5))[0] ?? peFamilie[0])?.c;
 }
 
 // finisajul din codul de ierarhie (pozitiile 6-8) sau din textul finisajului -> textul listei sablonului
@@ -232,7 +238,10 @@ export function umpleFormulare(intrare: IntrareUmplere): FormularUmplut[] {
       // modelul (tabela de corespondenta), tipul, modulul, membrana
       // doar varianta de profil, optiunea si unitatea: denumirea familiei insira toate
       // variantele ("Retro Plus (Standard, Micro-Ribs, Flat, Double Line)") si ar alege gresit
-      let model = numeDinCorespondenta(corespondente, inv.cod, [inv.variantaProfil ?? "", inv.optiune ?? "", inv.um]);
+      const randInv = randDinCorespondenta(corespondente, inv.cod, [inv.variantaProfil ?? "", inv.optiune ?? "", inv.um]);
+      let model = randInv?.numeFormular;
+      // S17d: avertizarea pe produs din tabela (ex. Retro Duo dripstop - cod compus gresit de macro)
+      if (randInv?.atentie) avertizari.push(`Atenție la trimitere — ${inv.denumire} (${inv.cod}): ${randInv.atentie}`);
       if (!model) {
         avertizari.push(`${eticheta}: produsul ${inv.cod} (${inv.denumire}) nu are corespondență în tabela „Formular Bilka” din Referințe`);
       } else {
@@ -348,11 +357,13 @@ export function umpleFormulare(intrare: IntrareUmplere): FormularUmplut[] {
         continue;
       }
       const cheie = cheieLinie(l, oferta.invelitori);
-      let nume = numeDinCorespondenta(corespondente, l.cod, [l.optiune ?? "", l.um, l.denumire, l.familie ?? ""], l.familie);
+      const randL = randDinCorespondenta(corespondente, l.cod, [l.optiune ?? "", l.um, l.denumire, l.familie ?? ""], l.familie);
+      let nume = randL?.numeFormular;
       if (!nume) {
         faraLoc.push(`${descriere} — fără corespondență în tabela „Formular Bilka” din Referințe`);
         continue;
       }
+      if (randL?.atentie) avertizari.push(`Atenție la trimitere — ${descriere}: ${randL.atentie}`);
       const cuCuloare = nume.includes("{RAL}");
       if (cuCuloare) nume = nume.replace("{RAL}", numarRal(cheie.ral));
       plaseaza(nume, cantitate, descriere, !cuCuloare);
@@ -414,7 +425,9 @@ export function umpleFormulare(intrare: IntrareUmplere): FormularUmplut[] {
         const culoare = culoareFormular(cheie.ral, finisaj, finisaj ? liste.culoriPeFinisaj(finisaj) : []);
         if (culoare !== undefined) pune(comanda, bloc.culoare, culoare);
         else avertizari.push(`${eticheta}: culoarea „${cheie.ral}” nu se poate scrie pe formular`);
-        const model = numeDinCorespondenta(corespondente, linie.cod, [sipca.model, linie.denumire]);
+        const randSipca = randDinCorespondenta(corespondente, linie.cod, [sipca.model, linie.denumire]);
+        const model = randSipca?.numeFormular;
+        if (randSipca?.atentie) avertizari.push(`Atenție la trimitere — ${linie.denumire} (${linie.cod}): ${randSipca.atentie}`);
         const exact = model ? liste.modeleSipca.find((m) => normNume(m) === normNume(model)) : undefined;
         if (!model) avertizari.push(`${eticheta}: produsul ${linie.cod} (${sipca.model}) nu are corespondență în tabela „Formular Bilka”`);
         else if (!exact) numeLipsa.add(model);
@@ -527,6 +540,50 @@ function pluvialPeFormulare(oferta: OfertaCuProduse, rezultat: RezultatOferta): 
       const gasit = locuri.find((x) => x.loc === loc && numarRal(x.ral) === ral) ?? locuri.find((x) => x.loc === loc);
       out.set(l.id, gasit?.nr ?? formulare[0].nr);
     }
+  }
+  return out;
+}
+
+// M4 (S17d): randul formularului pe care incape fiecare linie de accesorii, pe acelasi
+// drum ca la plasare (tabela de corespondenta -> numele -> randul din sablon), dat
+// motorului ca `randFormular`: un rand cu lista tine o singura varianta pe formular, a
+// doua varianta pleaca pe alt formular (pachete.ts, 5b-bis). Randurile cu aceeasi lista
+// (ex. cele 25 de speciale 2 ML) isi pastreaza capacitatea: liniile aceleiasi chei
+// primesc pe rand cate un rand liber dintre cele care le pot tine; cand nu mai e niciunul,
+// primul rand - motorul vede atunci dublura si o muta. Liniile fara rand (pluvial, lungimi,
+// sipca, fara corespondenta, nume cu culoarea lipsa din sablon) nu primesc nimic.
+export function randuriFormular(harta: HartaFormular, corespondente: Corespondenta[], oferta: Pick<OfertaCuProduse, "linii" | "invelitori" | "sipci">, produse: Map<string, DateProdus>): Map<string, string> {
+  const out = new Map<string, string>();
+  const sipcaPeLinie = new Set(oferta.sipci.map((s) => s.linieId));
+  const folosite = new Map<string, Set<string>>(); // cheia liniei -> randurile date
+  for (const l of oferta.linii) {
+    if (esteLinieInvelitoare(l.rubrica) || sipcaPeLinie.has(l.id) || esteRubricaLungimi(l.rubrica) || esteRubricaPluvial(l.rubrica)) continue;
+    const cheie = cheieLinie(l, oferta.invelitori);
+    let nume: string | undefined;
+    if (esteRubricaSpeciale(l.rubrica)) {
+      const treapta = treaptaLiniei(l, produse);
+      nume = treapta ? `ACCESORIU SPECIAL ${treapta}` : undefined;
+    } else {
+      nume = numeDinCorespondenta(corespondente, l.cod, [l.optiune ?? "", l.um, l.denumire, l.familie ?? ""], l.familie);
+      if (nume?.includes("{RAL}")) nume = nume.replace("{RAL}", numarRal(cheie.ral));
+    }
+    if (!nume) continue;
+    const k = normNume(nume);
+    if (!harta.numeAcceptate.has(k)) continue;
+    // aceeasi ordine de preferinta ca la plasare: randul cu numele fix, apoi randurile
+    // fara nume cu numele in lista, apoi orice rand cu numele in lista
+    const candidate = [
+      ...harta.accesorii.filter((r) => normNume(r.numeImplicit) === k),
+      ...harta.accesorii.filter((r) => r.numeImplicit === "" && r.lista.includes(k)),
+      ...harta.accesorii.filter((r) => normNume(r.numeImplicit) !== k && r.numeImplicit !== "" && r.lista.includes(k)),
+    ].map((r) => `${r.coloanaNume}${r.rand}`);
+    if (candidate.length === 0) continue;
+    const kCheie = `${cheie.ral}|${cheie.finisaj}|${cheie.grosime ?? ""}`;
+    if (!folosite.has(kCheie)) folosite.set(kCheie, new Set());
+    const date = folosite.get(kCheie)!;
+    const rand = candidate.find((c) => !date.has(c)) ?? candidate[0];
+    date.add(rand);
+    out.set(l.id, rand);
   }
   return out;
 }

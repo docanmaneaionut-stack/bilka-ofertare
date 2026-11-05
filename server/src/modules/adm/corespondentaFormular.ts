@@ -21,6 +21,8 @@ export interface RandCorespondenta {
   numeFormular: string;
   stare: string;
   observatie: string | null;
+  // S17d: avertizare pe produs la trimiterea formularului (coloana optionala "atentie")
+  atentie: string | null;
 }
 
 export function citesteCsvCorespondenta(cale = CALE_CSV_CORESPONDENTA): RandCorespondenta[] {
@@ -38,6 +40,7 @@ export function citesteCsvCorespondenta(cale = CALE_CSV_CORESPONDENTA): RandCore
   const iNume = idx("nume_formular");
   const iStare = idx("stare");
   const iObs = idx("observatie");
+  const iAtentie = antet?.indexOf("atentie") ?? -1;
   return randuri.slice(1).map((r, k) => {
     const c = r.split(";").map((x) => x.trim());
     const cheie = c[iCheie] ?? "";
@@ -45,17 +48,23 @@ export function citesteCsvCorespondenta(cale = CALE_CSV_CORESPONDENTA): RandCore
     if (!cheie || !nume) throw new Error(`${path.basename(cale)}: randul ${k + 2} nu are cheie sau nume`);
     const stare = c[iStare] || "automat";
     if (stare !== "automat" && stare !== "de_verificat") throw new Error(`${path.basename(cale)}: randul ${k + 2}: starea trebuie sa fie "automat" sau "de_verificat"`);
-    return { furnizor: c[iFurnizor] || "Bilka", cheie, cuvant: c[iCuvant] ?? "", numeFormular: nume, stare, observatie: c[iObs] || null };
+    return { furnizor: c[iFurnizor] || "Bilka", cheie, cuvant: c[iCuvant] ?? "", numeFormular: nume, stare, observatie: c[iObs] || null, atentie: (iAtentie >= 0 ? c[iAtentie] : "") || null };
   });
 }
 
 type Client = Pick<PrismaClient, "corespondentaFormularBilka">;
 
+// idempotent: se adauga randurile care lipsesc; la cele existente se completeaza doar
+// avertizarea "atentie" cand in baza e goala si CSV-ul o are (S17d) - ce a scris Admin
+// general in Referinte ramane
 export async function incarcaCorespondentaFormularBilka(prisma: Client, randuri: RandCorespondenta[] = citesteCsvCorespondenta()): Promise<number> {
   let adaugate = 0;
   for (const r of randuri) {
     const existent = await prisma.corespondentaFormularBilka.findUnique({ where: { furnizor_cheie_cuvant: { furnizor: r.furnizor, cheie: r.cheie, cuvant: r.cuvant } } });
-    if (existent) continue;
+    if (existent) {
+      if (r.atentie && !existent.atentie) await prisma.corespondentaFormularBilka.update({ where: { id: existent.id }, data: { atentie: r.atentie } });
+      continue;
+    }
     await prisma.corespondentaFormularBilka.create({ data: r });
     adaugate += 1;
   }

@@ -115,14 +115,17 @@ function verificaHash(rezultat: Buffer) {
   const original = citesteSablon(require("node:fs").readFileSync(SABLON));
   const nou = citesteIntrari(rezultat);
   expect(nou.map((e) => e.nume)).toEqual(original.intrari.map((e) => e.nume));
-  const modificate = new Set(["xl/workbook.xml", ...Object.values(original.harta.foaie)]);
+  // S17d: si foaia ascunsa "Portal" se schimba (randurile de date scoase, antetul ramane)
+  const portal = original.foi.get("Portal")!;
+  expect(portal).toBeTruthy();
+  const modificate = new Set(["xl/workbook.xml", portal, ...Object.values(original.harta.foaie)]);
   let identice = 0;
   for (const e of original.intrari) {
     const n = nou.find((x) => x.nume === e.nume)!;
     // foile scrise pot ramane identice cand n-au nimic de completat (Magnelis la E01);
-    // FORMULAR COMANDA si workbook.xml se schimba sigur
+    // FORMULAR COMANDA, Portal si workbook.xml se schimba sigur
     if (modificate.has(e.nume)) {
-      if (e.nume === "xl/workbook.xml" || e.nume === original.harta.foaie.comanda) expect(n.crc, e.nume).not.toBe(e.crc);
+      if (e.nume === "xl/workbook.xml" || e.nume === original.harta.foaie.comanda || e.nume === portal) expect(n.crc, e.nume).not.toBe(e.crc);
       continue;
     }
     expect(n.crc, e.nume).toBe(e.crc);
@@ -134,6 +137,13 @@ function verificaHash(rezultat: Buffer) {
   expect(sha(continutIntrare(rezultat, vba))).toBe(sha(continutIntrare(original.buf, original.intrari.find((x) => x.nume === "xl/vbaProject.bin")!)));
   expect(continutIntrare(rezultat, vba).length).toBe(976_896);
   expect(continutIntrare(rezultat, nou.find((x) => x.nume === "xl/workbook.xml")!).toString()).toMatch(/<calcPr[^>]*fullCalcOnLoad="1"/);
+  // Portal: in sablon 110 randuri (antet + comanda veche); in fisierul generat doar antetul
+  const portalOriginal = original.xml(portal);
+  const portalNou = continutIntrare(rezultat, nou.find((x) => x.nume === portal)!).toString();
+  expect((portalOriginal.match(/<row /g) ?? []).length).toBeGreaterThan(1);
+  expect((portalNou.match(/<row /g) ?? []).length).toBe(1);
+  expect(portalNou).toMatch(/<row r="1"[\s\S]*<\/row><\/sheetData>/);
+  expect(portalNou).toMatch(/<\/worksheet>\s*$/);
 }
 
 describe("formularele Bilka (S16b)", () => {
@@ -324,19 +334,22 @@ describe("formularele Bilka (S16b)", () => {
     expect(v(r2.fisiere[0].s, "comanda", "E23")).toBe("T 35 P");
   }, 120_000);
 
-  it("produsul fara loc intra in avertizari (pluvial Aluzinc); formularul se genereaza si la Comandat, din rezultatul salvat", async () => {
+  it("produsul fara loc intra in avertizari (subcoama industriala 312: nume acceptat de macro, dar pe niciun rand); formularul se genereaza si la Comandat, din rezultatul salvat", async () => {
+    // S17d: pluvialul Aluzinc nu mai exista (cele 35 de produse sunt inactive, CSV 04b din 05.11);
+    // produsul fara loc e acum subcoama industriala 312, acceptata de macro dar fara rand pe formular (S17c)
     const agent = await autentificaAgent(app, EMAIL.agent1);
     const id = await ofertaNoua(agent);
     const e = citesteEtalon("E01");
     const corp = await corpDinEtalon(e);
-    const aluzinc = await produsDupaCod("SABUR0903ML");
-    corp.linii.push({ cheie: "LA", rubrica: "Sistem pluvial", produsId: aluzinc.id, cantitate: "2", invelitoare: null, culoare: { ral: "Aluzinc", finisaj: "Aluzinc", grosime: null } });
+    expect(await prisma.produs.count({ where: { codFurnizor: "SABUR0903ML", activ: true } })).toBe(0);
+    const subcoama = await produsDupaCod("ASI31MAT050");
+    corp.linii.push({ cheie: "LS", rubrica: "Accesorii standard", produsId: subcoama.id, cantitate: "2", invelitoare: "I1", culoare: null });
     const rp = await agent.put(`/api/oferte/${id}/produse`).send(corp);
     expect(rp.status, JSON.stringify(rp.body)).toBe(200);
     await puneCursulEtalonului(id, e);
     await deComandat(agent, id);
     const { fisiere, avertizari } = await genereaza(agent, id);
-    expect(avertizari.join("\n")).toMatch(/Nu au loc în formularul Bilka: .*SABUR0903ML.*pluvialul acesta nu are foaie în formular/);
+    expect(avertizari.join("\n")).toMatch(/Nu au loc în formularul Bilka: .*ASI31MAT050.*niciun rând liber pentru „SUBCOAMA INDUSTRIALA 312MM”/);
     expect(fisiere.length).toBeGreaterThanOrEqual(1);
     expect(fisiere[0].doc.avertizari).toMatch(/Nu au loc în formularul Bilka/);
     // la "Comandat": din rezultatul salvat, fara recalcul
@@ -368,6 +381,34 @@ describe("formularele Bilka (S16b)", () => {
     await construieste(colab, idc, citesteEtalon("E01"));
     await deComandat(colab, idc);
     await colab.post(`/api/oferte/${idc}/formulare-bilka`).send({}).expect(403);
+  }, 120_000);
+
+  // S17d: avertizarea pe produs din tabela de corespondenta (coloana "atentie") - pe ecran si in
+  // panoul Documente, nu in celulele Excel; valorile din CSV intra prin seed (si la randurile existente)
+  it("atentie la trimitere: textul din tabela de corespondenta ajunge in avertizarile generarii si ale documentului; seed-ul il incarca din CSV", async () => {
+    const dinCsv = await prisma.corespondentaFormularBilka.findFirstOrThrow({ where: { cheie: "AXSPRLUC400" } });
+    expect(dinCsv.atentie).toMatch(/spray-ul lucios pleacă cu codul și prețul spray-ului mat/);
+    expect((await prisma.corespondentaFormularBilka.findMany({ where: { cheie: { startsWith: "RDDUO" } } })).every((r) => r.atentie)).toBe(true);
+    expect((await prisma.corespondentaFormularBilka.findMany({ where: { cheie: { in: ["AXINCLUC000", "AXINCLUCMIC", "AXINCGDM000", "AXINCGDMMIC"] } } })).map((r) => r.atentie ?? "").filter((a) => /codul MAT/.test(a))).toHaveLength(4);
+    expect((await prisma.corespondentaFormularBilka.findMany({ where: { cheie: { in: ["BIL-4D720A7978", "BIL-9C2EAA014D", "BIL-433F545044"] } } })).map((r) => r.numeFormular).sort()).toEqual(["BORDURA LA PERETE 178 MM", "BORDURA LA PERETE 208 MM", "BORDURA LA PERETE 250 MM"]);
+
+    const agent = await autentificaAgent(app, EMAIL.agent1);
+    const id = await ofertaNoua(agent);
+    await construieste(agent, id, citesteEtalon("E01"));
+    await deComandat(agent, id);
+    const rand = await prisma.corespondentaFormularBilka.findFirstOrThrow({ where: { cheie: "ACMIC" } });
+    await prisma.corespondentaFormularBilka.update({ where: { id: rand.id }, data: { atentie: "Text de probă: confirmă cu Bilka" } });
+    try {
+      const { fisiere, avertizari } = await genereaza(agent, id);
+      const a = avertizari.filter((x) => /Atenție la trimitere/.test(x));
+      expect(a).toHaveLength(1);
+      expect(a[0]).toMatch(/^Atenție la trimitere — Coamă mică .*\(ACMICMAT050\): Text de probă: confirmă cu Bilka$/);
+      expect(fisiere[0].doc.avertizari).toContain("Atenție la trimitere — Coamă mică");
+      // formularul in sine nu primeste textul: celula mesajului de productie ramane goala
+      expect(v(fisiere[0].s, "comanda", "F20")).toBeUndefined();
+    } finally {
+      await prisma.corespondentaFormularBilka.update({ where: { id: rand.id }, data: { atentie: null } });
+    }
   }, 120_000);
 
   it("G6: un nume din tabela de corespondenta care lipseste din sablon opreste generarea, cu numele si unde se corecteaza; Aluzinc ramane avertizare", async () => {
@@ -477,18 +518,32 @@ describe("formularele Bilka (S16b)", () => {
       expect(v(s, "comanda", `${rand.coloanaNume}${rand.rand}`), finisaj).toBe("CORECTOR");
       expect(v(s, "comanda", `${rand.coloanaCantitate}${rand.rand}`), finisaj).toBe("2");
     }
-    // spray + corector: spray-ul (primul in ordinea liniilor) ia randul, corectorul merge la avertizari
+    // M4 (S17d): spray + corector pe aceeasi oferta - spray-ul (primul in ordinea liniilor) ia
+    // randul pe formularul casei, corectorul pleaca pe al doilea formular (fara invelitoare, cu
+    // cheia sectiunii), fara nicio avertizare; structura ofertei anunta cele doua formulare
     const id = await ofertaNoua(agent);
     await construiesteFaraPreturi(id, { ...corp, linii: [...corp.linii, await corector("lucios")] });
+    const structura = await agent.get(`/api/oferte/${id}`).expect(200);
+    expect(structura.body.oferta.structura.rezultat.formulareBilka).toHaveLength(2);
+    expect(structura.body.oferta.structura.textFormulare ?? structura.body.oferta.structura.rezultat.textFormulare).toMatch(/Se vor genera 2 formulare Bilka: .*Corector colorat pentru acoperiș – lucios — a doua variantă pe același rând al formularului \(cheia 3005 mat 0,50\)/);
     await deComandat(agent, id);
     const { fisiere, avertizari } = await genereaza(agent, id);
+    expect(avertizari.filter((x) => /Corector colorat|același rând/.test(x))).toEqual([]);
+    expect(fisiere).toHaveLength(2);
     const s = fisiere[0].s;
     const rand = randSpray(s);
     expect(v(s, "comanda", `${rand.coloanaNume}${rand.rand}`)).toBe("SPRAY RETUS");
     expect(v(s, "comanda", `${rand.coloanaCantitate}${rand.rand}`)).toBe("3");
-    const a = avertizari.find((x) => /Corector colorat/.test(x));
-    expect(a).toMatch(/același rând în formular/);
-    expect(a).toMatch(/Nu au loc în formularul Bilka/);
+    const s2 = fisiere[1].s;
+    expect(fisiere[1].doc.formularNr).toBe(2);
+    expect(v(s2, "comanda", `${rand.coloanaNume}${rand.rand}`)).toBe("CORECTOR");
+    expect(v(s2, "comanda", `${rand.coloanaCantitate}${rand.rand}`)).toBe("2");
+    // formular fara invelitoare: blocul invelitorii gol, cheia sectiunii (mat 3005 0,50) pe finisaj / culoare / grosime
+    expect(v(s2, "comanda", "E23")).toBeUndefined();
+    expect(v(s2, "comanda", "E24")).toBe("MAT");
+    expect(v(s2, "comanda", "I24")).toBe("3005");
+    expect(v(s2, "comanda", "S24")).toBe("0.50");
+    verificaHash(fisiere[1].buf);
   }, 180_000);
 
   it("un fisier care nu e formularul Bilka e refuzat la incarcare", async () => {

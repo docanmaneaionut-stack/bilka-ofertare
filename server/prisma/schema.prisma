@@ -532,6 +532,8 @@ model CorespondentaFormularBilka {
   numeFormular String
   stare        String   @default("automat")
   observatie   String?
+  // S17d: avertizare pe produs la trimiterea formularului (ex. cod compus gresit de macro-ul Bilka)
+  atentie      String?
   activ        Boolean  @default(true)
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt

@@ -94,6 +94,11 @@ export interface LinieOferta {
   pretFix?: PretFix;
   // exceptie de discount afisat pe linie (discount_per_linie)
   discountPct?: Suma;
+  // M4 (S17d): randul formularului de comanda Bilka pe care incape produsul - il da
+  // ofertarea din tabela de corespondenta si sablonul firmei (identificatorul randului,
+  // ex. "C74"); un rand cu lista tine o singura varianta pe formular (R10). Lipsa =
+  // linia nu concureaza pe niciun rand (pluvial, lungimi, sipca, fara corespondenta)
+  randFormular?: string;
 }
 
 // FISA-OFERTARE cap. 8
@@ -414,6 +419,7 @@ export const schemaIntrareOferta = zod.object({
       culoare: zod.object({ ral: zod.string(), finisaj: zod.string(), grosime: zod.string().optional() }).optional(),
       pretFix: zod.object({ tip: zod.enum(["eur_fara_tva", "achizitie_plus_pct"]), valoare: sumaNenegativa, preluat: zod.boolean().optional() }).optional(),
       discountPct: procent.optional(),
+      randFormular: zod.string().min(1).optional(),
     }),
   ),
   zonaB: zod.array(

@@ -165,7 +165,7 @@ REFERINTE.push({
   titlu: "Formular Bilka — corespondența numelor",
   titluScurt: "Formular Bilka",
   descriere:
-    "Numele de pe rândurile formularului de comandă Bilka pentru fiecare produs: cheia = codul de ierarhie întreg sau prefixul familiei (5 caractere); cuvântul de deosebire se caută în denumire, varianta de profil, modelul șipcii sau unitatea de măsură (convexă / concavă, coamă / streașină, BUC la tabla plană ca accesoriu); „{RAL}” în nume = culoarea liniei. Starea „de verificat” = potrivire hotărâtă de Code la S16b, de controlat aici. Valorile inițiale vin din docs/import/configurare/corespondenta-formular-bilka.csv prin npm run seed. Numele se verifică la fiecare generare pe listele șablonului firmei.",
+    "Numele de pe rândurile formularului de comandă Bilka pentru fiecare produs: cheia = codul de ierarhie întreg sau prefixul familiei (5 caractere); cuvântul de deosebire se caută în denumire, varianta de profil, modelul șipcii sau unitatea de măsură (convexă / concavă, coamă / streașină, BUC la tabla plană ca accesoriu); „{RAL}” în nume = culoarea liniei. Starea „de verificat” = potrivire hotărâtă de Code la S16b, de controlat aici. „Atenție la trimitere” = un text care apare ca avertizare la generarea formularului și în panoul Documente, pentru produsele la care formularul Bilka compune codul sau prețul altfel decât catalogul (nu se scrie în fișierul Excel). Valorile inițiale vin din docs/import/configurare/corespondenta-formular-bilka.csv prin npm run seed. Numele se verifică la fiecare generare pe listele șablonului firmei.",
   coloane: [
     FURNIZOR,
     { cheie: "cheie", eticheta: "Cod / prefix", tip: "text", obligatoriu: true, latime: "130px" },
@@ -184,6 +184,7 @@ REFERINTE.push({
       ],
     },
     { cheie: "observatie", eticheta: "Observație", tip: "text" },
+    { cheie: "atentie", eticheta: "Atenție la trimitere", tip: "text" },
     ACTIV,
   ],
 });
