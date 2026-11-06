@@ -223,7 +223,7 @@ describe("comenzile din oferta si lista comuna", () => {
     expect(d.body.comanda.notiteOferta.map((o: { text: string }) => o.text)).toEqual(["notiță de pe ofertă"]);
     expect(d.body.comanda.client.telefon).toBe("0730 000 499");
     // S22: Contabilitatea vede comanda, deci poate face retur (comanda din oferta); nimic altceva
-    expect(d.body.comanda.drepturi).toEqual({ logistic: false, detalii: false, livrare: false, alocare: false, bani: false, comision: false, retur: true, anuleazaRetur: false, notaPalet: false, statusPalet: false });
+    expect(d.body.comanda.drepturi).toEqual({ logistic: false, detalii: false, livrare: false, alocare: false, bani: false, comision: false, retur: true, anuleazaRetur: false, notaPalet: false, statusPalet: false, aviz: true, documente: true, fisaSoferului: false, locatie: false });
     expect(d.body.comanda.istoric.filter((i: { tip: string }) => i.tip === "contact").map((i: { camp: string }) => i.camp).sort()).toEqual(["clientTelefon", "montatorTelefon"]);
     expect(d.body.comanda.istoric.filter((i: { tip: string }) => i.tip === "facturare")).toHaveLength(3);
   });

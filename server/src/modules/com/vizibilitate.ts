@@ -85,9 +85,9 @@ export function poateAloca(u: Utilizator): boolean {
   return u.rol === "ADMIN_GENERAL" || u.rol === "ADMINISTRATOR";
 }
 
-// tabelul de facturare si formularul Bilka nu sunt pentru colaborator (CONTURI §2)
+// tabelul de facturare, formularul Bilka si avizul (S23) nu sunt pentru colaborator (CONTURI §2)
 export function vedeDocumentulComenzii(u: Utilizator, tip: string): boolean {
-  if (u.rol === "COLABORATOR" && (tip === "TABEL_FACTURARE" || tip === "FORMULAR_BILKA")) return false;
+  if (u.rol === "COLABORATOR" && (tip === "TABEL_FACTURARE" || tip === "FORMULAR_BILKA" || tip === "AVIZ")) return false;
   // nota de retur (S22) o vede oricine vede comanda, colaboratorul inclus (e documentul lui)
   return true;
 }
@@ -96,6 +96,17 @@ export function vedeDocumentulComenzii(u: Utilizator, tip: string): boolean {
 // (COMENZI cap. 8); nota de palet o scriu cei care opereaza logistic (Gestiunea, Administratorii)
 export function poateSchimbaStatusPalet(u: Utilizator): boolean {
   return u.rol === "ADMINISTRATOR" || u.rol === "ADMIN_GENERAL";
+}
+
+// S23 - avizul de insotire a marfii (COMENZI cap. 9; CONTURI §2-3): il genereaza si il printeaza orice
+// cont care vede comanda, in afara colaboratorului; la fel tabelul de facturare si detaliata din comanda
+export function poateGeneraAviz(u: Utilizator): boolean {
+  return u.rol !== "COLABORATOR";
+}
+
+// S23 - fisa soferului (COMENZI cap. 4c): Gestiunea (soferii au cont de Gestiune), Administratorii, Admin general
+export function poateFaceFisaSoferului(u: Utilizator): boolean {
+  return u.rol === "GESTIUNE" || u.rol === "ADMINISTRATOR" || u.rol === "ADMIN_GENERAL";
 }
 
 // S20 - banii raman pe firma (CONTURI §3): incasarile (notare, confirmare, anulare) si bifa

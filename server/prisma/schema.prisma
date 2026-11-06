@@ -125,6 +125,7 @@ model Utilizator {
   comandaAtasamente ComandaAtasament[]  @relation("ComandaAtasamenteIncarcate")
   incasariNotate    ComandaIncasare[]   @relation("IncasariNotate")
   retururiNotate    ComandaRetur[]      @relation("RetururiNotate")
+  avizeGenerate     ComandaAviz[]       @relation("AvizeGenerate")
   notiteScrise      OfertaNotita[]      @relation("NotiteScrise")
 
   firmeAcces          UtilizatorFirma[]
@@ -1068,11 +1069,16 @@ model Comanda {
   paletRecuperatLa     DateTime?
   paletRecuperatDeNume String?
 
+  // S23 (migrarea 19; FISA-COMENZI cap. 4c): adresa web a locatiei lucrarii (link la harta), optionala,
+  // scrisa de cine modifica detaliile comenzii, cu istoric; pe fisa soferului ca "locatia pe harta"
+  locatieUrl String?
+
   istoric    ComandaIstoric[]
   observatii ComandaObservatie[]
   atasamente ComandaAtasament[]
   incasari   ComandaIncasare[]
   retururi   ComandaRetur[]
+  avize      ComandaAviz[]
 
   @@index([firmaId, data])
   @@index([contAlocatId])
@@ -1214,6 +1220,50 @@ model ComandaReturLinie {
   @@map("comanda_retur_linie")
 }
 
+// S23 (migrarea 19; FISA-COMENZI cap. 9): avizul de insotire a marfii - unul per livrare, identificat
+// prin numarul comenzii si data livrarii; cantitatile de pe aviz (ajustate la livrari partiale) raman
+// pe liniile lui; PDF-ul (dublu exemplar) e document al ofertei comandate (tip AVIZ). Nu se anuleaza
+// si nu se sterge: un aviz gresit se inlocuieste cu altul, amandoua raman in istoric.
+model ComandaAviz {
+  id                  String             @id @default(uuid())
+  comandaId           String
+  comanda             Comanda            @relation(fields: [comandaId], references: [id])
+  numar               Int
+  dataLivrarii        DateTime           @db.Date
+  partial             Boolean            @default(false)
+  coli                Int                @default(0)
+  piese               Decimal            @default(0) @db.Decimal(14, 3)
+  generatDeId         String?
+  generatDe           Utilizator?        @relation("AvizeGenerate", fields: [generatDeId], references: [id])
+  numeGeneratLaMoment String
+  moment              DateTime           @default(now())
+  documentId          String?
+  linii               ComandaAvizLinie[]
+
+  @@index([comandaId, numar])
+  @@map("comanda_aviz")
+}
+
+// o linie de aviz: un produs al comenzii (linieId) cu cantitatea de pe aviz, sau o lungime de panotaj
+// (pozitieId, lungimeM, bucati) a invelitorii - in ordinea documentului
+model ComandaAvizLinie {
+  id        String      @id @default(uuid())
+  avizId    String
+  aviz      ComandaAviz @relation(fields: [avizId], references: [id])
+  ordine    Int
+  linieId   String?
+  pozitieId String?
+  cod       String?
+  denumire  String
+  um        String
+  cantitate Decimal     @db.Decimal(14, 3)
+  lungimeM  Decimal?    @db.Decimal(8, 3)
+  bucati    Int?
+
+  @@index([avizId])
+  @@map("comanda_aviz_linie")
+}
+
 // atasamentele comenzii (necesarul primit, formularul trimis, poze), in folderul de date (comenzi/<id>/)
 model ComandaAtasament {
   id           String      @id @default(uuid())
@@ -1257,6 +1307,9 @@ enum TipDocument {
   FORMULAR_BILKA
   // S22 (migrarea 18): nota de retur (PDF pe sablonul ofertei), document al ofertei comandate
   NOTA_RETUR
+  // S23 (migrarea 19): avizul de insotire a marfii (PDF, dublu exemplar, fara valori), document
+  // al ofertei comandate - unul per livrare (FISA-COMENZI cap. 9)
+  AVIZ
 }
 
 enum CanalTransmitere {

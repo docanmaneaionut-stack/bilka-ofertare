@@ -1,5 +1,5 @@
 import { useEffect, useState, type FormEvent } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import {
   apiComenzi,
   dataRo,
@@ -9,6 +9,8 @@ import {
   type ComandaManualaNoua,
   type ContScurt,
   type FiltreComenzi,
+  type AvizComanda,
+  type LinieDeAvizat,
   type LinieReturnabila,
   type ListaComenzi,
   type RandComanda,
@@ -23,6 +25,9 @@ import { ETICHETA_ROL } from "./ContulMeu";
 // soferului, S23), "+ Comanda manuala", filtrele, coloanele din fisa, randul desfasurat
 // cu cele patru casete (Incasari - S20 -, Livrare si facturare, Statusuri, Observatii),
 // ordinea (invers cronologic; Livrat la sfarsit, ascuns implicit), varianta pe telefon.
+// S23: "Fisa soferului (n)" din comenzile bifate (Gestiune, Administratori, Admin general),
+// avizul de insotire a marfii din "Doc." (caseta "Aviz"), linkul la locatie, generarea
+// detaliatei / tabelului de facturare din comanda.
 
 type Perioada = "90" | "luna" | "an" | "interval";
 
@@ -47,6 +52,9 @@ export function Comenzi() {
   const vedeAgent = adminGeneral || administrator;
   const vedeFirma = adminGeneral || administrator || gestiune || eu.rol === "CONTABILITATE";
   const adaugaManuala = adminGeneral || administrator || gestiune;
+  // S23: fisa soferului - Gestiune, Administratori, Admin general (FISA-COMENZI cap. 4c)
+  const faceFisa = adminGeneral || administrator || gestiune;
+  const navigheaza = useNavigate();
 
   const [q, setQ] = useState("");
   const [status, setStatus] = useState<StatusLogistic | "">("");
@@ -125,9 +133,11 @@ export function Comenzi() {
             aria-label="Caută"
             style={{ minWidth: 320 }}
           />
-          <button className="buton secundar" disabled title="Fișa șoferului vine la S23">
-            🚚 Fișa șoferului{selectate.size > 0 ? ` (${selectate.size})` : ""}
-          </button>
+          {faceFisa && (
+            <button className="buton secundar" disabled={selectate.size === 0} title={selectate.size === 0 ? "Bifează comenzile din tabel, în ordinea traseului" : "Fișa șoferului pentru comenzile bifate"} onClick={() => navigheaza(`/comenzi/fisa-soferului?c=${[...selectate].join(",")}`)}>
+              🚚 Fișa șoferului{selectate.size > 0 ? ` (${selectate.size})` : ""}
+            </button>
+          )}
           {adaugaManuala && (
             <button className="buton" onClick={() => setFormularManual(true)}>
               + Comandă manuală
@@ -409,6 +419,9 @@ function DetaliuComanda({ id, onSchimbat }: { id: string; onSchimbat: () => void
   // S22: nota de palet
   const [editPalet, setEditPalet] = useState(false);
   const [notaPalet, setNotaPalet] = useState("");
+  // S23: linkul la locatie
+  const [editLocatie, setEditLocatie] = useState(false);
+  const [locatieUrl, setLocatieUrl] = useState("");
 
   const incarca = () =>
     apiComenzi
@@ -420,6 +433,7 @@ function DetaliuComanda({ id, onSchimbat }: { id: string; onSchimbat: () => void
         setFacturare({ firma: r.comanda.facturare?.firma ?? "", cui: r.comanda.facturare?.cui ?? "", adresa: r.comanda.facturare?.adresa ?? "" });
         setContNou(r.comanda.contAlocat?.id ?? "");
         setNotaPalet(r.comanda.palet?.nota ?? "");
+        setLocatieUrl(r.comanda.locatieUrl ?? "");
         setEroare(null);
         if (r.comanda.drepturi.alocare) apiComenzi.conturi().then((x) => setConturi(x.conturi)).catch(() => setConturi([]));
       })
@@ -495,6 +509,42 @@ function DetaliuComanda({ id, onSchimbat }: { id: string; onSchimbat: () => void
                 Salvează
               </button>
               <button type="button" className="buton secundar mic" onClick={() => setEditLivrare(false)}>
+                Renunță
+              </button>
+            </div>
+          </form>
+        )}
+        <p>
+          <strong>Locația:</strong>{" "}
+          {c.locatieUrl ? (
+            <a href={c.locatieUrl} target="_blank" rel="noreferrer">
+              locația pe hartă
+            </a>
+          ) : (
+            <span className="text-secundar">fără link</span>
+          )}
+          {d.locatie && !editLocatie && (
+            <button className="buton secundar mic" style={{ marginLeft: 8 }} onClick={() => setEditLocatie(true)}>
+              {c.locatieUrl ? "Schimbă" : "Adaugă link"}
+            </button>
+          )}
+        </p>
+        {editLocatie && (
+          <form
+            className="formular-mic"
+            onSubmit={(e: FormEvent) => {
+              e.preventDefault();
+              void ruleaza(() => apiComenzi.locatie(c.id, locatieUrl.trim() || null)).then(() => setEditLocatie(false));
+            }}
+          >
+            <Camp eticheta="Adresa web a locației (http / https — din Google Maps sau WhatsApp)">
+              <input value={locatieUrl} onChange={(e) => setLocatieUrl(e.target.value)} placeholder="https://maps.app.goo.gl/…" style={{ minWidth: 320 }} />
+            </Camp>
+            <div className="actiuni">
+              <button className="buton mic" disabled={ocupat}>
+                Salvează
+              </button>
+              <button type="button" className="buton secundar mic" onClick={() => setEditLocatie(false)}>
                 Renunță
               </button>
             </div>
@@ -591,6 +641,16 @@ function DetaliuComanda({ id, onSchimbat }: { id: string; onSchimbat: () => void
           <p>
             <strong>Formular Bilka:</strong> {c.formulareBilka.generate === 0 ? "negenerat încă" : `${c.formulareBilka.generate} formular${c.formulareBilka.generate === 1 ? "" : "e"}, ${c.formulareBilka.transmise === 0 ? "netrimise" : `${c.formulareBilka.transmise} trimis${c.formulareBilka.transmise === 1 ? "" : "e"}${c.formulareBilka.ultimaTrimitere ? ` ${dataRo(c.formulareBilka.ultimaTrimitere)}` : ""}`}`}
           </p>
+        )}
+        {d.documente && (
+          <div className="actiuni" style={{ marginTop: 8, gap: 6, flexWrap: "wrap" }}>
+            <button className="buton secundar mic" disabled={ocupat} onClick={() => void ruleaza(() => apiComenzi.genereazaDocument(c.id, "TABEL_FACTURARE"))} title="generează tabelul de facturare al ofertei comandate">
+              Tabel de facturare
+            </button>
+            <button className="buton secundar mic" disabled={ocupat} onClick={() => void ruleaza(() => apiComenzi.genereazaDocument(c.id, "DETALIATA"))} title="generează oferta detaliată (cu panotaj și coloana „Primit”)">
+              Ofertă detaliată
+            </button>
+          </div>
         )}
         {c.documente.length > 0 && (
           <>
@@ -784,6 +844,7 @@ function DetaliuComanda({ id, onSchimbat }: { id: string; onSchimbat: () => void
       </section>
 
       <CasetaRetururi c={c} ocupat={ocupat} ruleaza={ruleaza} />
+      <CasetaAviz c={c} ocupat={ocupat} ruleaza={ruleaza} />
     </div>
   );
 }
@@ -958,6 +1019,162 @@ function CasetaRetururi({ c, ocupat, ruleaza }: { c: ComandaDetaliu; ocupat: boo
 }
 
 // ------------------------------------------------------------------ "+ Comanda manuala" (cap. 4b)
+
+// S23 - avizul de insotire a marfii (cap. 9): avizele comenzii (unul per livrare, cu data livrarii si
+// "partial") si formularul de generare cu cantitatile propuse (restul de livrat), ajustabile
+export function CasetaAviz({ c, ocupat, ruleaza, deschisInitial = false }: { c: { id: string; tip: RandComanda["tip"]; avize: AvizComanda[]; drepturi: { aviz: boolean } }; ocupat: boolean; ruleaza: (f: () => Promise<unknown>) => Promise<void>; deschisInitial?: boolean }) {
+  const [formular, setFormular] = useState(false);
+  const [linii, setLinii] = useState<LinieDeAvizat[]>([]);
+  const [dataLivrarii, setDataLivrarii] = useState("");
+  const [cantitati, setCantitati] = useState<Record<string, string>>({});
+  const [bucati, setBucati] = useState<Record<string, string>>({});
+  const [eroare, setEroare] = useState<string | null>(null);
+  const deschide = () => {
+    setEroare(null);
+    apiComenzi
+      .aviz(c.id)
+      .then((r) => {
+        setLinii(r.linii);
+        setDataLivrarii(r.dataPropusa);
+        const q: Record<string, string> = {};
+        const b: Record<string, string> = {};
+        for (const l of r.linii) {
+          if (l.propusa !== null) q[l.linieId] = l.propusa.replace(/\.000$/, "");
+          for (const p of l.panotaj ?? []) b[p.pozitieId] = String(p.propuse);
+        }
+        setCantitati(q);
+        setBucati(b);
+        setFormular(true);
+      })
+      .catch((e) => setEroare(textEroare(e)));
+  };
+  useEffect(() => {
+    if (deschisInitial && c.drepturi.aviz) deschide();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [deschisInitial]);
+  if (c.tip === "MANUALA") return null;
+  const genereaza = () =>
+    ruleaza(() =>
+      apiComenzi.genereazaAviz(c.id, {
+        dataLivrarii,
+        linii: linii.filter((l) => l.propusa !== null).map((l) => ({ linieId: l.linieId, cantitate: (cantitati[l.linieId] ?? "0").trim() || "0" })),
+        pozitii: linii.flatMap((l) => (l.panotaj ?? []).map((p) => ({ pozitieId: p.pozitieId, bucati: Number(bucati[p.pozitieId] ?? 0) || 0 }))),
+      }),
+    ).then(() => setFormular(false));
+  let banda: string | null = null;
+  return (
+    <section className="caseta" style={{ gridColumn: "1 / -1" }}>
+      <h4>Aviz de însoțire a mărfii</h4>
+      {eroare && <Mesaj tip="eroare">{eroare}</Mesaj>}
+      {c.avize.length === 0 && <p className="text-secundar mic">niciun aviz generat</p>}
+      {c.avize.length > 0 && (
+        <ul className="lista-documente">
+          {c.avize.map((a) => (
+            <li key={a.id}>
+              {a.documentId ? (
+                <a href={apiComenzi.caleDocument(c.id, a.documentId)} target="_blank" rel="noreferrer">
+                  Aviz {a.numar} · livrare din {dataRo(a.dataLivrarii)}
+                </a>
+              ) : (
+                <span>
+                  Aviz {a.numar} · livrare din {dataRo(a.dataLivrarii)}
+                </span>
+              )}
+              {a.partial && <span className="eticheta-regularizat" style={{ marginLeft: 6 }}>livrare parțială</span>}
+              <span className="mic text-secundar">
+                {" "}
+                · {a.coli} coli · {a.piese.replace(/\.000$/, "")} piese · {a.generatDe}, {dataOra(a.moment)}
+              </span>
+            </li>
+          ))}
+        </ul>
+      )}
+      {c.drepturi.aviz && !formular && (
+        <button className="buton secundar mic" onClick={deschide}>
+          + Aviz pentru o livrare
+        </button>
+      )}
+      {formular && (
+        <form
+          className="formular-mic"
+          style={{ flexDirection: "column", alignItems: "stretch" }}
+          onSubmit={(e: FormEvent) => {
+            e.preventDefault();
+            void genereaza();
+          }}
+        >
+          <div className="rand-campuri">
+            <Camp eticheta="Data livrării" obligatoriu>
+              <input type="date" value={dataLivrarii} onChange={(e) => setDataLivrarii(e.target.value)} required />
+            </Camp>
+            <span className="mic text-secundar" style={{ alignSelf: "flex-end" }}>
+              Cantitățile propuse sunt restul de livrat (comandat minus avizele anterioare). Scrie mai puțin pentru o livrare parțială; o linie cu 0 nu apare pe aviz.
+            </span>
+          </div>
+          <table className="tabel-incasari">
+            <thead>
+              <tr>
+                <th>Produs</th>
+                <th>UM</th>
+                <th className="dreapta">Comandat</th>
+                <th className="dreapta">Livrat deja</th>
+                <th className="dreapta">Pe acest aviz</th>
+              </tr>
+            </thead>
+            <tbody>
+              {linii.flatMap((l) => {
+                const randuri = [];
+                if (l.banda !== banda) {
+                  banda = l.banda;
+                  randuri.push(
+                    <tr key={`b-${l.linieId}`}>
+                      <td colSpan={5}>
+                        <strong className="mic">{l.banda}</strong>
+                      </td>
+                    </tr>,
+                  );
+                }
+                randuri.push(
+                  <tr key={l.linieId}>
+                    <td>{l.denumire}</td>
+                    <td className="mic">{l.um}</td>
+                    <td className="dreapta">{l.cantitateComandata}</td>
+                    <td className="dreapta mic text-secundar">{l.livrata.replace(/\.000$/, "")}</td>
+                    <td className="dreapta">{l.panotaj ? <span className="mic text-secundar">din lungimi</span> : <input value={cantitati[l.linieId] ?? ""} onChange={(e) => setCantitati({ ...cantitati, [l.linieId]: e.target.value })} inputMode="decimal" style={{ width: 90, textAlign: "right" }} aria-label={`cantitate ${l.denumire}`} />}</td>
+                  </tr>,
+                );
+                for (const p of l.panotaj ?? []) {
+                  randuri.push(
+                    <tr key={p.pozitieId}>
+                      <td className="mic" style={{ paddingLeft: 24 }}>
+                        {Number(p.lungimeM).toLocaleString("ro-RO", { minimumFractionDigits: 2 })} m
+                      </td>
+                      <td className="mic">buc</td>
+                      <td className="dreapta">{p.bucati}</td>
+                      <td className="dreapta mic text-secundar">{p.livrate}</td>
+                      <td className="dreapta">
+                        <input value={bucati[p.pozitieId] ?? ""} onChange={(e) => setBucati({ ...bucati, [p.pozitieId]: e.target.value })} inputMode="numeric" style={{ width: 90, textAlign: "right" }} aria-label={`bucăți ${p.lungimeM} m`} />
+                      </td>
+                    </tr>,
+                  );
+                }
+                return randuri;
+              })}
+            </tbody>
+          </table>
+          <div className="actiuni">
+            <button className="buton mic" disabled={ocupat || !dataLivrarii}>
+              Generează avizul (PDF, 2 exemplare)
+            </button>
+            <button type="button" className="buton secundar mic" onClick={() => setFormular(false)}>
+              Renunță
+            </button>
+          </div>
+        </form>
+      )}
+    </section>
+  );
+}
 
 function FormularComandaManuala({ firme, conturi, onInchide, onCreata }: { firme: { id: string; denumire: string }[]; conturi: (ContScurt & { firmaId: string | null })[]; onInchide: () => void; onCreata: () => void }) {
   const eu = useUtilizator();

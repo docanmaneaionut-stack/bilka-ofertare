@@ -28,13 +28,15 @@ const MIGRARI_ETAPA_3 = [
   "20261106102533_vanzari_comision_agent",
   // S22: retururile si paletii
   "20261106105545_retururi_paleti",
+  // S23: avizul si fisa soferului
+  "20261106130933_aviz_fisa_soferului",
 ];
 
 afterAll(async () => {
   await prisma.$disconnect();
 });
 
-describe("migrarile Etapei 3 si 5 (6-18) sunt aditive", () => {
+describe("migrarile Etapei 3 si 5 (6-19) sunt aditive", () => {
   it("fiecare SQL exista si nu contine instructiuni distructive", () => {
     const existente = fs.readdirSync(FOLDER).filter((d) => /^\d{14}_/.test(d));
     for (const m of MIGRARI_ETAPA_3) expect(existente, m).toContain(m);
@@ -53,6 +55,12 @@ describe("migrarile Etapei 3 si 5 (6-18) sunt aditive", () => {
     expect(m13).toContain(`ALTER TYPE "TipDocument" ADD VALUE 'FORMULAR_BILKA'`);
     expect(m13).toContain(`CREATE TABLE "corespondenta_formular_bilka"`);
     expect(m13).toMatch(/ALTER TABLE "oferta_invelitoare" ADD COLUMN\s+"montaj" TEXT/);
+    // migrarea 19: AVIZ in enum, tabelele avizului, linkul la locatie pe comanda
+    const m19 = fs.readFileSync(path.join(FOLDER, "20261106130933_aviz_fisa_soferului", "migration.sql"), "utf8");
+    expect(m19).toContain(`ALTER TYPE "TipDocument" ADD VALUE 'AVIZ'`);
+    expect(m19).toContain(`CREATE TABLE "comanda_aviz"`);
+    expect(m19).toContain(`CREATE TABLE "comanda_aviz_linie"`);
+    expect(m19).toMatch(/ALTER TABLE "comanda" ADD COLUMN\s+"locatieUrl" TEXT/);
   });
 });
 

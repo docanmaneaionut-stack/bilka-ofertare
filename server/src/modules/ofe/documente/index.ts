@@ -37,16 +37,16 @@ export class EroareDocument extends Error {
 
 // cine poate vedea / genera un document: cine vede oferta; colaboratorul nu
 // primeste tabelul de facturare (FISA-CONTURI §2)
-export function poateVedeaDocument(u: Utilizator, oferta: { utilizatorId: string; firmaId: string }, tip: TipDocument | "FORMULAR_BILKA" | "NOTA_RETUR"): boolean {
+export function poateVedeaDocument(u: Utilizator, oferta: { utilizatorId: string; firmaId: string }, tip: TipDocument | "FORMULAR_BILKA" | "NOTA_RETUR" | "AVIZ"): boolean {
   if (!poateVedeaOferta(u, oferta)) return false;
-  // colaboratorul nu primeste tabelul de facturare si nici formularul de comanda
-  // Bilka (S16b: comanda firmei catre furnizor)
-  if (u.rol === "COLABORATOR" && (tip === "TABEL_FACTURARE" || tip === "FORMULAR_BILKA")) return false;
+  // colaboratorul nu primeste tabelul de facturare, formularul de comanda Bilka (S16b:
+  // comanda firmei catre furnizor) si nici avizul (S23, CONTURI §2)
+  if (u.rol === "COLABORATOR" && (tip === "TABEL_FACTURARE" || tip === "FORMULAR_BILKA" || tip === "AVIZ")) return false;
   return true;
 }
 
 // eticheta oricarui document al ofertei (PDF-urile + formularul Bilka)
-export const ETICHETA_ORICE_DOCUMENT: Record<TipDocumentDb, string> = { ...ETICHETA_DOCUMENT, FORMULAR_BILKA: "Formular Bilka", NOTA_RETUR: "Notă de retur" };
+export const ETICHETA_ORICE_DOCUMENT: Record<TipDocumentDb, string> = { ...ETICHETA_DOCUMENT, FORMULAR_BILKA: "Formular Bilka", NOTA_RETUR: "Notă de retur", AVIZ: "Aviz de însoțire a mărfii" };
 const TIP_CONTINUT: Record<string, string> = { ".pdf": "application/pdf", ".xlsm": "application/vnd.ms-excel.sheet.macroEnabled.12" };
 
 const dataRo = (d: Date) => new Intl.DateTimeFormat("ro-RO", { timeZone: "Europe/Bucharest", day: "2-digit", month: "2-digit", year: "numeric" }).format(d);

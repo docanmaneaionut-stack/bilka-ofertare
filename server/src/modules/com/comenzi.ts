@@ -8,10 +8,12 @@ import { z } from "zod";
 import { prisma } from "../../db/prisma.js";
 import { env } from "../../env.js";
 import { gasesteSauCreeazaClient, normalizeazaTelefon, numarComplet, schemaClient } from "../ofe/clienti.js";
-import { ETICHETA_ORICE_DOCUMENT } from "../ofe/documente/index.js";
+import { EroareDocument, ETICHETA_ORICE_DOCUMENT, genereazaDocument } from "../ofe/documente/index.js";
 import { urmatorulNumar } from "../ofe/numerotare.js";
+import { avizeRouter, includeAviz, spreAviz } from "./avize.js";
+import { fisaRouter } from "./fisaSoferului.js";
 import { includeRetur, retururiRouter, spreRetur } from "./retururi.js";
-import { filtruVizibilitateComenzi, poateAloca, poateCreaComandaManuala, poateModificaComision, poateModificaDetalii, poateOperaLogistic, poateSchimbaStatusPalet, poateScrieBani, poateVedeaComanda, vedeDocumentulComenzii } from "./vizibilitate.js";
+import { filtruVizibilitateComenzi, poateAloca, poateCreaComandaManuala, poateFaceFisaSoferului, poateGeneraAviz, poateModificaComision, poateModificaDetalii, poateOperaLogistic, poateSchimbaStatusPalet, poateScrieBani, poateVedeaComanda, vedeDocumentulComenzii } from "./vizibilitate.js";
 
 // Tabelul de comenzi (S19; FISA-COMENZI cap. 1, 3, 4b, 6; FISA-OFERTARE cap. 16):
 // lista comuna cu numaratorile din cap, cautarea, filtrele, ordinea (invers cronologic
@@ -20,11 +22,15 @@ import { filtruVizibilitateComenzi, poateAloca, poateCreaComandaManuala, poateMo
 // istoric, observatii cu istoric + notitele si atasamentele ofertei in citire),
 // comenzile manuale (seria CM, contul alocat sau "neidentificata"), "Doc." din
 // documentele existente ale ofertei. Incasarile si comisioanele (S20), retururile si
-// paletii (S22, com/retururi.ts) sunt aici; avizul si fisa soferului vin in S23.
+// paletii (S22, com/retururi.ts), avizul (S23, com/avize.ts) si fisa soferului (S23,
+// com/fisaSoferului.ts) sunt aici; tabelul de facturare si detaliata se genereaza si din
+// comanda (cap. 6), printr-o ruta a comenzii, fara sa se atinga modulul ofertei.
 
 export const comenziRouter = Router();
-// S22: retururile comenzii (modul separat, montat sub comanda)
+// S22: retururile comenzii (modul separat, montat sub comanda); S23: avizele si fisa soferului
 comenziRouter.use("/:id/retururi", retururiRouter);
+comenziRouter.use("/:id/aviz", avizeRouter);
+comenziRouter.use("/fisa-soferului", fisaRouter);
 
 export const SERIE_MANUALA = "CM";
 
@@ -44,9 +50,14 @@ const TRANZITII: Record<StatusLogistic, StatusLogistic[]> = {
   LIVRAT: [],
 };
 
-// documentele ofertei care se deschid din comanda (cap. 6): formularele Bilka,
-// detaliata, tabelul de facturare - nimic nou generat aici
-const DOCUMENTE_COMENZII: (TipDocument | "FORMULAR_BILKA" | "NOTA_RETUR")[] = ["FORMULAR_BILKA", "DETALIATA", "TABEL_FACTURARE", "NOTA_RETUR"];
+// documentele ofertei care se deschid din comanda (cap. 6): formularele Bilka, detaliata,
+// tabelul de facturare, nota de retur (S22), avizul (S23); detaliata si tabelul de facturare
+// se pot si genera din comanda (POST /:id/documente)
+const DOCUMENTE_COMENZII: (TipDocument | "FORMULAR_BILKA" | "NOTA_RETUR" | "AVIZ")[] = ["FORMULAR_BILKA", "DETALIATA", "TABEL_FACTURARE", "NOTA_RETUR", "AVIZ"];
+const DOCUMENTE_GENERABILE = ["DETALIATA", "TABEL_FACTURARE"] as const;
+const schemaGenerareDocument = z.object({ tip: z.enum(DOCUMENTE_GENERABILE) });
+// S23: linkul la locatie - doar adrese web http / https
+const schemaLocatie = z.object({ url: z.string().trim().max(2000).regex(/^https?:\/\/\S+$/i, "adresa locației trebuie să înceapă cu http:// sau https://").nullable() });
 
 export class EroareComanda extends Error {
   constructor(
@@ -203,6 +214,8 @@ export function spreRand(c: ComandaCuRelatii) {
     // S22: nota si statusul paletului (cap. 8); retururile active pe scurt (cap. 5)
     palet: c.notaPalet === null ? null : { nota: c.notaPalet, notatDe: c.notaPaletNume, notatLa: c.notaPaletLa, recuperat: c.paletRecuperat, recuperatLa: c.paletRecuperatLa, recuperatDe: c.paletRecuperatDeNume },
     retururi: c.retururi.map((x) => ({ id: x.id, numar: x.numar, sumaCuTvaLei: x.sumaCuTvaLei.toFixed(2), deRegularizat: x.deRegularizat })),
+    // S23: linkul la locatia lucrarii (cap. 4c)
+    locatieUrl: c.locatieUrl,
   };
 }
 
@@ -352,6 +365,13 @@ function drepturi(u: Utilizator, c: ComandaCuRelatii) {
     anuleazaRetur: poateScrieBani(u, c),
     notaPalet: poateOperaLogistic(u),
     statusPalet: poateSchimbaStatusPalet(u),
+    // S23: avizul si generarea detaliatei / tabelului de facturare din comanda - orice cont care vede
+    // comanda, in afara colaboratorului, doar la comenzile din oferta; fisa soferului - Gestiune /
+    // Administratori / Admin general; linkul la locatie - cine modifica detaliile
+    aviz: poateGeneraAviz(u) && c.tip === "DIN_OFERTA",
+    documente: poateGeneraAviz(u) && c.tip === "DIN_OFERTA",
+    fisaSoferului: poateFaceFisaSoferului(u),
+    locatie: poateModificaDetalii(u, c),
   };
 }
 
@@ -380,7 +400,7 @@ comenziRouter.get("/:id", async (req, res) => {
     res.status(404).json({ eroare: "Comanda nu există sau nu e vizibilă" });
     return;
   }
-  const [istoric, observatii, atasamente, documente, notiteOferta, atasamenteOferta, retururi] = await Promise.all([
+  const [istoric, observatii, atasamente, documente, notiteOferta, atasamenteOferta, retururi, avize] = await Promise.all([
     prisma.comandaIstoric.findMany({ where: { comandaId: c.id }, orderBy: { moment: "desc" } }),
     prisma.comandaObservatie.findMany({ where: { comandaId: c.id }, orderBy: { moment: "desc" } }),
     prisma.comandaAtasament.findMany({ where: { comandaId: c.id }, orderBy: { moment: "desc" }, include: { incarcatDe: { select: { nume: true } } } }),
@@ -388,6 +408,7 @@ comenziRouter.get("/:id", async (req, res) => {
     c.ofertaId ? prisma.ofertaNotita.findMany({ where: { ofertaId: c.ofertaId }, orderBy: { moment: "desc" } }) : Promise.resolve([]),
     c.ofertaId ? prisma.ofertaAtasament.findMany({ where: { ofertaId: c.ofertaId }, orderBy: { moment: "desc" }, include: { incarcatDe: { select: { nume: true } } } }) : Promise.resolve([]),
     prisma.comandaRetur.findMany({ where: { comandaId: c.id }, include: includeRetur, orderBy: { numar: "asc" } }),
+    prisma.comandaAviz.findMany({ where: { comandaId: c.id }, include: includeAviz, orderBy: { numar: "asc" } }),
   ]);
   const formulare = documente.filter((d) => d.tip === "FORMULAR_BILKA");
   res.json({
@@ -395,8 +416,9 @@ comenziRouter.get("/:id", async (req, res) => {
       ...spreRand(c),
       drepturi: drepturi(u, c),
       incasari: c.incasari.map(spreIncasare),
-      // S22: retururile complete (cu linii), active si anulate
+      // S22: retururile complete (cu linii), active si anulate; S23: avizele (unul per livrare)
       retururi: retururi.map(spreRetur),
+      avize: avize.map(spreAviz),
       istoric: istoric.map((i) => ({ id: i.id, moment: i.moment, numeUtilizatorLaMoment: i.numeUtilizatorLaMoment, tip: i.tip, camp: i.camp, valoareInainte: i.valoareInainte, valoareDupa: i.valoareDupa, mentiuni: i.mentiuni })),
       observatii: observatii.map((o) => ({ id: o.id, moment: o.moment, numeUtilizatorLaMoment: o.numeUtilizatorLaMoment, text: o.text })),
       atasamente: atasamente.map((a) => ({ id: a.id, nume: a.nume, tipMime: a.tipMime, marime: a.marime, moment: a.moment, incarcatDe: a.incarcatDe?.nume ?? null })),
@@ -763,6 +785,42 @@ comenziRouter.get("/:id/atasamente-oferta/:aid", async (req, res) => {
     return;
   }
   res.download(path.join(env.dateDir, a.fisier), a.nume);
+});
+
+// S23 - linkul la locatia lucrarii (cap. 4c): cine modifica detaliile comenzii, cu istoric
+comenziRouter.put("/:id/locatie", async (req, res) => {
+  const u = req.utilizator!;
+  const date = schemaLocatie.parse(req.body);
+  try {
+    const c = await cuDrepturi(req, u, (x) => poateModificaDetalii(u, x), "Locația o scriu Gestiunea, Administratorii și contul comenzii");
+    const dupa = await prisma.$transaction(async (tx) => {
+      const d = await tx.comanda.update({ where: { id: c.id }, data: { locatieUrl: date.url }, include: includeRand });
+      if ((c.locatieUrl ?? null) !== (date.url ?? null)) await scrieIstoricComanda(tx, c.id, u, [{ tip: "locatie", camp: "locatieUrl", inainte: c.locatieUrl, dupa: date.url }]);
+      return d;
+    });
+    res.json({ comanda: spreRand(dupa) });
+  } catch (e) {
+    raspunde(res, e);
+  }
+});
+
+// S23 - detaliata si tabelul de facturare generate din comanda (cap. 6), pentru cine vede comanda fara sa
+// vada oferta (Gestiune, Contabilitate); colaboratorul nu; documentul e al ofertei, ca pana acum
+comenziRouter.post("/:id/documente", async (req, res) => {
+  const u = req.utilizator!;
+  const { tip } = schemaGenerareDocument.parse(req.body);
+  try {
+    const c = await cuDrepturi(req, u, () => poateGeneraAviz(u), "Documentele comenzii nu sunt disponibile colaboratorilor (FISA-CONTURI §2)");
+    if (c.tip !== "DIN_OFERTA" || !c.ofertaId) throw new EroareComanda("Comanda manuală n-are ofertă: nu are din ce se genera documentul", 409);
+    const d = await genereazaDocument(c.ofertaId, tip, u);
+    res.status(201).json({ document: { id: d.id, tip: d.tip, eticheta: ETICHETA_ORICE_DOCUMENT[d.tip], versiune: d.versiune, nume: d.nume, marime: d.marime, generatLa: d.generatLa, generatDe: d.generatDe?.nume ?? null, transmisLa: d.transmisLa, canal: d.canal, formularNr: d.formularNr } });
+  } catch (e) {
+    if (e instanceof EroareDocument) {
+      res.status(e.status).json({ eroare: e.message });
+      return;
+    }
+    raspunde(res, e);
+  }
 });
 
 // ------------------------------------------------------------------ documentele ofertei, prin comanda (cap. 6)

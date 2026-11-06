@@ -1121,7 +1121,33 @@ export type RandComanda = {
   // S22: nota si statusul paletului; retururile active pe scurt
   palet: PaletComanda | null;
   retururi: { id: string; numar: number; sumaCuTvaLei: string; deRegularizat: boolean }[];
+  // S23: linkul la locatia lucrarii
+  locatieUrl: string | null;
 };
+// S23: avizul de insotire a marfii (unul per livrare) si fisa soferului
+export type LinieAviz = { id: string; linieId: string | null; pozitieId: string | null; cod: string | null; denumire: string; um: string; cantitate: string; lungimeM: string | null; bucati: number | null };
+export type AvizComanda = { id: string; numar: number; dataLivrarii: string; partial: boolean; coli: number; piese: string; generatDe: string; moment: string; documentId: string | null; linii: LinieAviz[] };
+export type PozitieAviz = { pozitieId: string; lungimeM: string; bucati: number; livrate: number; propuse: number };
+export type LinieDeAvizat = { linieId: string; cod: string; denumire: string; um: string; banda: string; cantitateComandata: string; livrata: string; propusa: string | null; latimeTotalaM: string | null; panotaj: PozitieAviz[] | null };
+export type StructuraAviz = { avize: AvizComanda[]; linii: LinieDeAvizat[]; dataPropusa: string; manuala: boolean; poateGenera: boolean };
+export type BlocFisa = {
+  comandaId: string;
+  numarComplet: string;
+  completareLa: string | null;
+  manuala: boolean;
+  client: { nume: string; telefon: string };
+  adresa: string | null;
+  locatieUrl: string | null;
+  rezumat: string;
+  coli: string | null;
+  categorii: string[];
+  livrare: { indicatii: string | null; data: string | null };
+  montator: { nume: string; telefon: string | null } | null;
+  restLei: string;
+  statusLogistic: StatusLogistic;
+  avize: { id: string; numar: number; dataLivrarii: string; partial: boolean; documentId: string | null }[];
+};
+export type FisaSoferului = { data: string; dataText: string; masina: string | null; gestiune: { nume: string; telefon: string | null }; firma: { denumire: string; adresa: string; logo: string | null }; livrari: number; blocuri: BlocFisa[]; avertizari: string[] };
 export type PaletComanda = { nota: string; notatDe: string | null; notatLa: string | null; recuperat: boolean; recuperatLa: string | null; recuperatDe: string | null };
 export type LinieRetur = { id: string; linieId: string; cod: string; denumire: string; um: string; cantitate: string; pretDocumentEur: string; valoareEur: string; achizitieLei: string };
 export type ReturComanda = {
@@ -1155,9 +1181,10 @@ export type ObservatieComanda = { id: string; moment: string; numeUtilizatorLaMo
 export type AtasamentComanda = { id: string; nume: string; tipMime: string | null; marime: number | null; moment: string; incarcatDe: string | null };
 export type DocumentComanda = { id: string; tip: string; eticheta: string; versiune: number; nume: string; marime: number; generatLa: string; generatDe: string | null; transmisLa: string | null; canal: string | null; formularNr: number | null };
 export type ComandaDetaliu = Omit<RandComanda, "retururi"> & {
-  drepturi: { logistic: boolean; detalii: boolean; livrare: boolean; alocare: boolean; bani: boolean; comision: boolean; retur: boolean; anuleazaRetur: boolean; notaPalet: boolean; statusPalet: boolean };
+  drepturi: { logistic: boolean; detalii: boolean; livrare: boolean; alocare: boolean; bani: boolean; comision: boolean; retur: boolean; anuleazaRetur: boolean; notaPalet: boolean; statusPalet: boolean; aviz: boolean; documente: boolean; fisaSoferului: boolean; locatie: boolean };
   incasari: IncasareComanda[];
   retururi: ReturComanda[];
+  avize: AvizComanda[];
   istoric: IntrareIstoricComanda[];
   observatii: ObservatieComanda[];
   atasamente: AtasamentComanda[];
@@ -1228,6 +1255,21 @@ export const apiComenzi = {
     const p = new URLSearchParams();
     for (const [k, v] of Object.entries(f)) if (v) p.set(k, String(v));
     return cerere<{ paleti: RandComanda[]; nerecuperati: number; poateSchimbaStatus: boolean }>(`${BAZA_COM}/paleti?${p.toString()}`);
+  },
+  // S23: avizul (unul per livrare), documentele generate din comanda, linkul la locatie, fisa soferului
+  aviz: (id: string) => cerere<StructuraAviz>(`${BAZA_COM}/${id}/aviz`),
+  genereazaAviz: (id: string, corp: { dataLivrarii: string; linii?: { linieId: string; cantitate: string }[]; pozitii?: { pozitieId: string; bucati: number }[] }) => cerere<{ aviz: AvizComanda }>(`${BAZA_COM}/${id}/aviz`, { method: "POST", body: JSON.stringify(corp) }),
+  genereazaDocument: (id: string, tip: "DETALIATA" | "TABEL_FACTURARE") => cerere<{ document: DocumentComanda }>(`${BAZA_COM}/${id}/documente`, { method: "POST", body: JSON.stringify({ tip }) }),
+  locatie: (id: string, url: string | null) => cerere<{ comanda: RandComanda }>(`${BAZA_COM}/${id}/locatie`, { method: "PUT", body: JSON.stringify({ url }) }),
+  fisaSoferului: (corp: { comenzi: string[]; masina?: string | null; data?: string }) => cerere<{ fisa: FisaSoferului }>(`${BAZA_COM}/fisa-soferului`, { method: "POST", body: JSON.stringify(corp) }),
+  // PDF-ul fisei (nereținut de soft): deschis in browser sau descarcat ("Descarca pentru WhatsApp")
+  fisaSoferuluiPdf: async (corp: { comenzi: string[]; masina?: string | null; data?: string }, descarca: boolean): Promise<Blob> => {
+    const raspuns = await fetch(`${BAZA_API}${BAZA_COM}/fisa-soferului/pdf${descarca ? "?descarca=da" : ""}`, { method: "POST", credentials: "include", headers: { "Content-Type": "application/json" }, body: JSON.stringify(corp) });
+    if (!raspuns.ok) {
+      const c = await raspuns.json().catch(() => ({}));
+      throw eroareDinRaspuns(raspuns.status, c);
+    }
+    return raspuns.blob();
   },
   // S20
   incasare: (id: string, i: { sumaLei: string; data: string; ceReprezinta: string }) => cerere<{ incasare: IncasareComanda; comanda: RandComanda }>(`${BAZA_COM}/${id}/incasari`, { method: "POST", body: JSON.stringify(i) }),
