@@ -9,6 +9,8 @@ export function Ofertare({ utilizator, onLogout }: { utilizator: Utilizator; onL
   const areZonaTehnica = utilizator.rol === "ADMIN_GENERAL" || utilizator.rol === "ADMINISTRATOR";
   // S19: Contabilitatea si Gestiunea au doar Comenzi (si contul); restul au si Oferte
   const areOferte = utilizator.rol !== "CONTABILITATE" && utilizator.rol !== "GESTIUNE";
+  // S21: tabelul de vanzari - agentul (al lui), Administratorul, Admin general; colaboratorul nu are
+  const areVanzari = utilizator.rol === "ADMIN_GENERAL" || utilizator.rol === "ADMINISTRATOR" || utilizator.rol === "AGENT";
   return (
     <>
       <header className="bara-sus">
@@ -22,6 +24,11 @@ export function Ofertare({ utilizator, onLogout }: { utilizator: Utilizator; onL
           <NavLink to="/comenzi" className={clasa}>
             Comenzi
           </NavLink>
+          {areVanzari && (
+            <NavLink to="/vanzari" className={clasa}>
+              Vânzări
+            </NavLink>
+          )}
           <NavLink to="/cont" className={clasa}>
             Contul meu
           </NavLink>

@@ -951,3 +951,38 @@ table.tabel tr.detaliu-comanda td {
 .rest-incasat {
   margin-top: 8px;
 }
+
+/* --- S21: tabelul de vanzari --- */
+
+.statistici-vanzari {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 10px;
+  margin: 12px 0 16px;
+}
+
+.statistici-vanzari > div {
+  background: var(--bg-secundar);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 8px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+table.tabel-vanzari th.dreapta,
+table.tabel-vanzari td.dreapta {
+  text-align: right;
+  white-space: nowrap;
+}
+
+table.tabel-vanzari tr.completare td {
+  padding-left: 18px;
+  color: var(--text-secundar);
+}
+
+table.tabel-vanzari tr.rand-lucrare td {
+  background: var(--bg-secundar);
+  border-bottom: 2px solid var(--border);
+}

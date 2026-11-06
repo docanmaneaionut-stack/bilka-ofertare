@@ -491,3 +491,16 @@ Fiecare intrare: data, obiectivul sesiunii, rezultatul, următorul pas propus.
 - **Teste**: `com-incasari.test.ts` (10 cazuri), testul S19 adus la regula „închis”, migrarea 16 în testul migrărilor, exportul cu `comanda_incasare`; `npm test` verde — 32 de fișiere, 332 de teste; 12 etaloane la zero. Ecranul verificat prin tipuri și build, nu în browser.
 
 **Următorul pas propus:** S21 — tabelul de vânzări (OFERTARE cap. 19): coloanele și definițiile, lucrările cu completări, comisionul agentului scris de Administrator cu „achitat”, filtrul încasat / neîncasat, statisticile; colaboratorii ca vânzare în tabelul Administratorului.
+
+
+## 2026-11-06 — S21: tabelul de vânzări (Etapa 5)
+
+**Obiectiv:** PLAN v0.30 S21 — ecran de lucru alimentat automat din comenzi (OFERTARE cap. 19, COMENZI cap. 7): cifrele din rezultatul salvat la „Comandat”, rândul colaboratorului în tabelul Administratorului, lucrările una sub alta, coloanele în ordinea lui Ionuț, comisionul agentului, filtrele, statisticile, cine vede ce. Motorul, oferta (ÎNGHEȚATĂ), retururile și paleții neatinse. Aprobat de Ionuț cu cele șase decizii (sumele manuale doar cu cont alocat; filtrul încasat / neîncasat ignoră perioada; procentul = net ÷ cost; rândurile fără sume în afara totalurilor; completarea fără inițiala în selecție ca rând de sine stătător; data comenzii în prima coloană).
+
+**Rezultat:**
+- **Migrarea 17** (aditivă): comisionul agentului cu „achitat” (cine, când) și sumele manuale de vânzare pe comandă. Aplicată pe baza de lucru.
+- **`/api/vanzari`**: rândurile din blocul `vanzari` al rezultatului salvat — niciun recalcul (E01: 17.000 · 14.337,77 · 2.662,23 · 2.200,19; E05 costul fără grupă; E03 vânzare = achiziția colaboratorului, cost = baza, în tabelul Administratorului); comenzile manuale fără sume până le completează Administratorul firmei (doar cu cont alocat); lucrările una sub alta cu adaosul pe lucrare (`agregaLucrare`: E01 + E10 = 17.000 · 14.539,82 · 2.460,18 · 2.033,21); filtrele (încasat / neîncasat traversând lunile, lună / an / interval, agenți combinat, firmă); statisticile pe selecție (totaluri, comisioane, procent de adaos). Comisionul agentului scris de Administrator cu istoric și asterisc, „achitat” cu cine și când; comisionul recomandării rămâne cel de pe comandă.
+- **Ecranul „Vânzări”**: coloanele în ordinea din cap. 19, rândul lucrării sub comenzile legate, statisticile (Administrator, Admin general), scrierea comisionului și a bifelor inline, „Completează sumele” la comenzile manuale; meniul doar la Administratori, Admin general și agenți (agentul vede tabelul lui, fără statistici, fără să scrie).
+- **Teste**: `com-vanzari.test.ts` (9 cazuri) — toate cifrele etalon ies din prima; migrarea 17 în testul migrărilor; `npm test` verde — 33 de fișiere, 341 de teste; 12 etaloane la zero. Ecranul verificat prin tipuri și build, nu în browser.
+
+**Următorul pas propus:** S22 — retururile și nota de retur (COMENZI cap. 5): calculul la prețurile din ofertă, rândul de retur legat în tabelul de vânzări (cu minus când comisionul era achitat), nota de retur pentru client; evidența paleților (cap. 8).

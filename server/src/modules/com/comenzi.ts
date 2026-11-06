@@ -113,7 +113,7 @@ export type StatusIncasare = "NEINCASAT" | "PARTIAL" | "INCASAT";
 export const ETICHETA_STATUS_INCASARE: Record<StatusIncasare, string> = { NEINCASAT: "neîncasat", PARTIAL: "încasat parțial", INCASAT: "încasat" };
 
 // statusul incasarii si restul: din incasarile CONFIRMATE (cap. 2); propusele se arata separat
-function rezumatIncasari(c: { totalLei: Prisma.Decimal; incasari: { sumaLei: Prisma.Decimal; stare: string }[] }) {
+export function rezumatIncasari(c: { totalLei: Prisma.Decimal; incasari: { sumaLei: Prisma.Decimal; stare: string }[] }) {
   const confirmate = c.incasari.filter((i) => i.stare === "CONFIRMATA");
   const incasat = confirmate.reduce((s, i) => s.plus(i.sumaLei), new Prisma.Decimal(0));
   const propuse = c.incasari.filter((i) => i.stare === "PROPUSA").reduce((s, i) => s.plus(i.sumaLei), new Prisma.Decimal(0));
@@ -811,6 +811,73 @@ comenziRouter.put("/:id/comision/achitat", async (req, res) => {
       return d;
     });
     res.json({ comanda: spreRand(dupa) });
+  } catch (e) {
+    raspunde(res, e);
+  }
+});
+
+// ------------------------------------------------------------------ S21: comisionul agentului si sumele manuale (OFERTARE cap. 19)
+
+const schemaComisionAgent = z.object({ comisionAgentLei: suma.nullable(), mentiuni: textOptional });
+const schemaSumeVanzare = z.object({ pretVanzareLei: suma, costAchizitieLei: suma, mentiuni: textOptional });
+
+comenziRouter.put("/:id/comision-agent", async (req, res) => {
+  const u = req.utilizator!;
+  const date = schemaComisionAgent.parse(req.body);
+  try {
+    const c = await cuDrepturi(req, u, (x) => poateScrieBani(u, x), "Comisionul agentului îl scrie doar Administratorul firmei");
+    const nou = date.comisionAgentLei === null ? null : new Prisma.Decimal(date.comisionAgentLei);
+    if (nou !== null && nou.lt(0)) throw new EroareComanda("Comisionul nu poate fi negativ", 400);
+    const dupa = await prisma.$transaction(async (tx) => {
+      const d = await tx.comanda.update({ where: { id: c.id }, data: { comisionAgentLei: nou }, include: includeRand });
+      if ((nou?.toFixed(2) ?? null) !== (c.comisionAgentLei?.toFixed(2) ?? null)) await scrieIstoricComanda(tx, c.id, u, [{ tip: "suma", camp: "comisionAgentLei", inainte: c.comisionAgentLei?.toFixed(2) ?? null, dupa: nou?.toFixed(2) ?? null, mentiuni: date.mentiuni }]);
+      return d;
+    });
+    res.json({ comanda: spreRand(dupa), comisionAgent: dupa.comisionAgentLei === null ? null : { lei: dupa.comisionAgentLei.toFixed(2), achitat: dupa.comisionAgentAchitat } });
+  } catch (e) {
+    raspunde(res, e);
+  }
+});
+
+comenziRouter.put("/:id/comision-agent/achitat", async (req, res) => {
+  const u = req.utilizator!;
+  const date = schemaAchitat.parse(req.body);
+  try {
+    const c = await cuDrepturi(req, u, (x) => poateScrieBani(u, x), "„Achitat” îl bifează doar Administratorul firmei comenzii");
+    if (c.comisionAgentLei === null || c.comisionAgentLei.lte(0)) throw new EroareComanda("Comanda nu are comision de agent de achitat", 409);
+    const acum = new Date();
+    const dupa = await prisma.$transaction(async (tx) => {
+      const d = await tx.comanda.update({ where: { id: c.id }, data: { comisionAgentAchitat: date.achitat, comisionAgentAchitatLa: date.achitat ? acum : null, comisionAgentAchitatDeNume: date.achitat ? u.nume : null }, include: includeRand });
+      if (date.achitat !== c.comisionAgentAchitat) await scrieIstoricComanda(tx, c.id, u, [{ tip: "comision", camp: "comisionAgentAchitat", inainte: c.comisionAgentAchitat ? "achitat" : "neachitat", dupa: date.achitat ? "achitat" : "neachitat" }]);
+      return d;
+    });
+    res.json({ comanda: spreRand(dupa), comisionAgent: { lei: dupa.comisionAgentLei!.toFixed(2), achitat: dupa.comisionAgentAchitat, achitatLa: dupa.comisionAgentAchitatLa, achitatDe: dupa.comisionAgentAchitatDeNume } });
+  } catch (e) {
+    raspunde(res, e);
+  }
+});
+
+// sumele comenzii manuale (cost si vanzare), ca sa intre in adaos si comisioane (cap. 4b, 7):
+// Administratorul firmei, doar cand comanda are cont alocat
+comenziRouter.put("/:id/sume-vanzare", async (req, res) => {
+  const u = req.utilizator!;
+  const date = schemaSumeVanzare.parse(req.body);
+  try {
+    const c = await cuDrepturi(req, u, (x) => poateScrieBani(u, x), "Sumele comenzii manuale le completează doar Administratorul firmei");
+    if (c.tip !== "MANUALA") throw new EroareComanda("Sumele comenzilor din ofertă vin din rezultatul salvat la „Comandat”", 409);
+    if (!c.contAlocatId) throw new EroareComanda("Comanda e neidentificată: întâi se alocă unui cont", 409);
+    const pret = new Prisma.Decimal(date.pretVanzareLei);
+    const cost = new Prisma.Decimal(date.costAchizitieLei);
+    if (pret.lt(0) || cost.lt(0)) throw new EroareComanda("Sumele nu pot fi negative", 400);
+    const dupa = await prisma.$transaction(async (tx) => {
+      const d = await tx.comanda.update({ where: { id: c.id }, data: { vanzarePretLei: pret, vanzareCostLei: cost }, include: includeRand });
+      await scrieIstoricComanda(tx, c.id, u, [
+        ...(pret.toFixed(2) !== (c.vanzarePretLei?.toFixed(2) ?? null) ? [{ tip: "suma", camp: "vanzarePretLei", inainte: c.vanzarePretLei?.toFixed(2) ?? null, dupa: pret.toFixed(2), mentiuni: date.mentiuni }] : []),
+        ...(cost.toFixed(2) !== (c.vanzareCostLei?.toFixed(2) ?? null) ? [{ tip: "suma", camp: "vanzareCostLei", inainte: c.vanzareCostLei?.toFixed(2) ?? null, dupa: cost.toFixed(2), mentiuni: date.mentiuni }] : []),
+      ]);
+      return d;
+    });
+    res.json({ comanda: spreRand(dupa), sume: { pretVanzareLei: pret.toFixed(2), costAchizitieLei: cost.toFixed(2) } });
   } catch (e) {
     raspunde(res, e);
   }

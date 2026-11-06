@@ -1193,3 +1193,43 @@ export const apiComenzi = {
   comision: (id: string, comisionLei: string | null, mentiuni: string | null) => cerere<{ comanda: RandComanda }>(`${BAZA_COM}/${id}/comision`, { method: "PUT", body: JSON.stringify({ comisionLei, mentiuni }) }),
   comisionAchitat: (id: string, achitat: boolean) => cerere<{ comanda: RandComanda }>(`${BAZA_COM}/${id}/comision/achitat`, { method: "PUT", body: JSON.stringify({ achitat }) }),
 };
+
+// ---------------------------------------------------------------- S21: tabelul de vanzari (FISA-OFERTARE cap. 19)
+
+export type RandVanzari = {
+  comandaId: string;
+  numarComplet: string;
+  manuala: boolean;
+  data: string;
+  firma: { id: string; denumire: string };
+  client: { nume: string; localitate: string | null };
+  agent: ContScurt | null;
+  tabelulLui: string | null;
+  tabel: "propriu" | "administrator";
+  faraSume: boolean;
+  costAchizitieLei: string | null;
+  pretVanzareLei: string | null;
+  adaosNetLei: string | null;
+  adaosBrutLei: string | null;
+  sursaRecomandarii: string | null;
+  comisionRecomandare: { lei: string; achitat: boolean } | null;
+  comisionAgent: { lei: string; achitat: boolean; achitatLa: string | null; achitatDe: string | null } | null;
+  comisionAgentModificat: boolean;
+  incasare: { status: StatusIncasare; eticheta: string; incasatLei: string; restLei: string };
+  completareLa: { numarComplet: string; motiv: string | null } | null;
+  lucrare: { pretVanzareLei: string; costAchizitieLei: string; adaosNetLei: string; adaosBrutLei: string; comenzi: number } | null;
+  copii: RandVanzari[];
+};
+export type StatisticiVanzari = { comenzi: number; faraSume: number; costAchizitieLei: string; pretVanzareLei: string; adaosNetLei: string; adaosBrutLei: string; comisioaneLei: string; procentAdaos: string | null };
+export type FiltreVanzari = { deLa?: string; panaLa?: string; incasare?: "" | "incasat" | "neincasat"; agent?: string; firmaId?: string };
+
+export const apiVanzari = {
+  lista: (f: FiltreVanzari) => {
+    const p = new URLSearchParams();
+    for (const [k, v] of Object.entries(f)) if (v) p.set(k, String(v));
+    return cerere<{ randuri: RandVanzari[]; statistici: StatisticiVanzari | null; perioada: { deLa: string; panaLa: string } | null; poateScrie: boolean }>(`/api/vanzari?${p.toString()}`);
+  },
+  comisionAgent: (id: string, comisionAgentLei: string | null, mentiuni: string | null) => cerere<{ comanda: RandComanda }>(`${BAZA_COM}/${id}/comision-agent`, { method: "PUT", body: JSON.stringify({ comisionAgentLei, mentiuni }) }),
+  comisionAgentAchitat: (id: string, achitat: boolean) => cerere<{ comanda: RandComanda }>(`${BAZA_COM}/${id}/comision-agent/achitat`, { method: "PUT", body: JSON.stringify({ achitat }) }),
+  sumeVanzare: (id: string, pretVanzareLei: string, costAchizitieLei: string, mentiuni: string | null) => cerere<{ comanda: RandComanda }>(`${BAZA_COM}/${id}/sume-vanzare`, { method: "PUT", body: JSON.stringify({ pretVanzareLei, costAchizitieLei, mentiuni }) }),
+};

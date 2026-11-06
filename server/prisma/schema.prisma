@@ -1046,6 +1046,17 @@ model Comanda {
   comisionAchitatLa     DateTime?
   comisionAchitatDeNume String?
 
+  // S21 (migrarea 17): comisionul agentului - scris manual de Administratorul firmei in tabelul de
+  // vanzari (OFERTARE cap. 19), cu istoric si asterisc rosu, "achitat" cu cine si cand; sumele
+  // comenzilor manuale (cost si vanzare), completate de Administratorul firmei - pana atunci
+  // randul e "fara sume" si nu intra in totaluri
+  comisionAgentLei           Decimal?  @db.Decimal(14, 2)
+  comisionAgentAchitat       Boolean   @default(false)
+  comisionAgentAchitatLa     DateTime?
+  comisionAgentAchitatDeNume String?
+  vanzarePretLei             Decimal?  @db.Decimal(14, 2)
+  vanzareCostLei             Decimal?  @db.Decimal(14, 2)
+
   istoric    ComandaIstoric[]
   observatii ComandaObservatie[]
   atasamente ComandaAtasament[]
