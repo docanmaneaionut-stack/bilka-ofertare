@@ -10,7 +10,8 @@ import { env } from "../../env.js";
 import { gasesteSauCreeazaClient, normalizeazaTelefon, numarComplet, schemaClient } from "../ofe/clienti.js";
 import { ETICHETA_ORICE_DOCUMENT } from "../ofe/documente/index.js";
 import { urmatorulNumar } from "../ofe/numerotare.js";
-import { filtruVizibilitateComenzi, poateAloca, poateCreaComandaManuala, poateModificaComision, poateModificaDetalii, poateOperaLogistic, poateScrieBani, poateVedeaComanda, vedeDocumentulComenzii } from "./vizibilitate.js";
+import { includeRetur, retururiRouter, spreRetur } from "./retururi.js";
+import { filtruVizibilitateComenzi, poateAloca, poateCreaComandaManuala, poateModificaComision, poateModificaDetalii, poateOperaLogistic, poateSchimbaStatusPalet, poateScrieBani, poateVedeaComanda, vedeDocumentulComenzii } from "./vizibilitate.js";
 
 // Tabelul de comenzi (S19; FISA-COMENZI cap. 1, 3, 4b, 6; FISA-OFERTARE cap. 16):
 // lista comuna cu numaratorile din cap, cautarea, filtrele, ordinea (invers cronologic
@@ -18,10 +19,12 @@ import { filtruVizibilitateComenzi, poateAloca, poateCreaComandaManuala, poateMo
 // la sfarsit, ascunse implicit), randul desfasurat (livrare si facturare, statusuri cu
 // istoric, observatii cu istoric + notitele si atasamentele ofertei in citire),
 // comenzile manuale (seria CM, contul alocat sau "neidentificata"), "Doc." din
-// documentele existente ale ofertei. Incasarile, comisioanele, retururile, paletii si
-// fisa soferului vin in S20-S23.
+// documentele existente ale ofertei. Incasarile si comisioanele (S20), retururile si
+// paletii (S22, com/retururi.ts) sunt aici; avizul si fisa soferului vin in S23.
 
 export const comenziRouter = Router();
+// S22: retururile comenzii (modul separat, montat sub comanda)
+comenziRouter.use("/:id/retururi", retururiRouter);
 
 export const SERIE_MANUALA = "CM";
 
@@ -43,7 +46,7 @@ const TRANZITII: Record<StatusLogistic, StatusLogistic[]> = {
 
 // documentele ofertei care se deschid din comanda (cap. 6): formularele Bilka,
 // detaliata, tabelul de facturare - nimic nou generat aici
-const DOCUMENTE_COMENZII: (TipDocument | "FORMULAR_BILKA")[] = ["FORMULAR_BILKA", "DETALIATA", "TABEL_FACTURARE"];
+const DOCUMENTE_COMENZII: (TipDocument | "FORMULAR_BILKA" | "NOTA_RETUR")[] = ["FORMULAR_BILKA", "DETALIATA", "TABEL_FACTURARE", "NOTA_RETUR"];
 
 export class EroareComanda extends Error {
   constructor(
@@ -101,6 +104,9 @@ const schemaStatus = z.object({
 const schemaLivrare = z.object({ indicatii: textOptional, dataLivrarii: dataIso.nullish() });
 const schemaFacturare = z.object({ firma: textOptional, cui: z.string().trim().max(50).nullish(), adresa: textOptional });
 const schemaContacte = z.object({ clientTelefon: z.string().trim().min(6).max(50).optional(), montatorNume: z.string().trim().max(200).nullish(), montatorTelefon: z.string().trim().max(50).nullish() });
+const schemaNotaPalet = z.object({ text: z.string().trim().max(1000).nullable() });
+const schemaPaletRecuperat = z.object({ recuperat: z.boolean() });
+const schemaFiltrePaleti = z.object({ recuperati: z.enum(["da", "nu", "toti"]).default("nu"), q: z.string().trim().max(100).optional() });
 const schemaAlocare = z.object({ contAlocatId: z.string().trim().min(1).nullable(), mentiuni: textOptional });
 const schemaObservatie = z.object({ text: z.string().trim().min(1, "observația e goală").max(4000) });
 // S20
@@ -137,7 +143,7 @@ interface IntrareIstoricComanda {
   mentiuni?: string | null;
 }
 
-async function scrieIstoricComanda(tx: Tx, comandaId: string, u: Utilizator, intrari: IntrareIstoricComanda[]): Promise<void> {
+export async function scrieIstoricComanda(tx: Tx, comandaId: string, u: Utilizator, intrari: IntrareIstoricComanda[]): Promise<void> {
   if (intrari.length === 0) return;
   await tx.comandaIstoric.createMany({
     data: intrari.map((i) => ({ comandaId, utilizatorId: u.id, numeUtilizatorLaMoment: u.nume, tip: i.tip, camp: i.camp ?? null, valoareInainte: i.inainte ?? null, valoareDupa: i.dupa ?? null, mentiuni: (i.mentiuni ?? "").trim() || null })),
@@ -146,17 +152,19 @@ async function scrieIstoricComanda(tx: Tx, comandaId: string, u: Utilizator, int
 
 // ------------------------------------------------------------------ randul listei
 
-const includeRand = {
+export const includeRand = {
   firma: { select: { id: true, denumire: true } },
   responsabil: { select: { id: true, nume: true, rol: true } },
   contAlocat: { select: { id: true, nume: true, rol: true } },
   oferta: { select: { id: true, utilizatorId: true, localitate: true, completareLa: { select: { serie: true, numar: true } }, motivCompletare: true } },
   incasari: { orderBy: [{ data: "asc" as const }, { moment: "asc" as const }] },
+  // S22: retururile active, pe scurt (numarul, suma, "de regularizat")
+  retururi: { where: { stare: "ACTIV" as const }, select: { id: true, numar: true, sumaCuTvaLei: true, deRegularizat: true }, orderBy: { numar: "asc" as const } },
 } satisfies Prisma.ComandaInclude;
 
-type ComandaCuRelatii = Prisma.ComandaGetPayload<{ include: typeof includeRand }>;
+export type ComandaCuRelatii = Prisma.ComandaGetPayload<{ include: typeof includeRand }>;
 
-function spreRand(c: ComandaCuRelatii) {
+export function spreRand(c: ComandaCuRelatii) {
   const manuala = c.tip === "MANUALA";
   const incasare = rezumatIncasari(c);
   return {
@@ -192,6 +200,9 @@ function spreRand(c: ComandaCuRelatii) {
     comision: c.comisionLei !== null ? { lei: c.comisionLei.toFixed(2), achitat: c.comisionAchitat, achitatLa: c.comisionAchitatLa, achitatDe: c.comisionAchitatDeNume } : null,
     // "inchisa" = Livrat si incasat (cap. 1): la sfarsitul listei, ascunsa implicit
     inchisa: c.statusLogistic === "LIVRAT" && incasare.status === "INCASAT",
+    // S22: nota si statusul paletului (cap. 8); retururile active pe scurt (cap. 5)
+    palet: c.notaPalet === null ? null : { nota: c.notaPalet, notatDe: c.notaPaletNume, notatLa: c.notaPaletLa, recuperat: c.paletRecuperat, recuperatLa: c.paletRecuperatLa, recuperatDe: c.paletRecuperatDeNume },
+    retururi: c.retururi.map((x) => ({ id: x.id, numar: x.numar, sumaCuTvaLei: x.sumaCuTvaLei.toFixed(2), deRegularizat: x.deRegularizat })),
   };
 }
 
@@ -247,7 +258,11 @@ comenziRouter.get("/", async (req, res) => {
 
   // toate comenzile vizibile din perioada; statusul incasarii e derivat, deci filtrele pe
   // status / incasare si numaratorile se fac aici, nu in SQL
-  const toate = (await prisma.comanda.findMany({ where: { AND: conditii }, include: includeRand })).map((c) => ({ c, r: spreRand(c) }));
+  const [toate, paletiNerecuperati] = await Promise.all([
+    prisma.comanda.findMany({ where: { AND: conditii }, include: includeRand }).then((l) => l.map((c) => ({ c, r: spreRand(c) }))),
+    // S22: paletii nerecuperati - peste toate comenzile vizibile, indiferent de perioada (cap. 8)
+    prisma.comanda.count({ where: { AND: [vizibilitate, { notaPalet: { not: null }, paletRecuperat: false }] } }),
+  ]);
   const numar = (s: StatusLogistic) => toate.filter((x) => x.c.statusLogistic === s).length;
   let filtrate = toate;
   if (f.status) filtrate = filtrate.filter((x) => x.c.statusLogistic === f.status);
@@ -275,6 +290,7 @@ comenziRouter.get("/", async (req, res) => {
       neincasate: toate.filter((x) => x.r.incasare.status !== "INCASAT").length,
       comisioaneNeachitate: toate.filter((x) => x.c.comisionLei !== null && x.c.comisionLei.gt(0) && !x.c.comisionAchitat).length,
       neidentificate: toate.filter((x) => x.r.neidentificata).length,
+      paletiNerecuperati,
     },
     perioada: { deLa, panaLa },
   });
@@ -315,7 +331,7 @@ comenziRouter.get("/conturi", async (req, res) => {
 
 // ------------------------------------------------------------------ o comanda
 
-async function comandaVizibila(u: Utilizator, id: string) {
+export async function comandaVizibila(u: Utilizator, id: string) {
   const c = await prisma.comanda.findUnique({ where: { id }, include: includeRand });
   return c && (await poateVedeaComanda(u, c)) ? c : null;
 }
@@ -329,8 +345,33 @@ function drepturi(u: Utilizator, c: ComandaCuRelatii) {
     // S20: banii - doar Administratorul firmei; comisionul ca suma - contul ofertei si Administratorul lui
     bani: poateScrieBani(u, c),
     comision: poateModificaComision(u, c),
+    // S22: returul - orice cont care vede comanda, doar la comenzile din oferta; anularea si
+    // regularizarea - Administratorul firmei; nota de palet - Gestiune / Administratori;
+    // statusul paletului - orice Administrator si Admin general
+    retur: c.tip === "DIN_OFERTA",
+    anuleazaRetur: poateScrieBani(u, c),
+    notaPalet: poateOperaLogistic(u),
+    statusPalet: poateSchimbaStatusPalet(u),
   };
 }
+
+// S22 - evidenta paletilor (cap. 8): comenzile vizibile cu nota de palet, fara perioada;
+// implicit nerecuperatii, cei mai vechi sus (dupa data notei); cu "recuperati=da" cei recuperati
+comenziRouter.get("/paleti", async (req, res) => {
+  const u = req.utilizator!;
+  const vizibilitate = await filtruVizibilitateComenzi(u);
+  if (!vizibilitate) {
+    res.status(403).json({ eroare: "Contul nu are acces la comenzi" });
+    return;
+  }
+  const f = schemaFiltrePaleti.parse(req.query);
+  const conditii: Prisma.ComandaWhereInput[] = [vizibilitate, { notaPalet: { not: null } }];
+  if (f.recuperati !== "toti") conditii.push({ paletRecuperat: f.recuperati === "da" });
+  if (f.q) conditii.push({ OR: [{ clientNume: { contains: f.q, mode: "insensitive" } }, { clientLocalitate: { contains: f.q, mode: "insensitive" } }] });
+  const comenzi = await prisma.comanda.findMany({ where: { AND: conditii }, include: includeRand, orderBy: [{ paletRecuperat: "asc" }, { notaPaletLa: "asc" }] });
+  const nerecuperati = await prisma.comanda.count({ where: { AND: [vizibilitate, { notaPalet: { not: null }, paletRecuperat: false }] } });
+  res.json({ paleti: comenzi.map(spreRand), nerecuperati, poateSchimbaStatus: poateSchimbaStatusPalet(u) });
+});
 
 comenziRouter.get("/:id", async (req, res) => {
   const u = req.utilizator!;
@@ -339,13 +380,14 @@ comenziRouter.get("/:id", async (req, res) => {
     res.status(404).json({ eroare: "Comanda nu există sau nu e vizibilă" });
     return;
   }
-  const [istoric, observatii, atasamente, documente, notiteOferta, atasamenteOferta] = await Promise.all([
+  const [istoric, observatii, atasamente, documente, notiteOferta, atasamenteOferta, retururi] = await Promise.all([
     prisma.comandaIstoric.findMany({ where: { comandaId: c.id }, orderBy: { moment: "desc" } }),
     prisma.comandaObservatie.findMany({ where: { comandaId: c.id }, orderBy: { moment: "desc" } }),
     prisma.comandaAtasament.findMany({ where: { comandaId: c.id }, orderBy: { moment: "desc" }, include: { incarcatDe: { select: { nume: true } } } }),
     c.ofertaId ? prisma.ofertaDocument.findMany({ where: { ofertaId: c.ofertaId, tip: { in: DOCUMENTE_COMENZII as TipDocument[] } }, orderBy: [{ generatLa: "desc" }], include: { generatDe: { select: { nume: true } } } }) : Promise.resolve([]),
     c.ofertaId ? prisma.ofertaNotita.findMany({ where: { ofertaId: c.ofertaId }, orderBy: { moment: "desc" } }) : Promise.resolve([]),
     c.ofertaId ? prisma.ofertaAtasament.findMany({ where: { ofertaId: c.ofertaId }, orderBy: { moment: "desc" }, include: { incarcatDe: { select: { nume: true } } } }) : Promise.resolve([]),
+    prisma.comandaRetur.findMany({ where: { comandaId: c.id }, include: includeRetur, orderBy: { numar: "asc" } }),
   ]);
   const formulare = documente.filter((d) => d.tip === "FORMULAR_BILKA");
   res.json({
@@ -353,6 +395,8 @@ comenziRouter.get("/:id", async (req, res) => {
       ...spreRand(c),
       drepturi: drepturi(u, c),
       incasari: c.incasari.map(spreIncasare),
+      // S22: retururile complete (cu linii), active si anulate
+      retururi: retururi.map(spreRetur),
       istoric: istoric.map((i) => ({ id: i.id, moment: i.moment, numeUtilizatorLaMoment: i.numeUtilizatorLaMoment, tip: i.tip, camp: i.camp, valoareInainte: i.valoareInainte, valoareDupa: i.valoareDupa, mentiuni: i.mentiuni })),
       observatii: observatii.map((o) => ({ id: o.id, moment: o.moment, numeUtilizatorLaMoment: o.numeUtilizatorLaMoment, text: o.text })),
       atasamente: atasamente.map((a) => ({ id: a.id, nume: a.nume, tipMime: a.tipMime, marime: a.marime, moment: a.moment, incarcatDe: a.incarcatDe?.nume ?? null })),
@@ -492,14 +536,14 @@ comenziRouter.put("/:id/status-logistic", async (req, res) => {
 
 // ------------------------------------------------------------------ livrarea, facturarea, contactele, alocarea
 
-async function cuDrepturi(req: { params: Record<string, unknown> }, u: Utilizator, verifica: (c: ComandaCuRelatii) => boolean, mesaj: string) {
+export async function cuDrepturi(req: { params: Record<string, unknown> }, u: Utilizator, verifica: (c: ComandaCuRelatii) => boolean, mesaj: string) {
   const c = await comandaVizibila(u, idDin(req));
   if (!c) throw new EroareComanda("Comanda nu există sau nu e vizibilă", 404);
   if (!verifica(c)) throw new EroareComanda(mesaj, 403);
   return c;
 }
 
-function raspunde(res: { status: (n: number) => { json: (b: unknown) => void }; json: (b: unknown) => void }, e: unknown) {
+export function raspunde(res: { status: (n: number) => { json: (b: unknown) => void }; json: (b: unknown) => void }, e: unknown) {
   if (e instanceof EroareComanda) {
     res.status(e.status).json({ eroare: e.message });
     return;
@@ -618,6 +662,45 @@ comenziRouter.post("/:id/observatii", async (req, res) => {
     const c = await cuDrepturi(req, u, (x) => poateModificaDetalii(u, x), "Observațiile le adaugă cine operează comanda sau contul ei");
     const o = await prisma.comandaObservatie.create({ data: { comandaId: c.id, utilizatorId: u.id, numeUtilizatorLaMoment: u.nume, text: date.text } });
     res.status(201).json({ observatie: { id: o.id, moment: o.moment, numeUtilizatorLaMoment: o.numeUtilizatorLaMoment, text: o.text } });
+  } catch (e) {
+    raspunde(res, e);
+  }
+});
+
+// ------------------------------------------------------------------ paletii (S22, cap. 8)
+
+// nota de palet: text liber, pe orice comanda (si inchisa), Gestiune / Administratori, cu istoric
+comenziRouter.put("/:id/nota-palet", async (req, res) => {
+  const u = req.utilizator!;
+  const date = schemaNotaPalet.parse(req.body);
+  try {
+    const c = await cuDrepturi(req, u, () => poateOperaLogistic(u), "Nota de palet o scrie Gestiunea sau un Administrator");
+    const text = date.text?.trim() || null;
+    const dupa = await prisma.$transaction(async (tx) => {
+      const d = await tx.comanda.update({ where: { id: c.id }, data: { notaPalet: text, notaPaletNume: text ? u.nume : c.notaPaletNume, notaPaletLa: text ? new Date() : c.notaPaletLa }, include: includeRand });
+      await scrieIstoricComanda(tx, c.id, u, [{ tip: "palet", camp: "notaPalet", inainte: c.notaPalet, dupa: text }]);
+      return d;
+    });
+    res.json({ comanda: spreRand(dupa) });
+  } catch (e) {
+    raspunde(res, e);
+  }
+});
+
+// statusul paletului (nerecuperat / recuperat): orice Administrator si Admin general, cu istoric si data
+comenziRouter.put("/:id/palet-recuperat", async (req, res) => {
+  const u = req.utilizator!;
+  const date = schemaPaletRecuperat.parse(req.body);
+  try {
+    const c = await cuDrepturi(req, u, () => poateSchimbaStatusPalet(u), "Statusul paletului îl schimbă un Administrator sau Admin general");
+    if (c.notaPalet === null) throw new EroareComanda("Comanda n-are notă de palet", 409);
+    if (c.paletRecuperat === date.recuperat) throw new EroareComanda(date.recuperat ? "Paletul e deja recuperat" : "Paletul e deja nerecuperat", 409);
+    const dupa = await prisma.$transaction(async (tx) => {
+      const d = await tx.comanda.update({ where: { id: c.id }, data: { paletRecuperat: date.recuperat, paletRecuperatLa: date.recuperat ? new Date() : null, paletRecuperatDeNume: date.recuperat ? u.nume : null }, include: includeRand });
+      await scrieIstoricComanda(tx, c.id, u, [{ tip: "palet", camp: "paletRecuperat", inainte: c.paletRecuperat ? "recuperat" : "nerecuperat", dupa: date.recuperat ? "recuperat" : "nerecuperat" }]);
+      return d;
+    });
+    res.json({ comanda: spreRand(dupa) });
   } catch (e) {
     raspunde(res, e);
   }

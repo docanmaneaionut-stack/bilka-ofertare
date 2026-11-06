@@ -205,6 +205,7 @@ export function Vanzari() {
           <li>Lucrările: completările apar sub comanda ofertei inițiale, iar adaosul lucrării e calculat din sumele tuturor comenzilor legate. Comenzile manuale intră „fără sume” până le completează Administratorul (cost și vânzare), și nu intră în totaluri până atunci.</li>
           <li>Filtrul încasat / neîncasat arată toate vânzările cu statusul ales, din toate lunile — ca Administratorul să completeze comisionul exact la lucrările încasate. Procentul de adaos = adaos net ÷ cost achiziție.</li>
           <li>Comisionul agentului îl scrie Administratorul, cu istoric (asteriscul roșu arată că a fost modificat); bifele „achitat” (agent, recomandare) le pune doar Administratorul firmei. Comisionul recomandării e cel de pe comandă.</li>
+          <li>Retururile (din comandă) apar ca rând cu minus sub comanda lor: vânzarea scade cu suma de restituit, costul cu achiziția mărfii returnate; lucrarea le cuprinde. Dacă un comision era deja achitat, rândul rămâne „de regularizat” până îl bifează Administratorul firmei. La comenzile manuale returul se face prin „retur: corectează sumele”.</li>
         </ul>
       </Ajutor>
     </>
@@ -216,12 +217,13 @@ function RandGrup({ rand, poateScrie, alegeAgenti, onSchimbat }: { rand: RandVan
     <>
       <RandTr r={rand} poateScrie={poateScrie} alegeAgenti={alegeAgenti} onSchimbat={onSchimbat} />
       {rand.copii.map((k) => (
-        <RandTr key={k.comandaId} r={k} poateScrie={poateScrie} alegeAgenti={alegeAgenti} onSchimbat={onSchimbat} completare />
+        <RandTr key={k.retur ? k.retur.id : k.comandaId} r={k} poateScrie={poateScrie} alegeAgenti={alegeAgenti} onSchimbat={onSchimbat} completare={!k.retur} />
       ))}
       {rand.lucrare && (
         <tr className="rand-lucrare">
           <td colSpan={3} className="mic text-secundar">
-            Lucrarea {rand.numarComplet} ({rand.lucrare.comenzi} comenzi): adaosul pe lucrare
+            Lucrarea {rand.numarComplet} ({rand.lucrare.comenzi} {rand.lucrare.comenzi === 1 ? "comandă" : "comenzi"}
+            {rand.copii.some((k) => k.retur) ? ", cu retururile" : ""}): adaosul pe lucrare
           </td>
           <td className="dreapta">{lei(rand.lucrare.costAchizitieLei)}</td>
           <td className="dreapta">{lei(rand.lucrare.pretVanzareLei)}</td>
@@ -256,6 +258,43 @@ function RandTr({ r, poateScrie, alegeAgenti, onSchimbat, completare }: { r: Ran
         onSchimbat();
       })
       .catch((e) => setEroare(textEroare(e)));
+  // S22: randul de retur - sub comanda, cu minus, fara comision; "de regularizat" cu bifa Administratorului
+  if (r.retur) {
+    const ret = r.retur;
+    return (
+      <tr className="completare retur">
+        <td>
+          ↳ {dataRo(r.data)}
+          <div className="mic text-secundar">{r.numarComplet}</div>
+          {eroare && <div className="mic" style={{ color: "var(--eroare-text, #a12a2a)" }}>{eroare}</div>}
+        </td>
+        <td>
+          {r.client.nume}
+          {ret.deRegularizat && (
+            <div className="mic">
+              <span className="eticheta-regularizat">de regularizat — comisionul era achitat</span>
+              {poateScrie && (
+                <label style={{ marginLeft: 6 }}>
+                  <input type="checkbox" checked={false} onChange={() => void ruleaza(() => apiComenzi.regularizat(r.comandaId, ret.id))} aria-label="retur regularizat" /> regularizat
+                </label>
+              )}
+            </div>
+          )}
+          {!ret.deRegularizat && ret.regularizatDe && <div className="mic text-secundar">regularizat de {ret.regularizatDe}, {dataRo(ret.regularizatLa)}</div>}
+        </td>
+        <td className="col-optional">{r.client.localitate ?? "—"}</td>
+        <td className="dreapta">{lei(r.costAchizitieLei)}</td>
+        <td className="dreapta">{lei(r.pretVanzareLei)}</td>
+        <td className="col-optional">—</td>
+        <td className="dreapta col-optional">—</td>
+        <td className="col-optional">—</td>
+        <td className="dreapta">{lei(r.adaosNetLei)}</td>
+        <td className="dreapta col-optional">{lei(r.adaosBrutLei)}</td>
+        <td className="dreapta">—</td>
+        <td>—</td>
+      </tr>
+    );
+  }
   return (
     <tr className={completare ? "completare" : undefined}>
       <td>
@@ -307,6 +346,31 @@ function RandTr({ r, poateScrie, alegeAgenti, onSchimbat, completare }: { r: Ran
         )}
         <div className="mic">
           <span className={`status-incasare ${r.incasare.status}`}>{r.incasare.eticheta}</span>
+          {/* S22: la comanda manuala, returul = corectia sumelor (cost si vanzare), cu istoric */}
+          {r.manuala && !r.faraSume && poateScrie && !editSume && (
+            <button className="buton secundar mic" style={{ marginLeft: 6 }} onClick={() => setEditSume(true)} title="retur: corectează sumele (cost și vânzare), cu istoric">
+              retur: corectează sumele
+            </button>
+          )}
+          {r.manuala && !r.faraSume && editSume && (
+            <form
+              className="formular-mic"
+              onSubmit={(e: FormEvent) => {
+                e.preventDefault();
+                void ruleaza(() => apiVanzari.sumeVanzare(r.comandaId, pret.trim(), cost.trim(), mentiuni.trim() || "retur: corecția sumelor"));
+              }}
+            >
+              <input value={cost} onChange={(e) => setCost(e.target.value)} placeholder={`cost achiziție (acum ${lei(r.costAchizitieLei)})`} inputMode="decimal" style={{ minWidth: 160 }} />
+              <input value={pret} onChange={(e) => setPret(e.target.value)} placeholder={`preț vânzare (acum ${lei(r.pretVanzareLei)})`} inputMode="decimal" style={{ minWidth: 160 }} />
+              <input value={mentiuni} onChange={(e) => setMentiuni(e.target.value)} placeholder="mențiuni (ex. retur 2 coame)" style={{ minWidth: 160 }} />
+              <button className="buton mic" disabled={!pret.trim() || !cost.trim()}>
+                Salvează
+              </button>
+              <button type="button" className="buton secundar mic" onClick={() => setEditSume(false)}>
+                Renunță
+              </button>
+            </form>
+          )}
         </div>
       </td>
       <td className="col-optional">{r.client.localitate ?? "—"}</td>

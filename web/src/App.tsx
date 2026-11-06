@@ -20,6 +20,7 @@ import { CursBnr } from "./pages/CursBnr";
 import { Ofertare } from "./pages/Ofertare";
 import { Oferte } from "./pages/Oferte";
 import { Comenzi } from "./pages/Comenzi";
+import { Paleti } from "./pages/Paleti";
 import { Vanzari } from "./pages/Vanzari";
 import { OfertaNoua } from "./pages/OfertaNoua";
 import { AflaPret } from "./pages/AflaPret";
@@ -108,6 +109,7 @@ export default function App() {
         )}
         <Route path="/comenzi" element={<Ofertare utilizator={utilizator} onLogout={iesiDinCont} />}>
           <Route index element={<Comenzi />} />
+          <Route path="paleti" element={<Paleti />} />
         </Route>
         {(adminGeneral || administrator || utilizator.rol === "AGENT") && (
           <Route path="/vanzari" element={<Ofertare utilizator={utilizator} onLogout={iesiDinCont} />}>

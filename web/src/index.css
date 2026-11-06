@@ -986,3 +986,35 @@ table.tabel-vanzari tr.rand-lucrare td {
   background: var(--bg-secundar);
   border-bottom: 2px solid var(--border);
 }
+
+/* S22: randul de retur (cu minus), "de regularizat", statusul paletului */
+table.tabel-vanzari tr.retur td.dreapta {
+  color: #a12a2a;
+}
+
+.eticheta-regularizat {
+  display: inline-block;
+  margin-left: 6px;
+  padding: 1px 8px;
+  border-radius: 999px;
+  font-size: 12px;
+  background: #fff1e0;
+  color: #9a4b00;
+}
+
+.eticheta-palet {
+  display: inline-block;
+  padding: 1px 8px;
+  border-radius: 999px;
+  font-size: 12px;
+}
+
+.eticheta-palet.nerecuperat {
+  background: #fde8e8;
+  color: #a12a2a;
+}
+
+.eticheta-palet.recuperat {
+  background: #e3f5e8;
+  color: #1f6b3a;
+}

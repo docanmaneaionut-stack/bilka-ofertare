@@ -504,3 +504,17 @@ Fiecare intrare: data, obiectivul sesiunii, rezultatul, următorul pas propus.
 - **Teste**: `com-vanzari.test.ts` (9 cazuri) — toate cifrele etalon ies din prima; migrarea 17 în testul migrărilor; `npm test` verde — 33 de fișiere, 341 de teste; 12 etaloane la zero. Ecranul verificat prin tipuri și build, nu în browser.
 
 **Următorul pas propus:** S22 — retururile și nota de retur (COMENZI cap. 5): calculul la prețurile din ofertă, rândul de retur legat în tabelul de vânzări (cu minus când comisionul era achitat), nota de retur pentru client; evidența paleților (cap. 8).
+
+
+## 2026-11-06 — S22: retururile cu nota de retur și evidența paleților (Etapa 5)
+
+**Obiectiv:** PLAN v0.30 S22 — returul din comandă la prețurile ofertei comandate (COMENZI cap. 5, OFERTARE cap. 19), nota de retur PDF, efectul în vânzări, nota de palet și evidența paleților (cap. 8). Motorul, oferta (ÎNGHEȚATĂ), avizul și fișa șoferului neatinse. Aprobat de Ionuț cu cele șapte decizii și completarea pentru comenzile manuale (returul = corecția sumelor manuale, cu istoric).
+
+**Rezultat:**
+- **Migrarea 18** (aditivă): `comanda_retur` + `comanda_retur_linie`, `NOTA_RETUR` în enumul documentelor, nota și statusul paletului pe comandă. Aplicată pe baza de lucru.
+- **Returul** (`com/retururi.ts`): orice cont care vede comanda alege liniile și cantitățile din rezultatul salvat la „Comandat” (cel mult cantitatea comandată, peste retururile active); suma de restituit cu aritmetica R4 / R6 din `mot/zecimal.ts` (E01, 2 coame mici + 1 opritor: 15,81 € · TVA 3,32 · 19,13 € · **102,32 lei**), achiziția mărfii returnate pas cu pas (**86,29 lei**); numerotat, cu istoric; anularea cu motiv de Administratorul firmei (nimic șters, cantitatea se eliberează); **nota de retur** PDF pe șablonul ofertei, generată la salvare ca document al ofertei comandate, în „Doc.” al comenzii. Comenzile manuale: „retur: corectează sumele” (cost și vânzare, cu istoric), în ARH §4.4 și pe ecran.
+- **Vânzări**: rândul de retur cu minus sub comandă („Retur n la …”, data returului, fără comision), lucrarea îl cuprinde (E01 cu retur: 16.897,68 · 14.251,48 · 2.646,20 · 2.186,94), statisticile scad; **„de regularizat”** când un comision era deja achitat, până bifează Administratorul firmei.
+- **Paleții**: nota de palet pe orice comandă (Gestiune / Administratori, cu istoric), statusul nerecuperat / recuperat (orice Administrator și Admin general, cu istoric și data), ecranul „Evidența paleților” (nerecuperații cei mai vechi sus, filtre recuperați / client), „n paleți nerecuperați” în capul tabelului de comenzi peste toate comenzile vizibile.
+- **Teste**: `com-retururi.test.ts` (8 cazuri) — cifrele pe hârtie au ieșit din prima, inclusiv textul PDF-ului; migrarea 18 în testul migrărilor; exportul cu cele două tabele; `npm test` verde — 34 de fișiere, 349 de teste; 13 etaloane la zero. Ecranele verificate prin tipuri (`tsc -b`, care a scos la iveală un tip dublat din S21, corectat) și build, nu în browser.
+
+**Următorul pas propus:** S23 — documentele comenzii (COMENZI cap. 4c, 6, 9): avizul de însoțire a mărfii după machetă (un aviz per livrare, cantități ajustabile la livrări parțiale), fișa șoferului după machetă (selecția de comenzi, telefoane apelabile, linkul la locație), tipărirea avizului / tabelului de facturare din fișă.

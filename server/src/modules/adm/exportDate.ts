@@ -61,6 +61,9 @@ export const MODELE_EXPORT = [
   "ComandaAtasament",
   // S20: incasarile comenzii
   "ComandaIncasare",
+  // S22: retururile comenzii si liniile lor
+  "ComandaRetur",
+  "ComandaReturLinie",
   "ImportPropunere",
   "JurnalIntrare",
   "JurnalAutentificare",
@@ -96,7 +99,10 @@ function filtruFirma(model: ModelExport, firmaId: string): Record<string, unknow
     case "ComandaObservatie":
     case "ComandaAtasament":
     case "ComandaIncasare":
+    case "ComandaRetur":
       return { comanda: { firmaId } };
+    case "ComandaReturLinie":
+      return { retur: { comanda: { firmaId } } };
     case "JurnalIntrare":
     case "Montator":
       return { utilizator: { firmaId } };

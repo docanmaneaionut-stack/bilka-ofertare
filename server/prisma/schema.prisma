@@ -124,6 +124,7 @@ model Utilizator {
   comandaObservatii ComandaObservatie[] @relation("ComandaObservatiiScrise")
   comandaAtasamente ComandaAtasament[]  @relation("ComandaAtasamenteIncarcate")
   incasariNotate    ComandaIncasare[]   @relation("IncasariNotate")
+  retururiNotate    ComandaRetur[]      @relation("RetururiNotate")
   notiteScrise      OfertaNotita[]      @relation("NotiteScrise")
 
   firmeAcces          UtilizatorFirma[]
@@ -1057,10 +1058,21 @@ model Comanda {
   vanzarePretLei             Decimal?  @db.Decimal(14, 2)
   vanzareCostLei             Decimal?  @db.Decimal(14, 2)
 
+  // S22 (migrarea 18; FISA-COMENZI cap. 8): nota de palet (text liber - ce palet a ramas si unde),
+  // scrisa de Gestiune sau Administratori cu istoric; statusul nerecuperat / recuperat il schimba
+  // orice Administrator, cu istoric si data schimbarii. Fara tipuri sau preturi de paleti.
+  notaPalet            String?
+  notaPaletNume        String?
+  notaPaletLa          DateTime?
+  paletRecuperat       Boolean   @default(false)
+  paletRecuperatLa     DateTime?
+  paletRecuperatDeNume String?
+
   istoric    ComandaIstoric[]
   observatii ComandaObservatie[]
   atasamente ComandaAtasament[]
   incasari   ComandaIncasare[]
+  retururi   ComandaRetur[]
 
   @@index([firmaId, data])
   @@index([contAlocatId])
@@ -1137,6 +1149,71 @@ model ComandaIncasare {
   @@map("comanda_incasare")
 }
 
+// S22 (migrarea 18; FISA-COMENZI cap. 5, OFERTARE cap. 19): returul - liniile si cantitatile
+// returnate dintr-o comanda din oferta, la preturile de vanzare ale ofertei comandate (din
+// rezultatul salvat la "Comandat"): valoarea liniei = pret document x cantitate (EUR, 2 zecimale),
+// suma fara TVA, TVA din suma, cu TVA in euro si in lei la cursul documentului; in paralel
+// valoarea de achizitie a marfii returnate (achizitia reala x cantitate, in lei cu TVA la cursul
+// de achizitie), pentru vanzari. Orice cont care vede comanda il face; un retur gresit se ANULEAZA
+// cu motiv de Administratorul firmei (nimic sters). Nota de retur (PDF) e document al ofertei.
+// "deRegularizat": la crearea returului un comision (agent / recomandare) era deja achitat -
+// randul cu minus ramane vizibil pana il bifeaza Administratorul firmei.
+enum StareRetur {
+  ACTIV
+  ANULAT
+}
+
+model ComandaRetur {
+  id                String              @id @default(uuid())
+  comandaId         String
+  comanda           Comanda             @relation(fields: [comandaId], references: [id])
+  numar             Int
+  data              DateTime            @db.Date
+  stare             StareRetur          @default(ACTIV)
+  sumaFaraTvaEur    Decimal             @db.Decimal(14, 2)
+  tvaEur            Decimal             @db.Decimal(14, 2)
+  sumaCuTvaEur      Decimal             @db.Decimal(14, 2)
+  sumaCuTvaLei      Decimal             @db.Decimal(14, 2)
+  achizitieLei      Decimal             @db.Decimal(14, 2)
+  cursBnr           Decimal             @db.Decimal(10, 4)
+  cursAchizitie     Decimal             @db.Decimal(10, 4)
+  tvaPct            Decimal             @db.Decimal(5, 2)
+  observatii        String?
+  notatDeId         String?
+  notatDe           Utilizator?         @relation("RetururiNotate", fields: [notatDeId], references: [id])
+  numeNotatLaMoment String
+  moment            DateTime            @default(now())
+  anulatLa          DateTime?
+  anulatDeNume      String?
+  motivAnulare      String?
+  deRegularizat     Boolean             @default(false)
+  regularizatLa     DateTime?
+  regularizatDeNume String?
+  documentId        String?
+  linii             ComandaReturLinie[]
+
+  @@index([comandaId, numar])
+  @@map("comanda_retur")
+}
+
+model ComandaReturLinie {
+  id                String       @id @default(uuid())
+  returId           String
+  retur             ComandaRetur @relation(fields: [returId], references: [id])
+  linieId           String
+  cod               String
+  denumire          String
+  um                String
+  cantitate         Decimal      @db.Decimal(14, 3)
+  pretDocumentEur   Decimal      @db.Decimal(14, 4)
+  valoareEur        Decimal      @db.Decimal(14, 2)
+  achizitieRealaEur Decimal      @db.Decimal(14, 4)
+  achizitieLei      Decimal      @db.Decimal(14, 2)
+
+  @@index([returId])
+  @@map("comanda_retur_linie")
+}
+
 // atasamentele comenzii (necesarul primit, formularul trimis, poze), in folderul de date (comenzi/<id>/)
 model ComandaAtasament {
   id           String      @id @default(uuid())
@@ -1178,6 +1255,8 @@ enum TipDocument {
   TABEL_FACTURARE
   // S16b (migrarea 13): formularul de comanda Bilka (.xlsm), unul per formular R10
   FORMULAR_BILKA
+  // S22 (migrarea 18): nota de retur (PDF pe sablonul ofertei), document al ofertei comandate
+  NOTA_RETUR
 }
 
 enum CanalTransmitere {

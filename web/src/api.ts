@@ -692,7 +692,8 @@ export type LiniePret = {
   pachet?: string;
 };
 
-export type RandVanzari = { pretVanzareLei: string; costAchizitieLei: string; adaosNetLei: string; adaosBrutLei: string; tabel: "propriu" | "administrator"; nota?: string };
+// blocul de vanzari al rezultatului motorului (nu randul tabelului de vanzari, mai jos)
+export type RandVanzariMotor = { pretVanzareLei: string; costAchizitieLei: string; adaosNetLei: string; adaosBrutLei: string; tabel: "propriu" | "administrator"; nota?: string };
 
 export type RezultatPreturi = {
   cursBnr: string;
@@ -714,8 +715,8 @@ export type RezultatPreturi = {
     totalListaFaraTvaEur?: string;
     discountGeneralEur?: string;
   };
-  vanzari: RandVanzari | null;
-  lucrare: RandVanzari | null;
+  vanzari: RandVanzariMotor | null;
+  lucrare: RandVanzariMotor | null;
   abatereEur: string;
   garda: { respectata: boolean; liniiSubAchizitie: string[]; aplicata: boolean };
   zonaB?: { suplimentTotalLei: string; tabelFacturare: { faraTvaEur: string; tvaEur: string; cuTvaEur: string; totalLei: string } };
@@ -1117,16 +1118,46 @@ export type RandComanda = {
   incasare: { status: StatusIncasare; eticheta: string; incasatLei: string; restLei: string; propuseLei: string; propuse: number; confirmate: number };
   comision: { lei: string; achitat: boolean; achitatLa: string | null; achitatDe: string | null } | null;
   inchisa: boolean;
+  // S22: nota si statusul paletului; retururile active pe scurt
+  palet: PaletComanda | null;
+  retururi: { id: string; numar: number; sumaCuTvaLei: string; deRegularizat: boolean }[];
 };
+export type PaletComanda = { nota: string; notatDe: string | null; notatLa: string | null; recuperat: boolean; recuperatLa: string | null; recuperatDe: string | null };
+export type LinieRetur = { id: string; linieId: string; cod: string; denumire: string; um: string; cantitate: string; pretDocumentEur: string; valoareEur: string; achizitieLei: string };
+export type ReturComanda = {
+  id: string;
+  numar: number;
+  data: string;
+  stare: "ACTIV" | "ANULAT";
+  sumaFaraTvaEur: string;
+  tvaEur: string;
+  sumaCuTvaEur: string;
+  sumaCuTvaLei: string;
+  achizitieLei: string;
+  cursBnr: string;
+  observatii: string | null;
+  notatDe: string;
+  moment: string;
+  anulatLa: string | null;
+  anulatDe: string | null;
+  motivAnulare: string | null;
+  deRegularizat: boolean;
+  regularizatLa: string | null;
+  regularizatDe: string | null;
+  documentId: string | null;
+  linii: LinieRetur[];
+};
+export type LinieReturnabila = { linieId: string; cod: string; denumire: string; um: string; cantitateComandata: string; cantitateReturnata: string; pretDocumentEur: string; achizitieRealaEur: string };
 export type StatusIncasare = "NEINCASAT" | "PARTIAL" | "INCASAT";
 export type IncasareComanda = { id: string; sumaLei: string; data: string; ceReprezinta: string; stare: "PROPUSA" | "CONFIRMATA" | "ANULATA"; notatDe: string; moment: string; confirmatLa: string | null; confirmatDe: string | null; anulatLa: string | null; anulatDe: string | null; motivAnulare: string | null };
 export type IntrareIstoricComanda = { id: string; moment: string; numeUtilizatorLaMoment: string; tip: string; camp: string | null; valoareInainte: string | null; valoareDupa: string | null; mentiuni: string | null };
 export type ObservatieComanda = { id: string; moment: string; numeUtilizatorLaMoment: string; text: string };
 export type AtasamentComanda = { id: string; nume: string; tipMime: string | null; marime: number | null; moment: string; incarcatDe: string | null };
 export type DocumentComanda = { id: string; tip: string; eticheta: string; versiune: number; nume: string; marime: number; generatLa: string; generatDe: string | null; transmisLa: string | null; canal: string | null; formularNr: number | null };
-export type ComandaDetaliu = RandComanda & {
-  drepturi: { logistic: boolean; detalii: boolean; livrare: boolean; alocare: boolean; bani: boolean; comision: boolean };
+export type ComandaDetaliu = Omit<RandComanda, "retururi"> & {
+  drepturi: { logistic: boolean; detalii: boolean; livrare: boolean; alocare: boolean; bani: boolean; comision: boolean; retur: boolean; anuleazaRetur: boolean; notaPalet: boolean; statusPalet: boolean };
   incasari: IncasareComanda[];
+  retururi: ReturComanda[];
   istoric: IntrareIstoricComanda[];
   observatii: ObservatieComanda[];
   atasamente: AtasamentComanda[];
@@ -1141,7 +1172,7 @@ export type ListaComenzi = {
   total: number;
   page: number;
   pageSize: number;
-  numaratori: { active: number; deReceptionat: number; livrate: number; neincasate: number; comisioaneNeachitate: number; neidentificate: number };
+  numaratori: { active: number; deReceptionat: number; livrate: number; neincasate: number; comisioaneNeachitate: number; neidentificate: number; paletiNerecuperati: number };
   perioada: { deLa: string; panaLa: string };
 };
 export type ComandaManualaNoua = {
@@ -1186,6 +1217,18 @@ export const apiComenzi = {
   caleAtasament: (id: string, aid: string) => `${BAZA_API}${BAZA_COM}/${id}/atasamente/${aid}`,
   caleAtasamentOferta: (id: string, aid: string) => `${BAZA_API}${BAZA_COM}/${id}/atasamente-oferta/${aid}`,
   caleDocument: (id: string, did: string) => `${BAZA_API}${BAZA_COM}/${id}/documente/${did}`,
+  // S22: retururile si paletii
+  retururi: (id: string) => cerere<{ retururi: ReturComanda[]; linii: LinieReturnabila[]; manuala: boolean; poateAnula: boolean }>(`${BAZA_COM}/${id}/retururi`),
+  retur: (id: string, linii: { linieId: string; cantitate: string }[], observatii: string | null) => cerere<{ retur: ReturComanda; comanda: RandComanda }>(`${BAZA_COM}/${id}/retururi`, { method: "POST", body: JSON.stringify({ linii, observatii }) }),
+  anuleazaRetur: (id: string, rid: string, motiv: string) => cerere<{ retur: ReturComanda }>(`${BAZA_COM}/${id}/retururi/${rid}/anuleaza`, { method: "PUT", body: JSON.stringify({ motiv }) }),
+  regularizat: (id: string, rid: string) => cerere<{ retur: ReturComanda }>(`${BAZA_COM}/${id}/retururi/${rid}/regularizat`, { method: "PUT", body: "{}" }),
+  notaPalet: (id: string, text: string | null) => cerere<{ comanda: RandComanda }>(`${BAZA_COM}/${id}/nota-palet`, { method: "PUT", body: JSON.stringify({ text }) }),
+  paletRecuperat: (id: string, recuperat: boolean) => cerere<{ comanda: RandComanda }>(`${BAZA_COM}/${id}/palet-recuperat`, { method: "PUT", body: JSON.stringify({ recuperat }) }),
+  paleti: (f: { recuperati?: "nu" | "da" | "toti"; q?: string }) => {
+    const p = new URLSearchParams();
+    for (const [k, v] of Object.entries(f)) if (v) p.set(k, String(v));
+    return cerere<{ paleti: RandComanda[]; nerecuperati: number; poateSchimbaStatus: boolean }>(`${BAZA_COM}/paleti?${p.toString()}`);
+  },
   // S20
   incasare: (id: string, i: { sumaLei: string; data: string; ceReprezinta: string }) => cerere<{ incasare: IncasareComanda; comanda: RandComanda }>(`${BAZA_COM}/${id}/incasari`, { method: "POST", body: JSON.stringify(i) }),
   confirmaIncasare: (id: string, iid: string) => cerere<{ incasare: IncasareComanda; comanda: RandComanda }>(`${BAZA_COM}/${id}/incasari/${iid}/confirma`, { method: "PUT", body: "{}" }),
@@ -1219,6 +1262,8 @@ export type RandVanzari = {
   completareLa: { numarComplet: string; motiv: string | null } | null;
   lucrare: { pretVanzareLei: string; costAchizitieLei: string; adaosNetLei: string; adaosBrutLei: string; comenzi: number } | null;
   copii: RandVanzari[];
+  // S22: randul de retur (sub comanda, cu minus)
+  retur: { id: string; numar: number; data: string; sumaCuTvaLei: string; achizitieLei: string; deRegularizat: boolean; regularizatLa: string | null; regularizatDe: string | null } | null;
 };
 export type StatisticiVanzari = { comenzi: number; faraSume: number; costAchizitieLei: string; pretVanzareLei: string; adaosNetLei: string; adaosBrutLei: string; comisioaneLei: string; procentAdaos: string | null };
 export type FiltreVanzari = { deLa?: string; panaLa?: string; incasare?: "" | "incasat" | "neincasat"; agent?: string; firmaId?: string };

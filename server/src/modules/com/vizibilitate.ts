@@ -88,7 +88,14 @@ export function poateAloca(u: Utilizator): boolean {
 // tabelul de facturare si formularul Bilka nu sunt pentru colaborator (CONTURI §2)
 export function vedeDocumentulComenzii(u: Utilizator, tip: string): boolean {
   if (u.rol === "COLABORATOR" && (tip === "TABEL_FACTURARE" || tip === "FORMULAR_BILKA")) return false;
+  // nota de retur (S22) o vede oricine vede comanda, colaboratorul inclus (e documentul lui)
   return true;
+}
+
+// S22 - statusul paletului (nerecuperat / recuperat): orice Administrator si Admin general
+// (COMENZI cap. 8); nota de palet o scriu cei care opereaza logistic (Gestiunea, Administratorii)
+export function poateSchimbaStatusPalet(u: Utilizator): boolean {
+  return u.rol === "ADMINISTRATOR" || u.rol === "ADMIN_GENERAL";
 }
 
 // S20 - banii raman pe firma (CONTURI §3): incasarile (notare, confirmare, anulare) si bifa

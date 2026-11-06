@@ -1,14 +1,15 @@
 import { useEffect, useState, type FormEvent } from "react";
+import { Link } from "react-router-dom";
 import {
   apiComenzi,
   dataRo,
   ETICHETA_STATUS_LOGISTIC,
-  momentRelativ,
   STATUSURI_LOGISTICE,
   type ComandaDetaliu,
   type ComandaManualaNoua,
   type ContScurt,
   type FiltreComenzi,
+  type LinieReturnabila,
   type ListaComenzi,
   type RandComanda,
   type StatusLogistic,
@@ -105,7 +106,10 @@ export function Comenzi() {
           <h1 style={{ marginBottom: 4 }}>Comenzi</h1>
           {n && (
             <span className="text-secundar">
-              {n.active} active · {n.deReceptionat} de recepționat · {n.neincasate} neîncasate complet · {n.comisioaneNeachitate} comisioane neachitate · {n.neidentificate} neidentificat{n.neidentificate === 1 ? "ă" : "e"}
+              {n.active} active · {n.deReceptionat} de recepționat · {n.neincasate} neîncasate complet · {n.comisioaneNeachitate} comisioane neachitate · {n.neidentificate} neidentificat{n.neidentificate === 1 ? "ă" : "e"} ·{" "}
+              <Link to="/comenzi/paleti" title="Evidența paleților">
+                {n.paletiNerecuperati} {n.paletiNerecuperati === 1 ? "palet nerecuperat" : "paleți nerecuperați"}
+              </Link>
             </span>
           )}
         </div>
@@ -402,6 +406,9 @@ function DetaliuComanda({ id, onSchimbat }: { id: string; onSchimbat: () => void
   const [observatie, setObservatie] = useState("");
   const [conturi, setConturi] = useState<(ContScurt & { firmaId: string | null })[]>([]);
   const [contNou, setContNou] = useState("");
+  // S22: nota de palet
+  const [editPalet, setEditPalet] = useState(false);
+  const [notaPalet, setNotaPalet] = useState("");
 
   const incarca = () =>
     apiComenzi
@@ -412,6 +419,7 @@ function DetaliuComanda({ id, onSchimbat }: { id: string; onSchimbat: () => void
         setDataLivrarii(r.comanda.livrare.data ?? "");
         setFacturare({ firma: r.comanda.facturare?.firma ?? "", cui: r.comanda.facturare?.cui ?? "", adresa: r.comanda.facturare?.adresa ?? "" });
         setContNou(r.comanda.contAlocat?.id ?? "");
+        setNotaPalet(r.comanda.palet?.nota ?? "");
         setEroare(null);
         if (r.comanda.drepturi.alocare) apiComenzi.conturi().then((x) => setConturi(x.conturi)).catch(() => setConturi([]));
       })
@@ -495,6 +503,58 @@ function DetaliuComanda({ id, onSchimbat }: { id: string; onSchimbat: () => void
         <p>
           <strong>Facturare:</strong> {c.facturare ? [c.facturare.firma, c.facturare.cui, c.facturare.adresa].filter(Boolean).join(" · ") : "ca în datele clientului"}
         </p>
+        <p>
+          <strong>Palet:</strong>{" "}
+          {c.palet ? (
+            <>
+              {c.palet.nota}
+              <span className="mic text-secundar">
+                {" "}
+                — {c.palet.notatDe}, {dataOra(c.palet.notatLa)}
+              </span>{" "}
+              <span className={`eticheta-palet ${c.palet.recuperat ? "recuperat" : "nerecuperat"}`}>{c.palet.recuperat ? "recuperat" : "nerecuperat"}</span>
+              {c.palet.recuperat && c.palet.recuperatDe && (
+                <span className="mic text-secundar">
+                  {" "}
+                  de {c.palet.recuperatDe}, {dataOra(c.palet.recuperatLa)}
+                </span>
+              )}
+              {d.statusPalet && (
+                <label className="mic" style={{ marginLeft: 8 }}>
+                  <input type="checkbox" checked={c.palet.recuperat} disabled={ocupat} onChange={(e) => void ruleaza(() => apiComenzi.paletRecuperat(c.id, e.target.checked))} /> recuperat
+                </label>
+              )}
+            </>
+          ) : (
+            <span className="text-secundar">fără notă de palet</span>
+          )}
+        </p>
+        {d.notaPalet && !editPalet && (
+          <button className="buton secundar mic" onClick={() => setEditPalet(true)}>
+            {c.palet ? "Modifică nota de palet" : "Notă palet"}
+          </button>
+        )}
+        {editPalet && (
+          <form
+            className="formular-mic"
+            onSubmit={(e: FormEvent) => {
+              e.preventDefault();
+              void ruleaza(() => apiComenzi.notaPalet(c.id, notaPalet.trim() || null)).then(() => setEditPalet(false));
+            }}
+          >
+            <Camp eticheta="Nota de palet (ce palet a rămas și unde)">
+              <input value={notaPalet} onChange={(e) => setNotaPalet(e.target.value)} placeholder="ex. 2 paleți la client, în curte" />
+            </Camp>
+            <div className="actiuni">
+              <button className="buton mic" disabled={ocupat}>
+                Salvează
+              </button>
+              <button type="button" className="buton secundar mic" onClick={() => setEditPalet(false)}>
+                Renunță
+              </button>
+            </div>
+          </form>
+        )}
         {d.detalii && !editFacturare && (
           <button className="buton secundar mic" onClick={() => setEditFacturare(true)}>
             Date de facturare diferite
@@ -722,7 +782,178 @@ function DetaliuComanda({ id, onSchimbat }: { id: string; onSchimbat: () => void
           </details>
         )}
       </section>
+
+      <CasetaRetururi c={c} ocupat={ocupat} ruleaza={ruleaza} />
     </div>
+  );
+}
+
+// ------------------------------------------------------------------ retururile (S22, cap. 5)
+
+const eur = (s: string) => `${Number(s).toLocaleString("ro-RO", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} €`;
+
+function CasetaRetururi({ c, ocupat, ruleaza }: { c: ComandaDetaliu; ocupat: boolean; ruleaza: (f: () => Promise<unknown>) => Promise<void> }) {
+  const [formular, setFormular] = useState(false);
+  const [linii, setLinii] = useState<LinieReturnabila[]>([]);
+  const [cantitati, setCantitati] = useState<Record<string, string>>({});
+  const [observatii, setObservatii] = useState("");
+  const [motivId, setMotivId] = useState<string | null>(null);
+  const [motiv, setMotiv] = useState("");
+  const [eroare, setEroare] = useState<string | null>(null);
+  const d = c.drepturi;
+  const deschide = () => {
+    setEroare(null);
+    apiComenzi
+      .retururi(c.id)
+      .then((r) => {
+        setLinii(r.linii);
+        setCantitati({});
+        setFormular(true);
+      })
+      .catch((e) => setEroare(textEroare(e)));
+  };
+  const alese = Object.entries(cantitati).filter(([, q]) => q.trim() !== "" && Number(q.replace(",", ".")) > 0);
+  return (
+    <section className="caseta" style={{ gridColumn: "1 / -1" }}>
+      <h4>Retururi</h4>
+      {c.tip === "MANUALA" && (
+        <p className="mic text-secundar">
+          Retur: comanda manuală n-are linii cu prețuri — returul se reflectă prin corecția sumelor manuale (cost și vânzare) de către Administratorul firmei, cu istoric, în <Link to="/vanzari">tabelul de vânzări</Link> („corectează sumele”).
+        </p>
+      )}
+      {c.retururi.length === 0 && c.tip !== "MANUALA" && <p className="text-secundar mic">niciun retur</p>}
+      {c.retururi.length > 0 && (
+        <table className="tabel-incasari">
+          <tbody>
+            {c.retururi.map((r) => (
+              <tr key={r.id} className={r.stare === "ANULAT" ? "anulata" : undefined}>
+                <td className="mic">{dataRo(r.data)}</td>
+                <td className="mic">
+                  <strong>Retur {r.numar}</strong>: {r.linii.map((l) => `${Number(l.cantitate).toLocaleString("ro-RO", { maximumFractionDigits: 3 })} ${l.um} ${l.denumire}`).join(", ")}
+                  {r.observatii ? ` — ${r.observatii}` : ""}
+                  {r.stare === "ANULAT" && (
+                    <span className="mic text-secundar">
+                      {" "}
+                      · anulat: {r.motivAnulare} ({r.anulatDe})
+                    </span>
+                  )}
+                  {r.stare === "ACTIV" && r.deRegularizat && <span className="eticheta-regularizat">de regularizat — comisionul era achitat</span>}
+                  {r.stare === "ACTIV" && !r.deRegularizat && r.regularizatDe && <span className="mic text-secundar"> · regularizat de {r.regularizatDe}</span>}
+                  <div className="text-secundar">
+                    notat de {r.notatDe}
+                    {r.documentId && (
+                      <>
+                        {" "}
+                        ·{" "}
+                        <a href={apiComenzi.caleDocument(c.id, r.documentId)} target="_blank" rel="noreferrer">
+                          Notă de retur
+                        </a>
+                      </>
+                    )}
+                  </div>
+                </td>
+                <td className="suma">
+                  {lei(r.sumaCuTvaLei)}
+                  <div className="mic text-secundar">
+                    {eur(r.sumaFaraTvaEur)} + TVA = {eur(r.sumaCuTvaEur)}
+                  </div>
+                </td>
+                {d.anuleazaRetur && (
+                  <td className="mic">
+                    {r.stare === "ACTIV" && r.deRegularizat && (
+                      <button className="buton secundar mic" disabled={ocupat} onClick={() => void ruleaza(() => apiComenzi.regularizat(c.id, r.id))}>
+                        Regularizat
+                      </button>
+                    )}{" "}
+                    {r.stare === "ACTIV" && motivId !== r.id && (
+                      <button className="buton secundar mic" disabled={ocupat} onClick={() => setMotivId(r.id)}>
+                        Anulează
+                      </button>
+                    )}
+                    {motivId === r.id && (
+                      <form
+                        className="formular-mic"
+                        onSubmit={(e: FormEvent) => {
+                          e.preventDefault();
+                          void ruleaza(() => apiComenzi.anuleazaRetur(c.id, r.id, motiv.trim())).then(() => {
+                            setMotivId(null);
+                            setMotiv("");
+                          });
+                        }}
+                      >
+                        <input value={motiv} onChange={(e) => setMotiv(e.target.value)} placeholder="motivul anulării" aria-label="Motivul anulării" />
+                        <button className="buton mic" disabled={ocupat || !motiv.trim()}>
+                          Confirmă
+                        </button>
+                        <button type="button" className="buton secundar mic" onClick={() => setMotivId(null)}>
+                          Renunță
+                        </button>
+                      </form>
+                    )}
+                  </td>
+                )}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
+      {eroare && <Mesaj tip="eroare">{eroare}</Mesaj>}
+      {d.retur && !formular && (
+        <button className="buton secundar mic" disabled={ocupat} onClick={deschide}>
+          + Retur
+        </button>
+      )}
+      {formular && (
+        <form
+          onSubmit={(e: FormEvent) => {
+            e.preventDefault();
+            void ruleaza(() =>
+              apiComenzi.retur(
+                c.id,
+                alese.map(([linieId, cantitate]) => ({ linieId, cantitate: cantitate.trim() })),
+                observatii.trim() || null,
+              ),
+            ).then(() => {
+              setFormular(false);
+              setObservatii("");
+            });
+          }}
+        >
+          <p className="mic text-secundar">Alege produsele și cantitățile returnate (cel mult cantitatea comandată, mai puțin ce s-a returnat deja). Suma de restituit = prețurile din oferta comandată; nota de retur se generează la salvare.</p>
+          <table className="tabel-incasari">
+            <tbody>
+              {linii.map((l) => {
+                const ramas = Number(l.cantitateComandata) - Number(l.cantitateReturnata);
+                return (
+                  <tr key={l.linieId}>
+                    <td className="mic">
+                      {l.denumire} <span className="text-secundar">({l.cod})</span>
+                      <div className="text-secundar">
+                        comandat {Number(l.cantitateComandata).toLocaleString("ro-RO", { maximumFractionDigits: 3 })} {l.um}
+                        {Number(l.cantitateReturnata) > 0 ? ` · returnat deja ${Number(l.cantitateReturnata).toLocaleString("ro-RO", { maximumFractionDigits: 3 })}` : ""} · {eur(l.pretDocumentEur)}/{l.um}
+                      </div>
+                    </td>
+                    <td className="suma">
+                      <input value={cantitati[l.linieId] ?? ""} onChange={(e) => setCantitati({ ...cantitati, [l.linieId]: e.target.value })} inputMode="decimal" placeholder="0" disabled={ramas <= 0} style={{ width: 90, textAlign: "right" }} aria-label={`Cantitate returnată ${l.denumire}`} />
+                      <span className="mic text-secundar"> / {ramas.toLocaleString("ro-RO", { maximumFractionDigits: 3 })}</span>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+          <div className="formular-mic">
+            <input value={observatii} onChange={(e) => setObservatii(e.target.value)} placeholder="observații (opțional)" style={{ minWidth: 260 }} />
+            <button className="buton mic" disabled={ocupat || alese.length === 0}>
+              Salvează returul
+            </button>
+            <button type="button" className="buton secundar mic" onClick={() => setFormular(false)}>
+              Renunță
+            </button>
+          </div>
+        </form>
+      )}
+    </section>
   );
 }
 

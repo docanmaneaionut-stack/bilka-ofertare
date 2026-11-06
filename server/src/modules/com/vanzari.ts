@@ -3,6 +3,7 @@ import { Router } from "express";
 import { z } from "zod";
 import { prisma } from "../../db/prisma.js";
 import { agregaLucrare } from "../../modules/mot/lucrare.js";
+import { factorTva } from "../../modules/mot/zecimal.js";
 import type { RandVanzari, RezultatOferta } from "../../modules/mot/tipuri.js";
 import { numarComplet } from "../ofe/clienti.js";
 import { ETICHETA_STATUS_INCASARE, rezumatIncasari, type StatusIncasare } from "./comenzi.js";
@@ -51,6 +52,8 @@ const includeVanzari = {
   contAlocat: { select: { id: true, nume: true, rol: true, administratorId: true } },
   oferta: { select: { id: true, tvaPct: true, completareLaId: true, rezultatMotor: true, completareLa: { select: { serie: true, numar: true } }, motivCompletare: true } },
   incasari: true,
+  // S22: retururile active - rand de retur sub comanda, cu minus
+  retururi: { where: { stare: "ACTIV" as const }, orderBy: { numar: "asc" as const } },
 } satisfies Prisma.ComandaInclude;
 
 type ComandaVanzari = Prisma.ComandaGetPayload<{ include: typeof includeVanzari }>;
@@ -91,6 +94,35 @@ export interface RandTabelVanzari {
   // lucrarea (oferta initiala + completarile din selectie), pe randul initialei
   lucrare: { pretVanzareLei: string; costAchizitieLei: string; adaosNetLei: string; adaosBrutLei: string; comenzi: number } | null;
   copii: RandTabelVanzari[];
+  // S22: randul de retur (sub comanda, cu minus): numarul, data returului, "de regularizat" cand
+  // un comision era achitat la retur - pana il bifeaza Administratorul firmei
+  retur: { id: string; numar: number; data: string; sumaCuTvaLei: string; achizitieLei: string; deRegularizat: boolean; regularizatLa: Date | null; regularizatDe: string | null } | null;
+}
+
+// S22 - randul de retur al unei comenzi din oferta: vanzarea scade cu suma de restituit (lei cu
+// TVA, la cursul documentului), costul cu valoarea de achizitie a marfii returnate; fara comision
+function randDeRetur(c: ComandaVanzari, ret: ComandaVanzari["retururi"][number], parinte: RandTabelVanzari): RandTabelVanzari {
+  const vanzare = ret.sumaCuTvaLei.neg();
+  const cost = ret.achizitieLei.neg();
+  const net = vanzare.minus(cost);
+  return {
+    ...parinte,
+    numarComplet: `Retur ${ret.numar} la ${parinte.numarComplet}`,
+    data: dataDoar(ret.data),
+    faraSume: false,
+    costAchizitieLei: la2(cost),
+    pretVanzareLei: la2(vanzare),
+    adaosNetLei: la2(net),
+    adaosBrutLei: la2(net.div(factorTva(ret.tvaPct.toString()))),
+    sursaRecomandarii: null,
+    comisionRecomandare: null,
+    comisionAgent: null,
+    comisionAgentModificat: false,
+    completareLa: null,
+    lucrare: null,
+    copii: [],
+    retur: { id: ret.id, numar: ret.numar, data: dataDoar(ret.data), sumaCuTvaLei: la2(ret.sumaCuTvaLei), achizitieLei: la2(ret.achizitieLei), deRegularizat: ret.deRegularizat, regularizatLa: ret.regularizatLa, regularizatDe: ret.regularizatDeNume },
+  };
 }
 
 function spreRand(c: ComandaVanzari, comisionModificat: Set<string>): RandTabelVanzari {
@@ -120,6 +152,7 @@ function spreRand(c: ComandaVanzari, comisionModificat: Set<string>): RandTabelV
     completareLa: c.oferta?.completareLa ? { numarComplet: numarComplet(c.oferta.completareLa.serie, c.oferta.completareLa.numar), motiv: c.oferta.motivCompletare } : null,
     lucrare: null,
     copii: [],
+    retur: null,
   };
 }
 
@@ -152,9 +185,20 @@ vanzariRouter.get("/", async (req, res) => {
   if (u.rol === "AGENT") randuri = randuri.filter((r) => r.tabel === "propriu");
   if (f.incasare) randuri = randuri.filter((r) => (f.incasare === "incasat" ? r.incasare.status === "INCASAT" : r.incasare.status !== "INCASAT"));
 
+  // S22: randurile de retur (active) sub comanda lor; urmeaza parintele prin filtre
+  for (const r of [...randuri]) {
+    const c = comenzi.find((x) => x.id === r.comandaId)!;
+    if (c.tip !== "DIN_OFERTA") continue;
+    for (const ret of c.retururi) {
+      const rr = randDeRetur(c, ret, r);
+      r.copii.push(rr);
+      randuri.push(rr);
+    }
+  }
+
   // lucrarile: completarea sub comanda ofertei initiale, cand initiala e in selectie
   const dupaOferta = new Map(comenzi.filter((c) => c.ofertaId).map((c) => [c.ofertaId!, c]));
-  const randDupaComanda = new Map(randuri.map((r) => [r.comandaId, r]));
+  const randDupaComanda = new Map(randuri.filter((r) => !r.retur).map((r) => [r.comandaId, r]));
   const radacini: RandTabelVanzari[] = [];
   for (const c of comenzi) {
     const r = randDupaComanda.get(c.id);
@@ -164,13 +208,19 @@ vanzariRouter.get("/", async (req, res) => {
     if (randParinte) randParinte.copii.push(r);
     else radacini.push(r);
   }
+  // (S22: si retururile - randurile cu minus de sub initiala si de sub completari intra in lucrare)
+  const descendenti = (r: RandTabelVanzari): RandTabelVanzari[] => r.copii.flatMap((k) => [k, ...descendenti(k)]);
   for (const r of radacini) {
     if (r.copii.length === 0 || r.faraSume) continue;
     const initiala = comenzi.find((c) => c.id === r.comandaId)!;
     const rezInitiala = { vanzari: vanzarileComenzii(initiala)! } as RezultatOferta;
-    const completari = r.copii.map((k) => vanzarileComenzii(comenzi.find((c) => c.id === k.comandaId)!)).filter((v): v is RandVanzari => v !== null).map((v) => ({ vanzari: v }) as RezultatOferta);
+    const sub = descendenti(r);
+    const completari = sub
+      .map((k) => (k.retur ? ({ pretVanzareLei: k.pretVanzareLei!, costAchizitieLei: k.costAchizitieLei!, adaosNetLei: k.adaosNetLei!, adaosBrutLei: k.adaosBrutLei!, tabel: k.tabel } satisfies RandVanzari) : vanzarileComenzii(comenzi.find((c) => c.id === k.comandaId)!)))
+      .filter((v): v is RandVanzari => v !== null)
+      .map((v) => ({ vanzari: v }) as RezultatOferta);
     const l = agregaLucrare(rezInitiala, completari, initiala.oferta?.tvaPct?.toString() ?? "21");
-    r.lucrare = { pretVanzareLei: l.pretVanzareLei, costAchizitieLei: l.costAchizitieLei, adaosNetLei: l.adaosNetLei, adaosBrutLei: l.adaosBrutLei, comenzi: 1 + completari.length };
+    r.lucrare = { pretVanzareLei: l.pretVanzareLei, costAchizitieLei: l.costAchizitieLei, adaosNetLei: l.adaosNetLei, adaosBrutLei: l.adaosBrutLei, comenzi: 1 + sub.filter((k) => !k.retur && !k.faraSume).length };
   }
 
   // statisticile pe selectie (Administrator, Admin general): randurile cu sume, fiecare comanda o data
@@ -182,7 +232,8 @@ vanzariRouter.get("/", async (req, res) => {
     const vanzare = cuSume.reduce((s, r) => s.plus(D(r.pretVanzareLei!)), D(0));
     const net = vanzare.minus(cost);
     const comisioane = toate.reduce((s, r) => s.plus(D(r.comisionAgent?.lei ?? 0)).plus(D(r.comisionRecomandare?.lei ?? 0)), D(0));
-    statistici = { comenzi: toate.length, faraSume: toate.length - cuSume.length, costAchizitieLei: la2(cost), pretVanzareLei: la2(vanzare), adaosNetLei: la2(net), adaosBrutLei: la2(net.div(1.21)), comisioaneLei: la2(comisioane), procentAdaos: cost.gt(0) ? net.div(cost).mul(100).toFixed(2) : null };
+    const comenziToate = toate.filter((r) => !r.retur);
+    statistici = { comenzi: comenziToate.length, faraSume: comenziToate.filter((r) => r.faraSume).length, costAchizitieLei: la2(cost), pretVanzareLei: la2(vanzare), adaosNetLei: la2(net), adaosBrutLei: la2(net.div(1.21)), comisioaneLei: la2(comisioane), procentAdaos: cost.gt(0) ? net.div(cost).mul(100).toFixed(2) : null };
   }
 
   res.json({ randuri: radacini, statistici, perioada, poateScrie: u.rol === "ADMINISTRATOR" });

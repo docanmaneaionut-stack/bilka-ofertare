@@ -156,7 +156,7 @@ export function randGarantii(o: OfertaCuProduse, ctx: ContextDocument): string |
 
 // ------------------------------------------------------------- bucati comune
 
-function antet(ctx: ContextDocument, titlu: string, etichetaNr: string): string {
+export function antet(ctx: ContextDocument, titlu: string, etichetaNr: string): string {
   const sigla = ctx.firma.logo ? imagineDataUri(path.resolve(env.dateDir, ctx.firma.logo)) : null;
   const furnizori = ctx.furnizori
     .map((f) => {
