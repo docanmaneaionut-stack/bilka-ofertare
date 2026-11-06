@@ -1,5 +1,5 @@
 import { execSync } from "node:child_process";
-import { mkdtemp, writeFile, mkdir } from "node:fs/promises";
+import { mkdtemp, writeFile, mkdir, readFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import AdmZip from "adm-zip";
@@ -23,6 +23,7 @@ let firmaA: string;
 let firmaB: string;
 let ofertaA1: string;
 let ofertaA2: string;
+let comandaA1: string;
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const delegat = (client: PrismaClient, model: string) => (client as any)[model.charAt(0).toLowerCase() + model.slice(1)];
@@ -95,6 +96,7 @@ beforeAll(async () => {
   await prisma.comandaAviz.create({ data: { comandaId: comandaA.id, numar: 1, dataLivrarii: azi, partial: false, coli: 10, piese: "8", numeGeneratLaMoment: adminFirma.nume, generatDeId: adminFirma.id, linii: { create: [{ ordine: 0, linieId: "l1", cod: "ACMICMAT050", denumire: "Coamă mică", um: "buc", cantitate: "8" }, { ordine: 1, linieId: "i1", pozitieId: "p1", cod: "T", denumire: "4,20 m × 10 buc", um: "mp", cantitate: "49.560", lungimeM: "4.200", bucati: 10 }] } } });
   await mkdir(path.join(env.dateDir, "comenzi", comandaA.id), { recursive: true });
   await writeFile(path.join(env.dateDir, "comenzi", comandaA.id, "necesar.txt"), "test");
+  comandaA1 = comandaA.id;
   await prisma.ofertaLinie.create({ data: { ofertaId: oB.id, ordine: 1, rubrica: "Accesorii standard", cod: "ACMICMAT050", denumire: "Coamă mică", um: "BUC", pretBazaEur: "4.9", cantitate: "3" } });
   // fisierele firmelor: sigla, sablonul Bilka, documentul si atasamentul ofertei
   for (const [folder, nume] of [["sigle", `${firmaA}.png`], ["sigle", `${firmaB}.png`], ["sabloane-bilka", `${firmaA}.xlsm`], [`oferte/${o1.id}/documente`, "EXF-0001-F1.xlsm"], [`oferte/${o1.id}/atasamente`, "poza.jpg"], [`oferte/${oB.id}/documente`, "EXB-0001-oferta.pdf"]]) {
@@ -148,6 +150,8 @@ describe("Export 'descarca tot' si restaurare", () => {
     expect(readme).toContain("Tip export: complet");
     expect(intrari).toContain(`fisiere/sabloane-bilka/${firmaA}.xlsm`);
     expect(intrari).toContain(`fisiere/oferte/${ofertaA1}/documente/EXF-0001-F1.xlsm`);
+    // S24 (F2): fisierul atasat al comenzii intra in export
+    expect(intrari).toContain(`fisiere/comenzi/${comandaA1}/necesar.txt`);
     for (const tabel of ["client", "curs_valutar", "contor_serie", "montator", "oferta", "oferta_invelitoare", "oferta_linie", "oferta_pozitie", "oferta_sipca", "oferta_tronson", "oferta_zona_b", "oferta_istoric", "oferta_atasament", "oferta_notita", "oferta_document", "comanda", "comanda_istoric", "comanda_observatie", "comanda_atasament", "comanda_incasare", "comanda_retur", "comanda_retur_linie", "comanda_aviz", "comanda_aviz_linie", "corespondenta_formular_bilka"]) {
       expect(numaratori[tabel], tabel).toBeGreaterThanOrEqual(tabel === "corespondenta_formular_bilka" ? 0 : 1);
     }
@@ -197,6 +201,12 @@ describe("Export 'descarca tot' si restaurare", () => {
     expect(o1.notite[0].text).toBe("notiță de test");
     expect(o1.documente[0]).toMatchObject({ tip: "FORMULAR_BILKA", formularNr: 1 });
     expect(o1.comanda?.totalLei.toString()).toBe("17000");
+    // S24 (F2): comanda restaurata cu copiii ei si cu fisierul atasat pe disc
+    const c1 = await prismaRestore.comanda.findUniqueOrThrow({ where: { id: comandaA1 }, include: { istoric: true, observatii: true, atasamente: true, incasari: true, retururi: { include: { linii: true } }, avize: { include: { linii: true } } } });
+    expect([c1.istoric.length, c1.observatii.length, c1.atasamente.length, c1.incasari.length, c1.retururi.length, c1.retururi[0].linii.length, c1.avize.length, c1.avize[0].linii.length]).toEqual([1, 1, 1, 1, 1, 1, 1, 2]);
+    expect(c1.locatieUrl).toBe("https://maps.app.goo.gl/exemplu");
+    expect(c1.avize[0].linii.find((l) => l.pozitieId)?.cantitate.toString()).toBe("49.56");
+    expect(await readFile(path.join(dateDirRestore, "comenzi", comandaA1, "necesar.txt"), "utf8")).toBe("test");
     const cursA = await prisma.cursValutar.count();
     expect(await prismaRestore.cursValutar.count()).toBe(cursA);
     expect((await prismaRestore.contorSerie.findUnique({ where: { serie: "EXF" } }))?.ultimulNumar).toBe(2);
@@ -235,6 +245,7 @@ describe("Export 'descarca tot' si restaurare", () => {
     expect(intrari).toContain(`fisiere/sigle/${firmaA}.png`);
     expect(intrari).toContain(`fisiere/sabloane-bilka/${firmaA}.xlsm`);
     expect(intrari).toContain(`fisiere/oferte/${ofertaA1}/documente/EXF-0001-F1.xlsm`);
+    expect(intrari).toContain(`fisiere/comenzi/${comandaA1}/necesar.txt`); // S24 (F2): atasamentul comenzii firmei
     expect(intrari).not.toContain(`fisiere/sigle/${firmaB}.png`);
     expect(intrari.some((i) => i.startsWith("fisiere/importuri") || i === "fisiere/sigle/test-export.png")).toBe(false);
     const readme = zip.getEntry("README.md")!.getData().toString("utf8");

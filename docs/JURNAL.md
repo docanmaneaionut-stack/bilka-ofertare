@@ -532,3 +532,20 @@ Fiecare intrare: data, obiectivul sesiunii, rezultatul, următorul pas propus.
 - **Teste**: `com-documente-aviz-fisa.test.ts` (6 cazuri, pe textul extras din PDF: avizul E01 cu ambele exemplare și fără valori, căsuțele = rânduri + lungimi, livrarea parțială cu două avize și restul propus, drepturile, linkul la locație, fișa pentru două comenzi cu `tel:` și locația, nereținută, drepturile fișei); migrarea 19 în testul migrărilor; exportul cu cele două tabele; `npm test` verde — 35 de fișiere, 355 de teste; 13 cazuri etalon la zero. Ecranele verificate prin tipuri (`tsc -b`) și build, nu în browser.
 
 **Următorul pas propus:** S24 — verificare și înghețare Etapa 5: lista de acceptare `docs/ACCEPTARE-ETAPA-5.md`, Ionuț și testerii pe comenzi reale (inclusiv o comandă manuală, un retur, un aviz și o fișă a șoferului), ARH §4.4 (COM) → ÎNGHEȚAT, eticheta `v0.4-comenzi`.
+
+
+## 2026-11-06 — S24: verificarea și înghețarea Etapei 5 (`v0.4-comenzi`)
+
+**Obiectiv:** PLAN v0.31 S24 — nicio funcționalitate nouă: rândurile „Code (S24)” din `docs/ACCEPTARE-ETAPA-5.md` bifate cu testul sau citirea care le acoperă (rândurile „Ionuț / testeri” neatinse), F1–F4 verificate, ARH §4.4 (COM) → ÎNGHEȚAT, eticheta. Aprobat de Ionuț, inclusiv interpretarea la F3 (cele trei fișiere din `ofe/` = legarea comenzii, nu modificări ale ofertei).
+
+**Rezultat:**
+- **A–E**: toate cele 22 de rânduri „Code (S24)” acoperite de testele existente (`com-comenzi`, `com-incasari`, `com-vanzari`, `com-retururi`, `com-documente-aviz-fisa`, `ofe-statusuri`), bifate cu ✔ și referința testului. Nimic picat, nimic de reparat.
+- **F3**: `mot/` neatins față de `v0.3-ofertare` (diff gol); `ofe/` cu trei fișiere, toate legarea comenzii — `statusuri.ts` (crearea comenzii la „Comandat”: tipul, contul alocat, clientul, comisionul copiat, istoricul inițial, avansul ca încasare propusă), `documente/continut.ts` (antetul exportat, fără schimbare de conținut), `documente/index.ts` (etichetele notei de retur și avizului, regula colaboratorului); 13 etaloane la zero.
+- **F1**: migrările 15–19 se aplică de la zero la fiecare rulare (`prisma migrate deploy` pe baza de test goală); SQL-ul citit — singura lărgire e legătura la ofertă devenită opțională (migrarea 15), restul clauze standard ale cheilor străine; `date:comenzi` idempotentă, cu jurnal (test existent).
+- **F2**: testul export → bază goală → restaurare compară acum și copiii comenzii (istoric, observație, atașament, încasare, retur cu linie, aviz cu linii, linkul la locație) și fișierul atașat pe disc; exportul de firmă cuprinde fișierul comenzii firmei. Așteptări adăugate doar în test, verzi din prima.
+- **F4**: depozitul fără fișiere de probă sau diagnostic; `npm test` verde — 35 de fișiere, 355 de teste.
+- **F6**: ARH §4.4 (COM) → **ÎNGHEȚAT** (aceeași regulă ca §4.1–§4.3 / §5 / §6: schimbări doar prin MODIFICARE, întâi testul, apoi codul, migrări aditive); §13 cu intrarea S24; PLAN v0.31 cu S24 GATA și **Etapa 5 închisă**; eticheta `v0.4-comenzi`.
+
+**Rămân deschise** (Ionuț și testerii, până la punerea în funcțiune): A4, A6, C3, D4, F5 și partea „Ionuț / tester” a celorlalte rânduri — o comandă cap-coadă (ofertă → Comandat → formulare → Recepționat → aviz → Livrat → încasare → comision → vânzări), o comandă manuală, un retur, fișa șoferului pe telefon.
+
+**Următorul pas propus:** după decizia lui Ionuț — S18 (finisajul vizual, cu observațiile din `docs/OBSERVATII-ECRAN.md`) sau Faza 3 (punerea în funcțiune: VPS, domeniul `roofdata.ro`, backup, conturile reale), conform PLAN.
