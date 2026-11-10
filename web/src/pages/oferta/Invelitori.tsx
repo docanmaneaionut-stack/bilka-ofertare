@@ -232,12 +232,17 @@ function BlocInvelitoare({
             )}
           <div className="bi-rand">
             <span>Cantitate</span>
+            {/* S25b (BUG-12): cele trei moduri din FISA-OFERTARE 3.2 - panotaj, mp direct, combinat (amandoua);
+                comutarea nu pierde nimic: pozitiile si mp-ul raman in stare, pleaca spre motor doar ce apartine modului */}
             <div className="comutator" role="group" aria-label="Modul de cantitate">
-              <button type="button" className={inv.mod !== "mp" ? "activ" : undefined} disabled={!poate} onClick={() => onSchimba((i) => ({ ...i, mod: i.mod === "combinat" ? "combinat" : "panotaj" }))}>
+              <button type="button" className={inv.mod === "panotaj" ? "activ" : undefined} disabled={!poate} onClick={() => onSchimba((i) => ({ ...i, mod: "panotaj" }))}>
                 Panotaj
               </button>
               <button type="button" className={inv.mod === "mp" ? "activ" : undefined} disabled={!poate} onClick={() => onSchimba((i) => ({ ...i, mod: "mp" }))}>
                 mp direct
+              </button>
+              <button type="button" className={inv.mod === "combinat" ? "activ" : undefined} disabled={!poate} onClick={() => onSchimba((i) => ({ ...i, mod: "combinat" }))} title="o parte în mp direct și o parte panotată; se adună">
+                Combinat
               </button>
             </div>
           </div>
@@ -306,10 +311,10 @@ function BlocInvelitoare({
           {calcul && !calcul.integralPanotata && <span className="mic text-secundar"> · nu se poate comanda așa (mp direct)</span>}
         </span>
         {inv.mod === "combinat" && (
-          <span>
-            + suprafață directă{" "}
-            <CasutaCantitate value={inv.mpDirect} onChange={(v) => onSchimba((i) => ({ ...i, mpDirect: v }))} tip="zecimal" eticheta="Suprafață directă în plus (mp)" disabled={!poate} latime={100} />
-            <span className="mic text-secundar"> mp (ofertă cu suprafață combinată)</span>
+          <span className="bi-mp-direct">
+            Suprafață directă (mp){" "}
+            <CasutaCantitate value={inv.mpDirect} onChange={(v) => onSchimba((i) => ({ ...i, mpDirect: v }))} tip="zecimal" eticheta="Suprafață directă (mp)" disabled={!poate} latime={100} placeholder="ex. 148,000" />
+            <span className="mic text-secundar"> se adună la panotaj</span>
           </span>
         )}
         {inv.mod !== "mp" && poate && complete.length > 1 && (

@@ -1169,7 +1169,7 @@ table.tabel-vanzari tr.retur td.dreapta {
 /* comutatorul Panotaj / mp direct */
 .comutator {
   display: inline-grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(3, 1fr);
   height: var(--casuta-compact);
   border: 1px solid var(--border);
   border-radius: 4px;

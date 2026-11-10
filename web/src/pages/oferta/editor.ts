@@ -230,7 +230,8 @@ export function stareDinOferta(o: OfertaDetaliu, invelitoriCatalog: ProdusEditor
       grosime: i.grosime ?? "",
       culoare: i.culoare ?? "",
       latimeTotalaM: i.latimeTotalaM,
-      mpDirect: i.mpDirect ?? "",
+      // S25b: suprafata directa cu 3 zecimale la deschidere (serverul o da fara zerourile finale)
+      mpDirect: i.mpDirect ? Number(i.mpDirect).toFixed(3) : "",
       panotaj: i.panotaj.length ? i.panotaj.map((p) => ({ lungimeM: p.lungimeM, bucati: String(p.bucati) })) : [{ lungimeM: "", bucati: "" }],
     };
   });

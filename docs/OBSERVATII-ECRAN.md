@@ -1,6 +1,6 @@
 # Observații de ecran — pentru S18 (finisajul vizual)
 
-Versiunea 1.1 · 10 noiembrie 2026 · Scris de Claude (chat) din observațiile lui Ionuț și ale testerilor. Se completează pe măsură ce apar, pe ecrane; înainte de S18, Claude chat face simulări grafice pentru punctele mai mari, Ionuț le alege, iar planul S18 pornește de la lista finală. **Nimic de funcționalitate aici** — acelea sunt în `CERERI-BUG-S25.md`.
+Versiunea 1.2 · 10 noiembrie 2026 · Scris de Claude (chat) din observațiile lui Ionuț și ale testerilor. Se completează pe măsură ce apar, pe ecrane; înainte de S18, Claude chat face simulări grafice pentru punctele mai mari, Ionuț le alege, iar planul S18 pornește de la lista finală. **Nimic de funcționalitate aici** — acelea sunt în `CERERI-BUG-S25.md`.
 
 Legendă priorități: **A** deranjează la fiecare folosire · **B** vizibil, de făcut în S18 · **C** gust, dacă încape.
 
@@ -25,6 +25,8 @@ Legendă priorități: **A** deranjează la fiecare folosire · **B** vizibil, d
 | Nr | Observația | Prioritate | Simulare / decizie |
 |---|---|---|---|
 | V1 | (28.10) „ecranul de produse să fie mai comprimat, acum e foarte diluat și lung" — parțial făcut la S15 (rânduri dense); de revăzut la S18 cu Ionuț | B | |
+| V5 | (10.11, Claude chat, din capturile S25 `verificari/S25-capturi/`) la blocul învelitorii coloana de selecție e lată (~430 px) iar căsuțele de poziții sunt înguste și departe una de alta; proporțiile din simularea v2: selecția ~340 px, căsuțele de lungime / bucăți mai late, coloanele de poziții apropiate | B | de potrivit cu stilul compact general |
+| V6 | (10.11, Claude chat) „Lățime totală 1,2 m” → „1,20 m” (două zecimale la lățime; suprafața rămâne la 3 zecimale, FISA 3.2) | C | |
 
 ## Comenzi, vânzări, paleți
 | Nr | Observația | Prioritate | Simulare / decizie |
