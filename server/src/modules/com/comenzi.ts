@@ -7,6 +7,7 @@ import multer from "multer";
 import { z } from "zod";
 import { prisma } from "../../db/prisma.js";
 import { env } from "../../env.js";
+import { idsCuTextul } from "../../lib/normalizare.js";
 import { gasesteSauCreeazaClient, normalizeazaTelefon, numarComplet, schemaClient } from "../ofe/clienti.js";
 import { EroareDocument, ETICHETA_ORICE_DOCUMENT, genereazaDocument } from "../ofe/documente/index.js";
 import { urmatorulNumar } from "../ofe/numerotare.js";
@@ -254,9 +255,8 @@ comenziRouter.get("/", async (req, res) => {
     const numar = /^([A-Za-z]{2,3})-?(\d+)$/.exec(q);
     conditii.push({
       OR: [
-        { clientNume: { contains: q, mode: "insensitive" } },
-        { clientLocalitate: { contains: q, mode: "insensitive" } },
-        { montatorNume: { contains: q, mode: "insensitive" } },
+        // S25 BUG-10: clientul, localitatea si montatorul fara diacritice
+        { id: { in: await idsCuTextul("comanda", ["clientNume", "clientLocalitate", "montatorNume"], q) } },
         ...(cifre.length >= 4 ? [{ clientTelefon: { contains: cifre } }, { montatorTelefon: { contains: cifre } }] : []),
         ...(numar ? [{ serie: { equals: numar[1].toUpperCase() }, numar: Number(numar[2]) }] : []),
       ],
@@ -387,7 +387,7 @@ comenziRouter.get("/paleti", async (req, res) => {
   const f = schemaFiltrePaleti.parse(req.query);
   const conditii: Prisma.ComandaWhereInput[] = [vizibilitate, { notaPalet: { not: null } }];
   if (f.recuperati !== "toti") conditii.push({ paletRecuperat: f.recuperati === "da" });
-  if (f.q) conditii.push({ OR: [{ clientNume: { contains: f.q, mode: "insensitive" } }, { clientLocalitate: { contains: f.q, mode: "insensitive" } }] });
+  if (f.q) conditii.push({ id: { in: await idsCuTextul("comanda", ["clientNume", "clientLocalitate"], f.q) } });
   const comenzi = await prisma.comanda.findMany({ where: { AND: conditii }, include: includeRand, orderBy: [{ paletRecuperat: "asc" }, { notaPaletLa: "asc" }] });
   const nerecuperati = await prisma.comanda.count({ where: { AND: [vizibilitate, { notaPalet: { not: null }, paletRecuperat: false }] } });
   res.json({ paleti: comenzi.map(spreRand), nerecuperati, poateSchimbaStatus: poateSchimbaStatusPalet(u) });

@@ -1,6 +1,9 @@
 import { useEffect, useState } from "react";
 import { apiCatalogEditor, type ProdusEditor, type StructuraOferta } from "../../api";
+import { BtnSterge } from "../../components/BtnSterge";
+import { CasutaCantitate } from "../../components/CasutaCantitate";
 import { Camp, Mesaj, textEroare } from "../../components/ui";
+import { potriveste } from "../../lib/text";
 import type { Catalog } from "./Produse";
 import { cheieNoua, culoriPentru, ral, RUBRICI, sectiuneaLiniei, type LinieUI, type StareEditor } from "./editor";
 
@@ -64,7 +67,7 @@ export function Pluvial({ catalog, stare, set, poate }: Props) {
         />
       ))}
       {poate && (
-        <button className="buton secundar" type="button" onClick={() => setNoi((p) => [...p, { cheie: cheieNoua("pl"), finisaj: finisajImplicit, sistem: "125 / 90", ral: "" }])}>
+        <button className="buton secundar" type="button" tabIndex={-1} onClick={() => setNoi((p) => [...p, { cheie: cheieNoua("pl"), finisaj: finisajImplicit, sistem: "125 / 90", ral: "" }])}>
           + Adaugă sistem pluvial
         </button>
       )}
@@ -106,7 +109,8 @@ function SectiunePluvial({ s, idx, finisaje, catalog, stare, set, poate, onSchim
     });
   };
   const scoate = (cheie: string) => set((st) => ({ ...st, linii: st.linii.filter((l) => l.cheie !== cheie) }));
-  const gasite = cautare.trim().length >= 2 ? restul.filter((p) => p.denumire.toLowerCase().includes(cautare.trim().toLowerCase())).slice(0, 12) : [];
+  // S25 BUG-10: cautarea locala fara diacritice, in ambele sensuri
+  const gasite = cautare.trim().length >= 2 ? restul.filter((p) => potriveste(`${p.denumire} ${p.cod}`, cautare)).slice(0, 12) : [];
   const randuri = [...implicite.map((p) => ({ produs: p as ProdusEditor, numeLista: p.numeLista as string | null, linie: linii.find((l) => l.produs.id === p.id) ?? null })), ...linii.filter((l) => !implicite.some((p) => p.id === l.produs.id)).map((l) => ({ produs: l.produs, numeLista: null, linie: l }))];
 
   return (
@@ -114,7 +118,7 @@ function SectiunePluvial({ s, idx, finisaje, catalog, stare, set, poate, onSchim
       <div className="antet-pagina" style={{ marginBottom: 8 }}>
         <strong>Sistem pluvial {String.fromCharCode(65 + idx)}</strong>
         {poate && (
-          <button className="buton secundar mic" type="button" onClick={onScoate}>
+          <button className="buton secundar mic" type="button" tabIndex={-1} onClick={onScoate}>
             Scoate sistemul
           </button>
         )}
@@ -166,7 +170,7 @@ function SectiunePluvial({ s, idx, finisaje, catalog, stare, set, poate, onSchim
                 </tr>
               </thead>
               <tbody>
-                {randuri.map((r) => (
+                {randuri.map((r, idx) => (
                   <tr key={r.produs.id} className={r.linie ? undefined : "inactiv"}>
                     <td>
                       {r.numeLista ?? r.produs.denumire}
@@ -176,14 +180,10 @@ function SectiunePluvial({ s, idx, finisaje, catalog, stare, set, poate, onSchim
                     </td>
                     <td>{r.produs.um.toLowerCase()}</td>
                     <td>
-                      <input type="text" inputMode="decimal" value={r.linie?.cantitate ?? ""} onChange={(e) => (e.target.value.trim() === "" && r.linie ? scoate(r.linie.cheie) : seteazaCantitate(r.produs, e.target.value))} disabled={!poate} aria-label={`Cantitate ${r.produs.denumire}`} />
+                      <CasutaCantitate value={r.linie?.cantitate ?? ""} onChange={(v) => (v.trim() === "" && r.linie ? scoate(r.linie.cheie) : seteazaCantitate(r.produs, v))} eticheta={`Cantitate ${r.produs.denumire}`} disabled={!poate} grup={`pluvial-${s.cheie}`} rand={idx} camp="cantitate" />
                     </td>
                     <td>
-                      {r.linie && poate && (
-                        <button className="buton secundar mic" type="button" onClick={() => scoate(r.linie!.cheie)} aria-label="Scoate">
-                          ✕
-                        </button>
-                      )}
+                      {r.linie && poate && <BtnSterge onClick={() => scoate(r.linie!.cheie)} eticheta={`Scoate ${r.produs.denumire}`} />}
                     </td>
                   </tr>
                 ))}

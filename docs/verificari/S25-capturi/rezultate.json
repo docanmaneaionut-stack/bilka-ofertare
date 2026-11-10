@@ -1,0 +1,182 @@
+[
+  {
+    "nume": "BUG-7: selectia are 8 randuri si coloanele au 8 + 8 pozitii",
+    "ok": true,
+    "detalii": "8 randuri, pozitii 8 + 8"
+  },
+  {
+    "nume": "BUG-7: randul Varianta exista mereu, implicit „Standard” (la Iberic catalogul are si dripstop ca optiune, deci randul e activ)",
+    "ok": true,
+    "detalii": "{\"disabled\":false,\"text\":\"Standard\"}"
+  },
+  {
+    "nume": "BUG-7: pozitia 1 la inaltimea randului Furnizor, 8 la a ultimului rand, 9 la a primului; capetele pe aceeasi linie; rand 28 px",
+    "ok": true,
+    "detalii": "{\"d1\":0,\"d8\":0,\"d9\":0,\"cap\":[1223,1223,1223],\"inaltime\":28}"
+  },
+  {
+    "nume": "principala: 6 pozitii introduse fara mouse, cursorul mereu pe lungimea pozitiei urmatoare (BUG-6)",
+    "ok": true,
+    "detalii": ""
+  },
+  {
+    "nume": "principala: dupa Enter pe pozitia 6, cursorul pe lungimea pozitiei 7",
+    "ok": true,
+    "detalii": "{\"tag\":\"INPUT\",\"aria\":\"Lungime poziția 7\",\"cls\":\"casuta-cantitate\",\"value\":\"\"}"
+  },
+  {
+    "nume": "BUG-7: totalurile sub coloane (coli, Σ, latime din catalog, mp)",
+    "ok": true,
+    "detalii": "Coli 47Σ lungime × bucăți 143,65 mLățime totală 1,18 m din catalogSuprafață 169,507 mpSortează descrescător"
+  },
+  {
+    "nume": "BUG-6/7: Enter pe pozitia 8 -> lungimea pozitiei 9 (coloana a treia)",
+    "ok": true,
+    "detalii": "{\"tag\":\"INPUT\",\"aria\":\"Lungime poziția 9\",\"cls\":\"casuta-cantitate\",\"value\":\"\"}"
+  },
+  {
+    "nume": "BUG-6/7: Enter pe pozitia 16 -> pozitia 17 apare sub coloana a treia, cursorul pe lungimea ei",
+    "ok": true,
+    "detalii": "{\"tag\":\"INPUT\",\"aria\":\"Lungime poziția 17\",\"cls\":\"casuta-cantitate\",\"value\":\"\"}"
+  },
+  {
+    "nume": "BUG-7: dupa 17, coloana a doua ramane cu 8, a treia are 10 (9..18), nimic mutat (pozitia 1 = 4,25)",
+    "ok": true,
+    "detalii": "{\"col2\":8,\"col3\":10,\"in3\":true,\"p18\":true,\"p1\":\"4,25\"}"
+  },
+  {
+    "nume": "BUG-7: totalurile cu 17 pozitii (89 coli)",
+    "ok": true,
+    "detalii": "Coli 89Σ lungime × bucăți 216,65 mLățime totală 1,18 m din catalogSuprafață 255,647 mpSortează descrescător"
+  },
+  {
+    "nume": "BUG-7: suprafata vine din motor (3 zecimale)",
+    "ok": true,
+    "detalii": "255,647"
+  },
+  {
+    "nume": "secundara: 6 pozitii introduse fara mouse, cursorul mereu pe lungimea pozitiei urmatoare (BUG-6)",
+    "ok": true,
+    "detalii": ""
+  },
+  {
+    "nume": "secundara: dupa Enter pe pozitia 6, cursorul pe lungimea pozitiei 7",
+    "ok": true,
+    "detalii": "{\"tag\":\"INPUT\",\"aria\":\"Lungime poziția 7\",\"cls\":\"casuta-cantitate\",\"value\":\"\"}"
+  },
+  {
+    "nume": "BUG-6/7 secundara: dupa 17 pozitii cursorul pe lungimea pozitiei 18",
+    "ok": true,
+    "detalii": "{\"tag\":\"INPUT\",\"aria\":\"Lungime poziția 18\",\"cls\":\"casuta-cantitate\",\"value\":\"\"}"
+  },
+  {
+    "nume": "BUG-7: pe telefon coloanele sunt una sub alta",
+    "ok": true,
+    "detalii": ""
+  },
+  {
+    "nume": "BUG-7: la „mp direct” apare casuta de suprafata in locul coloanelor",
+    "ok": true,
+    "detalii": "{\"areMp\":true,\"fara\":1}"
+  },
+  {
+    "nume": "BUG-7: inapoi la Panotaj, pozitiile scrise sunt la locul lor",
+    "ok": true,
+    "detalii": "4,25"
+  },
+  {
+    "nume": "BUG-8 speciale 2 ML: „12” scris dintr-o miscare, casuta pastreaza focalizarea",
+    "ok": true,
+    "detalii": "{\"tag\":\"INPUT\",\"aria\":\"Cantitate rândul 1\",\"cls\":\"casuta-cantitate\",\"value\":\"12\"}"
+  },
+  {
+    "nume": "BUG-8 speciale 2 ML: „125”",
+    "ok": true,
+    "detalii": "{\"tag\":\"INPUT\",\"aria\":\"Cantitate rândul 1\",\"cls\":\"casuta-cantitate\",\"value\":\"125\"}"
+  },
+  {
+    "nume": "rubrica Accesorii standard are randuri din lista implicita",
+    "ok": true,
+    "detalii": "10"
+  },
+  {
+    "nume": "BUG-8 rubrica standard: „1,5” cu virgula, fara pierderea focalizarii",
+    "ok": true,
+    "detalii": "{\"tag\":\"INPUT\",\"aria\":\"Cantitate Coamă mică – mat – 0,50 mm\",\"cls\":\"casuta-cantitate\",\"value\":\"1,5\"}"
+  },
+  {
+    "nume": "BUG-9: randul in care scrii e colorat pe tot (fond + contur), nu doar casuta",
+    "ok": true,
+    "detalii": "{\"bg\":\"rgb(238, 243, 255)\",\"sombra\":true}"
+  },
+  {
+    "nume": "BUG-11: Tab de la prima casuta trece doar prin casute, nu se opreste pe cos",
+    "ok": true,
+    "detalii": "INPUT:casuta-cantitate > INPUT:casuta-cantitate > INPUT:casuta-cantitate > INPUT:casuta-cantitate > INPUT:casuta-cantitate > INPUT:casuta-cantitate > INPUT:casuta-cantitate > INPUT:casuta-cantitate"
+  },
+  {
+    "nume": "BUG-11: butoanele de stergere sunt cosuri cu tabIndex -1",
+    "ok": true,
+    "detalii": "14"
+  },
+  {
+    "nume": "BUG-11: Enter / Delete / Backspace pe cos nu sterg nimic",
+    "ok": true,
+    "detalii": "3 -> 3"
+  },
+  {
+    "nume": "BUG-11: clic pe cos sterge cantitatea randului",
+    "ok": true,
+    "detalii": "\"\""
+  },
+  {
+    "nume": "BUG-11: cosul e gri si devine rosu la mouse",
+    "ok": true,
+    "detalii": "rgb(138, 138, 138) -> rgb(176, 0, 32)"
+  },
+  {
+    "nume": "BUG-10 „+ Adauga…”: „fronton 360” gaseste „Bordură fronton – 360 mm”",
+    "ok": true,
+    "detalii": "Bordură fronton – 360 mm / 2 m – mat – 0,50 mm · ABF36MAT050"
+  },
+  {
+    "nume": "BUG-10 „+ Adauga…”: „COAMĂ MICĂ” (majuscule cu diacritice) gaseste „Coamă mică”",
+    "ok": true,
+    "detalii": "Coamă mică – mat – 0,50 mm · ACMICMAT050 | Închidere coamă mică – mat · AXINCMATMIC"
+  },
+  {
+    "nume": "BUG-10 „Afla pret”: „tigla iberic” gaseste Țiglă metalică Iberic",
+    "ok": true,
+    "detalii": ""
+  },
+  {
+    "nume": "BUG-10 lista de oferte: „campineanca” gaseste clientul din Câmpineanca",
+    "ok": true,
+    "detalii": ""
+  },
+  {
+    "nume": "BUG-10 comenzi: „asociatia” gaseste „Asociația Cercul Unirea”",
+    "ok": true,
+    "detalii": ""
+  },
+  {
+    "nume": "BUG-5 din ofertă: formularul avizului vine precompletat (sau mesajul la manuala)",
+    "ok": true,
+    "detalii": "{\"casute\":31,\"coama\":\"13\",\"p420\":\"15\",\"goale\":0,\"mesajManuala\":false,\"data\":\"2026-11-10\"}"
+  },
+  {
+    "nume": "BUG-5 manuală: formularul avizului vine precompletat (sau mesajul la manuala)",
+    "ok": true,
+    "detalii": "{\"casute\":0,\"coama\":null,\"p420\":null,\"goale\":0,\"mesajManuala\":true}"
+  },
+  {
+    "nume": "BUG-5 cu aviz anterior: formularul avizului vine precompletat (sau mesajul la manuala)",
+    "ok": true,
+    "detalii": "{\"casute\":31,\"coama\":\"8\",\"p420\":\"5\",\"goale\":0,\"mesajManuala\":false,\"data\":\"2026-11-10\"}"
+  },
+  {
+    "nume": "BUG-5: „Generează” direct -> avizul 1 pentru livrarea completa apare pe comanda, fara „livrare parțială”",
+    "ok": true,
+    "detalii": ""
+  }
+]

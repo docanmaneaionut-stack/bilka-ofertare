@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
 import { apiCatalogEditor, type ProdusEditor, type StructuraOferta } from "../../api";
+import { BtnSterge } from "../../components/BtnSterge";
+import { CasutaCantitate } from "../../components/CasutaCantitate";
 import { Camp, Mesaj, textEroare } from "../../components/ui";
 import type { Catalog } from "./Produse";
 import { cheieNoua, culoriPentru, ral, RUBRICI, sectiuneaLiniei, sipciTrimise, type LinieUI, type SipcaUI, type StareEditor } from "./editor";
@@ -62,7 +64,7 @@ export function Sipca({ catalog, stare, set, poate, structura }: Props) {
         />
       ))}
       {poate && (
-        <button className="buton secundar" type="button" onClick={adauga}>
+        <button className="buton secundar" type="button" tabIndex={-1} onClick={adauga}>
           + Adaugă rubrică șipcă
         </button>
       )}
@@ -124,7 +126,7 @@ function RubricaSipca({ idx, litera, s, produse, catalog, stare, set, poate, cal
           {idx > 0 ? " (formular Bilka separat)" : ""}
         </h3>
         {poate && (
-          <button className="buton secundar mic" type="button" onClick={scoate}>
+          <button className="buton secundar mic" type="button" tabIndex={-1} onClick={scoate}>
             Scoate rubrica
           </button>
         )}
@@ -201,10 +203,10 @@ function RubricaSipca({ idx, litera, s, produse, catalog, stare, set, poate, cal
             {(linie.pozitii ?? []).map((p, i) => (
               <tr key={i}>
                 <td>
-                  <input type="text" inputMode="decimal" value={p.lungimeM} onChange={(e) => setLinie({ pozitii: (linie.pozitii ?? []).map((x, j) => (j === i ? { ...x, lungimeM: e.target.value } : x)) })} disabled={!poate} aria-label="Lungime" />
+                  <CasutaCantitate value={p.lungimeM} onChange={(v) => setLinie({ pozitii: (linie.pozitii ?? []).map((x, j) => (j === i ? { ...x, lungimeM: v } : x)) })} eticheta={`Lungime șipcă poziția ${i + 1}`} disabled={!poate} grup={`sipca-${s.linie}`} rand={i} camp="lungime" />
                 </td>
                 <td>
-                  <input type="text" inputMode="numeric" value={p.bucati} onChange={(e) => setLinie({ pozitii: (linie.pozitii ?? []).map((x, j) => (j === i ? { ...x, bucati: e.target.value } : x)) })} disabled={!poate} aria-label="Bucăți" />
+                  <CasutaCantitate value={p.bucati} onChange={(v) => setLinie({ pozitii: (linie.pozitii ?? []).map((x, j) => (j === i ? { ...x, bucati: v } : x)) })} tip="intreg" eticheta={`Bucăți poziția ${i + 1}`} disabled={!poate} grup={`sipca-${s.linie}`} rand={i} camp="bucati" />
                 </td>
               </tr>
             ))}
@@ -212,7 +214,7 @@ function RubricaSipca({ idx, litera, s, produse, catalog, stare, set, poate, cal
         </table>
       )}
       {linie && s.varianta === "comanda" && poate && (
-        <button className="buton secundar mic" type="button" style={{ marginTop: 6 }} onClick={() => setLinie({ pozitii: [...(linie.pozitii ?? []), { lungimeM: "", bucati: "" }] })}>
+        <button className="buton secundar mic" type="button" tabIndex={-1} style={{ marginTop: 6 }} data-adauga={`sipca-${s.linie}`} onClick={() => setLinie({ pozitii: [...(linie.pozitii ?? []), { lungimeM: "", bucati: "" }] })}>
           + Adaugă poziție
         </button>
       )}
@@ -234,29 +236,25 @@ function RubricaSipca({ idx, litera, s, produse, catalog, stare, set, poate, cal
               {s.tronsoane.map((t, i) => (
                 <tr key={i}>
                   <td>
-                    <input type="text" inputMode="decimal" value={t.lungimeSipcaM} onChange={(e) => setSipca((x) => ({ ...x, tronsoane: x.tronsoane.map((y, j) => (j === i ? { ...y, lungimeSipcaM: e.target.value } : y)) }))} disabled={!poate} aria-label="Lungime șipcă" />
+                    <CasutaCantitate value={t.lungimeSipcaM} onChange={(v) => setSipca((x) => ({ ...x, tronsoane: x.tronsoane.map((y, j) => (j === i ? { ...y, lungimeSipcaM: v } : y)) }))} eticheta={`Lungime șipcă tronsonul ${i + 1}`} disabled={!poate} grup={`tronsoane-${s.linie}`} rand={i} camp="lungime" />
                   </td>
                   <td>
-                    <input type="text" inputMode="decimal" value={t.lungimeTronsonM} onChange={(e) => setSipca((x) => ({ ...x, tronsoane: x.tronsoane.map((y, j) => (j === i ? { ...y, lungimeTronsonM: e.target.value } : y)) }))} disabled={!poate} aria-label="Lungime tronson" />
+                    <CasutaCantitate value={t.lungimeTronsonM} onChange={(v) => setSipca((x) => ({ ...x, tronsoane: x.tronsoane.map((y, j) => (j === i ? { ...y, lungimeTronsonM: v } : y)) }))} eticheta={`Lungime tronsonul ${i + 1}`} disabled={!poate} grup={`tronsoane-${s.linie}`} rand={i} camp="lungimeTronson" />
                   </td>
                   <td>
-                    <input type="text" inputMode="decimal" value={t.distantaMm} onChange={(e) => setSipca((x) => ({ ...x, tronsoane: x.tronsoane.map((y, j) => (j === i ? { ...y, distantaMm: e.target.value } : y)) }))} disabled={!poate} aria-label="Distanța" />
+                    <CasutaCantitate value={t.distantaMm} onChange={(v) => setSipca((x) => ({ ...x, tronsoane: x.tronsoane.map((y, j) => (j === i ? { ...y, distantaMm: v } : y)) }))} eticheta={`Distanța tronsonul ${i + 1}`} disabled={!poate} grup={`tronsoane-${s.linie}`} rand={i} camp="distanta" />
                   </td>
                   <td>{calcul?.tronsoane[i]?.bucati ?? "—"}</td>
                   <td>{calcul?.tronsoane[i]?.ml ?? "—"}</td>
                   <td>
-                    {poate && s.tronsoane.length > 1 && (
-                      <button className="buton secundar mic" type="button" onClick={() => setSipca((x) => ({ ...x, tronsoane: x.tronsoane.filter((_, j) => j !== i) }))} aria-label="Scoate tronsonul">
-                        ✕
-                      </button>
-                    )}
+                    {poate && s.tronsoane.length > 1 && <BtnSterge onClick={() => setSipca((x) => ({ ...x, tronsoane: x.tronsoane.filter((_, j) => j !== i) }))} eticheta={`Scoate tronsonul ${i + 1}`} />}
                   </td>
                 </tr>
               ))}
             </tbody>
           </table>
           {poate && (
-            <button className="buton secundar mic" type="button" style={{ marginTop: 6 }} onClick={() => setSipca((x) => ({ ...x, tronsoane: [...x.tronsoane, { lungimeSipcaM: x.tronsoane[0]?.lungimeSipcaM ?? "", lungimeTronsonM: "", distantaMm: x.tronsoane[0]?.distantaMm ?? "" }] }))}>
+            <button className="buton secundar mic" type="button" tabIndex={-1} style={{ marginTop: 6 }} data-adauga={`tronsoane-${s.linie}`} onClick={() => setSipca((x) => ({ ...x, tronsoane: [...x.tronsoane, { lungimeSipcaM: x.tronsoane[0]?.lungimeSipcaM ?? "", lungimeTronsonM: "", distantaMm: x.tronsoane[0]?.distantaMm ?? "" }] }))}>
               + Adaugă tronson
             </button>
           )}

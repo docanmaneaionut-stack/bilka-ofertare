@@ -2,6 +2,7 @@ import type { Prisma } from "@prisma/client";
 import { Router } from "express";
 import { z } from "zod";
 import { prisma } from "../../db/prisma.js";
+import { idsCuTextul } from "../../lib/normalizare.js";
 import { cereAutentificare } from "../accounts/middleware.js";
 import { ROLURI_CU_OFERTE } from "./vizibilitate.js";
 
@@ -264,11 +265,13 @@ catalogEditorRouter.get("/liste-implicite", async (req, res) => {
 
 catalogEditorRouter.get("/cauta", async (req, res) => {
   const { q, categorie, ...cheie } = z.object({ q: z.string().trim().min(2).max(100), categorie: z.string().trim().optional() }).merge(schemaCheie).parse(req.query);
+  // S25 BUG-10: denumirea fara diacritice (id-urile din SQL), codul furnizorului ca pana acum
+  const ids = await idsCuTextul("produs", ["denumire"], q);
   const produse = await prisma.produs.findMany({
     where: {
       activ: true,
       ...(categorie ? { categorieOferta: { denumire: categorie } } : {}),
-      OR: [{ denumire: { contains: q, mode: "insensitive" } }, { codFurnizor: { contains: q, mode: "insensitive" } }],
+      OR: [{ id: { in: ids } }, { codFurnizor: { contains: q, mode: "insensitive" } }],
     },
     select: selectProdusEditor,
     orderBy: { denumire: "asc" },

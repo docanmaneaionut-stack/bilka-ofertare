@@ -1,3 +1,5 @@
+import { BtnSterge } from "../../components/BtnSterge";
+import { CasutaCantitate } from "../../components/CasutaCantitate";
 import { Camp } from "../../components/ui";
 import type { StareEditor } from "./editor";
 
@@ -34,10 +36,10 @@ export function ZonaB({ stare, set, poate }: { stare: StareEditor; set: (f: (s: 
                     <input type="text" value={l.um} onChange={(e) => schimba(i, { um: e.target.value })} disabled={!poate} style={{ width: 80 }} aria-label="UM" placeholder="ml, mp, buc, lucrare" />
                   </td>
                   <td>
-                    <input type="text" inputMode="decimal" value={l.cantitate} onChange={(e) => schimba(i, { cantitate: e.target.value })} disabled={!poate} style={{ width: 90 }} aria-label="Cantitate" />
+                    <CasutaCantitate value={l.cantitate} onChange={(v) => schimba(i, { cantitate: v })} eticheta={`Cantitate zona B rândul ${i + 1}`} disabled={!poate} latime={90} grup="zonaB" rand={i} camp="cantitate" />
                   </td>
                   <td>
-                    <input type="text" inputMode="decimal" value={l.sumaLei} onChange={(e) => schimba(i, { sumaLei: e.target.value })} disabled={!poate} style={{ width: 110 }} aria-label="Sumă lei" />
+                    <CasutaCantitate value={l.sumaLei} onChange={(v) => schimba(i, { sumaLei: v })} eticheta={`Sumă lei rândul ${i + 1}`} disabled={!poate} latime={110} grup="zonaB" rand={i} camp="suma" />
                   </td>
                   <td>
                     <input type="checkbox" checked={l.contineTva} onChange={(e) => schimba(i, { contineTva: e.target.checked })} disabled={!poate} aria-label="Conține TVA" />
@@ -46,11 +48,7 @@ export function ZonaB({ stare, set, poate }: { stare: StareEditor; set: (f: (s: 
                     <input type="checkbox" checked={l.preiaInFactura} onChange={(e) => schimba(i, { preiaInFactura: e.target.checked })} disabled={!poate} aria-label="Preia în factură" />
                   </td>
                   <td>
-                    {poate && (
-                      <button className="buton secundar mic" type="button" onClick={() => setLinii(linii.filter((_, j) => j !== i))} aria-label="Scoate">
-                        ✕
-                      </button>
-                    )}
+                    {poate && <BtnSterge onClick={() => setLinii(linii.filter((_, j) => j !== i))} eticheta={`Scoate rândul ${i + 1} din zona B`} />}
                   </td>
                 </tr>
               ))}
@@ -59,7 +57,7 @@ export function ZonaB({ stare, set, poate }: { stare: StareEditor; set: (f: (s: 
         </div>
       )}
       {poate && (
-        <button className="buton secundar mic" type="button" style={{ marginTop: 8 }} onClick={() => setLinii([...linii, { denumire: "", um: "buc", cantitate: "1", sumaLei: "", contineTva: false, preiaInFactura: false }])}>
+        <button className="buton secundar mic" type="button" tabIndex={-1} style={{ marginTop: 8 }} onClick={() => setLinii([...linii, { denumire: "", um: "buc", cantitate: "1", sumaLei: "", contineTva: false, preiaInFactura: false }])}>
           + Adaugă linie în zona B
         </button>
       )}

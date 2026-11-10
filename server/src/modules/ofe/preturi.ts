@@ -2,6 +2,7 @@ import { Prisma, type Utilizator } from "@prisma/client";
 import { z } from "zod";
 import { ZodError } from "zod";
 import { prisma } from "../../db/prisma.js";
+import { idsCuTextul } from "../../lib/normalizare.js";
 import { env } from "../../env.js";
 import { cursulZilei } from "../curs/serviciu.js";
 import { calculeazaOferta } from "../mot/calcul.js";
@@ -395,7 +396,7 @@ export async function surseDePreluare(u: Utilizator, ofertaId: string, q: string
   if (q) {
     const numar = /^([A-Za-z]{2,3})-?(\d+)$/.exec(q.trim());
     conditii.push({
-      OR: [{ client: { nume: { contains: q, mode: "insensitive" } } }, ...(numar ? [{ serie: { equals: numar[1].toUpperCase() }, numar: Number(numar[2]) }] : [])],
+      OR: [{ clientId: { in: await idsCuTextul("client", ["nume"], q) } }, ...(numar ? [{ serie: { equals: numar[1].toUpperCase() }, numar: Number(numar[2]) }] : [])],
     });
   }
   const oferte = await prisma.oferta.findMany({

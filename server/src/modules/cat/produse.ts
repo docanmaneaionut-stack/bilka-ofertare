@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { z } from "zod";
 import { prisma } from "../../db/prisma.js";
+import { idsCuTextul } from "../../lib/normalizare.js";
 import { cereRol } from "../accounts/middleware.js";
 import { scrieCreare, scrieModificari } from "../adm/jurnal.js";
 import { genereazaCodIntern } from "./codIntern.js";
@@ -93,7 +94,8 @@ produseRouter.get("/", async (req, res) => {
     ...(q
       ? {
           OR: [
-            { denumire: { contains: q, mode: "insensitive" as const } },
+            // S25 BUG-10: denumirea fara diacritice
+            { id: { in: await idsCuTextul("produs", ["denumire"], q) } },
             { codFurnizor: { contains: q, mode: "insensitive" as const } },
             { codIntern: { contains: q, mode: "insensitive" as const } },
           ],

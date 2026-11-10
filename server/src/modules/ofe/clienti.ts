@@ -2,6 +2,7 @@ import type { Prisma, Utilizator } from "@prisma/client";
 import { Router } from "express";
 import { z } from "zod";
 import { prisma } from "../../db/prisma.js";
+import { idsCuTextul } from "../../lib/normalizare.js";
 import { cereAutentificare } from "../accounts/middleware.js";
 import { filtruVizibilitateOferte, ROLURI_CU_OFERTE } from "./vizibilitate.js";
 
@@ -93,7 +94,8 @@ clientiRouter.get("/", async (req, res) => {
   const { telefon, q } = z.object({ telefon: z.string().trim().optional(), q: z.string().trim().optional() }).parse(req.query);
   const where: Prisma.ClientWhereInput = {};
   if (telefon && normalizeazaTelefon(telefon).length >= 4) where.telefonNormalizat = { startsWith: normalizeazaTelefon(telefon) };
-  else if (q && q.length >= 2) where.OR = [{ nume: { contains: q, mode: "insensitive" } }, { localitate: { contains: q, mode: "insensitive" } }];
+  // S25 BUG-10: numele si localitatea fara diacritice
+  else if (q && q.length >= 2) where.id = { in: await idsCuTextul("client", ["nume", "localitate"], q) };
   else {
     res.json({ clienti: [] });
     return;

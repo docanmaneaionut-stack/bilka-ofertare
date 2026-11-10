@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { z } from "zod";
 import { prisma } from "../../db/prisma.js";
+import { normalizeazaText } from "../../lib/normalizare.js";
 import { env } from "../../env.js";
 import { cereAutentificare } from "../accounts/middleware.js";
 import { cursulZilei, EroareCurs } from "../curs/serviciu.js";
@@ -22,7 +23,8 @@ const schemaCautare = z.object({ q: z.string().trim().min(2).max(100) });
 
 pretRapidRouter.get("/", async (req, res) => {
   const { q } = schemaCautare.parse(req.query);
-  const termeni = cuvinte(q);
+  // S25 BUG-10: cautarea fara diacritice, in ambele sensuri (textul cautat si textul produsului)
+  const termeni = cuvinte(normalizeazaText(q));
   const randuri = await prisma.produs.findMany({
     where: { activ: true, preturi: { some: { listaPret: { status: "ACTIVA" } } } },
     select: selectProdusEditor,
@@ -31,7 +33,7 @@ pretRapidRouter.get("/", async (req, res) => {
   const produse = randuri
     .map(spreProdusEditor)
     .filter((p) => {
-      const text = cuvinte([p.denumire, p.familie ?? "", p.grup, p.varianta ?? "", p.optiune ?? "", p.desfasurata ?? "", p.treapta ?? ""].join(" "), true);
+      const text = cuvinte(normalizeazaText([p.denumire, p.familie ?? "", p.grup, p.varianta ?? "", p.optiune ?? "", p.desfasurata ?? "", p.treapta ?? ""].join(" ")), true);
       return termeni.every((t) => text.some((c) => c.startsWith(t)));
     })
     .slice(0, 200);

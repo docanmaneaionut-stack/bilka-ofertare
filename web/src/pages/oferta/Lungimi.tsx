@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
 import { apiCatalogEditor, type ProdusEditor, type StructuraOferta } from "../../api";
+import { BtnSterge } from "../../components/BtnSterge";
+import { CasutaCantitate } from "../../components/CasutaCantitate";
 import { Mesaj, textEroare } from "../../components/ui";
 import type { Catalog } from "./Produse";
 import { cheieNoua, culoriPentru, ral, RUBRICI, sectiuneaLiniei, type LinieUI, type StareEditor } from "./editor";
@@ -120,17 +122,13 @@ export function Lungimi({ catalog, stare, set, poate, structura }: Props) {
                 {(l.pozitii ?? []).map((p, i) => (
                   <tr key={i}>
                     <td>
-                      <input type="text" inputMode="decimal" value={p.lungimeM} onChange={(e) => schimba(l.cheie, { pozitii: (l.pozitii ?? []).map((x, j) => (j === i ? { ...x, lungimeM: e.target.value } : x)) })} disabled={!poate} aria-label="Lungime" />
+                      <CasutaCantitate value={p.lungimeM} onChange={(v) => schimba(l.cheie, { pozitii: (l.pozitii ?? []).map((x, j) => (j === i ? { ...x, lungimeM: v } : x)) })} eticheta={`Lungime poziția ${i + 1}`} disabled={!poate} grup={`lungimi-${l.cheie}`} rand={i} camp="lungime" />
                     </td>
                     <td>
-                      <input type="text" inputMode="numeric" value={p.bucati} onChange={(e) => schimba(l.cheie, { pozitii: (l.pozitii ?? []).map((x, j) => (j === i ? { ...x, bucati: e.target.value } : x)) })} disabled={!poate} aria-label="Bucăți" />
+                      <CasutaCantitate value={p.bucati} onChange={(v) => schimba(l.cheie, { pozitii: (l.pozitii ?? []).map((x, j) => (j === i ? { ...x, bucati: v } : x)) })} tip="intreg" eticheta={`Bucăți poziția ${i + 1}`} disabled={!poate} grup={`lungimi-${l.cheie}`} rand={i} camp="bucati" />
                     </td>
                     <td>
-                      {poate && (
-                        <button className="buton secundar mic" type="button" onClick={() => schimba(l.cheie, { pozitii: (l.pozitii ?? []).filter((_, j) => j !== i) })} aria-label="Scoate poziția">
-                          ✕
-                        </button>
-                      )}
+                      {poate && <BtnSterge onClick={() => schimba(l.cheie, { pozitii: (l.pozitii ?? []).filter((_, j) => j !== i) })} eticheta={`Scoate poziția ${i + 1}`} />}
                     </td>
                   </tr>
                 ))}
@@ -138,13 +136,13 @@ export function Lungimi({ catalog, stare, set, poate, structura }: Props) {
             </table>
             <div className="actiuni" style={{ marginTop: 6 }}>
               {poate && (
-                <button className="buton secundar mic" type="button" onClick={() => schimba(l.cheie, { pozitii: [...(l.pozitii ?? []), { lungimeM: "", bucati: "" }] })}>
+                <button className="buton secundar mic" type="button" tabIndex={-1} data-adauga={`lungimi-${l.cheie}`} onClick={() => schimba(l.cheie, { pozitii: [...(l.pozitii ?? []), { lungimeM: "", bucati: "" }] })}>
                   + poziție
                 </button>
               )}
               <span>{mlCalculat(l) ? <strong>{mlCalculat(l)} ml</strong> : <span className="text-secundar">—</span>}</span>
               {poate && (
-                <button className="buton secundar mic" type="button" onClick={() => scoate(l.cheie)}>
+                <button className="buton secundar mic" type="button" tabIndex={-1} onClick={() => scoate(l.cheie)}>
                   Scoate rândul
                 </button>
               )}
@@ -154,7 +152,7 @@ export function Lungimi({ catalog, stare, set, poate, structura }: Props) {
       })}
       {poate && (
         <div className="actiuni" style={{ justifyContent: "flex-start" }}>
-          <button className="buton secundar" type="button" onClick={adauga} disabled={produse.length === 0}>
+          <button className="buton secundar" type="button" tabIndex={-1} onClick={adauga} disabled={produse.length === 0}>
             + Adaugă accesoriu la lungimi
           </button>
           {produse.length === 0 && <span className="explicatie-buton">Catalogul nu are încă accesorii la lungimi pentru această cheie.</span>}

@@ -15,7 +15,8 @@ export default defineConfig({
     strictPort: true,
     proxy: {
       "/api": {
-        target: "http://localhost:4000",
+        // VITE_API_PROXY: o a doua instanta (ex. verificarea in browser pe baza de test, S25)
+        target: process.env.VITE_API_PROXY ?? "http://localhost:4000",
         xfwd: true,
       },
     },

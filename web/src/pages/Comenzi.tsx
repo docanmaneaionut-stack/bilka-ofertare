@@ -1052,7 +1052,14 @@ export function CasetaAviz({ c, ocupat, ruleaza, deschisInitial = false }: { c: 
     if (deschisInitial && c.drepturi.aviz) deschide();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [deschisInitial]);
-  if (c.tip === "MANUALA") return null;
+  // S25 BUG-5: la comanda manuala nu exista rezultat salvat, deci nici cantitati de propus - se spune pe ecran
+  if (c.tip === "MANUALA")
+    return (
+      <section className="caseta" style={{ gridColumn: "1 / -1" }}>
+        <h4>Aviz de însoțire a mărfii</h4>
+        <p className="mic text-secundar">Comanda manuală n-are rezultat salvat (linii cu cantități), deci nu există cantități de propus pe aviz: avizul ei se scrie în afara softului.</p>
+      </section>
+    );
   const genereaza = () =>
     ruleaza(() =>
       apiComenzi.genereazaAviz(c.id, {

@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
 import { apiCatalogEditor, type ProdusEditor, type StructuraOferta } from "../../api";
+import { BtnSterge } from "../../components/BtnSterge";
+import { CasutaCantitate } from "../../components/CasutaCantitate";
 import { Camp, Mesaj, textEroare } from "../../components/ui";
 import type { Catalog } from "./Produse";
 import { categorieInvelitoare, cheieInvelitoare, cheieNoua, culoriPentru, ral, sectiuneaLiniei, textCheie, type LinieUI, type StareEditor } from "./editor";
@@ -51,7 +53,7 @@ export function Rubrica({ rubrica, titlu, catalog, stare, set, poate, categorieP
           <Sectiune key={inv.cheie} rubrica={rubrica} categorie={categoriaInvelitorii(inv.produsId) ?? categoriePrincipala} cheie={cheieInvelitoare(inv)} invelitoare={inv.cheie} titlu={`pentru învelitoarea secundară ${inv.model} · ${textCheie(cheieInvelitoare(inv))}`} stare={stare} set={set} poate={poate} catalog={catalog} />
         ) : (
           poate && (
-            <button key={inv.cheie} className="buton secundar mic" type="button" onClick={() => setSecundareDeschise((d) => [...d, inv.cheie])} style={{ marginRight: 8 }}>
+            <button key={inv.cheie} className="buton secundar mic" type="button" tabIndex={-1} onClick={() => setSecundareDeschise((d) => [...d, inv.cheie])} style={{ marginRight: 8 }}>
               + Adaugă {rubrica === "Fixare și etanșare" ? "fixare" : "accesorii"} pentru învelitoarea secundară ({inv.model} {textCheie(cheieInvelitoare(inv))})
             </button>
           )
@@ -76,7 +78,7 @@ function NouaSectiuneDeSine({ catalog, onAdauga }: { catalog: Catalog; onAdauga:
   const culori = finisaj && grosime ? culoriPentru(catalog.ref, null, finisaj, grosime) : [];
   if (!deschis)
     return (
-      <button className="buton secundar mic" type="button" onClick={() => setDeschis(true)}>
+      <button className="buton secundar mic" type="button" tabIndex={-1} onClick={() => setDeschis(true)}>
         + Secțiune de sine stătătoare (altă cheie, fără învelitoare)
       </button>
     );
@@ -115,7 +117,7 @@ function NouaSectiuneDeSine({ catalog, onAdauga }: { catalog: Catalog; onAdauga:
       <div className="actiuni" style={{ alignSelf: "end" }}>
         <button
           className="buton secundar"
-          type="button"
+          type="button" tabIndex={-1}
           disabled={!culoare}
           onClick={() => {
             onAdauga({ finisaj, grosime, ral: culoare });
@@ -214,7 +216,7 @@ export function Sectiune({
             </tr>
           </thead>
           <tbody>
-            {randuri.map((r) => (
+            {randuri.map((r, idx) => (
               <tr key={r.produs.id} className={r.linie ? undefined : "inactiv"}>
                 <td>
                   {r.numeLista ?? r.produs.denumire}
@@ -222,21 +224,10 @@ export function Sectiune({
                 </td>
                 <td>{r.produs.um.toLowerCase()}</td>
                 <td>
-                  <input
-                    type="text"
-                    inputMode="decimal"
-                    value={r.linie?.cantitate ?? ""}
-                    onChange={(e) => (e.target.value.trim() === "" && r.linie ? scoate(r.linie.cheie) : seteazaCantitate(r.produs, e.target.value, r.numeLista !== null))}
-                    disabled={!poate}
-                    aria-label={`Cantitate ${r.produs.denumire}`}
-                  />
+                  <CasutaCantitate value={r.linie?.cantitate ?? ""} onChange={(v) => (v.trim() === "" && r.linie ? scoate(r.linie.cheie) : seteazaCantitate(r.produs, v, r.numeLista !== null))} eticheta={`Cantitate ${r.produs.denumire}`} disabled={!poate} grup={sectiune} rand={idx} camp="cantitate" />
                 </td>
                 <td>
-                  {r.linie && poate && (
-                    <button className="buton secundar mic" type="button" onClick={() => scoate(r.linie!.cheie)} aria-label="Scoate">
-                      ✕
-                    </button>
-                  )}
+                  {r.linie && poate && <BtnSterge onClick={() => scoate(r.linie!.cheie)} eticheta={`Scoate ${r.produs.denumire}`} />}
                 </td>
               </tr>
             ))}

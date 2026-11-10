@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState, type KeyboardEvent } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { apiCatalogEditor, apiProduseOferta, type OfertaDetaliu, type ProdusEditor, type ReferinteEditor, type StructuraOferta } from "../../api";
 import { Ajutor, Mesaj, textEroare } from "../../components/ui";
 import { Invelitori } from "./Invelitori";
@@ -10,42 +10,13 @@ import { Speciale2ML } from "./Speciale2ML";
 import { Structura } from "./Structura";
 import { ZonaB } from "./ZonaB";
 import { categorieInvelitoare, RUBRICI, spreServer, stareDinOferta, stareGoala, type StareEditor } from "./editor";
+import { navigheazaTastatura } from "./tastatura";
 
 // Zona produselor din pagina ofertei (FISA-OFERTARE cap. 3-10): rubricile in
 // ordinea decisa, salvare automata la fiecare modificare (fara buton), rezultatul
 // motorului pe loc - doar cantitati si structura, fara preturi (S14).
 
 export type Catalog = { invelitori: ProdusEditor[]; ref: ReferinteEditor };
-
-// sagetile ↑ ↓ si Enter muta intre casutele de cantitate si intre randurile de
-// panotaj, pe aceeasi coloana a tabelului (Tab ramane); Enter pe ultimul rand de
-// panotaj lasa handlerul propriu sa adauge pozitia, apoi trece pe ea
-export function navigheazaCantitati(e: KeyboardEvent<HTMLElement>) {
-  if (e.key !== "ArrowDown" && e.key !== "ArrowUp" && e.key !== "Enter") return;
-  const el = e.target as HTMLElement;
-  if (!(el instanceof HTMLInputElement) || (el.type !== "text" && el.type !== "search")) return;
-  const celula = el.closest("td");
-  const rand = el.closest("tr");
-  const tabel = el.closest("table");
-  if (!celula || !rand || !tabel) return;
-  const col = celula.cellIndex;
-  const randuri = Array.from(tabel.querySelectorAll<HTMLTableRowElement>("tbody tr"));
-  const idx = randuri.indexOf(rand as HTMLTableRowElement);
-  const delta = e.key === "ArrowUp" ? -1 : 1;
-  const focuseaza = (r: HTMLTableRowElement | undefined) => {
-    const tinta = r?.cells[col]?.querySelector<HTMLInputElement>("input:not(:disabled)") ?? r?.querySelector<HTMLInputElement>("input:not(:disabled)");
-    if (!tinta) return false;
-    tinta.focus();
-    tinta.select();
-    return true;
-  };
-  if (focuseaza(randuri[idx + delta])) {
-    e.preventDefault();
-    return;
-  }
-  // Enter pe ultimul rand: randul nou apare dupa randare
-  if (e.key === "Enter" && delta === 1) setTimeout(() => focuseaza(Array.from(tabel.querySelectorAll<HTMLTableRowElement>("tbody tr"))[idx + 1]), 0);
-}
 
 export function Produse({ oferta, onOferta, mentiuni = "" }: { oferta: OfertaDetaliu; onOferta: (o: OfertaDetaliu) => void; mentiuni?: string }) {
   const [catalog, setCatalog] = useState<Catalog | null>(null);
@@ -113,7 +84,7 @@ export function Produse({ oferta, onOferta, mentiuni = "" }: { oferta: OfertaDet
   const set = (schimba: (s: StareEditor) => StareEditor) => setStare((s) => (s ? schimba(s) : s));
 
   return (
-    <div className="zona-produse" onKeyDown={navigheazaCantitati}>
+    <div className="zona-produse" onKeyDown={navigheazaTastatura}>
       <div className="antet-pagina" style={{ marginTop: 8 }}>
         <h2 style={{ margin: 0 }}>Produse</h2>
         <div className="actiuni">
@@ -152,7 +123,7 @@ export function Produse({ oferta, onOferta, mentiuni = "" }: { oferta: OfertaDet
           <li>Fiecare rubrică arată lista implicită pentru categoria învelitorii principale; restul produselor sunt sub „+ Adaugă…”, căutate în catalog pe rubrică și pe cheia de culoare. Cantitățile sunt manuale, fără calcule.</li>
           <li>Accesoriile standard, speciale 2 ML și fixarea iau culoarea învelitorii principale; pentru o învelitoare secundară cu altă cheie există „Adaugă pentru învelitoarea secundară”. Pluvialul, șipca și accesoriile la lungimi își aleg finisajul și culoarea.</li>
           <li>Rezultatul de jos vine din motorul de calcul: mp și coli, pachetele și formularele Bilka, dacă oferta se poate comanda.</li>
-          <li>Tastatură: Tab trece la următoarea căsuță; săgețile ↑ ↓ și Enter mută între căsuțele de cantitate și între rândurile de panotaj (Enter pe ultimul rând adaugă o poziție).</li>
+          <li>Tastatură: Tab trece la următoarea căsuță completabilă (sare peste coșuri și butoane); Enter trece pe lungimea poziției următoare (1…8, apoi 9…16; pe ultima adaugă o poziție) sau pe cantitatea rândului următor; săgețile ↑ ↓ mută pe același câmp. Ștergerea doar cu clic pe coș.</li>
         </ul>
       </Ajutor>
     </div>

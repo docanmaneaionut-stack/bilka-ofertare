@@ -2,6 +2,7 @@ import type { Prisma, StatusOferta, Utilizator } from "@prisma/client";
 import { Router, type Response } from "express";
 import { z } from "zod";
 import { prisma } from "../../db/prisma.js";
+import { idsCuTextul } from "../../lib/normalizare.js";
 import { env } from "../../env.js";
 import { cereAutentificare, cereRol } from "../accounts/middleware.js";
 import { scrieCreare, scrieModificari } from "../adm/jurnal.js";
@@ -203,8 +204,8 @@ oferteRouter.get("/", async (req, res) => {
     const numar = /^([A-Za-z]{2,3})-?(\d+)$/.exec(q);
     conditii.push({
       OR: [
-        { client: { nume: { contains: q, mode: "insensitive" } } },
-        { client: { localitate: { contains: q, mode: "insensitive" } } },
+        // S25 BUG-10: clientul (nume, localitate) fara diacritice
+        { clientId: { in: await idsCuTextul("client", ["nume", "localitate"], q) } },
         ...(cifre.length >= 4 ? [{ client: { telefonNormalizat: { contains: cifre } } }] : []),
         ...(numar ? [{ serie: { equals: numar[1].toUpperCase() }, numar: Number(numar[2]) }] : []),
         ...(/^[A-Za-z]{2,3}$/.test(q) ? [{ serie: { equals: q.toUpperCase() } }] : []),

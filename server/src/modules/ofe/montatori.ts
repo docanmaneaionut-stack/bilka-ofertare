@@ -2,6 +2,7 @@ import { Prisma, type Utilizator } from "@prisma/client";
 import { Router } from "express";
 import { z } from "zod";
 import { prisma } from "../../db/prisma.js";
+import { idsCuTextul } from "../../lib/normalizare.js";
 import { cereAutentificare, cereRol } from "../accounts/middleware.js";
 import { normalizeazaTelefon } from "./clienti.js";
 import { scrieIstoric } from "./istoric.js";
@@ -38,7 +39,8 @@ montatoriRouter.get("/", async (req, res) => {
   const q = typeof req.query.q === "string" ? req.query.q.trim() : "";
   const cifre = normalizeazaTelefon(q);
   const conditii: Prisma.MontatorWhereInput[] = [filtruVizibil(u)];
-  if (q) conditii.push({ OR: [{ nume: { contains: q, mode: "insensitive" } }, ...(cifre.length >= 3 ? [{ telefonNormalizat: { contains: cifre } }] : []), { localitate: { contains: q, mode: "insensitive" } }] });
+  // S25 BUG-10: numele si localitatea fara diacritice
+  if (q) conditii.push({ OR: [{ id: { in: await idsCuTextul("montator", ["nume", "localitate"], q) } }, ...(cifre.length >= 3 ? [{ telefonNormalizat: { contains: cifre } }] : [])] });
   if (req.query.toti !== "da") conditii.push({ activ: true });
   const montatori = await prisma.montator.findMany({ where: { AND: conditii }, orderBy: [{ nume: "asc" }], take: 100, include: { utilizator: { select: { id: true, nume: true } } } });
   res.json({ montatori });

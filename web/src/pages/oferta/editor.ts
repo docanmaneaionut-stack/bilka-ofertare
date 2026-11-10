@@ -21,6 +21,10 @@ export const RUBRICI = {
 export type InvelitoareUI = {
   cheie: string;
   produsId: string | null;
+  // S25 (BUG-7): furnizorul (compartimentul din catalog) si modul de cantitate - doar pe ecran;
+  // "combinat" = oferta veche cu mp direct SI panotaj (se deschide identic, pleaca amandoua)
+  furnizor: string;
+  mod: "panotaj" | "mp" | "combinat";
   tip: string;
   model: string;
   variantaProfil: string;
@@ -167,7 +171,7 @@ export function textCheie(c: { finisaj: string; grosime?: string | null; ral: st
 // ------------------------------------------------------- stare <-> server
 
 export function invelitoareGoala(): InvelitoareUI {
-  return { cheie: cheieNoua("inv"), produsId: null, tip: "", model: "", variantaProfil: "", montaj: "", optiune: "", finisaj: "", grosime: "", culoare: "", latimeTotalaM: "", mpDirect: "", panotaj: [{ lungimeM: "", bucati: "" }] };
+  return { cheie: cheieNoua("inv"), produsId: null, furnizor: "", mod: "panotaj", tip: "", model: "", variantaProfil: "", montaj: "", optiune: "", finisaj: "", grosime: "", culoare: "", latimeTotalaM: "", mpDirect: "", panotaj: [{ lungimeM: "", bucati: "" }] };
 }
 
 export function stareGoala(): StareEditor {
@@ -210,9 +214,13 @@ export function stareDinOferta(o: OfertaDetaliu, invelitoriCatalog: ProdusEditor
     const cheie = cheieNoua("inv");
     cheiInv.set(i.id, cheie);
     const p = i.produsId ? invelitoriCatalog.find((x) => x.id === i.produsId) : undefined;
+    const arePanotaj = i.panotaj.length > 0;
+    const areMp = Boolean(i.mpDirect && i.mpDirect.trim());
     return {
       cheie,
       produsId: i.produsId,
+      furnizor: p?.compartiment ?? "",
+      mod: areMp && arePanotaj ? "combinat" : areMp ? "mp" : "panotaj",
       tip: p?.grup ?? i.grup ?? "",
       model: p ? numeModel(p) : (i.familie ?? ""),
       variantaProfil: i.variantaProfil ?? "",
@@ -292,8 +300,9 @@ export function spreServer(s: StareEditor): StareProduse {
       produsId: i.produsId!,
       culoare: i.culoare || null,
       ...(i.latimeTotalaM ? { latimeTotalaM: i.latimeTotalaM } : {}),
-      mpDirect: i.mpDirect.trim() ? i.mpDirect.trim() : null,
-      panotaj: i.panotaj.filter((p) => p.lungimeM.trim() && Number(p.bucati) > 0).map((p) => ({ lungimeM: p.lungimeM.trim(), bucati: Number(p.bucati) })),
+      // S25: in fiecare mod pleaca exact ce pleca si inainte in modul acela - nu amandoua tacut
+      mpDirect: i.mod !== "panotaj" && i.mpDirect.trim() ? i.mpDirect.trim() : null,
+      panotaj: i.mod === "mp" ? [] : i.panotaj.filter((p) => p.lungimeM.trim() && Number(p.bucati) > 0).map((p) => ({ lungimeM: p.lungimeM.trim(), bucati: Number(p.bucati) })),
       variantaProfil: i.variantaProfil || null,
       montaj: i.montaj === "acoperis" || i.montaj === "perete" ? (i.montaj as "acoperis" | "perete") : null,
     }));
