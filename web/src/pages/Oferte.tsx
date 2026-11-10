@@ -21,6 +21,7 @@ import {
 } from "../api";
 import { MeniuActiuni } from "../components/MeniuActiuni";
 import { Ajutor, Camp, Mesaj, textEroare } from "../components/ui";
+import { euro, lei, textRo } from "../lib/numere";
 import { useUtilizator } from "../contextUtilizator";
 
 // Lista de oferte (FISA-OFERTARE cap. 15, macheta docs/design/ecran-lista-oferte):
@@ -293,14 +294,14 @@ function RandOfertaTr({ oferta: o, vedeAgent, adminGeneral, onDeschide, completa
           {o.completareLa ? `completare la ${o.completareLa.numarComplet}${o.completareLa.motiv ? ` · ${o.completareLa.motiv}` : ""}` : [o.client.localitate, o.client.telefon].filter(Boolean).join(" · ")}
         </div>
       </td>
-      <td className="col-optional text-secundar">{o.invelitoare ?? "—"}</td>
+      <td className="col-optional text-secundar">{o.invelitoare ? textRo(o.invelitoare) : "—"}</td>
       <td className="total-oferta">
-        <span className="numar-mare">{o.totalCuTvaEur ? `${o.totalCuTvaEur} €` : "—"}</span>
-        <div className="mic text-secundar">{o.totalLei ? `${o.totalLei} lei` : ""}</div>
+        <span className="numar-mare">{o.totalCuTvaEur ? euro(o.totalCuTvaEur) : "—"}</span>
+        <div className="mic text-secundar">{o.totalLei ? lei(o.totalLei) : ""}</div>
       </td>
       <td>
         <span className={`status-oferta ${o.status}`}>{ETICHETA_STATUS[o.status]}</span>
-        {o.status === "AVANS_LUAT" && o.avansLei !== null && <div className="mic">avans {o.avansLei} lei</div>}
+        {o.status === "AVANS_LUAT" && o.avansLei !== null && <div className="mic">avans {lei(o.avansLei)}</div>}
         {o.avertizareCurs && (
           <div className="mic" style={{ color: "var(--avertizare-text)" }}>
             ⚠ {o.avertizareCurs.split(":")[0]}

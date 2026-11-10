@@ -1,5 +1,6 @@
 import type { StructuraOferta } from "../../api";
 import { Mesaj } from "../../components/ui";
+import { mp, nr } from "../../lib/numere";
 
 // rezultatul motorului, pe loc (S13: doar cantitati si structura; preturile la S14)
 export function Structura({ structura }: { structura: { rezultat: StructuraOferta | null; eroare: string | null } | null }) {
@@ -21,8 +22,8 @@ export function Structura({ structura }: { structura: { rezultat: StructuraOfert
         {r.cantitati.invelitori.map((i, idx) => (
           <div key={i.id}>
             <span className="text-secundar mic">Învelitoarea {idx + 1}</span>
-            <span className="numar-mare">{i.mp} mp</span>
-            <span className="mic text-secundar">{i.coli} coli{i.mpDirect !== "0.000" ? ` · ${i.mpDirect} mp direct` : ""}</span>
+            <span className="numar-mare">{mp(i.mp)}</span>
+            <span className="mic text-secundar">{i.coli} coli{i.mpDirect !== "0.000" ? ` · ${nr(i.mpDirect, 3)} mp direct` : ""}</span>
           </div>
         ))}
         {r.cantitati.sipci.map((s, idx) => (

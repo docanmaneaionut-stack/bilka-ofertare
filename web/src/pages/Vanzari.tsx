@@ -1,6 +1,7 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { apiComenzi, apiVanzari, dataRo, type ContScurt, type FiltreVanzari, type RandVanzari, type StatisticiVanzari } from "../api";
 import { Ajutor, Camp, Mesaj, textEroare } from "../components/ui";
+import { lei } from "../lib/numere";
 import { useUtilizator } from "../contextUtilizator";
 import { ETICHETA_ROL } from "./ContulMeu";
 
@@ -12,7 +13,6 @@ import { ETICHETA_ROL } from "./ContulMeu";
 
 type Perioada = "luna" | "an" | "interval";
 
-const lei = (s: string | null | undefined) => (s === null || s === undefined ? "—" : Number(s).toLocaleString("ro-RO", { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
 
 function perioadaInDate(p: Perioada, deLa: string, panaLa: string): { deLa?: string; panaLa?: string } {
   const azi = new Date();

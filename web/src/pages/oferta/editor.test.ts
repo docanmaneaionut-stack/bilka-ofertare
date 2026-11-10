@@ -68,7 +68,8 @@ describe("modurile de cantitate (S25b, BUG-12)", () => {
     const s = stareDinOferta(oferta([{ lungimeM: "4.20", bucati: 10 }], "48.500"), [], new Map());
     s.invelitori[0].produsId = "p1";
     const t = spreServer(s).invelitori[0];
-    expect(t.panotaj).toEqual([{ lungimeM: "4.20", bucati: 10 }]);
-    expect(t.mpDirect).toBe("48.500");
+    // S18: la deschidere casutele primesc virgula (lungimile cu 2 zecimale, mp cu 3); serverul accepta ambele forme
+    expect(t.panotaj).toEqual([{ lungimeM: "4,20", bucati: 10 }]);
+    expect(t.mpDirect).toBe("48,500");
   });
 });

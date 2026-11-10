@@ -1,4 +1,5 @@
 import type { InvelitoareSalvata, LinieSalvata, OfertaDetaliu, ProdusEditor, ReferinteEditor, SipcaSalvata, StareProduse, ZonaBSalvata } from "../../api";
+import { cuVirgula } from "../../lib/numere";
 
 // Logica editorului de produse (FISA-OFERTARE cap. 3-10), fara apeluri de retea:
 // cascada invelitorii peste produsele din catalog, culorile, categoria invelitorii
@@ -231,8 +232,8 @@ export function stareDinOferta(o: OfertaDetaliu, invelitoriCatalog: ProdusEditor
       culoare: i.culoare ?? "",
       latimeTotalaM: i.latimeTotalaM,
       // S25b: suprafata directa cu 3 zecimale la deschidere (serverul o da fara zerourile finale)
-      mpDirect: i.mpDirect ? Number(i.mpDirect).toFixed(3) : "",
-      panotaj: i.panotaj.length ? i.panotaj.map((p) => ({ lungimeM: p.lungimeM, bucati: String(p.bucati) })) : [{ lungimeM: "", bucati: "" }],
+      mpDirect: i.mpDirect ? cuVirgula(Number(i.mpDirect).toFixed(3)) : "",
+      panotaj: i.panotaj.length ? i.panotaj.map((p) => ({ lungimeM: cuVirgula(Number(p.lungimeM).toFixed(2)), bucati: String(p.bucati) })) : [{ lungimeM: "", bucati: "" }],
     };
   });
   const linii: LinieUI[] = liniiSalvate
@@ -245,10 +246,10 @@ export function stareDinOferta(o: OfertaDetaliu, invelitoriCatalog: ProdusEditor
         cheie,
         rubrica: l.rubrica,
         produs: produsDinSnapshot(l, l.rubrica, catalogLinii),
-        cantitate: l.cantitate,
+        cantitate: cuVirgula(l.cantitate),
         invelitoare,
         culoare,
-        pozitii: l.pozitii.length ? l.pozitii.map((p) => ({ lungimeM: p.lungimeM, bucati: String(p.bucati) })) : null,
+        pozitii: l.pozitii.length ? l.pozitii.map((p) => ({ lungimeM: cuVirgula(Number(p.lungimeM).toFixed(2)), bucati: String(p.bucati) })) : null,
         sectiune: sectiuneaLiniei(l.rubrica, invelitoare, culoare),
         dinLista: false,
       };
@@ -262,7 +263,7 @@ export function stareDinOferta(o: OfertaDetaliu, invelitoriCatalog: ProdusEditor
       profil: profil || (linie?.familie ?? ""),
       capat: /rotund/i.test(capat ?? "") ? "rotund" : "drept",
       varianta: sipcaSalvata.varianta === "CALCUL" ? "calcul" : "comanda",
-      tronsoane: sipcaSalvata.tronsoane.length ? sipcaSalvata.tronsoane.map((t) => ({ lungimeSipcaM: t.lungimeSipcaM, lungimeTronsonM: t.lungimeTronsonM, distantaMm: t.distantaMm })) : [{ lungimeSipcaM: "", lungimeTronsonM: "", distantaMm: "" }],
+      tronsoane: sipcaSalvata.tronsoane.length ? sipcaSalvata.tronsoane.map((t) => ({ lungimeSipcaM: cuVirgula(t.lungimeSipcaM), lungimeTronsonM: cuVirgula(t.lungimeTronsonM), distantaMm: cuVirgula(t.distantaMm) })) : [{ lungimeSipcaM: "", lungimeTronsonM: "", distantaMm: "" }],
     };
   });
   return {
@@ -271,7 +272,7 @@ export function stareDinOferta(o: OfertaDetaliu, invelitoriCatalog: ProdusEditor
     invelitori: invelitori.length ? invelitori : [invelitoareGoala()],
     linii,
     sipci,
-    zonaB: (o.zonaB as ZonaBSalvata[]).map((z) => ({ denumire: z.denumire, um: z.um, cantitate: z.cantitate, sumaLei: z.sumaLei, contineTva: z.contineTva, preiaInFactura: z.preiaInFactura })),
+    zonaB: (o.zonaB as ZonaBSalvata[]).map((z) => ({ denumire: z.denumire, um: z.um, cantitate: cuVirgula(z.cantitate), sumaLei: cuVirgula(z.sumaLei), contineTva: z.contineTva, preiaInFactura: z.preiaInFactura })),
   };
 }
 
@@ -338,6 +339,6 @@ export function spreServer(s: StareEditor): StareProduse {
     invelitori,
     linii,
     sipci,
-    zonaB: s.zonaB.filter((z) => z.denumire.trim() && Number(z.cantitate) > 0).map((z) => ({ ...z, denumire: z.denumire.trim(), um: z.um.trim() || "buc", cantitate: z.cantitate.trim(), sumaLei: z.sumaLei.trim() || "0" })),
+    zonaB: s.zonaB.filter((z) => z.denumire.trim() && Number(z.cantitate.replace(",", ".")) > 0).map((z) => ({ ...z, denumire: z.denumire.trim(), um: z.um.trim() || "buc", cantitate: z.cantitate.trim(), sumaLei: z.sumaLei.trim() || "0" })),
   };
 }

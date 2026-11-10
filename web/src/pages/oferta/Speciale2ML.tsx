@@ -116,9 +116,7 @@ function SectiuneSpeciale({ catalog, stare, set, poate, inv, titlu }: { catalog:
 
   return (
     <div style={{ marginBottom: 20 }}>
-      <p className="mic text-secundar" style={{ margin: "8px 0" }}>
-        {titlu}
-      </p>
+      <div className="banda">{titlu}</div>
       {eroare && <Mesaj tip="eroare">{eroare}</Mesaj>}
       <div className="tabel-invelis">
         <table className="tabel editabil">
@@ -169,7 +167,7 @@ function SectiuneSpeciale({ catalog, stare, set, poate, inv, titlu }: { catalog:
         </table>
       </div>
       {poate && (
-        <button className="buton secundar mic" type="button" tabIndex={-1} style={{ marginTop: 8 }} data-adauga={grup} onClick={adaugaPresetat}>
+        <button className="buton adauga mic" type="button" tabIndex={-1} style={{ marginTop: 8 }} data-adauga={grup} onClick={adaugaPresetat}>
           + Adaugă accesoriu special
         </button>
       )}

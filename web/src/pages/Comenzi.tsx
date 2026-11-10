@@ -17,6 +17,7 @@ import {
   type StatusLogistic,
 } from "../api";
 import { Ajutor, Camp, Mesaj, textEroare } from "../components/ui";
+import { euro, lei, textRo } from "../lib/numere";
 import { useUtilizator } from "../contextUtilizator";
 import { ETICHETA_ROL } from "./ContulMeu";
 
@@ -40,8 +41,6 @@ function perioadaInDate(p: Perioada, deLa: string, panaLa: string): { deLa?: str
   return { ...(deLa ? { deLa } : {}), ...(panaLa ? { panaLa } : {}) };
 }
 
-const lei = (s: string) => `${Number(s).toLocaleString("ro-RO", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} lei`;
-const euro = (s: string) => `${Number(s).toLocaleString("ro-RO", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} €`;
 const dataOra = (iso: string | null | undefined) => (iso ? new Date(iso).toLocaleString("ro-RO", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" }) : "—");
 
 export function Comenzi() {
@@ -336,7 +335,7 @@ function RandComandaTr({ comanda: c, vedeAgent, deschisa, selectata, onSelecteaz
           <div className="mic text-secundar">{c.client.telefon}</div>
         </td>
         <td className="rezumat-comanda" onClick={onComuta}>
-          {c.rezumat}
+          {textRo(c.rezumat)}
         </td>
         <td className="col-optional" onClick={onComuta}>
           {c.montator ? (
@@ -851,7 +850,7 @@ function DetaliuComanda({ id, onSchimbat }: { id: string; onSchimbat: () => void
 
 // ------------------------------------------------------------------ retururile (S22, cap. 5)
 
-const eur = (s: string) => `${Number(s).toLocaleString("ro-RO", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} €`;
+const eur = euro;
 
 function CasetaRetururi({ c, ocupat, ruleaza }: { c: ComandaDetaliu; ocupat: boolean; ruleaza: (f: () => Promise<unknown>) => Promise<void> }) {
   const [formular, setFormular] = useState(false);
@@ -960,7 +959,7 @@ function CasetaRetururi({ c, ocupat, ruleaza }: { c: ComandaDetaliu; ocupat: boo
       )}
       {eroare && <Mesaj tip="eroare">{eroare}</Mesaj>}
       {d.retur && !formular && (
-        <button className="buton secundar mic" disabled={ocupat} onClick={deschide}>
+        <button className="buton adauga mic" disabled={ocupat} onClick={deschide}>
           + Retur
         </button>
       )}
@@ -1097,7 +1096,7 @@ export function CasetaAviz({ c, ocupat, ruleaza, deschisInitial = false }: { c: 
         </ul>
       )}
       {c.drepturi.aviz && !formular && (
-        <button className="buton secundar mic" onClick={deschide}>
+        <button className="buton adauga mic" onClick={deschide}>
           + Aviz pentru o livrare
         </button>
       )}
@@ -1357,7 +1356,7 @@ function CasetaIncasari({ c, ocupat, ruleaza }: { c: ComandaDetaliu; ocupat: boo
                       }}
                     >
                       <input value={motiv} onChange={(e) => setMotiv(e.target.value)} placeholder="motivul anulării" aria-label="Motivul anulării" />
-                      <button className="buton mic" disabled={ocupat || !motiv.trim()}>
+                      <button className="buton mic sterge" disabled={ocupat || !motiv.trim()}>
                         Anulează cu motiv
                       </button>
                     </form>
@@ -1396,7 +1395,7 @@ function CasetaIncasari({ c, ocupat, ruleaza }: { c: ComandaDetaliu; ocupat: boo
           <Camp eticheta="Ce reprezintă" obligatoriu>
             <input value={ce} onChange={(e) => setCe(e.target.value)} placeholder="ex. tranșa 2, numerar la birou; 600 € la 5,05" />
           </Camp>
-          <button className="buton mic" disabled={ocupat || !suma.trim() || !ce.trim()}>
+          <button className="buton mic adauga" disabled={ocupat || !suma.trim() || !ce.trim()}>
             + Notează încasare
           </button>
         </form>

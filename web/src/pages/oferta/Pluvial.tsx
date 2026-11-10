@@ -118,7 +118,7 @@ function SectiunePluvial({ s, idx, finisaje, catalog, stare, set, poate, onSchim
       <div className="antet-pagina" style={{ marginBottom: 8 }}>
         <strong>Sistem pluvial {String.fromCharCode(65 + idx)}</strong>
         {poate && (
-          <button className="buton secundar mic" type="button" tabIndex={-1} onClick={onScoate}>
+          <button className="buton sterge mic" type="button" tabIndex={-1} onClick={onScoate}>
             Scoate sistemul
           </button>
         )}
@@ -172,11 +172,13 @@ function SectiunePluvial({ s, idx, finisaje, catalog, stare, set, poate, onSchim
               <tbody>
                 {randuri.map((r, idx) => (
                   <tr key={r.produs.id} className={r.linie ? undefined : "inactiv"}>
-                    <td>
-                      {r.numeLista ?? r.produs.denumire}
-                      <div className="mic text-secundar">
-                        {r.produs.denumire} · {r.produs.cod}
-                      </div>
+                    <td className="produs">
+                      <span className="celula-produs" title={`${r.numeLista ?? r.produs.denumire} · ${r.produs.denumire} · ${r.produs.cod}`}>
+                        {r.numeLista ?? r.produs.denumire}{" "}
+                        <span className="mic text-secundar">
+                          · {r.produs.denumire} · {r.produs.cod}
+                        </span>
+                      </span>
                     </td>
                     <td>{r.produs.um.toLowerCase()}</td>
                     <td>

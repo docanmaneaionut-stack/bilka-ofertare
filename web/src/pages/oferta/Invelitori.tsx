@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import type { StructuraOferta } from "../../api";
 import { CasutaCantitate, numarDinText } from "../../components/CasutaCantitate";
+import { nr } from "../../lib/numere";
 import type { Catalog } from "./Produse";
 import {
   culoriPentru,
@@ -66,8 +67,8 @@ export function Invelitori({ catalog, stare, set, poate, structura }: Props) {
 }
 
 const POZITIE_GOALA = { lungimeM: "", bucati: "" };
-const ro2 = (n: number) => n.toLocaleString("ro-RO", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-const ro3 = (s: string) => Number(s).toLocaleString("ro-RO", { minimumFractionDigits: 3, maximumFractionDigits: 3 });
+const ro2 = (n: number) => nr(n, 2);
+const ro3 = (s: string) => nr(s, 3);
 
 // o pozitie completa: lungime si bucati valide
 const completa = (p: { lungimeM: string; bucati: string }) => p.lungimeM.trim() !== "" && Number(p.bucati) > 0;
@@ -192,7 +193,7 @@ function BlocInvelitoare({
         {rezumat && <span className="text-secundar">{rezumat}</span>}
         {produs?.modulCm && <span className="text-secundar mic">modul {produs.modulCm} cm</span>}
         {onSterge && poate && (
-          <button className="buton secundar mic" type="button" tabIndex={-1} onClick={onSterge} style={{ marginLeft: "auto" }}>
+          <button className="buton sterge mic" type="button" tabIndex={-1} onClick={onSterge} style={{ marginLeft: "auto" }}>
             Scoate învelitoarea
           </button>
         )}
@@ -289,7 +290,7 @@ function BlocInvelitoare({
           Lățime totală{" "}
           {inv.latimeTotalaM ? (
             <>
-              <strong>{inv.latimeTotalaM.replace(".", ",")} m</strong> <span className="mic text-secundar">din catalog</span>
+              <strong>{ro2(numarDinText(inv.latimeTotalaM))} m</strong> <span className="mic text-secundar">din catalog</span>
             </>
           ) : produs ? (
             <>

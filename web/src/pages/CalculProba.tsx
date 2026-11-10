@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { BtnSterge } from "../components/BtnSterge";
 import {
   apiMot,
   type InvelitoareIntrare,
@@ -10,6 +11,7 @@ import {
   type RezultatProba,
 } from "../api";
 import { Ajutor, Camp, Mesaj, textEroare } from "../components/ui";
+import { nr } from "../lib/numere";
 
 // Ecran tehnic de proba (doar Admin general): produse din catalogul real,
 // cantitati, cont, grupa, tinta, mod de prezentare, preturi fixe; rezultatul
@@ -465,7 +467,7 @@ export function CalculProba() {
           {rezultat.cantitati.invelitori.length > 0 && (
             <p className="text-secundar mic">
               Învelitori:{" "}
-              {rezultat.cantitati.invelitori.map((i) => `${i.id} ${i.mp} mp (${i.coli} coli)`).join(" · ")}
+              {rezultat.cantitati.invelitori.map((i) => `${i.id} ${nr(i.mp, 3)} mp (${i.coli} coli)`).join(" · ")}
               {rezultat.cantitati.sipci.length ? ` · Șipcă: ${rezultat.cantitati.sipci.map((s) => `${s.bucatiTotal} buc, ${s.mlTotal} ml`).join(" / ")}` : ""}
             </p>
           )}
@@ -594,9 +596,7 @@ function LinieRand({
         </td>
         <td>{rezultat?.valoareEur ?? "–"}</td>
         <td>
-          <button className="buton secundar mic" onClick={onSterge} aria-label={`Șterge linia ${nr}`}>
-            ✕
-          </button>
+          <BtnSterge onClick={onSterge} eticheta={`Șterge linia ${nr}`} />
         </td>
       </tr>
       {(invelitoare || ml) && (
@@ -635,9 +635,7 @@ function LinieRand({
                         style={{ width: 60 }}
                         aria-label="Bucăți"
                       />
-                      <button className="buton secundar mic" onClick={() => seteazaPozitii(pozitii.filter((_, j) => j !== i))} aria-label="Șterge poziția">
-                        ✕
-                      </button>
+                      <BtnSterge onClick={() => seteazaPozitii(pozitii.filter((_, j) => j !== i))} eticheta="Șterge poziția" />
                     </span>
                   ))}
                   <button className="buton secundar mic" onClick={() => seteazaPozitii([...pozitii, { lungimeM: "", bucati: 0 }])}>

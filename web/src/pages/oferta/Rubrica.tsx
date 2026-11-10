@@ -200,9 +200,7 @@ export function Sectiune({
 
   return (
     <div style={{ marginBottom: 20 }}>
-      <p className="mic text-secundar" style={{ margin: "8px 0" }}>
-        {titlu}
-      </p>
+      <div className="banda">{titlu}</div>
       {eroare && <Mesaj tip="eroare">{eroare}</Mesaj>}
       {nerezolvate.length > 0 && <Mesaj tip="avertizare">Din lista implicită nu s-au găsit în catalog pentru această cheie: {nerezolvate.join(", ")}.</Mesaj>}
       <div className="tabel-invelis">
@@ -218,9 +216,10 @@ export function Sectiune({
           <tbody>
             {randuri.map((r, idx) => (
               <tr key={r.produs.id} className={r.linie ? undefined : "inactiv"}>
-                <td>
-                  {r.numeLista ?? r.produs.denumire}
-                  <div className="mic text-secundar">{r.produs.denumire !== r.numeLista ? `${r.produs.denumire} · ${r.produs.cod}` : r.produs.cod}</div>
+                <td className="produs">
+                  <span className="celula-produs" title={`${r.numeLista ?? r.produs.denumire} · ${r.produs.denumire} · ${r.produs.cod}`}>
+                    {r.numeLista ?? r.produs.denumire} <span className="mic text-secundar">· {r.produs.denumire !== r.numeLista ? `${r.produs.denumire} · ${r.produs.cod}` : r.produs.cod}</span>
+                  </span>
                 </td>
                 <td>{r.produs.um.toLowerCase()}</td>
                 <td>

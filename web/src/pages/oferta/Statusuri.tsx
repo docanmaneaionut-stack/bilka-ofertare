@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { apiStatus, ETICHETA_STATUS, STATUSURI_OFERTA, type OfertaDetaliu, type StatusOferta } from "../../api";
 import { Camp, eroareCamp, Mesaj, textEroare } from "../../components/ui";
+import { lei } from "../../lib/numere";
 
 // Statusurile ofertei (FISA-OFERTARE cap. 14): cele 8, in orice ordine, cu
 // revenire, totul cu istoric; doar "Comandat" e ireversibil. "Avans luat" cere
@@ -43,7 +44,7 @@ export function Statusuri({ oferta, onOferta, mentiuni }: { oferta: OfertaDetali
         {oferta.avansLei !== null && oferta.avansLei !== undefined && (
           <span className="mic text-secundar">
             {" "}
-            · avans {oferta.avansLei} lei{oferta.sumeModificate?.includes("avansLei") ? <span className="asterisc-rosu" title="sumă modificată — vezi istoricul">*</span> : null}
+            · avans {lei(oferta.avansLei)}{oferta.sumeModificate?.includes("avansLei") ? <span className="asterisc-rosu" title="sumă modificată — vezi istoricul">*</span> : null}
           </span>
         )}
       </h2>
@@ -98,9 +99,9 @@ export function Statusuri({ oferta, onOferta, mentiuni }: { oferta: OfertaDetali
           </div>
           <div>
             <span className="text-secundar mic">Total · avans · rest (lei)</span>
-            <span className="numar-mare">{oferta.comanda.totalLei}</span>
+            <span className="numar-mare">{lei(oferta.comanda.totalLei)}</span>
             <span className="mic text-secundar">
-              avans {oferta.comanda.avansLei} · rest {oferta.comanda.restLei} · trimisă de {oferta.comanda.responsabil}
+              avans {lei(oferta.comanda.avansLei)} · rest {lei(oferta.comanda.restLei)} · trimisă de {oferta.comanda.responsabil}
             </span>
           </div>
         </div>

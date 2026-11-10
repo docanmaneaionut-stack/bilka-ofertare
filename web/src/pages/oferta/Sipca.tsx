@@ -64,7 +64,7 @@ export function Sipca({ catalog, stare, set, poate, structura }: Props) {
         />
       ))}
       {poate && (
-        <button className="buton secundar" type="button" tabIndex={-1} onClick={adauga}>
+        <button className="buton adauga" type="button" tabIndex={-1} onClick={adauga}>
           + Adaugă rubrică șipcă
         </button>
       )}
@@ -126,7 +126,7 @@ function RubricaSipca({ idx, litera, s, produse, catalog, stare, set, poate, cal
           {idx > 0 ? " (formular Bilka separat)" : ""}
         </h3>
         {poate && (
-          <button className="buton secundar mic" type="button" tabIndex={-1} onClick={scoate}>
+          <button className="buton sterge mic" type="button" tabIndex={-1} onClick={scoate}>
             Scoate rubrica
           </button>
         )}

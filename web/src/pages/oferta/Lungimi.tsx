@@ -152,7 +152,7 @@ export function Lungimi({ catalog, stare, set, poate, structura }: Props) {
       })}
       {poate && (
         <div className="actiuni" style={{ justifyContent: "flex-start" }}>
-          <button className="buton secundar" type="button" tabIndex={-1} onClick={adauga} disabled={produse.length === 0}>
+          <button className="buton adauga" type="button" tabIndex={-1} onClick={adauga} disabled={produse.length === 0}>
             + Adaugă accesoriu la lungimi
           </button>
           {produse.length === 0 && <span className="explicatie-buton">Catalogul nu are încă accesorii la lungimi pentru această cheie.</span>}

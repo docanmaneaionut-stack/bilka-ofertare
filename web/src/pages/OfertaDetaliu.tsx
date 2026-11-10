@@ -4,6 +4,7 @@ import { apiDocumente, apiFormulareBilka, apiOferte, apiOptiuni, apiPreturi, api
 import { clientGol, dinClient, FormularClient } from "../components/FormularClient";
 import { MeniuActiuni } from "../components/MeniuActiuni";
 import { Ajutor, Camp, eroareCamp, Mesaj, textEroare } from "../components/ui";
+import { nr } from "../lib/numere";
 import { Documente, ETICHETA_TIP } from "./oferta/Documente";
 import { Istoric, NotiteAtasamente } from "./oferta/IstoricNotite";
 import { Montator } from "./oferta/Montator";
@@ -377,10 +378,10 @@ export function OfertaDetaliu() {
               <input type="date" value={data} onChange={(e) => setData(e.target.value)} required disabled={!oferta.poateModifica} />
             </Camp>
             <Camp eticheta="Curs BNR (documentul)">
-              <input type="text" value={`${c.cursBnr} · ${dataRo(c.dataCurs)} · ${c.sursaCurs}`} readOnly />
+              <input type="text" value={`${nr(c.cursBnr, 4)} · ${dataRo(c.dataCurs)} · ${c.sursaCurs}`} readOnly />
             </Camp>
             <Camp eticheta="Curs de achiziție (BNR × 1,01)">
-              <input type="text" value={c.cursAchizitie} readOnly />
+              <input type="text" value={nr(c.cursAchizitie, 4)} readOnly />
             </Camp>
             <Camp eticheta="Adresa lucrării" eroare={eroareCamp(eroareFormular, "adresaLucrarii")}>
               <input type="text" value={adresaLucrarii} onChange={(e) => setAdresaLucrarii(e.target.value)} disabled={!oferta.poateModifica} />

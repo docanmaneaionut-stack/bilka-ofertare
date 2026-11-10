@@ -1,7 +1,9 @@
 import { useEffect, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { apiComenzi, dataRo, type FisaSoferului as DateFisa } from "../api";
+import { BtnSterge } from "../components/BtnSterge";
 import { Ajutor, Camp, Mesaj, textEroare } from "../components/ui";
+import { lei, textRo } from "../lib/numere";
 import { CasetaAviz } from "./Comenzi";
 
 // Fisa soferului (S23; FISA-COMENZI cap. 4c; macheta docs/design/macheta-fisa-soferului.html):
@@ -12,7 +14,6 @@ import { CasetaAviz } from "./Comenzi";
 // montatorul, "de incasat", avizul de generat / deschis, tabelul de facturare. PDF-ul se deschide
 // sau se descarca pentru WhatsApp; softul nu retine fisa.
 
-const lei = (s: string) => `${Number(s).toLocaleString("ro-RO", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} lei`;
 const azi = () => new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Bucharest", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date());
 
 export function FisaSoferului() {
@@ -149,9 +150,7 @@ export function FisaSoferului() {
               <button className="buton secundar mic" disabled={i === fisa.blocuri.length - 1} onClick={() => muta(i, 1)} aria-label="mai jos">
                 ▼
               </button>
-              <button className="buton secundar mic" onClick={() => scoate(i)} aria-label="scoate din fișă">
-                ✕
-              </button>
+              <BtnSterge onClick={() => scoate(i)} eticheta="scoate din fișă" />
             </div>
           </div>
           <p>
@@ -167,7 +166,7 @@ export function FisaSoferului() {
             )}
           </p>
           <p>
-            <strong>Marfa:</strong> {b.rezumat}
+            <strong>Marfa:</strong> {textRo(b.rezumat)}
             {(b.coli || b.categorii.length > 0) && <span className="mic text-secundar"> · {[b.coli, ...b.categorii].filter(Boolean).join(" · ")}</span>}
           </p>
           <p>

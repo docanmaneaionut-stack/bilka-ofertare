@@ -351,7 +351,7 @@ export function ImportPropunere() {
             <button className="buton" type="submit" disabled={blocat || seLucreaza}>
               {seLucreaza ? "Se scrie…" : propunere.areProduse ? "Confirmă importul (creează versiunea ca schiță)" : "Aplică în catalog"}
             </button>
-            <button className="buton secundar" type="button" onClick={anuleaza} disabled={seLucreaza}>
+            <button className="buton sterge" type="button" onClick={anuleaza} disabled={seLucreaza}>
               Anulează propunerea
             </button>
           </div>

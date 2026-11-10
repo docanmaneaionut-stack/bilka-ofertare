@@ -1,23 +1,59 @@
-/* Capitolul 0 (FISA-OFERTARE): aerisit, contrast puternic, litera mare,
-   laptop intai, culoarea doar cand inseamna ceva. Acesta e tiparul tuturor
-   ecranelor - fara cosmetizare peste el. */
+/* Stilul softului (FISA-OFERTARE Capitolul 0; S18 - stilul compact pe tot softul, dupa
+   docs/design/simulari/S18-simulare-stil-compact.pdf aprobat de Ionut la 10.11.2026):
+   densitatea vine din randuri si spatii, nu din text mic; titlurile pe benzi, nu pe linii;
+   nicio linie de tabel; butoane text pe antracit sau gri; cosul pentru stergere; pastile
+   de status cu aceleasi culori peste tot. Toate valorile stau in variabilele de mai jos -
+   o singura definitie, folosita de toate ecranele. Documentele PDF nu folosesc acest CSS. */
 
 :root {
   color-scheme: light;
-  --bg: #ffffff;
-  --bg-secundar: #f4f4f2;
-  --text: #121212;
-  --text-secundar: #4a4a4a;
-  --border: #c9c9c6;
-  --focus: #1a4fd6; /* o singura culoare de accent: focus si actiunea principala */
-  --avertizare-bg: #fff4d6; /* galben: avertizari */
-  --avertizare-text: #6b4e00;
-  --eroare: #b00020; /* rosu: erori, asterisc la modificat */
-  --ok: #1f6f3a;
 
-  font: 18px/1.5 system-ui, "Segoe UI", Roboto, sans-serif;
+  /* culorile (ghidul de stil, pag. 1) */
+  --fundal: #f6f7f9;
+  --card: #ffffff;
+  --banda-zona: #e3e6ea;
+  --banda-categorie: #edeff2;
+  --zebra: #fafbfc;
+  --contur: #d1d5db;
+  --text: #111827;
+  --text-secundar: #5b6472;
+  --antracit: #2f3640;
+  --accent: #2563eb;
+  --rosu: #dc2626;
+  --rand-activ-bg: #eff6ff;
+  --secundar-bg: #e4e7eb;
+  --secundar-hover: #cbd0d6;
+  --ok: #166534;
+  --avertizare-bg: #fef3c7;
+  --avertizare-text: #92400e;
+
+  /* numele vechi, pastrate pentru regulile care le folosesc */
+  --bg: var(--card);
+  --bg-secundar: var(--banda-categorie);
+  --border: var(--contur);
+  --focus: var(--accent);
+  --eroare: var(--rosu);
+
+  /* dimensiunile (ghidul de stil): densitatea din randuri si spatii */
+  --text-baza: 13px;
+  --text-sec: 11.5px;
+  --text-cap: 11px;
+  --rand-editor: 28px;
+  --rand-lista: 30px;
+  --casuta: 24px;
+  --banda-inaltime: 22px;
+  --banda-zona-inaltime: 24px;
+  --spatiu-rand: 2px;
+  --spatiu-categorie: 6px;
+  --spatiu-zona: 10px;
+  --card-margine: 10px;
+  /* numele din S25 */
+  --rand-compact: var(--rand-editor);
+  --casuta-compact: var(--casuta);
+
+  font: var(--text-baza) / 1.4 system-ui, "Segoe UI", Roboto, sans-serif;
   color: var(--text);
-  background: var(--bg);
+  background: var(--fundal);
 }
 
 * {
@@ -26,34 +62,64 @@
 
 body {
   margin: 0;
-  background: var(--bg);
+  background: var(--fundal);
 }
 
 h1 {
-  font-size: 32px;
-  line-height: 1.2;
-  margin: 0 0 24px;
-}
-
-h2 {
-  font-size: 24px;
-  line-height: 1.25;
-  margin: 32px 0 16px;
-}
-
-h3 {
   font-size: 20px;
-  margin: 24px 0 12px;
+  line-height: 1.2;
+  margin: 0 0 var(--spatiu-zona);
+}
+
+/* titlurile de zona: pe banda inchisa, majuscule mici, bold - niciodata pe linie */
+h2 {
+  margin: var(--spatiu-zona) 0 var(--spatiu-categorie);
+  padding: 0 10px;
+  min-height: var(--banda-zona-inaltime);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--banda-zona);
+  border-radius: 4px;
+  font-size: var(--text-sec);
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+
+/* categoriile: pe banda deschisa */
+h3,
+.banda {
+  margin: var(--spatiu-categorie) 0 var(--spatiu-rand);
+  padding: 0 8px;
+  min-height: var(--banda-inaltime);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--banda-categorie);
+  border-radius: 4px;
+  font-size: var(--text-cap);
+  font-weight: 700;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+  color: var(--text-secundar);
+}
+
+.banda .la-dreapta {
+  margin-left: auto;
+  font-weight: 500;
+  text-transform: none;
+  letter-spacing: 0;
 }
 
 p {
-  margin: 0 0 12px;
+  margin: 0 0 6px;
 }
 
 a {
   color: var(--text);
-  text-decoration-thickness: 2px;
-  text-underline-offset: 3px;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 2px;
 }
 
 /* --- aspect general --- */
@@ -61,64 +127,72 @@ a {
 .pagina {
   max-width: 1280px;
   margin: 0 auto;
-  padding: 32px 24px 64px;
+  padding: var(--spatiu-zona) 12px 40px;
 }
 
 .pagina-ingusta {
-  max-width: 480px;
-  margin: 96px auto;
-  padding: 0 24px;
+  max-width: 400px;
+  margin: 60px auto;
+  padding: 0 16px;
 }
 
 .antet-pagina {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  gap: 24px;
+  gap: 12px;
   flex-wrap: wrap;
-  margin-bottom: 24px;
+  margin-bottom: var(--spatiu-zona);
 }
 
 .antet-pagina h1 {
   margin: 0;
 }
 
+/* meniul de sus: banda inchisa, elementul activ pe antracit */
 .bara-sus {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: 24px;
-  padding: 16px 24px;
-  border-bottom: 2px solid var(--text);
+  gap: 12px;
+  padding: 4px 12px;
+  background: var(--banda-zona);
 }
 
 .bara-sus .titlu {
   font-weight: 700;
-  font-size: 20px;
+  font-size: 13px;
 }
 
 .meniu {
   display: flex;
-  gap: 8px;
+  gap: 4px;
   flex-wrap: wrap;
 }
 
 .meniu a {
-  display: inline-block;
-  padding: 10px 16px;
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--casuta);
+  padding: 0 10px;
   text-decoration: none;
-  border: 2px solid transparent;
-  border-radius: 6px;
+  border-radius: 4px;
   font-weight: 600;
+  font-size: 12.5px;
+}
+
+.meniu a:hover {
+  background: var(--secundar-hover);
 }
 
 .meniu a.activ {
-  border-color: var(--text);
+  background: var(--antracit);
+  color: #fff;
 }
 
 .meniu a:focus-visible {
-  outline: 3px solid var(--focus);
-  outline-offset: 2px;
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
 }
 
 .text-secundar {
@@ -126,34 +200,36 @@ a {
 }
 
 .mic {
-  font-size: 16px;
+  font-size: var(--text-sec);
 }
 
 /* --- formulare --- */
 
 .formular {
   display: grid;
-  gap: 20px;
+  gap: var(--spatiu-categorie);
 }
 
 .rand-campuri {
   display: grid;
-  gap: 20px;
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: var(--spatiu-categorie) 10px;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
 }
 
 .camp {
   display: grid;
-  gap: 6px;
+  gap: 2px;
 }
 
 .camp > span {
   font-weight: 600;
+  font-size: var(--text-sec);
+  color: var(--text-secundar);
 }
 
 .camp .ajutor {
   font-weight: 400;
-  font-size: 16px;
+  font-size: var(--text-sec);
   color: var(--text-secundar);
 }
 
@@ -165,89 +241,137 @@ button {
   color: inherit;
 }
 
+/* casutele sunt singurele cu contur */
 input[type="text"],
 input[type="email"],
 input[type="password"],
 input[type="number"],
 input[type="search"],
+input[type="date"],
+input[type="tel"],
 select,
 textarea {
   width: 100%;
-  min-height: 48px;
-  padding: 10px 12px;
-  border: 2px solid var(--border);
-  border-radius: 6px;
-  background: var(--bg);
+  min-height: var(--casuta);
+  padding: 0 6px;
+  border: 1px solid var(--contur);
+  border-radius: 4px;
+  background: var(--card);
+  font-size: var(--text-baza);
+  line-height: 1.2;
+}
+
+select {
+  padding-right: 2px;
 }
 
 textarea {
-  min-height: 96px;
+  min-height: 56px;
+  padding: 4px 6px;
   resize: vertical;
 }
 
 input:focus-visible,
 select:focus-visible,
 textarea:focus-visible {
-  outline: 3px solid var(--focus);
-  outline-offset: 1px;
-  border-color: var(--focus);
+  outline: 2px solid var(--accent);
+  outline-offset: 0;
+  border-color: var(--accent);
 }
 
 input[type="checkbox"] {
-  width: 24px;
-  height: 24px;
-  accent-color: var(--text);
+  width: 16px;
+  height: 16px;
+  accent-color: var(--antracit);
 }
 
 .camp-bifa {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 8px;
   font-weight: 600;
-  min-height: 48px;
+  min-height: var(--casuta);
 }
 
-/* --- butoane --- */
+/* --- butoane: text pe antracit (principal, albastru la mouse), gri (secundar),
+   rosu la mouse doar la stergere / anulare, contur punctat la "+ Adauga" --- */
 
 .buton {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-height: 48px;
-  padding: 10px 20px;
-  border-radius: 6px;
-  border: 2px solid var(--text);
-  background: var(--text);
+  gap: 4px;
+  min-height: 28px;
+  padding: 0 12px;
+  border-radius: 4px;
+  border: 1px solid transparent;
+  background: var(--antracit);
   color: #fff;
-  font-weight: 700;
+  font-weight: 600;
+  font-size: 12.5px;
+  line-height: 1.2;
   cursor: pointer;
   text-decoration: none;
+  white-space: nowrap;
+}
+
+.buton:hover {
+  background: var(--accent);
 }
 
 .buton.secundar {
-  background: var(--bg);
+  background: var(--secundar-bg);
   color: var(--text);
 }
 
-.buton.mic {
-  min-height: 40px;
-  padding: 6px 14px;
-  font-size: 16px;
+.buton.secundar:hover {
+  background: var(--secundar-hover);
 }
 
-.buton:disabled {
-  opacity: 0.5;
+.buton.sterge {
+  background: var(--secundar-bg);
+  color: var(--text);
+}
+
+.buton.sterge:hover {
+  background: var(--rosu);
+  color: #fff;
+}
+
+.buton.adauga {
+  background: transparent;
+  color: var(--text);
+  border: 1px dashed var(--contur);
+}
+
+.buton.adauga:hover {
+  background: var(--rand-activ-bg);
+  color: var(--accent);
+  border-color: var(--accent);
+}
+
+.buton.mic {
+  min-height: var(--casuta);
+  padding: 0 8px;
+  font-size: 12px;
+}
+
+.buton:disabled,
+.buton:disabled:hover {
+  background: var(--secundar-bg);
+  color: #9aa1ab;
+  border-color: transparent;
   cursor: default;
 }
 
 .buton:focus-visible {
-  outline: 3px solid var(--focus);
-  outline-offset: 2px;
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
 }
 
 .actiuni {
   display: flex;
-  gap: 12px;
+  gap: 6px;
   flex-wrap: wrap;
   align-items: center;
 }
@@ -255,10 +379,11 @@ input[type="checkbox"] {
 /* --- mesaje in pagina (nu ferestre mici care se inchid) --- */
 
 .mesaj {
-  padding: 14px 16px;
-  border-radius: 6px;
-  border: 2px solid var(--border);
-  background: var(--bg-secundar);
+  padding: 6px 10px;
+  border-radius: 4px;
+  border: 1px solid var(--contur);
+  background: var(--banda-categorie);
+  margin-bottom: var(--spatiu-categorie);
 }
 
 .mesaj.avertizare {
@@ -268,8 +393,8 @@ input[type="checkbox"] {
 }
 
 .mesaj.eroare {
-  border-color: var(--eroare);
-  color: var(--eroare);
+  border-color: var(--rosu);
+  color: var(--rosu);
   background: #fff;
 }
 
@@ -277,12 +402,12 @@ input[type="checkbox"] {
 .camp.cu-eroare > input,
 .camp.cu-eroare > select,
 .camp.cu-eroare > textarea {
-  border-color: var(--eroare);
+  border-color: var(--rosu);
 }
 
 .eroare-camp {
-  color: var(--eroare);
-  font-size: 0.9em;
+  color: var(--rosu);
+  font-size: var(--text-sec);
 }
 
 .mesaj.ok {
@@ -291,36 +416,62 @@ input[type="checkbox"] {
   background: #fff;
 }
 
-/* --- tabele --- */
+/* --- tabele: nicio linie; randurile despartite de 2 px, capetele pe banda deschisa,
+   zebra abia vizibila pe listele lungi --- */
 
 .tabel-invelis {
   overflow-x: auto;
-  border: 2px solid var(--border);
-  border-radius: 6px;
 }
 
 table.tabel {
   width: 100%;
-  border-collapse: collapse;
-  font-size: 17px;
+  border-collapse: separate;
+  border-spacing: 0 var(--spatiu-rand);
+  font-size: var(--text-baza);
 }
 
 table.tabel th,
 table.tabel td {
-  padding: 12px 14px;
+  padding: 2px 8px;
   text-align: left;
-  border-bottom: 1px solid var(--border);
+  border: 0;
   vertical-align: middle;
 }
 
 table.tabel th {
-  background: var(--bg-secundar);
+  height: var(--banda-inaltime);
+  background: var(--banda-categorie);
   font-weight: 700;
+  font-size: var(--text-cap);
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+  color: var(--text-secundar);
   white-space: nowrap;
 }
 
-table.tabel tr:last-child td {
-  border-bottom: none;
+table.tabel th:first-child {
+  border-radius: 4px 0 0 4px;
+}
+
+table.tabel th:last-child {
+  border-radius: 0 4px 4px 0;
+}
+
+table.tabel td {
+  height: var(--rand-lista);
+  background: var(--card);
+}
+
+table.tabel td:first-child {
+  border-radius: 4px 0 0 4px;
+}
+
+table.tabel td:last-child {
+  border-radius: 0 4px 4px 0;
+}
+
+table.tabel tbody tr:nth-child(even) td {
+  background: var(--zebra);
 }
 
 table.tabel tr.inactiv td {
@@ -332,165 +483,189 @@ table.tabel tr.selectabil {
 }
 
 table.tabel tr.selectabil:hover td {
-  background: var(--bg-secundar);
+  background: var(--rand-activ-bg);
 }
 
-/* tabelele de referinta: celule editabile, navigabile cu Tab si sageti */
-
+/* tabelele cu casute (editor, referinte): randuri de 28 px, casute de 24 */
 table.tabel.editabil td {
-  padding: 6px 8px;
+  height: var(--rand-editor);
+  padding: 0 6px;
+}
+
+table.tabel.editabil tbody tr:nth-child(even) td {
+  background: var(--card);
 }
 
 table.tabel.editabil input,
 table.tabel.editabil select {
-  min-height: 44px;
-  padding: 8px 10px;
+  min-height: var(--casuta);
+  height: var(--casuta);
 }
 
 table.tabel.editabil input[type="checkbox"] {
   margin: 0 auto;
   display: block;
+  height: 16px;
 }
 
 tr.modificat td:first-child {
-  box-shadow: inset 4px 0 0 var(--focus);
+  box-shadow: inset 3px 0 0 var(--accent);
 }
 
-.eticheta {
+/* --- pastilele: statusuri si etichete, aceleasi culori pe toate ecranele --- */
+
+.pastila,
+.eticheta,
+.status-oferta,
+.status-logistic,
+.status-incasare,
+.eticheta-manuala,
+.eticheta-neidentificata,
+.eticheta-propusa,
+.eticheta-regularizat,
+.eticheta-palet {
   display: inline-block;
-  padding: 2px 10px;
+  padding: 1px 8px;
   border-radius: 999px;
-  border: 2px solid var(--border);
-  font-size: 15px;
+  font-size: var(--text-cap);
   font-weight: 600;
+  line-height: 1.5;
+  white-space: nowrap;
+  background: var(--secundar-bg);
+  color: #374151;
+  vertical-align: middle;
 }
 
 .eticheta.inactiv {
   color: var(--text-secundar);
 }
 
+/* albastru */
+.status-oferta.TRANSMISA,
+.status-logistic.RECEPTIONAT {
+  background: #dbeafe;
+  color: #1d4ed8;
+}
+
+/* galben */
+.status-oferta.DE_REVIZIONAT,
+.status-oferta.DE_COMANDAT,
+.status-logistic.RECEPTIONAT_PARTIAL,
+.status-incasare.PARTIAL,
+.eticheta-propusa,
+.eticheta-regularizat {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+/* verde */
+.status-oferta.ACCEPTATA,
+.status-oferta.AVANS_LUAT,
+.status-oferta.COMANDAT,
+.status-incasare.INCASAT,
+.eticheta-palet.recuperat,
+.eticheta.activa {
+  background: #dcfce7;
+  color: #166534;
+}
+
+/* teal */
+.status-logistic.LIVRAT {
+  background: #ccfbf1;
+  color: #0f766e;
+}
+
+/* rosu */
+.status-oferta.NEACCEPTATA,
+.status-oferta.ANULATA,
+.status-incasare.NEINCASAT,
+.eticheta-neidentificata,
+.eticheta-palet.nerecuperat {
+  background: #fee2e2;
+  color: #b91c1c;
+}
+
+.eticheta-manuala {
+  background: #ede9fe;
+  color: #5b21b6;
+}
+
+.eticheta-manuala,
+.eticheta-neidentificata,
+.eticheta-propusa,
+.eticheta-regularizat {
+  margin-left: 6px;
+}
+
 .lista-culori {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: 4px;
 }
 
 .lista-culori span {
-  padding: 6px 12px;
-  border: 2px solid var(--border);
-  border-radius: 6px;
+  padding: 2px 8px;
+  border: 1px solid var(--contur);
+  border-radius: 4px;
   font-weight: 600;
+  font-size: var(--text-sec);
 }
 
 .separator {
   border: none;
-  border-top: 2px solid var(--border);
-  margin: 32px 0;
+  border-top: 1px solid var(--banda-zona);
+  margin: var(--spatiu-zona) 0;
 }
 
 .paginare {
   display: flex;
   align-items: center;
-  gap: 16px;
-  margin-top: 16px;
+  gap: 10px;
+  margin-top: var(--spatiu-categorie);
 }
 
 /* sectiunile ecranului de diferente: pliate implicit, numaratoarea in titlu */
 
 .sectiune-diferente {
-  border: 2px solid var(--border);
+  background: var(--card);
   border-radius: 6px;
-  padding: 10px 16px;
-  margin-bottom: 12px;
+  padding: 6px 10px;
+  margin-bottom: var(--spatiu-categorie);
 }
 
 .sectiune-diferente summary {
   cursor: pointer;
   font-weight: 700;
-  font-size: 18px;
-  padding: 6px 0;
+  padding: 4px 0;
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 8px;
 }
 
 .sectiune-diferente summary:focus-visible {
-  outline: 3px solid var(--focus);
-  outline-offset: 2px;
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
 }
 
 .numar-mare {
-  font-size: 28px;
+  font-size: 16px;
   font-weight: 700;
   line-height: 1.1;
-}
-
-/* S15: zona produselor comprimata (verificarea lui Ionut, 28.10): randuri dense,
-   mai putin aer, rubricile in mai putina inaltime */
-.zona-produse .panou {
-  padding: 10px 14px;
-  margin-bottom: 10px;
-}
-.zona-produse .panou h2 {
-  font-size: 17px;
-  margin-bottom: 6px;
-}
-.zona-produse .panou h3 {
-  font-size: 15px;
-  margin: 8px 0 4px;
-}
-.zona-produse .rand-campuri {
-  gap: 8px 12px;
-  margin-bottom: 6px;
-}
-.zona-produse .camp > span {
-  font-size: 13px;
-}
-.zona-produse input[type="text"],
-.zona-produse input[type="search"],
-.zona-produse select {
-  min-height: 36px;
-  padding: 5px 9px;
-  font-size: 15px;
-}
-.zona-produse table.tabel {
-  font-size: 15px;
-}
-.zona-produse table.tabel th,
-.zona-produse table.tabel td {
-  padding: 4px 8px;
-}
-.zona-produse table.tabel.editabil input,
-.zona-produse table.tabel.editabil select {
-  min-height: 32px;
-  padding: 3px 8px;
-}
-.zona-produse .buton.mic {
-  min-height: 30px;
-  padding: 3px 10px;
-}
-.zona-produse .grila-totaluri > div {
-  padding: 6px 10px;
-}
-.zona-produse .ajutor-panou,
-.zona-produse details.ajutor {
-  margin-top: 6px;
 }
 
 /* S15: statusurile, istoricul, meniul ⋯ */
 .bara-statusuri {
   display: flex;
   flex-wrap: wrap;
-  gap: 6px;
+  gap: 4px;
   align-items: center;
 }
 .bara-statusuri button.status-curent {
-  outline: 3px solid var(--text);
-  outline-offset: 1px;
-  font-weight: 700;
+  background: var(--antracit);
+  color: #fff;
 }
 .asterisc-rosu {
-  color: #b3261e;
+  color: var(--rosu);
   font-weight: 700;
   margin-left: 4px;
 }
@@ -503,40 +678,39 @@ tr.modificat td:first-child {
   right: 0;
   top: 100%;
   z-index: 20;
-  min-width: 260px;
-  margin: 4px 0 0;
-  padding: 6px 0;
+  min-width: 220px;
+  margin: 2px 0 0;
+  padding: 4px 0;
   list-style: none;
-  background: var(--bg);
-  border: 2px solid var(--border);
-  border-radius: 6px;
+  background: var(--card);
+  border: 1px solid var(--contur);
+  border-radius: 4px;
   box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);
   text-align: left;
 }
 .meniu-actiuni li button {
   width: 100%;
   text-align: left;
-  padding: 8px 14px;
+  padding: 4px 10px;
   background: none;
   border: none;
   cursor: pointer;
 }
 .meniu-actiuni li button:hover,
 .meniu-actiuni li button:focus-visible {
-  background: var(--bg-secundar);
+  background: var(--rand-activ-bg);
 }
 .explicatie-buton {
-  font-size: 13px;
+  font-size: var(--text-sec);
   color: var(--text-secundar);
 }
 .istoric li {
-  padding: 6px 0;
-  border-bottom: 1px solid var(--border);
+  padding: 2px 0;
 }
 
 /* S14: preturile */
 tr.sub-achizitie td {
-  background: #fdecec;
+  background: #fee2e2;
 }
 .pret-fix {
   font-weight: 600;
@@ -546,15 +720,15 @@ tr.sub-achizitie td {
 }
 .grila-totaluri {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-  gap: 12px;
-  margin: 16px 0 24px;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: var(--spatiu-categorie);
+  margin: var(--spatiu-categorie) 0 var(--spatiu-zona);
 }
 
 .grila-totaluri > div {
-  border: 2px solid var(--border);
-  border-radius: 6px;
-  padding: 12px 14px;
+  background: var(--banda-categorie);
+  border-radius: 4px;
+  padding: 4px 8px;
 }
 
 .grila-totaluri .mic {
@@ -564,58 +738,43 @@ tr.sub-achizitie td {
 /* ajutorul paginii: o singura sectiune, la final, pliata implicit */
 
 .ajutor-pagina {
-  margin-top: 56px;
-  border-top: 2px solid var(--border);
-  padding-top: 12px;
-  font-size: 16px;
+  margin-top: 24px;
+  font-size: var(--text-sec);
   color: var(--text-secundar);
 }
 
 .ajutor-pagina summary {
   cursor: pointer;
   font-weight: 700;
-  font-size: 17px;
   color: var(--text);
-  padding: 10px 0;
+  padding: 4px 0;
   list-style-position: inside;
 }
 
 .ajutor-pagina summary:focus-visible {
-  outline: 3px solid var(--focus);
-  outline-offset: 2px;
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
 }
 
 .ajutor-pagina > div {
-  padding: 4px 0 8px;
+  padding: 2px 0 6px;
 }
 
 .ajutor-pagina p {
-  margin: 8px 0;
+  margin: 4px 0;
 }
 
 .ajutor-pagina ul {
-  margin: 8px 0;
-  padding-left: 22px;
+  margin: 4px 0;
+  padding-left: 18px;
 }
 
 .ajutor-pagina li {
-  margin-bottom: 6px;
+  margin-bottom: 3px;
 }
 
 .ajutor-pagina strong {
   color: var(--text);
-}
-
-@media (max-width: 720px) {
-  :root {
-    font-size: 16px;
-  }
-  .pagina {
-    padding: 20px 16px 48px;
-  }
-  h1 {
-    font-size: 26px;
-  }
 }
 
 /* --- Ofertare: lista de oferte (FISA-OFERTARE cap. 15, macheta docs/design/ecran-lista-oferte) --- */
@@ -623,50 +782,36 @@ tr.sub-achizitie td {
 .filtre-status {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
-  margin: 16px 0;
+  gap: 4px;
+  margin: var(--spatiu-categorie) 0;
 }
 
 .filtre-status button {
-  border: 2px solid var(--border);
-  background: var(--bg);
+  border: 1px solid var(--contur);
+  background: var(--card);
   border-radius: 999px;
-  padding: 8px 16px;
+  min-height: var(--casuta);
+  padding: 0 10px;
   font: inherit;
+  font-size: 12px;
   font-weight: 600;
   cursor: pointer;
 }
 
+.filtre-status button:hover {
+  background: var(--secundar-bg);
+}
+
 .filtre-status button.activ {
-  background: var(--text);
-  color: var(--bg);
-  border-color: var(--text);
+  background: var(--antracit);
+  color: #fff;
+  border-color: var(--antracit);
 }
 
 .filtre-status button:focus-visible {
-  outline: 3px solid var(--focus);
-  outline-offset: 2px;
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
 }
-
-.status-oferta {
-  display: inline-block;
-  padding: 4px 12px;
-  border-radius: 999px;
-  font-size: 15px;
-  font-weight: 600;
-  white-space: nowrap;
-  border: 2px solid transparent;
-  background: var(--bg-secundar);
-  color: var(--text);
-}
-
-.status-oferta.TRANSMISA { background: #e4ecff; color: #1a3d9c; }
-.status-oferta.DE_REVIZIONAT { background: var(--avertizare-bg); color: var(--avertizare-text); }
-.status-oferta.ACCEPTATA { background: #e2f3e6; color: var(--ok); }
-.status-oferta.NEACCEPTATA { background: #fbe4e6; color: var(--eroare); }
-.status-oferta.AVANS_LUAT { background: #d8efdf; color: #124d26; }
-.status-oferta.DE_COMANDAT { background: #d9f0f4; color: #0d4b5c; }
-.status-oferta.COMANDAT { background: var(--text); color: var(--bg); }
 
 table.tabel td.numar-oferta {
   font-weight: 700;
@@ -674,15 +819,17 @@ table.tabel td.numar-oferta {
 }
 
 table.tabel tr.completare td.numar-oferta {
-  padding-left: 36px;
+  padding-left: 28px;
 }
 
 table.tabel tr.bloc-comandate td {
-  background: var(--bg-secundar);
+  background: var(--banda-categorie);
+  height: var(--banda-inaltime);
   font-weight: 700;
-  font-size: 15px;
-  letter-spacing: 0.04em;
+  font-size: var(--text-cap);
+  letter-spacing: 0.4px;
   text-transform: uppercase;
+  color: var(--text-secundar);
 }
 
 table.tabel td.total-oferta {
@@ -691,58 +838,55 @@ table.tabel td.total-oferta {
 }
 
 table.tabel td.total-oferta .numar-mare {
-  font-size: 22px;
+  font-size: 14px;
 }
 
 .punct-client {
   display: inline-block;
-  width: 10px;
-  height: 10px;
+  width: 8px;
+  height: 8px;
   border-radius: 50%;
   background: #7c5cff;
-  margin-right: 6px;
+  margin-right: 4px;
   vertical-align: middle;
 }
 
 .lista-sugestii {
   list-style: none;
-  margin: 4px 0 0;
-  padding: 0;
-  border: 2px solid var(--border);
-  border-radius: 6px;
-  background: var(--bg);
+  margin: 2px 0 0;
+  padding: 2px 0;
+  border: 1px solid var(--contur);
+  border-radius: 4px;
+  background: var(--card);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
 }
 
 .lista-sugestii li {
-  padding: 8px 12px;
+  padding: 3px 8px;
   cursor: pointer;
-  border-bottom: 1px solid var(--border);
-}
-
-.lista-sugestii li:last-child {
-  border-bottom: 0;
 }
 
 .lista-sugestii li:hover,
 .lista-sugestii li:focus-visible {
-  background: var(--bg-secundar);
+  background: var(--rand-activ-bg);
   outline: none;
 }
 
+/* cardul (zona / blocul): fara contur, titlul pe banda inchisa pana la margini */
 .panou {
-  border: 2px solid var(--border);
+  background: var(--card);
   border-radius: 6px;
-  padding: 16px 20px;
-  margin-bottom: 20px;
+  padding: var(--card-margine);
+  margin-bottom: var(--spatiu-zona);
 }
 
-.panou h2 {
-  margin-top: 0;
-  font-size: 20px;
+.panou > h2:first-child,
+.panou > .antet-pagina:first-child > h2 {
+  margin: calc(-1 * var(--card-margine)) calc(-1 * var(--card-margine)) var(--spatiu-categorie);
+  border-radius: 6px 6px 0 0;
 }
 
 .panou.in-lucru {
-  border-style: dashed;
   color: var(--text-secundar);
 }
 
@@ -756,132 +900,114 @@ table.tabel td.total-oferta .numar-mare {
 /* --- Comenzi (S19; FISA-COMENZI cap. 1, macheta docs/design/ecran-tabel-comenzi) --- */
 
 table.tabel-comenzi td.rezumat-comanda {
-  font-size: 14px;
-  line-height: 1.4;
+  font-size: var(--text-sec);
+  line-height: 1.35;
   max-width: 320px;
 }
 
+/* randul desfasurat: pe un fundal abia mai inchis, cu casetele una langa alta */
+table.tabel tr.deschisa td,
+table.tabel tr.detaliu-comanda td {
+  background: #f3f5f8;
+}
+
 table.tabel tr.deschisa td {
-  background: var(--bg-secundar);
-  border-bottom: none;
+  border-radius: 4px 4px 0 0;
 }
 
 table.tabel tr.detaliu-comanda td {
-  background: var(--bg-secundar);
-  padding: 4px 12px 18px;
-  border-bottom: 2px solid var(--border);
+  padding: 2px 8px 8px;
+  height: auto;
+  border-radius: 0 0 4px 4px;
 }
 
 .casete-comanda {
   display: grid;
   grid-template-columns: 1fr 1.2fr 1fr 1.2fr;
-  gap: 16px;
+  gap: var(--spatiu-categorie);
 }
 
 .caseta {
-  background: var(--bg);
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  padding: 10px 12px;
-  font-size: 14px;
-  line-height: 1.5;
+  background: var(--card);
+  border-radius: 6px;
+  padding: 8px;
+  line-height: 1.4;
 }
 
 .caseta h4 {
-  margin: 0 0 6px;
-  font-size: 12px;
+  margin: -8px -8px var(--spatiu-categorie);
+  padding: 0 8px;
+  min-height: var(--banda-inaltime);
+  display: flex;
+  align-items: center;
+  background: var(--banda-categorie);
+  border-radius: 6px 6px 0 0;
+  font-size: var(--text-cap);
+  font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.5px;
+  letter-spacing: 0.4px;
   color: var(--text-secundar);
 }
 
 .caseta p {
-  margin: 6px 0;
+  margin: 3px 0;
 }
 
 .formular-mic {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: 6px;
   align-items: flex-end;
-  margin: 8px 0;
+  margin: var(--spatiu-categorie) 0;
 }
 
 .formular-mic input,
 .formular-mic select {
-  min-width: 160px;
+  min-width: 140px;
 }
 
 .lista-istoric,
 .lista-documente {
-  margin: 4px 0;
-  padding-left: 18px;
+  margin: 2px 0;
+  padding-left: 16px;
 }
 
 .lista-istoric li,
 .lista-documente li {
-  margin-bottom: 4px;
+  margin-bottom: 2px;
 }
-
-.status-logistic {
-  display: inline-block;
-  padding: 4px 12px;
-  border-radius: 999px;
-  font-size: 14px;
-  font-weight: 600;
-  white-space: nowrap;
-  background: var(--bg-secundar);
-  color: var(--text);
-}
-
-.status-logistic.RECEPTIONAT { background: #e4ecff; color: #1a3d9c; }
-.status-logistic.RECEPTIONAT_PARTIAL { background: var(--avertizare-bg); color: var(--avertizare-text); }
-.status-logistic.LIVRAT { background: #e2f3e6; color: #1e6b33; }
 
 .asterisc {
-  color: #d12e2e;
+  color: var(--rosu);
   font-weight: 700;
   margin-left: 2px;
 }
 
-.eticheta-manuala,
-.eticheta-neidentificata {
-  display: inline-block;
-  padding: 1px 7px;
-  border-radius: 4px;
-  font-size: 11px;
-  font-weight: 700;
-  margin-left: 6px;
-  vertical-align: middle;
-}
-
-.eticheta-manuala { background: #efe9ff; color: #4b2fb3; }
-.eticheta-neidentificata { background: #fdecec; color: #a12a2a; }
-
 .fundal-dialog {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.45);
+  background: rgba(17, 24, 39, 0.45);
   display: flex;
   align-items: flex-start;
   justify-content: center;
-  padding: 40px 16px;
+  padding: 30px 12px;
   overflow: auto;
   z-index: 50;
 }
 
 .dialog {
-  background: var(--bg);
-  border-radius: 10px;
-  padding: 20px 24px;
-  width: min(760px, 100%);
+  background: var(--card);
+  border-radius: 6px;
+  padding: var(--card-margine);
+  width: min(720px, 100%);
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: var(--spatiu-categorie);
 }
 
 .dialog h2 {
-  margin: 0;
+  margin: calc(-1 * var(--card-margine)) calc(-1 * var(--card-margine)) 0;
+  border-radius: 6px 6px 0 0;
 }
 
 @media (max-width: 720px) {
@@ -896,35 +1022,36 @@ table.tabel tr.detaliu-comanda td {
 
 /* --- S20: incasari si comision --- */
 
-.status-incasare {
-  display: inline-block;
-  padding: 2px 9px;
-  border-radius: 999px;
-  font-size: 12.5px;
-  font-weight: 600;
-  white-space: nowrap;
-  background: #f1e4e4;
-  color: #7a2e2e;
-}
-
-.status-incasare.PARTIAL { background: var(--avertizare-bg); color: var(--avertizare-text); }
-.status-incasare.INCASAT { background: #e2f3e6; color: #1e6b33; }
-
 .tabel-incasari {
   width: 100%;
-  border-collapse: collapse;
-  font-size: 13px;
+  border-collapse: separate;
+  border-spacing: 0 var(--spatiu-rand);
+  font-size: var(--text-sec);
+}
+
+.tabel-incasari th {
+  padding: 2px 6px;
+  text-align: left;
+  background: var(--banda-categorie);
+  font-size: var(--text-cap);
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  color: var(--text-secundar);
 }
 
 .tabel-incasari td {
-  padding: 4px 6px 4px 0;
-  border-bottom: 1px dotted var(--border);
+  padding: 2px 6px 2px 0;
   vertical-align: top;
 }
 
-.tabel-incasari td.suma {
+.tabel-incasari td.suma,
+.tabel-incasari th.dreapta,
+.tabel-incasari td.dreapta {
   text-align: right;
   white-space: nowrap;
+}
+
+.tabel-incasari td.suma {
   font-weight: 600;
 }
 
@@ -937,38 +1064,26 @@ table.tabel tr.detaliu-comanda td {
   color: var(--text-secundar);
 }
 
-.eticheta-propusa {
-  display: inline-block;
-  margin-left: 6px;
-  padding: 1px 7px;
-  border-radius: 4px;
-  font-size: 11px;
-  font-weight: 700;
-  background: var(--avertizare-bg);
-  color: var(--avertizare-text);
-}
-
 .rest-incasat {
-  margin-top: 8px;
+  margin-top: var(--spatiu-categorie);
 }
 
 /* --- S21: tabelul de vanzari --- */
 
 .statistici-vanzari {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-  gap: 10px;
-  margin: 12px 0 16px;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: var(--spatiu-categorie);
+  margin: var(--spatiu-categorie) 0 var(--spatiu-zona);
 }
 
 .statistici-vanzari > div {
-  background: var(--bg-secundar);
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  padding: 8px 12px;
+  background: var(--banda-categorie);
+  border-radius: 4px;
+  padding: 4px 8px;
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 1px;
 }
 
 table.tabel-vanzari th.dreapta,
@@ -978,121 +1093,81 @@ table.tabel-vanzari td.dreapta {
 }
 
 table.tabel-vanzari tr.completare td {
-  padding-left: 18px;
+  padding-left: 16px;
   color: var(--text-secundar);
 }
 
 table.tabel-vanzari tr.rand-lucrare td {
-  background: var(--bg-secundar);
-  border-bottom: 2px solid var(--border);
+  background: var(--banda-categorie);
+  font-weight: 600;
 }
 
-/* S22: randul de retur (cu minus), "de regularizat", statusul paletului */
+/* S22: randul de retur (cu minus) */
 table.tabel-vanzari tr.retur td.dreapta {
-  color: #a12a2a;
+  color: var(--rosu);
 }
 
-.eticheta-regularizat {
-  display: inline-block;
-  margin-left: 6px;
-  padding: 1px 8px;
-  border-radius: 999px;
-  font-size: 12px;
-  background: #fff1e0;
-  color: #9a4b00;
-}
+/* ---------------------------------------------------------------- editorul: stilul compact (S25 BUG-7, S18) */
 
-.eticheta-palet {
-  display: inline-block;
-  padding: 1px 8px;
-  border-radius: 999px;
-  font-size: 12px;
-}
-
-.eticheta-palet.nerecuperat {
-  background: #fde8e8;
-  color: #a12a2a;
-}
-
-.eticheta-palet.recuperat {
-  background: #e3f5e8;
-  color: #1f6b3a;
-}
-
-/* ---------------------------------------------------------------- S25: stilul compact (BUG-7, simularea pag. 3)
-   Valorile stau intr-un singur loc; S18 le aplica pe restul ecranelor. Azi: blocul invelitorii. */
-:root {
-  --rand-compact: 28px;
-  --casuta-compact: 24px;
-  --banda-categorie: #eef0f3;
-  --rand-activ-bg: #eef3ff;
+.zona-produse .panou > h2 {
+  margin-bottom: var(--spatiu-categorie);
 }
 
 .compact input[type="text"],
 .compact input[type="search"],
 .compact select {
-  min-height: var(--casuta-compact);
-  height: var(--casuta-compact);
-  padding: 0 6px;
-  font-size: 15px;
-  line-height: 1.2;
-  border-width: 1px;
-  border-radius: 4px;
+  min-height: var(--casuta);
+  height: var(--casuta);
 }
 
-.compact input:focus-visible,
-.compact select:focus-visible {
-  outline-width: 2px;
-  outline-offset: 0;
-}
-
-/* blocul invelitorii pe trei coloane (simularea v2) */
+/* blocul invelitorii pe trei coloane (simularea v2; V5: selectia ~340 px, casutele mai late,
+   coloanele de pozitii apropiate) */
 .bloc-invelitoare {
-  margin-bottom: 10px;
-  padding: 8px 10px;
-  border-radius: 6px;
-  background: var(--bg);
+  margin-bottom: var(--spatiu-categorie);
+  padding: 4px 0 0;
 }
 
 .bloc-invelitoare + .bloc-invelitoare {
   border-top: 1px solid var(--banda-categorie);
-  padding-top: 10px;
+  padding-top: var(--spatiu-categorie);
 }
 
 .bi-antet {
   display: flex;
   align-items: baseline;
-  gap: 10px;
+  gap: 8px;
   flex-wrap: wrap;
-  margin-bottom: 6px;
-  font-size: 16px;
+  margin-bottom: var(--spatiu-rand);
+  font-size: 13.5px;
 }
 
 .bi-grila {
   display: grid;
-  grid-template-columns: minmax(300px, 520px) auto auto;
-  column-gap: 28px;
+  grid-template-columns: minmax(280px, 340px) 1fr 1fr;
+  column-gap: 12px;
   align-items: start;
 }
 
 .bi-cap {
-  height: var(--rand-compact);
+  height: var(--rand-editor);
   display: flex;
   align-items: center;
-  font-size: 12px;
+  font-size: var(--text-cap);
   font-weight: 700;
-  letter-spacing: 0.5px;
+  letter-spacing: 0.4px;
   text-transform: uppercase;
   color: var(--text-secundar);
 }
 
 .bi-rand {
-  height: var(--rand-compact);
+  height: var(--rand-editor);
   display: grid;
-  grid-template-columns: 88px 1fr;
+  grid-template-columns: 76px 1fr;
   align-items: center;
-  gap: 8px;
-  font-size: 15px;
+  gap: 6px;
+  padding: 0 4px;
+  margin: 0 -4px;
+  border-radius: 4px;
 }
 
 .bi-rand > span {
@@ -1104,11 +1179,11 @@ table.tabel-vanzari tr.retur td.dreapta {
 }
 
 .bi-pozitie {
-  height: var(--rand-compact);
+  height: var(--rand-editor);
   display: grid;
-  grid-template-columns: 24px 96px 72px;
+  grid-template-columns: 22px 3fr 2fr;
   align-items: center;
-  gap: 6px;
+  gap: 4px;
   padding: 0 4px;
   margin: 0 -4px;
   border-radius: 4px;
@@ -1119,7 +1194,7 @@ table.tabel-vanzari tr.retur td.dreapta {
 }
 
 .bi-nr {
-  font-size: 13px;
+  font-size: var(--text-sec);
   color: var(--text-secundar);
   text-align: right;
 }
@@ -1128,37 +1203,45 @@ table.tabel-vanzari tr.retur td.dreapta {
 .bi-pozitie:focus-within,
 .bi-rand:focus-within {
   background: var(--rand-activ-bg);
-  box-shadow: 0 0 0 2px var(--focus);
+  box-shadow: 0 0 0 2px var(--accent);
 }
 
 .bi-pozitie:focus-within .bi-nr {
-  color: var(--focus);
+  color: var(--accent);
   font-weight: 700;
 }
 
 .bi-adauga {
   margin-top: 4px;
-  min-height: var(--casuta-compact);
-  padding: 0 10px;
-  border-style: dashed;
-  font-size: 14px;
 }
 
 .bi-mp .bi-pozitie {
-  grid-template-columns: 24px 120px;
+  grid-template-columns: 22px 140px;
+}
+
+/* rubricile: produsul pe un singur rand (numele, apoi numele complet si codul in gri), taiat cu "..." */
+table.tabel.editabil td.produs {
+  max-width: 0;
+  width: 60%;
+}
+
+.celula-produs {
+  display: block;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .bi-totaluri {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 6px 22px;
-  margin-top: 10px;
-  font-size: 15px;
+  gap: 4px 18px;
+  margin-top: var(--spatiu-categorie);
 }
 
 .bi-totaluri .numar-mare {
-  font-size: 19px;
+  font-size: 15px;
 }
 
 .bi-totaluri .casuta-cantitate {
@@ -1166,61 +1249,58 @@ table.tabel-vanzari tr.retur td.dreapta {
   width: auto;
 }
 
-/* comutatorul Panotaj / mp direct */
+/* comutatorul Panotaj / mp direct / Combinat */
 .comutator {
   display: inline-grid;
   grid-template-columns: repeat(3, 1fr);
-  height: var(--casuta-compact);
-  border: 1px solid var(--border);
+  height: var(--casuta);
+  border: 1px solid var(--contur);
   border-radius: 4px;
   overflow: hidden;
 }
 
 .comutator button {
   border: 0;
-  background: var(--bg);
-  font-size: 14px;
-  padding: 0 8px;
+  background: var(--card);
+  font-size: 12px;
+  padding: 0 6px;
   cursor: pointer;
 }
 
+.comutator button:hover {
+  background: var(--secundar-bg);
+}
+
 .comutator button.activ {
-  background: var(--text);
-  color: var(--bg);
+  background: var(--antracit);
+  color: #fff;
 }
 
 .comutator button:focus-visible {
-  outline: 2px solid var(--focus);
+  outline: 2px solid var(--accent);
   outline-offset: -2px;
-}
-
-@media (max-width: 720px) {
-  .bi-grila {
-    grid-template-columns: 1fr;
-    row-gap: 8px;
-  }
 }
 
 /* BUG-9 in tabelele editabile (rubrici, zona B, lungimi, sipca): tot randul in care scrii */
 table.tabel.editabil tbody tr:focus-within td {
   background: var(--rand-activ-bg);
   box-shadow:
-    inset 0 2px 0 var(--focus),
-    inset 0 -2px 0 var(--focus);
+    inset 0 2px 0 var(--accent),
+    inset 0 -2px 0 var(--accent);
 }
 
 table.tabel.editabil tbody tr:focus-within td:first-child {
   box-shadow:
-    inset 2px 2px 0 var(--focus),
-    inset 0 -2px 0 var(--focus),
-    inset 2px 0 0 var(--focus);
+    inset 2px 2px 0 var(--accent),
+    inset 0 -2px 0 var(--accent),
+    inset 2px 0 0 var(--accent);
 }
 
 table.tabel.editabil tbody tr:focus-within td:last-child {
   box-shadow:
-    inset -2px 2px 0 var(--focus),
-    inset 0 -2px 0 var(--focus),
-    inset -2px 0 0 var(--focus);
+    inset -2px 2px 0 var(--accent),
+    inset 0 -2px 0 var(--accent),
+    inset -2px 0 0 var(--accent);
 }
 
 /* BUG-11: cosul in loc de "x" - mic, gri, rosu la mouse; nu intra in drumul tastaturii */
@@ -1228,8 +1308,8 @@ table.tabel.editabil tbody tr:focus-within td:last-child {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 26px;
-  height: 26px;
+  width: var(--casuta);
+  height: var(--casuta);
   padding: 0;
   border: 0;
   border-radius: 4px;
@@ -1239,11 +1319,111 @@ table.tabel.editabil tbody tr:focus-within td:last-child {
 }
 
 .cos:hover {
-  color: var(--eroare);
-  background: #fdecee;
+  color: var(--rosu);
+  background: #fee2e2;
 }
 
 .cos:disabled {
   opacity: 0.4;
   cursor: default;
+}
+
+/* ---------------------------------------------------------------- telefon (S18, simularea pag. 4):
+   text de baza 14 px, listele ca pastile / carduri scurte, coloanele una sub alta */
+@media (max-width: 720px) {
+  :root {
+    --text-baza: 14px;
+    --text-sec: 12.5px;
+    --text-cap: 11.5px;
+  }
+  .pagina {
+    padding: var(--spatiu-categorie) 8px 32px;
+  }
+  .bara-sus {
+    flex-wrap: wrap;
+    padding: 4px 8px;
+  }
+  .bi-grila {
+    grid-template-columns: 1fr;
+    row-gap: var(--spatiu-categorie);
+  }
+  .bi-rand {
+    grid-template-columns: 84px 1fr;
+  }
+  .rand-campuri {
+    grid-template-columns: 1fr;
+  }
+  .grila-totaluri,
+  .statistici-vanzari {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (max-width: 480px) {
+  /* listele devin carduri scurte: capul dispare, fiecare rand e un card cu celulele esentiale */
+  table.tabel:not(.editabil) thead {
+    display: none;
+  }
+  table.tabel:not(.editabil),
+  table.tabel:not(.editabil) tbody {
+    display: block;
+  }
+  table.tabel:not(.editabil) tbody tr {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 2px 10px;
+    padding: 6px 8px;
+    margin-bottom: 4px;
+    background: var(--card);
+    border-radius: 6px;
+  }
+  table.tabel:not(.editabil) tbody tr:nth-child(even) td {
+    background: transparent;
+  }
+  table.tabel:not(.editabil) td {
+    display: inline-block;
+    height: auto;
+    padding: 0;
+    background: transparent;
+    border-radius: 0;
+  }
+  table.tabel:not(.editabil) td:empty {
+    display: none;
+  }
+  table.tabel:not(.editabil) td.numar-oferta {
+    width: 100%;
+  }
+  table.tabel:not(.editabil) tr.detaliu-comanda,
+  table.tabel:not(.editabil) tr.detaliu-comanda td {
+    display: block;
+    width: 100%;
+  }
+  table.tabel:not(.editabil) tr.bloc-comandate td {
+    background: var(--banda-categorie);
+    width: 100%;
+    padding: 2px 8px;
+  }
+  .antet-pagina .actiuni {
+    width: 100%;
+  }
+}
+
+/* S18 (observatiile lui Ionut la primul ecran): pe telefon pastilele de filtrare pe un singur
+   rand derulabil lateral; in bara de sus contul si "Iesi din cont" pe un rand, cand incap */
+@media (max-width: 720px) {
+  .filtre-status {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 2px;
+    scrollbar-width: thin;
+  }
+  .filtre-status button {
+    flex: 0 0 auto;
+  }
+  .bara-sus .actiuni {
+    flex-wrap: nowrap;
+    white-space: nowrap;
+  }
 }

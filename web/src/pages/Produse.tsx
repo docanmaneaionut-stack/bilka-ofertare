@@ -131,7 +131,7 @@ export function Produse() {
                     <td className="mic">{p.codIntern}</td>
                     <td className="mic">{p.codFurnizor ?? "–"}</td>
                     <td>
-                      <strong>{p.denumire}</strong>
+                      {p.denumire}
                     </td>
                     <td className="mic">
                       {p.compartiment?.denumire} / {p.grup?.denumire}

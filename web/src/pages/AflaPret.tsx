@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { apiPretRapid, type PretRapid, type ProdusEditor } from "../api";
 import { Ajutor, Camp, Mesaj, textEroare } from "../components/ui";
+import { nr } from "../lib/numere";
 
 // "Afla pret" (FISA-OFERTARE cap. 21): o casuta de cautare, produsele potrivite de la
 // toti furnizorii, alegerea caracteristicilor (finisaj, grosime, varianta), apoi
@@ -153,13 +154,13 @@ export function AflaPret() {
                 <span className="text-secundar mic">Prețul contului, cu TVA, pe {pret.pret.um}</span>
                 <span className="numar-mare">{Number(pret.pret.achizitieContLeiCuTva).toLocaleString("ro-RO", { minimumFractionDigits: 2 })} lei</span>
                 <span className="mic text-secundar">
-                  {pret.pret.achizitieContEur} EUR fără TVA · curs achiziție {pret.pret.cursAchizitie} ({pret.pret.dataCurs})
+                  {nr(pret.pret.achizitieContEur)} EUR fără TVA · curs achiziție {nr(pret.pret.cursAchizitie, 4)} ({pret.pret.dataCurs})
                 </span>
               </div>
               {pret.pret.pretBazaEur && (
                 <div>
                   <span className="text-secundar mic">Prețul de bază (catalog)</span>
-                  <span className="numar-mare">{pret.pret.pretBazaEur} EUR</span>
+                  <span className="numar-mare">{nr(pret.pret.pretBazaEur)} EUR</span>
                 </div>
               )}
             </div>

@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { apiPreturi, EroareGarda, type DatePreturi, type LiniePret, type OfertaDetaliu, type SursaPreluare, type TipPretFixIntrare } from "../../api";
 import { Ajutor, Camp, eroareCamp, Mesaj, textEroare } from "../../components/ui";
+import { cantitate, nr } from "../../lib/numere";
 
 // Zona de preturi (FISA-OFERTARE cap. 11, 11.9): modul de prezentare, "Preia preturi
 // din oferta ...", cursul; tabelul liniilor cu achizitia contului in lei cu TVA,
@@ -18,11 +19,8 @@ const TIPURI_FIX: { tip: TipPretFixIntrare; eticheta: string }[] = [
   { tip: "achizitie_plus_pct", eticheta: "achiziție + %" },
 ];
 
-function lei(v: string | undefined): string {
-  if (v === undefined) return "—";
-  const n = Number(v);
-  return Number.isFinite(n) ? n.toLocaleString("ro-RO", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : v;
-}
+// numarul formatat (fara unitate - ecranul scrie "lei" / "EUR" dupa caz)
+const lei = (v: string | undefined) => (v === undefined ? "—" : nr(v, 2));
 
 export function Preturi({ oferta, onOferta, mentiuni = "" }: { oferta: OfertaDetaliu; onOferta: (o: OfertaDetaliu) => void; mentiuni?: string }) {
   const r = oferta.preturi?.rezultat ?? null;
@@ -124,7 +122,7 @@ export function Preturi({ oferta, onOferta, mentiuni = "" }: { oferta: OfertaDet
               type="button"
               disabled={lucru}
               onClick={() => {
-                if (window.confirm(`Reiau ambele cursuri din cursul zilei (acum ${oferta.curs.cursBnr} din ${oferta.curs.dataCurs}) și recalculez prețurile?`)) void actiune(async () => (await apiPreturi.curs(oferta.id)).oferta);
+                if (window.confirm(`Reiau ambele cursuri din cursul zilei (acum ${nr(oferta.curs.cursBnr, 4)} din ${oferta.curs.dataCurs}) și recalculez prețurile?`)) void actiune(async () => (await apiPreturi.curs(oferta.id)).oferta);
               }}
             >
               Reîmprospătează cursul
@@ -206,7 +204,7 @@ export function Preturi({ oferta, onOferta, mentiuni = "" }: { oferta: OfertaDet
           </Camp>
         )}
         <Camp eticheta="Cursul documentului / de achiziție">
-          <input type="text" value={`${r.cursBnr} / ${r.cursAchizitie}`} readOnly />
+          <input type="text" value={`${nr(r.cursBnr, 4)} / ${nr(r.cursAchizitie, 4)}`} readOnly />
         </Camp>
       </div>
 
@@ -279,7 +277,7 @@ export function Preturi({ oferta, onOferta, mentiuni = "" }: { oferta: OfertaDet
         </div>
         <div>
           <span className="text-secundar mic">Adaos real</span>
-          <span className="numar-mare">{r.totaluri.adaosRealPct} %</span>
+          <span className="numar-mare">{nr(r.totaluri.adaosRealPct)} %</span>
         </div>
       </div>
 
@@ -297,7 +295,7 @@ export function Preturi({ oferta, onOferta, mentiuni = "" }: { oferta: OfertaDet
           <span className="numar-mare">{lei(r.totaluri.documentFaraTvaEur)} EUR</span>
         </div>
         <div>
-          <span className="text-secundar mic">TVA {oferta.tvaPct} %</span>
+          <span className="text-secundar mic">TVA {cantitate(oferta.tvaPct)} %</span>
           <span className="numar-mare">{lei(r.totaluri.tvaEur)} EUR</span>
         </div>
         <div>
@@ -369,7 +367,7 @@ function RandLinie({
           <span className="mic text-secundar"> · {l.rubrica}</span>
         </td>
         <td>
-          {l.cantitate} {l.um}
+          {cantitate(l.cantitate)} {l.um}
         </td>
         <td>{lei(l.achizitieContLeiCuTva)}</td>
         {mod === "LISTA_DISCOUNT_GENERAL" && <td>{lei(l.pretListaEur)}</td>}
@@ -409,7 +407,7 @@ function RandLinie({
                 Fixează
               </button>
               {l.pretFix && (
-                <button className="buton secundar mic" type="button" onClick={scoateFix}>
+                <button className="buton sterge mic" type="button" onClick={scoateFix}>
                   Scoate fixul
                 </button>
               )}
