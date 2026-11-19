@@ -13,6 +13,7 @@ import { contextDocument } from "../ofe/documente/index.js";
 import { randeazaPdf } from "../ofe/documente/pdf.js";
 import { esc, pagina, ro } from "../ofe/documente/sablon.js";
 import { comandaVizibila, cuDrepturi, EroareComanda, raspunde, scrieIstoricComanda, spreRand } from "./comenzi.js";
+import { includeUltimaAjustare, rezultatCurent } from "./pretAjustat.js";
 import { poateScrieBani } from "./vizibilitate.js";
 
 // Retururile (S22; FISA-COMENZI cap. 5, OFERTARE cap. 19): din comanda, orice cont care vede
@@ -73,10 +74,11 @@ export function spreRetur(r: ReturCuLinii) {
   };
 }
 
-// liniile comenzii din rezultatul salvat, cu ce s-a returnat deja (retururile active)
+// liniile comenzii din rezultatul salvat, cu ce s-a returnat deja (retururile active); S26b (M5): un retur
+// facut dupa ajustarea pretului se calculeaza la preturile rezultatului ajustat curent (cele dinainte raman)
 export async function liniileReturnabile(comandaId: string) {
-  const c = await prisma.comanda.findUniqueOrThrow({ where: { id: comandaId }, include: { oferta: { include: { linii: true } }, retururi: { where: { stare: "ACTIV" }, include: { linii: true } } } });
-  const rezultat = c.oferta?.rezultatMotor as unknown as RezultatOferta | null;
+  const c = await prisma.comanda.findUniqueOrThrow({ where: { id: comandaId }, include: { oferta: { include: { linii: true } }, retururi: { where: { stare: "ACTIV" }, include: { linii: true } }, ajustariPret: includeUltimaAjustare } });
+  const rezultat: RezultatOferta | null = rezultatCurent(c.oferta?.rezultatMotor, c.ajustariPret);
   if (!c.oferta || !rezultat) return null;
   const returnat = new Map<string, Prisma.Decimal>();
   for (const r of c.retururi) for (const l of r.linii) returnat.set(l.linieId, (returnat.get(l.linieId) ?? new Prisma.Decimal(0)).plus(l.cantitate));

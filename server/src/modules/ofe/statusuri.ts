@@ -5,7 +5,7 @@ import { prisma } from "../../db/prisma.js";
 import type { CampInvalid } from "../../middleware/erori.js";
 import { calculeazaOferta } from "../mot/calcul.js";
 import { finisajScurt, numarRal, numeModel } from "../mot/pachete.js";
-import type { RezultatOferta } from "../mot/tipuri.js";
+import type { IntrareOferta, RezultatOferta } from "../mot/tipuri.js";
 import { includeProduse, intrareMot, type OfertaCuProduse } from "./intrareMot.js";
 import { scrieIstoric } from "./istoric.js";
 import { aceeasiLivrareBilka, descriereLivrareBilka, ETICHETA_LIVRARE_BILKA, MESAJ_FARA_LIVRARE_BILKA, schemaLivrareBilka, valoriLivrareBilka } from "./livrareBilka.js";
@@ -100,10 +100,13 @@ export async function schimbaStatus(ofertaId: string, date: z.infer<typeof schem
   const livrareSchimbata = !aceeasiLivrareBilka(livrareVeche, livrareNoua);
 
   let rezultat: RezultatOferta | null = null;
+  // S26b (M5): intrarea motorului se salveaza langa rezultat - intrarea inghetata a comenzii
+  let intrare: IntrareOferta | null = null;
   if (date.status === "COMANDAT") {
     if (o.invelitori.length === 0 && o.linii.length === 0) throw new EroareStatus("Oferta nu are produse; nu se poate comanda");
     try {
-      rezultat = calculeazaOferta(await intrareMot(o));
+      intrare = await intrareMot(o);
+      rezultat = calculeazaOferta(intrare);
     } catch (e) {
       const mesaj = e instanceof ZodError ? e.issues.map((i) => `${i.path.join(".")}: ${i.message}`).join("; ") : e instanceof Error ? e.message : String(e);
       throw new EroareStatus(`Oferta nu se poate calcula: ${mesaj}`);
@@ -121,6 +124,7 @@ export async function schimbaStatus(ofertaId: string, date: z.infer<typeof schem
     if (date.status === "COMANDAT") {
       data.comandatLa = acum;
       data.rezultatMotor = rezultat as unknown as Prisma.InputJsonValue;
+      data.intrareMotor = intrare as unknown as Prisma.InputJsonValue;
       data.rezultatSalvatLa = acum;
     }
     if (date.status === "ACCEPTATA" && !o.curenta) {
@@ -164,8 +168,12 @@ export async function schimbaStatus(ofertaId: string, date: z.infer<typeof schem
           clientNume: o.client.nume,
           clientTelefon: o.client.telefon ?? "",
           clientLocalitate: o.localitate ?? o.client.localitate,
+          // S26b (M8): "montatorNume" / "montatorTelefon" = RECOMANDAREA (persoana cu comisionul);
+          // montatorul de executie are campurile lui
           montatorNume: o.montator?.nume ?? null,
           montatorTelefon: o.montator?.telefon ?? null,
+          montatorExecutieNume: o.montatorExecutieNume,
+          montatorExecutieTelefon: o.montatorExecutieTelefon,
           rezumat: rezumatComenzii(o, rezultat),
           totalCuTvaEur: rezultat.totaluri.documentCuTvaEur,
           totalLei: total,

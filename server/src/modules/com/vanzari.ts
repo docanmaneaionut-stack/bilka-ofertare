@@ -7,6 +7,7 @@ import { factorTva } from "../../modules/mot/zecimal.js";
 import type { RandVanzari, RezultatOferta } from "../../modules/mot/tipuri.js";
 import { numarComplet } from "../ofe/clienti.js";
 import { ETICHETA_STATUS_INCASARE, rezumatIncasari, type StatusIncasare } from "./comenzi.js";
+import { pretAjustat, rezultatCurent } from "./pretAjustat.js";
 
 // Tabelul de vanzari (S21; FISA-OFERTARE cap. 19, FISA-COMENZI cap. 7): ecran de lucru
 // alimentat automat din comenzi. Cifrele vin din blocul `vanzari` al rezultatului salvat la
@@ -54,6 +55,8 @@ const includeVanzari = {
   incasari: true,
   // S22: retururile active - rand de retur sub comanda, cu minus
   retururi: { where: { stare: "ACTIV" as const }, orderBy: { numar: "asc" as const } },
+  // S26b (M5): ajustarile pretului de vanzare, cu rezultatul lor
+  ajustariPret: { orderBy: { versiune: "asc" as const } },
 } satisfies Prisma.ComandaInclude;
 
 type ComandaVanzari = Prisma.ComandaGetPayload<{ include: typeof includeVanzari }>;
@@ -61,7 +64,8 @@ type ComandaVanzari = Prisma.ComandaGetPayload<{ include: typeof includeVanzari 
 // blocul de vanzari al unei comenzi: din rezultatul salvat (oferta) sau din sumele manuale
 function vanzarileComenzii(c: ComandaVanzari): RandVanzari | null {
   if (c.tip === "DIN_OFERTA") {
-    const r = c.oferta?.rezultatMotor as unknown as RezultatOferta | null;
+    // S26b (M5): din rezultatul ajustat, cand pretul comenzii a fost ajustat (costul e acelasi, adaosul recalculat)
+    const r = rezultatCurent(c.oferta?.rezultatMotor, c.ajustariPret);
     return r?.vanzari ?? null;
   }
   if (c.vanzarePretLei === null || c.vanzareCostLei === null) return null;
@@ -89,6 +93,8 @@ export interface RandTabelVanzari {
   comisionRecomandare: { lei: string; achitat: boolean } | null;
   comisionAgent: { lei: string; achitat: boolean; achitatLa: Date | null; achitatDe: string | null } | null;
   comisionAgentModificat: boolean;
+  // S26b (M5): pretul de vanzare ajustat pe comanda (asterisc rosu, "Vezi istoric")
+  pretAjustat: ReturnType<typeof pretAjustat>;
   incasare: { status: StatusIncasare; eticheta: string; incasatLei: string; restLei: string };
   completareLa: { numarComplet: string; motiv: string | null } | null;
   // lucrarea (oferta initiala + completarile din selectie), pe randul initialei
@@ -118,6 +124,7 @@ function randDeRetur(c: ComandaVanzari, ret: ComandaVanzari["retururi"][number],
     comisionRecomandare: null,
     comisionAgent: null,
     comisionAgentModificat: false,
+    pretAjustat: null,
     completareLa: null,
     lucrare: null,
     copii: [],
@@ -148,6 +155,7 @@ function spreRand(c: ComandaVanzari, comisionModificat: Set<string>): RandTabelV
     comisionRecomandare: c.comisionLei !== null ? { lei: la2(c.comisionLei), achitat: c.comisionAchitat } : null,
     comisionAgent: c.comisionAgentLei !== null ? { lei: la2(c.comisionAgentLei), achitat: c.comisionAgentAchitat, achitatLa: c.comisionAgentAchitatLa, achitatDe: c.comisionAgentAchitatDeNume } : null,
     comisionAgentModificat: comisionModificat.has(c.id),
+    pretAjustat: c.tip === "DIN_OFERTA" ? pretAjustat(c.ajustariPret) : null,
     incasare: { status: inc.status, eticheta: ETICHETA_STATUS_INCASARE[inc.status], incasatLei: inc.incasatLei, restLei: inc.restLei },
     completareLa: c.oferta?.completareLa ? { numarComplet: numarComplet(c.oferta.completareLa.serie, c.oferta.completareLa.numar), motiv: c.oferta.motivCompletare } : null,
     lucrare: null,

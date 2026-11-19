@@ -723,13 +723,21 @@ model Oferta {
   // (cap. 12; "achitat" il bifeaza Administratorul, Etapa 5); rezultatul complet
   // al motorului salvat la "Comandat" (cap. 16: o viitoare MODIFICARE a motorului
   // nu schimba o comanda facturata; documentele din S16 il citesc de aici)
-  avansLei               Decimal?  @db.Decimal(14, 2)
-  montatorId             String?
-  montator               Montator? @relation(fields: [montatorId], references: [id])
-  comisionRecomandareLei Decimal?  @db.Decimal(14, 2)
-  comisionAchitat        Boolean   @default(false)
-  rezultatMotor          Json?
-  rezultatSalvatLa       DateTime?
+  avansLei                Decimal?  @db.Decimal(14, 2)
+  montatorId              String?
+  montator                Montator? @relation(fields: [montatorId], references: [id])
+  comisionRecomandareLei  Decimal?  @db.Decimal(14, 2)
+  comisionAchitat         Boolean   @default(false)
+  rezultatMotor           Json?
+  rezultatSalvatLa        DateTime?
+  // S26b (MODIFICAREA M5, migrarea 21): intrarea motorului salvata la "Comandat", langa rezultat -
+  // intrarea INGHETATA pe care se ruleaza ajustarea pretului de vanzare (singurul lucru care nu era
+  // inghetat in baza era adaosul contului); gol la ofertele comandate inainte de S26b
+  intrareMotor            Json?
+  // S26b (MODIFICAREA M8, migrarea 21; OFERTARE cap. 12): montatorul de executie - nume si telefon ca
+  // text (din lista agentului sau scris de mana); campul vechi (montatorId + comision) e "Recomandarea"
+  montatorExecutieNume    String?
+  montatorExecutieTelefon String?
 
   creatDeId     String?
   creatDe       Utilizator? @relation("OferteCreate", fields: [creatDeId], references: [id])
@@ -960,6 +968,8 @@ model OptiuneLista {
 enum TipMontator {
   MONTATOR
   CONSTRUCTOR
+  // S26b (M8): colaboratorul care aduce lucrari (recomandare)
+  COLABORATOR
 }
 
 // statusul logistic al comenzii (cap. 16); tabelul complet de comenzi vine in Etapa 5
@@ -1104,6 +1114,15 @@ model Comanda {
   livrareBilkaTelefon    String?
   livrareBilkaLa         DateTime?
 
+  // S26b (MODIFICAREA M8, migrarea 21): montatorul de executie (cine monteaza si e in santier la livrare) -
+  // coloana Montator si fisa soferului; "montatorNume" / "montatorTelefon" de mai sus raman RECOMANDAREA
+  // (persoana care a adus lucrarea, cu comisionul - tabelul de vanzari); nimic migrat
+  montatorExecutieNume    String?
+  montatorExecutieTelefon String?
+
+  // S26b (MODIFICAREA M5): ajustarile pretului de vanzare, in ordinea versiunilor
+  ajustariPret ComandaAjustarePret[]
+
   istoric    ComandaIstoric[]
   observatii ComandaObservatie[]
   atasamente ComandaAtasament[]
@@ -1118,6 +1137,30 @@ model Comanda {
 
 // istoricul comenzii (FISA-CONTURI §5): statusul logistic, livrarea, alocarea,
 // facturarea, contactele - cine, cand, inainte / dupa, mentiuni
+// S26b (MODIFICAREA M5, migrarea 21; FISA-COMENZI cap. 1, 7; CONTURI §3): ajustarea pretului de vanzare
+// dupa "Comandat" - doar Administratorul firmei comenzii, cu suma noua (total cu TVA, lei) si motiv,
+// cat comanda nu e incasata integral. Fiecare ajustare pastreaza rezultatul complet al motorului (rulat
+// neschimbat pe intrarea inghetata, cu tinta = suma noua), totalul vechi si cel nou, cine si cand;
+// rezultatul de la "Comandat" ramane pe oferta. Rezultatul curent al comenzii = ultima versiune.
+model ComandaAjustarePret {
+  id                     String   @id @default(uuid())
+  comandaId              String
+  comanda                Comanda  @relation(fields: [comandaId], references: [id])
+  versiune               Int
+  totalVechiLei          Decimal  @db.Decimal(14, 2)
+  totalNouLei            Decimal  @db.Decimal(14, 2)
+  totalVechiCuTvaEur     Decimal  @db.Decimal(14, 2)
+  totalNouCuTvaEur       Decimal  @db.Decimal(14, 2)
+  motiv                  String
+  rezultatMotor          Json
+  utilizatorId           String?
+  numeUtilizatorLaMoment String
+  moment                 DateTime @default(now())
+
+  @@unique([comandaId, versiune])
+  @@map("comanda_ajustare_pret")
+}
+
 model ComandaIstoric {
   id                     String      @id @default(uuid())
   comandaId              String

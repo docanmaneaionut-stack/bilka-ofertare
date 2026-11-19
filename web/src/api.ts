@@ -20,16 +20,19 @@ export class EroareCerere extends Error {
   readonly campuri: CampInvalid[];
   // S26a (M6): la telefonul unui client existent, raspunsul poarta clientul propus pentru legare
   readonly propunereLegare: Client | null;
-  constructor(message: string, status: number, campuri: CampInvalid[] = [], propunereLegare: Client | null = null) {
+  // S26b (M5): restul raspunsului de eroare (suma minima / cea mai apropiata suma la ajustarea pretului)
+  readonly corp: Record<string, unknown>;
+  constructor(message: string, status: number, campuri: CampInvalid[] = [], propunereLegare: Client | null = null, corp: Record<string, unknown> = {}) {
     super(message);
     this.status = status;
     this.campuri = campuri;
     this.propunereLegare = propunereLegare;
+    this.corp = corp;
   }
 }
 
 export function eroareDinRaspuns(status: number, corp: { eroare?: string; campuri?: CampInvalid[]; propunereLegare?: Client | null }): EroareCerere {
-  return new EroareCerere(corp.eroare ?? `Cerere esuata (${status})`, status, Array.isArray(corp.campuri) ? corp.campuri : [], corp.propunereLegare ?? null);
+  return new EroareCerere(corp.eroare ?? `Cerere esuata (${status})`, status, Array.isArray(corp.campuri) ? corp.campuri : [], corp.propunereLegare ?? null, corp as Record<string, unknown>);
 }
 
 async function cerere<T>(cale: string, optiuni?: RequestInit): Promise<T> {
@@ -664,6 +667,8 @@ export type OfertaDetaliu = {
   // S15: avansul, montatorul / recomandarea, comanda minima, rezultatul salvat, istoricul
   avansLei?: string | null;
   montator?: Montator | null;
+  // S26b (M8): "montator" de mai sus = RECOMANDAREA (cu comisionul); montatorul de executie separat
+  montatorExecutie?: Persoana | null;
   comisionRecomandareLei?: string | null;
   comisionAchitat?: boolean;
   comanda?: ComandaMinima | null;
@@ -794,8 +799,16 @@ export const apiPretRapid = {
   pret: (produsId: string) => cerere<PretRapid>(`/api/pret-rapid/${produsId}`),
 };
 
-export type Montator = { id: string; nume: string; telefon: string; localitate: string | null; tip: "MONTATOR" | "CONSTRUCTOR"; activ?: boolean; utilizator?: { id: string; nume: string } };
-export type ComandaMinima = { id: string; rezumat: string; totalCuTvaEur: string; totalLei: string; avansLei: string; restLei: string; statusLogistic: string; data: string; responsabil: string; livrareBilka?: LivrareBilka | null };
+// S26b (M8): lista de persoane a agentului - montatori, constructori, colaboratori
+export type TipPersoana = "MONTATOR" | "CONSTRUCTOR" | "COLABORATOR";
+export const ETICHETA_TIP_PERSOANA: Record<TipPersoana, string> = { MONTATOR: "montator", CONSTRUCTOR: "constructor", COLABORATOR: "colaborator" };
+export type Montator = { id: string; nume: string; telefon: string; localitate: string | null; tip: TipPersoana; activ?: boolean; utilizator?: { id: string; nume: string } };
+// S26b (M8): montatorul de executie (nume + telefon, ca text); recomandarea de pe comanda
+export type Persoana = { nume: string; telefon: string | null };
+// S26b (M5): pretul de vanzare ajustat pe comanda dupa "Comandat"
+export type PretAjustat = { versiune: number; totalInitialLei: string; totalVechiLei: string; motiv: string; de: string; la: string };
+export type AjustarePret = { versiune: number; totalVechiLei: string; totalNouLei: string; totalVechiCuTvaEur: string; totalNouCuTvaEur: string; motiv: string; de: string; moment: string };
+export type ComandaMinima = { id: string; rezumat: string; totalCuTvaEur: string; totalLei: string; avansLei: string; restLei: string; statusLogistic: string; data: string; responsabil: string; livrareBilka?: LivrareBilka | null; montator?: Persoana | null; pretAjustat?: PretAjustat | null };
 export type IntrareIstoric = { id: string; moment: string; numeUtilizatorLaMoment: string; tip: string; camp: string | null; valoareInainte: string | null; valoareDupa: string | null; mentiuni: string | null };
 export type Notita = { id: string; text: string; numeUtilizatorLaMoment: string; moment: string };
 export type Atasament = { id: string; nume: string; tipMime: string | null; marime: number | null; moment: string; incarcatDe: string | null };
@@ -807,7 +820,7 @@ export const apiStatus = {
   livrareBilka: (id: string, alegere: AlegereLivrareBilka, mentiuni: string | null) =>
     cerere<{ oferta: OfertaDetaliu }>(`/api/oferte/${id}/livrare-bilka`, { method: "PUT", body: JSON.stringify({ ...alegere, mentiuni }) }),
   istoric: (id: string) => cerere<{ areIstoric: boolean; intrari: IntrareIstoric[]; sumeModificate: string[] }>(`/api/oferte/${id}/istoric`),
-  montator: (id: string, date: { montatorId?: string | null; montatorNou?: { nume: string; telefon: string; localitate?: string | null; tip: "MONTATOR" | "CONSTRUCTOR" }; comisionRecomandareLei?: string | null; mentiuni?: string | null }) =>
+  montator: (id: string, date: { montatorId?: string | null; montatorNou?: { nume: string; telefon: string; localitate?: string | null; tip: TipPersoana }; comisionRecomandareLei?: string | null; montatorExecutie?: { nume: string; telefon: string } | null; mentiuni?: string | null }) =>
     cerere<{ oferta: OfertaDetaliu }>(`/api/oferte/${id}/montator`, { method: "PUT", body: JSON.stringify(date) }),
   leaga: (id: string, ofertaId: string, motiv: string, text: string | null, mentiuni: string | null) =>
     cerere<{ oferta: OfertaDetaliu }>(`/api/oferte/${id}/completare-la`, { method: "PUT", body: JSON.stringify({ ofertaId, motiv, text, mentiuni }) }),
@@ -833,7 +846,7 @@ export const apiFormulareBilka = {
 
 export const apiMontatori = {
   lista: (q: string) => cerere<{ montatori: Montator[] }>(`/api/montatori?q=${encodeURIComponent(q)}`),
-  creeaza: (m: { nume: string; telefon: string; localitate?: string | null; tip: "MONTATOR" | "CONSTRUCTOR" }) => cerere<{ montator: Montator }>("/api/montatori", { method: "POST", body: JSON.stringify(m) }),
+  creeaza: (m: { nume: string; telefon: string; localitate?: string | null; tip: TipPersoana }) => cerere<{ montator: Montator }>("/api/montatori", { method: "POST", body: JSON.stringify(m) }),
 };
 
 export const apiNotite = {
@@ -1116,7 +1129,11 @@ export type RandComanda = {
   completareLa: { numarComplet: string; motiv: string | null } | null;
   client: { nume: string; telefon: string; localitate: string | null };
   rezumat: string;
-  montator: { nume: string; telefon: string | null } | null;
+  // S26b (M8): coloana Montator = montatorul de executie; recomandarea (persoana cu comisionul) separat
+  montator: Persoana | null;
+  recomandare: Persoana | null;
+  // S26b (M5): pretul ajustat dupa "Comandat" (null = pretul de la "Comandat")
+  pretAjustat: PretAjustat | null;
   totalLei: string;
   totalCuTvaEur: string;
   avansLei: string;
@@ -1198,7 +1215,8 @@ export type ObservatieComanda = { id: string; moment: string; numeUtilizatorLaMo
 export type AtasamentComanda = { id: string; nume: string; tipMime: string | null; marime: number | null; moment: string; incarcatDe: string | null };
 export type DocumentComanda = { id: string; tip: string; eticheta: string; versiune: number; nume: string; marime: number; generatLa: string; generatDe: string | null; transmisLa: string | null; canal: string | null; formularNr: number | null; inainteDeSchimbareaLivrarii?: boolean };
 export type ComandaDetaliu = Omit<RandComanda, "retururi"> & {
-  drepturi: { logistic: boolean; detalii: boolean; livrare: boolean; alocare: boolean; bani: boolean; comision: boolean; retur: boolean; anuleazaRetur: boolean; notaPalet: boolean; statusPalet: boolean; aviz: boolean; documente: boolean; fisaSoferului: boolean; locatie: boolean; livrareBilka: boolean };
+  drepturi: { logistic: boolean; detalii: boolean; livrare: boolean; alocare: boolean; bani: boolean; comision: boolean; retur: boolean; anuleazaRetur: boolean; notaPalet: boolean; statusPalet: boolean; aviz: boolean; documente: boolean; fisaSoferului: boolean; locatie: boolean; livrareBilka: boolean; ajustarePret: boolean; montator: boolean; recomandare: boolean };
+  ajustariPret: AjustarePret[];
   incasari: IncasareComanda[];
   retururi: ReturComanda[];
   avize: AvizComanda[];
@@ -1226,7 +1244,8 @@ export type ComandaManualaNoua = {
   totalLei: string;
   totalCuTvaEur?: string;
   avansLei?: string;
-  montator?: { nume: string; telefon?: string | null } | null;
+  montator?: { nume: string; telefon: string } | null;
+  recomandare?: { nume: string; telefon?: string | null } | null;
   contAlocatId?: string | null;
   indicatiiLivrare?: string | null;
   dataLivrarii?: string | null;
@@ -1251,7 +1270,12 @@ export const apiComenzi = {
   livrare: (id: string, indicatii: string | null, dataLivrarii: string | null) => cerere<{ comanda: RandComanda }>(`${BAZA_COM}/${id}/livrare`, { method: "PUT", body: JSON.stringify({ indicatii, dataLivrarii }) }),
   livrareBilka: (id: string, alegere: AlegereLivrareBilka, mentiuni: string | null) => cerere<{ comanda: RandComanda }>(`${BAZA_COM}/${id}/livrare-bilka`, { method: "PUT", body: JSON.stringify({ ...alegere, mentiuni }) }),
   facturare: (id: string, f: { firma: string | null; cui: string | null; adresa: string | null }) => cerere<{ comanda: RandComanda }>(`${BAZA_COM}/${id}/facturare`, { method: "PUT", body: JSON.stringify(f) }),
-  contacte: (id: string, c: { clientTelefon?: string; montatorNume?: string | null; montatorTelefon?: string | null }) => cerere<{ comanda: RandComanda }>(`${BAZA_COM}/${id}/contacte`, { method: "PUT", body: JSON.stringify(c) }),
+  contacte: (id: string, c: { clientTelefon?: string }) => cerere<{ comanda: RandComanda }>(`${BAZA_COM}/${id}/contacte`, { method: "PUT", body: JSON.stringify(c) }),
+  // S26b (M8): montatorul de executie si recomandarea, fiecare cu ruta ei
+  montator: (id: string, montator: { nume: string; telefon: string } | null, mentiuni: string | null) => cerere<{ comanda: RandComanda }>(`${BAZA_COM}/${id}/montator`, { method: "PUT", body: JSON.stringify({ montator, mentiuni }) }),
+  recomandare: (id: string, recomandare: { nume: string; telefon?: string | null } | null, mentiuni: string | null) => cerere<{ comanda: RandComanda }>(`${BAZA_COM}/${id}/recomandare`, { method: "PUT", body: JSON.stringify({ recomandare, mentiuni }) }),
+  // S26b (M5): ajustarea pretului de vanzare (doar Administratorul firmei comenzii)
+  ajustarePret: (id: string, totalLei: string, motiv: string) => cerere<{ comanda: RandComanda; ajustare: AjustarePret }>(`${BAZA_COM}/${id}/ajustare-pret`, { method: "POST", body: JSON.stringify({ totalLei, motiv }) }),
   alocare: (id: string, contAlocatId: string | null, mentiuni: string | null) => cerere<{ comanda: RandComanda }>(`${BAZA_COM}/${id}/alocare`, { method: "PUT", body: JSON.stringify({ contAlocatId, mentiuni }) }),
   observatie: (id: string, text: string) => cerere<{ observatie: ObservatieComanda }>(`${BAZA_COM}/${id}/observatii`, { method: "POST", body: JSON.stringify({ text }) }),
   atasament: (id: string, fisier: File) => {
@@ -1318,6 +1342,8 @@ export type RandVanzari = {
   comisionRecomandare: { lei: string; achitat: boolean } | null;
   comisionAgent: { lei: string; achitat: boolean; achitatLa: string | null; achitatDe: string | null } | null;
   comisionAgentModificat: boolean;
+  // S26b (M5): pretul de vanzare ajustat pe comanda
+  pretAjustat: PretAjustat | null;
   incasare: { status: StatusIncasare; eticheta: string; incasatLei: string; restLei: string };
   completareLa: { numarComplet: string; motiv: string | null } | null;
   lucrare: { pretVanzareLei: string; costAchizitieLei: string; adaosNetLei: string; adaosBrutLei: string; comenzi: number } | null;

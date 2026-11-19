@@ -114,7 +114,8 @@ export async function dateFisa(u: Utilizator, cerere: z.infer<typeof schemaFisa>
       categorii,
       livrare: { indicatii: c.indicatiiLivrare, data: c.dataLivrarii ? dataDoar(c.dataLivrarii) : null },
       livrareBilka: textLivrareBilka(c),
-      montator: c.montatorNume ? { nume: c.montatorNume, telefon: c.montatorTelefon } : null,
+      // S26b (M8): montatorul de executie (cel care e in santier la livrare), nu recomandarea
+      montator: c.montatorExecutieNume ? { nume: c.montatorExecutieNume, telefon: c.montatorExecutieTelefon } : null,
       restLei: rezumatIncasari(c).restLei,
       statusLogistic: c.statusLogistic,
       avize: c.avize.map((a) => ({ id: a.id, numar: a.numar, dataLivrarii: dataDoar(a.dataLivrarii), partial: a.partial, documentId: spreAviz(a).documentId })),

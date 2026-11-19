@@ -67,6 +67,8 @@ export const MODELE_EXPORT = [
   // S23: avizele comenzii si liniile lor
   "ComandaAviz",
   "ComandaAvizLinie",
+  // S26b: ajustarile pretului de vanzare ale comenzii
+  "ComandaAjustarePret",
   "ImportPropunere",
   "JurnalIntrare",
   "JurnalAutentificare",
@@ -104,6 +106,7 @@ function filtruFirma(model: ModelExport, firmaId: string): Record<string, unknow
     case "ComandaIncasare":
     case "ComandaRetur":
     case "ComandaAviz":
+    case "ComandaAjustarePret":
       return { comanda: { firmaId } };
     case "ComandaReturLinie":
       return { retur: { comanda: { firmaId } } };

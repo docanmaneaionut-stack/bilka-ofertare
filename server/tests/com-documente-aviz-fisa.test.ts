@@ -61,7 +61,8 @@ async function comanda(agent: Agent, etalon: string, client = CLIENT): Promise<{
   await puneCursulEtalonului(id, e);
   const r = await agent.put(`/api/oferte/${id}/preturi`).send(preturiDinEtalon(e, rp.body.oferta.linii));
   expect(r.status, JSON.stringify(r.body)).toBe(200);
-  if (etalon === "E01") await agent.put(`/api/oferte/${id}/montator`).send({ montatorNou: { nume: "Gheorghe V.", telefon: "0733 000 222", tip: "MONTATOR" }, comisionRecomandareLei: "500" }).expect(200);
+  // S26b (M8): recomandarea (cu comision) si montatorul de executie sunt rubrici separate - aici aceeasi persoana
+  if (etalon === "E01") await agent.put(`/api/oferte/${id}/montator`).send({ montatorNou: { nume: "Gheorghe V.", telefon: "0733 000 222", tip: "MONTATOR" }, comisionRecomandareLei: "500", montatorExecutie: { nume: "Gheorghe V.", telefon: "0733 000 222" } }).expect(200);
   await agent.put(`/api/oferte/${id}/status`).send({ status: "TRANSMISA" }).expect(200);
   await agent.put(`/api/oferte/${id}/status`).send({ status: "DE_COMANDAT", livrareBilka: { tip: "DEPOZIT" } }).expect(200);
   const c = await agent.put(`/api/oferte/${id}/status`).send({ status: "COMANDAT", livrareBilka: { tip: "DEPOZIT" } });

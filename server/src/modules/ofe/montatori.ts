@@ -13,14 +13,33 @@ import { ROLURI_CU_OFERTE } from "./vizibilitate.js";
 // Administratorii; autocompletare pe oferta. Pe oferta: o singura persoana,
 // "montator / recomandare", si comisionul ei ca suma fixa (asterisc rosu si
 // istoric); "achitat" il bifeaza Administratorul (Etapa 5). Nimic pe documente.
+//
+// S26b (MODIFICAREA M8, docs/MODIFICARI-S26.md): doua rubrici. Persoana de mai sus (montatorId) si
+// comisionul sunt RECOMANDAREA (cine a adus lucrarea -> tabelul de vanzari); lista primeste tipul
+// "colaborator". MONTATORUL DE EXECUTIE (cine monteaza si e in santier la livrare -> coloana Montator
+// din comenzi, fisa soferului) e nume + telefon ca text, din lista sau scris de mana (scris de mana nu
+// intra in lista); daca e completat, telefonul e obligatoriu. Dupa "Comandat" se schimba pe comanda.
 
 export const schemaMontator = z.object({
   nume: z.string().trim().min(1, "numele e obligatoriu").max(200),
   telefon: z.string().trim().min(3, "telefonul e obligatoriu").max(40),
   localitate: z.string().trim().max(200).nullish(),
-  tip: z.enum(["MONTATOR", "CONSTRUCTOR"]).default("MONTATOR"),
+  tip: z.enum(["MONTATOR", "CONSTRUCTOR", "COLABORATOR"]).default("MONTATOR"),
   activ: z.boolean().optional(),
 });
+
+// montatorul de executie (pe oferta, pe comanda, la comanda manuala): nume si telefon, amandoua obligatorii
+export const schemaMontatorExecutie = z.object({
+  nume: z.string().trim().min(1, "numele e obligatoriu").max(200),
+  telefon: z
+    .string()
+    .trim()
+    .max(50)
+    .refine((t) => !/[a-zA-Z]/.test(t), "conține litere")
+    .refine((t) => normalizeazaTelefon(t).length >= 6, "trebuie să aibă cel puțin 6 cifre — fișa șoferului îl sună"),
+});
+// "Nume · telefon" pentru istoric
+export const textPersoana = (nume: string | null | undefined, telefon: string | null | undefined): string | null => (nume ? [nume, telefon].filter(Boolean).join(" · ") : null);
 
 export const montatoriRouter = Router();
 montatoriRouter.use(cereAutentificare);
@@ -71,13 +90,24 @@ export const schemaMontatorOferta = z.object({
   montatorId: z.string().min(1).nullish(),
   montatorNou: schemaMontator.omit({ activ: true }).optional(),
   comisionRecomandareLei: suma.nullish(),
+  // S26b (M8): montatorul de executie; null = golit; lipsa = neschimbat
+  montatorExecutie: schemaMontatorExecutie.nullish(),
   mentiuni: z.string().trim().max(2000).nullish(),
 });
 
-export class EroareMontator extends Error {}
+export class EroareMontator extends Error {
+  constructor(
+    message: string,
+    public status = 400,
+  ) {
+    super(message);
+  }
+}
 
 export async function seteazaMontatorOferta(ofertaId: string, date: z.infer<typeof schemaMontatorOferta>, u: Utilizator): Promise<void> {
   const o = await prisma.oferta.findUniqueOrThrow({ where: { id: ofertaId }, include: { montator: true } });
+  if (date.montatorExecutie !== undefined && o.status === "COMANDAT") throw new EroareMontator("Oferta e comandată: montatorul de execuție se schimbă de pe comandă", 409);
+  const executie = date.montatorExecutie === undefined ? { nume: o.montatorExecutieNume, telefon: o.montatorExecutieTelefon } : { nume: date.montatorExecutie?.nume ?? null, telefon: date.montatorExecutie?.telefon ?? null };
   let montatorId = date.montatorId === undefined ? o.montatorId : date.montatorId;
   let montatorNume = o.montator?.nume ?? null;
   await prisma.$transaction(async (tx) => {
@@ -95,8 +125,11 @@ export async function seteazaMontatorOferta(ofertaId: string, date: z.infer<type
     }
     const comisionNou = date.comisionRecomandareLei === undefined ? o.comisionRecomandareLei : date.comisionRecomandareLei === null ? null : new Prisma.Decimal(date.comisionRecomandareLei.replace(",", "."));
     if (comisionNou !== null && comisionNou !== undefined && comisionNou.lt(0)) throw new EroareMontator("Comisionul nu poate fi negativ");
-    await tx.oferta.update({ where: { id: ofertaId }, data: { montatorId, comisionRecomandareLei: comisionNou, modificatDeId: u.id } });
+    await tx.oferta.update({ where: { id: ofertaId }, data: { montatorId, comisionRecomandareLei: comisionNou, montatorExecutieNume: executie.nume, montatorExecutieTelefon: executie.telefon, modificatDeId: u.id } });
     const intrari = [];
+    const executieInainte = textPersoana(o.montatorExecutieNume, o.montatorExecutieTelefon);
+    const executieDupa = textPersoana(executie.nume, executie.telefon);
+    if (executieInainte !== executieDupa) intrari.push({ tip: "montator", camp: "montatorExecutie", inainte: executieInainte, dupa: executieDupa });
     if ((o.montatorId ?? null) !== (montatorId ?? null)) intrari.push({ tip: "montator", camp: "montator", inainte: o.montator?.nume ?? null, dupa: montatorNume });
     if ((o.comisionRecomandareLei?.toString() ?? null) !== (comisionNou?.toString() ?? null)) intrari.push({ tip: "suma", camp: "comisionRecomandareLei", inainte: o.comisionRecomandareLei?.toString() ?? null, dupa: comisionNou?.toString() ?? null });
     await scrieIstoric(tx, o, u, intrari, date.mentiuni);

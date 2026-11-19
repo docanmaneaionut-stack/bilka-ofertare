@@ -82,7 +82,13 @@ export async function contextDocument(o: { firmaId: string; utilizatorId: string
 export async function htmlPentru(ofertaId: string, tip: TipDocument): Promise<{ html: string; subsolStanga: string; versiune: number; numarComplet: string }> {
   const o = await prisma.oferta.findUniqueOrThrow({ where: { id: ofertaId }, include: includeProduse });
   if (o.invelitori.length === 0 && o.linii.length === 0) throw new EroareDocument("Oferta nu are produse; nu are ce să conțină documentul", 409);
-  const { rezultat, eroare } = await rezultatSauSalvat(o);
+  let { rezultat, eroare } = await rezultatSauSalvat(o);
+  // S26b (MODIFICAREA M5): tabelul de facturare al unei comenzi cu pretul ajustat se genereaza din
+  // rezultatul ajustat (ultima versiune); oferta, rezumatul si detaliata raman la preturile de la "Comandat"
+  if (tip === "TABEL_FACTURARE" && o.status === "COMANDAT") {
+    const ajustare = await prisma.comandaAjustarePret.findFirst({ where: { comanda: { ofertaId } }, orderBy: { versiune: "desc" }, select: { rezultatMotor: true } });
+    if (ajustare) rezultat = ajustare.rezultatMotor as unknown as typeof rezultat;
+  }
   if (!rezultat) throw new EroareDocument(`Oferta nu se poate calcula: ${eroare ?? "fără rezultat"}`, 409);
   const ctx = await contextDocument(o);
   const html = htmlDocument(tip, o, rezultat, ctx);

@@ -150,6 +150,11 @@ export function Statusuri({ oferta, onOferta, mentiuni, onEroareClient }: { ofer
           Nu se poate comanda până nu completezi panotajul: {motive.join("; ")}
         </Mesaj>
       )}
+      {comandata && oferta.comanda?.pretAjustat && (
+        <p className="mic">
+          <span className="asterisc">*</span> <strong>Preț ajustat pe comandă</strong> la {lei(oferta.comanda.totalLei)} ({oferta.comanda.pretAjustat.motiv}), de {oferta.comanda.pretAjustat.de}, la {new Date(oferta.comanda.pretAjustat.la).toLocaleDateString("ro-RO")} — oferta rămâne la {lei(oferta.comanda.pretAjustat.totalInitialLei)}.
+        </p>
+      )}
       {comandata && oferta.comanda && (
         <div className="grila-totaluri">
           <div>

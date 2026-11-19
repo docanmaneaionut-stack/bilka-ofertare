@@ -27,7 +27,7 @@ const COLOANE_PERMISE: Record<string, string[]> = {
   produs: ["denumire"],
   client: ["nume", "localitate"],
   montator: ["nume", "localitate"],
-  comanda: ["clientNume", "clientLocalitate", "montatorNume"],
+  comanda: ["clientNume", "clientLocalitate", "montatorNume", "montatorExecutieNume"],
 };
 
 const escapeLike = (s: string) => s.replace(/[\\%_]/g, (c) => `\\${c}`);

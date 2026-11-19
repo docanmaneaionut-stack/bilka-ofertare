@@ -205,6 +205,7 @@ export function Vanzari() {
           <li>Lucrările: completările apar sub comanda ofertei inițiale, iar adaosul lucrării e calculat din sumele tuturor comenzilor legate. Comenzile manuale intră „fără sume” până le completează Administratorul (cost și vânzare), și nu intră în totaluri până atunci.</li>
           <li>Filtrul încasat / neîncasat arată toate vânzările cu statusul ales, din toate lunile — ca Administratorul să completeze comisionul exact la lucrările încasate. Procentul de adaos = adaos net ÷ cost achiziție.</li>
           <li>Comisionul agentului îl scrie Administratorul, cu istoric (asteriscul roșu arată că a fost modificat); bifele „achitat” (agent, recomandare) le pune doar Administratorul firmei. Comisionul recomandării e cel de pe comandă.</li>
+          <li>Asteriscul roșu de lângă prețul de vânzare arată că prețul a fost ajustat pe comandă de Administrator, după „Comandat” (motivul apare la mouse; istoricul e pe comandă). Costul rămâne cel de la comandă, adaosul se recalculează. Sursa recomandării e rubrica „Recomandare”; montatorul de execuție nu apare aici.</li>
           <li>Retururile (din comandă) apar ca rând cu minus sub comanda lor: vânzarea scade cu suma de restituit, costul cu achiziția mărfii returnate; lucrarea le cuprinde. Dacă un comision era deja achitat, rândul rămâne „de regularizat” până îl bifează Administratorul firmei. La comenzile manuale returul se face prin „retur: corectează sumele”.</li>
         </ul>
       </Ajutor>
@@ -375,7 +376,14 @@ function RandTr({ r, poateScrie, alegeAgenti, onSchimbat, completare }: { r: Ran
       </td>
       <td className="col-optional">{r.client.localitate ?? "—"}</td>
       <td className="dreapta">{lei(r.costAchizitieLei)}</td>
-      <td className="dreapta">{lei(r.pretVanzareLei)}</td>
+      <td className="dreapta">
+        {lei(r.pretVanzareLei)}
+        {r.pretAjustat && (
+          <span className="asterisc" title={`preț ajustat pe comandă: ${lei(r.pretAjustat.totalInitialLei)} la „Comandat” — ${r.pretAjustat.motiv} (${r.pretAjustat.de}); vezi istoricul comenzii`}>
+            *
+          </span>
+        )}
+      </td>
       <td className="col-optional">{r.sursaRecomandarii ?? "—"}</td>
       <td className="dreapta col-optional">{r.comisionRecomandare ? lei(r.comisionRecomandare.lei) : "—"}</td>
       <td className="col-optional">

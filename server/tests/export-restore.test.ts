@@ -94,6 +94,8 @@ beforeAll(async () => {
   await prisma.comanda.update({ where: { id: comandaA.id }, data: { notaPalet: "2 paleți la client", notaPaletNume: adminFirma.nume, notaPaletLa: new Date(), locatieUrl: "https://maps.app.goo.gl/exemplu" } });
   // S23: un aviz cu o linie de produs si o lungime de panotaj
   await prisma.comandaAviz.create({ data: { comandaId: comandaA.id, numar: 1, dataLivrarii: azi, partial: false, coli: 10, piese: "8", numeGeneratLaMoment: adminFirma.nume, generatDeId: adminFirma.id, linii: { create: [{ ordine: 0, linieId: "l1", cod: "ACMICMAT050", denumire: "Coamă mică", um: "buc", cantitate: "8" }, { ordine: 1, linieId: "i1", pozitieId: "p1", cod: "T", denumire: "4,20 m × 10 buc", um: "mp", cantitate: "49.560", lungimeM: "4.200", bucati: 10 }] } } });
+  // S26b (M5): o ajustare a pretului de vanzare, cu rezultatul ei
+  await prisma.comandaAjustarePret.create({ data: { comandaId: comandaA.id, versiune: 1, totalVechiLei: "17000", totalNouLei: "16500", totalVechiCuTvaEur: "3178.46", totalNouCuTvaEur: "3084.98", motiv: "discount la livrare", rezultatMotor: REZULTAT_SALVAT, utilizatorId: adminFirma.id, numeUtilizatorLaMoment: adminFirma.nume } });
   await mkdir(path.join(env.dateDir, "comenzi", comandaA.id), { recursive: true });
   await writeFile(path.join(env.dateDir, "comenzi", comandaA.id, "necesar.txt"), "test");
   comandaA1 = comandaA.id;
@@ -152,7 +154,7 @@ describe("Export 'descarca tot' si restaurare", () => {
     expect(intrari).toContain(`fisiere/oferte/${ofertaA1}/documente/EXF-0001-F1.xlsm`);
     // S24 (F2): fisierul atasat al comenzii intra in export
     expect(intrari).toContain(`fisiere/comenzi/${comandaA1}/necesar.txt`);
-    for (const tabel of ["client", "curs_valutar", "contor_serie", "montator", "oferta", "oferta_invelitoare", "oferta_linie", "oferta_pozitie", "oferta_sipca", "oferta_tronson", "oferta_zona_b", "oferta_istoric", "oferta_atasament", "oferta_notita", "oferta_document", "comanda", "comanda_istoric", "comanda_observatie", "comanda_atasament", "comanda_incasare", "comanda_retur", "comanda_retur_linie", "comanda_aviz", "comanda_aviz_linie", "corespondenta_formular_bilka"]) {
+    for (const tabel of ["client", "curs_valutar", "contor_serie", "montator", "oferta", "oferta_invelitoare", "oferta_linie", "oferta_pozitie", "oferta_sipca", "oferta_tronson", "oferta_zona_b", "oferta_istoric", "oferta_atasament", "oferta_notita", "oferta_document", "comanda", "comanda_istoric", "comanda_observatie", "comanda_atasament", "comanda_incasare", "comanda_retur", "comanda_retur_linie", "comanda_aviz", "comanda_aviz_linie", "comanda_ajustare_pret", "corespondenta_formular_bilka"]) {
       expect(numaratori[tabel], tabel).toBeGreaterThanOrEqual(tabel === "corespondenta_formular_bilka" ? 0 : 1);
     }
     expect(readme).toContain(`- produs: ${numaratori.produs}`);
@@ -202,7 +204,10 @@ describe("Export 'descarca tot' si restaurare", () => {
     expect(o1.documente[0]).toMatchObject({ tip: "FORMULAR_BILKA", formularNr: 1 });
     expect(o1.comanda?.totalLei.toString()).toBe("17000");
     // S24 (F2): comanda restaurata cu copiii ei si cu fisierul atasat pe disc
-    const c1 = await prismaRestore.comanda.findUniqueOrThrow({ where: { id: comandaA1 }, include: { istoric: true, observatii: true, atasamente: true, incasari: true, retururi: { include: { linii: true } }, avize: { include: { linii: true } } } });
+    const c1 = await prismaRestore.comanda.findUniqueOrThrow({ where: { id: comandaA1 }, include: { istoric: true, observatii: true, atasamente: true, incasari: true, retururi: { include: { linii: true } }, avize: { include: { linii: true } }, ajustariPret: true } });
+    // S26b: ajustarea de pret se restaureaza cu motivul si rezultatul ei
+    expect(c1.ajustariPret.map((a) => [a.versiune, a.totalNouLei.toFixed(2), a.motiv])).toEqual([[1, "16500.00", "discount la livrare"]]);
+    expect(c1.ajustariPret[0].rezultatMotor).toEqual(REZULTAT_SALVAT);
     expect([c1.istoric.length, c1.observatii.length, c1.atasamente.length, c1.incasari.length, c1.retururi.length, c1.retururi[0].linii.length, c1.avize.length, c1.avize[0].linii.length]).toEqual([1, 1, 1, 1, 1, 1, 1, 2]);
     expect(c1.locatieUrl).toBe("https://maps.app.goo.gl/exemplu");
     expect(c1.avize[0].linii.find((l) => l.pozitieId)?.cantitate.toString()).toBe("49.56");

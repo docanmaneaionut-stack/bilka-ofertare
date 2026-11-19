@@ -8,6 +8,7 @@ import { cereAutentificare, cereRol } from "../accounts/middleware.js";
 import { scrieCreare, scrieModificari } from "../adm/jurnal.js";
 import { cursulZilei, EroareCurs } from "../curs/serviciu.js";
 import { clientPublic, clientulOfertei, gasesteSauCreeazaClient, normalizeazaTelefon, numarComplet, schemaClient } from "./clienti.js";
+import { pretAjustat, selectAjustare } from "../com/pretAjustat.js";
 import { aceeasiLivrareBilka, descriereLivrareBilka, livrareBilkaPublic, schemaSchimbareLivrareBilka, valoriLivrareBilka } from "./livrareBilka.js";
 import { optiunileListei } from "../adm/optiuniListe.js";
 import { finisajScurt, numarRal, numeModel } from "../mot/pachete.js";
@@ -377,7 +378,7 @@ async function detaliu(id: string, u: Utilizator) {
       completareLa: { select: { id: true, serie: true, numar: true } },
       preluataDin: { select: { id: true, serie: true, numar: true } },
       montator: true,
-      comanda: { select: { id: true, rezumat: true, totalCuTvaEur: true, totalLei: true, avansLei: true, restLei: true, statusLogistic: true, data: true, responsabil: { select: { nume: true } }, livrareBilka: true, livrareBilkaLocalitate: true, livrareBilkaTelefon: true, livrareBilkaLa: true } },
+      comanda: { select: { id: true, rezumat: true, totalCuTvaEur: true, totalLei: true, avansLei: true, restLei: true, statusLogistic: true, data: true, responsabil: { select: { nume: true } }, livrareBilka: true, livrareBilkaLocalitate: true, livrareBilkaTelefon: true, livrareBilkaLa: true, montatorExecutieNume: true, montatorExecutieTelefon: true, ajustariPret: { select: selectAjustare } } },
       _count: { select: { notite: true, atasamente: true, istoric: true, documente: true } },
       completari: { where: { curenta: true }, select: { id: true, serie: true, numar: true, motivCompletare: true, status: true } },
       listaPret: { select: { id: true, denumire: true, status: true } },
@@ -430,7 +431,15 @@ async function detaliu(id: string, u: Utilizator) {
     montator: o.montator ? { id: o.montator.id, nume: o.montator.nume, telefon: o.montator.telefon, localitate: o.montator.localitate, tip: o.montator.tip } : null,
     comisionRecomandareLei: o.comisionRecomandareLei?.toString() ?? null,
     comisionAchitat: o.comisionAchitat,
-    comanda: o.comanda ? { ...o.comanda, totalCuTvaEur: o.comanda.totalCuTvaEur.toString(), totalLei: o.comanda.totalLei.toString(), avansLei: o.comanda.avansLei.toString(), restLei: o.comanda.restLei.toString(), data: dataDoar(o.comanda.data), responsabil: o.comanda.responsabil.nume, livrareBilka: livrareBilkaPublic(o.comanda) } : null,
+    // S26b (M8): montatorul de executie (pana la "Comandat"; apoi e al comenzii)
+    montatorExecutie: o.montatorExecutieNume ? { nume: o.montatorExecutieNume, telefon: o.montatorExecutieTelefon } : null,
+    comanda: o.comanda ? { ...o.comanda, totalCuTvaEur: o.comanda.totalCuTvaEur.toString(), totalLei: o.comanda.totalLei.toString(), avansLei: o.comanda.avansLei.toString(), restLei: o.comanda.restLei.toString(), data: dataDoar(o.comanda.data), responsabil: o.comanda.responsabil.nume, livrareBilka: livrareBilkaPublic(o.comanda),
+          // S26b: montatorul de executie al comenzii (M8) si nota "pret ajustat pe comanda" (M5)
+          montator: o.comanda.montatorExecutieNume ? { nume: o.comanda.montatorExecutieNume, telefon: o.comanda.montatorExecutieTelefon } : null,
+          pretAjustat: pretAjustat(o.comanda.ajustariPret),
+          ajustariPret: undefined,
+        }
+      : null,
     rezultatSalvatLa: o.rezultatSalvatLa,
     areIstoric: o.status !== "IN_LUCRU",
     sumeModificate: await campuriCuIstoric(o.id),
@@ -769,7 +778,7 @@ oferteRouter.put("/:id/montator", async (req, res) => {
     await seteazaMontatorOferta(r.oferta.id, date, u);
   } catch (e) {
     if (e instanceof EroareMontator) {
-      res.status(400).json({ eroare: e.message });
+      res.status(e.status).json({ eroare: e.message });
       return;
     }
     throw e;

@@ -32,13 +32,15 @@ const MIGRARI_ETAPA_3 = [
   "20261106130933_aviz_fisa_soferului",
   // S26a: telefonul clientului optional (M6), livrarea de la Bilka (M7)
   "20261119102251_telefon_optional_livrare_bilka",
+  // S26b: ajustarea pretului de vanzare (M5), montatorul de executie (M8)
+  "20261119114721_ajustare_pret_montator_executie",
 ];
 
 afterAll(async () => {
   await prisma.$disconnect();
 });
 
-describe("migrarile Etapei 3 si 5 (6-20) sunt aditive", () => {
+describe("migrarile Etapei 3 si 5 (6-21) sunt aditive", () => {
   it("fiecare SQL exista si nu contine instructiuni distructive", () => {
     const existente = fs.readdirSync(FOLDER).filter((d) => /^\d{14}_/.test(d));
     for (const m of MIGRARI_ETAPA_3) expect(existente, m).toContain(m);
@@ -76,6 +78,17 @@ describe("migrarile Etapei 3 si 5 (6-20) sunt aditive", () => {
     expect(m20).toContain(`CREATE UNIQUE INDEX "client_telefonNormalizat_key" ON "client"("telefonNormalizat") WHERE "telefonNormalizat" IS NOT NULL AND "telefonDublat" = false;`);
     expect(m20).toMatch(/ALTER TABLE "oferta" ADD COLUMN\s+"livrareBilka" "LivrareBilka"/);
     expect(m20).toMatch(/ALTER TABLE "comanda" ADD COLUMN\s+"livrareBilka" "LivrareBilka"/);
+  });
+
+  it("migrarea 21 (S26b): tabelul ajustarilor de pret, intrarea motorului pe oferta, montatorul de executie, tipul colaborator - doar adaugiri", () => {
+    const m21 = fs.readFileSync(path.join(FOLDER, "20261119114721_ajustare_pret_montator_executie", "migration.sql"), "utf8");
+    expect(m21).toContain(`ALTER TYPE "TipMontator" ADD VALUE 'COLABORATOR'`);
+    expect(m21).toContain(`CREATE TABLE "comanda_ajustare_pret"`);
+    expect(m21).toContain(`CREATE UNIQUE INDEX "comanda_ajustare_pret_comandaId_versiune_key"`);
+    expect(m21).toMatch(/ALTER TABLE "oferta" ADD COLUMN\s+"intrareMotor" JSONB,\s+ADD COLUMN\s+"montatorExecutieNume" TEXT,\s+ADD COLUMN\s+"montatorExecutieTelefon" TEXT/);
+    expect(m21).toMatch(/ALTER TABLE "comanda" ADD COLUMN\s+"montatorExecutieNume" TEXT,\s+ADD COLUMN\s+"montatorExecutieTelefon" TEXT/);
+    // nimic redenumit, nimic mutat: coloanele recomandarii (montatorNume / montatorTelefon, comisionLei) nu apar in migrare
+    expect(m21.replace(/--[^\n]*/g, "")).not.toMatch(/RENAME|UPDATE\s+"|"montatorNume"|"comisionLei"/);
   });
 
   it("M6: indexul unic partial din baza - doi clienti nemarcati nu pot avea acelasi telefon; fara telefon si dublatul marcat sunt exceptiile", async () => {

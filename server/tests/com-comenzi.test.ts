@@ -134,7 +134,7 @@ describe("comenzile din oferta si lista comuna", () => {
     const r = await lista(agent, { q: c1.numarComplet });
     expect(r.comenzi).toHaveLength(1);
     const c = r.comenzi[0];
-    expect(c).toMatchObject({ manuala: false, neidentificata: false, responsabil: { nume: "Test AGENT" }, contAlocat: { id: idAgent1 }, client: { nume: "Client Comenzi", localitate: "Panciu", telefon: "0730000401" }, montator: { nume: "Gheorghe Montatorul" }, totalLei: "17000.00", avansLei: "5000.00", restLei: "12000.00", statusLogistic: "COMANDAT", statusLogisticEticheta: "Comandat", inchisa: false });
+    expect(c).toMatchObject({ manuala: false, neidentificata: false, responsabil: { nume: "Test AGENT" }, contAlocat: { id: idAgent1 }, client: { nume: "Client Comenzi", localitate: "Panciu", telefon: "0730000401" }, recomandare: { nume: "Gheorghe Montatorul", telefon: "0740 111 222" }, montator: null, totalLei: "17000.00", avansLei: "5000.00", restLei: "12000.00", statusLogistic: "COMANDAT", statusLogisticEticheta: "Comandat", inchisa: false });
     expect(c.rezumat).toMatch(/^Iberic 3005 mat 0,50/);
     expect(c.data).toBe(dataLocala(0));
     expect((await lista(agent, { q: "Pavel" })).comenzi.map((x) => x.numarComplet)).toEqual([c2.numarComplet]);
@@ -212,7 +212,9 @@ describe("comenzile din oferta si lista comuna", () => {
     const f = await agent.put(`/api/comenzi/${c1.comandaId}/facturare`).send({ firma: "SC Acoperiș Expert SRL", cui: "RO123", adresa: "Panciu, str. Mare 1" });
     expect(f.status, JSON.stringify(f.body)).toBe(200);
     expect(f.body.comanda.facturare).toEqual({ firma: "SC Acoperiș Expert SRL", cui: "RO123", adresa: "Panciu, str. Mare 1" });
-    await agent.put(`/api/comenzi/${c1.comandaId}/contacte`).send({ clientTelefon: "0730 000 499", montatorTelefon: "0740 999 999" }).expect(200);
+    await agent.put(`/api/comenzi/${c1.comandaId}/contacte`).send({ clientTelefon: "0730 000 499" }).expect(200);
+    // S26b (M8): montatorul de executie are ruta lui (nume + telefon)
+    await agent.put(`/api/comenzi/${c1.comandaId}/montator`).send({ montator: { nume: "Echipa Montaj", telefon: "0740 999 999" } }).expect(200);
     await agent.post(`/api/comenzi/${c1.comandaId}/observatii`).send({ text: "clientul vrea marfa pe paleți" }).expect(201);
     await (await autentificaAgent(app, EMAIL.gestiune)).post(`/api/comenzi/${c1.comandaId}/observatii`).send({ text: "confirmat telefonic" }).expect(201);
     // agentul 2 nu e contul comenzii; Contabilitatea doar vede
@@ -223,8 +225,8 @@ describe("comenzile din oferta si lista comuna", () => {
     expect(d.body.comanda.notiteOferta.map((o: { text: string }) => o.text)).toEqual(["notiță de pe ofertă"]);
     expect(d.body.comanda.client.telefon).toBe("0730 000 499");
     // S22: Contabilitatea vede comanda, deci poate face retur (comanda din oferta); nimic altceva
-    expect(d.body.comanda.drepturi).toEqual({ logistic: false, detalii: false, livrare: false, alocare: false, bani: false, comision: false, retur: true, anuleazaRetur: false, notaPalet: false, livrareBilka: false, statusPalet: false, aviz: true, documente: true, fisaSoferului: false, locatie: false });
-    expect(d.body.comanda.istoric.filter((i: { tip: string }) => i.tip === "contact").map((i: { camp: string }) => i.camp).sort()).toEqual(["clientTelefon", "montatorTelefon"]);
+    expect(d.body.comanda.drepturi).toEqual({ logistic: false, detalii: false, livrare: false, alocare: false, bani: false, comision: false, retur: true, anuleazaRetur: false, notaPalet: false, livrareBilka: false, statusPalet: false, aviz: true, documente: true, fisaSoferului: false, locatie: false, ajustarePret: false, montator: false, recomandare: false });
+    expect(d.body.comanda.istoric.filter((i: { tip: string }) => i.tip === "contact").map((i: { camp: string }) => i.camp).sort()).toEqual(["clientTelefon", "montatorExecutie"]);
     expect(d.body.comanda.istoric.filter((i: { tip: string }) => i.tip === "facturare")).toHaveLength(3);
   });
 
@@ -259,7 +261,7 @@ describe("comenzile manuale (cap. 4b)", () => {
     expect(m1.status, JSON.stringify(m1.body)).toBe(201);
     expect(m1.body.comanda).toMatchObject({ numarComplet: "CM-0001", manuala: true, neidentificata: true, contAlocat: null, responsabil: { nume: "Test GESTIUNE" }, restLei: "14120.00", statusLogistic: "COMANDAT" });
     const admin1 = await autentificaAgent(app, EMAIL.admin1);
-    const m2 = await admin1.post("/api/comenzi").send({ client: { nume: "Dănuț S. — SC Acoperiș Expert SRL", telefon: "0730000502", localitate: "Panciu" }, rezumat: "Clasic 8017 mat 0,45 — 86,20 mp; accesorii 8017 mat", totalLei: "9440", avansLei: "2000", contAlocatId: idColab, montator: { nume: "montează el", telefon: null }, indicatiiLivrare: "ridică el de la depozit, vineri" });
+    const m2 = await admin1.post("/api/comenzi").send({ client: { nume: "Dănuț S. — SC Acoperiș Expert SRL", telefon: "0730000502", localitate: "Panciu" }, rezumat: "Clasic 8017 mat 0,45 — 86,20 mp; accesorii 8017 mat", totalLei: "9440", avansLei: "2000", contAlocatId: idColab, montator: { nume: "montează el", telefon: "0730000502" }, indicatiiLivrare: "ridică el de la depozit, vineri" });
     expect(m2.status, JSON.stringify(m2.body)).toBe(201);
     expect(m2.body.comanda).toMatchObject({ numarComplet: "CM-0002", manuala: true, neidentificata: false, contAlocat: { id: idColab }, firma: { id: firma1 }, restLei: "7440.00", livrare: { indicatii: "ridică el de la depozit, vineri", nume: "Test ADMINISTRATOR" } });
     // clientul a intrat in baza comuna
