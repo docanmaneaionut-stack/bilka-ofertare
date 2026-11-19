@@ -73,9 +73,9 @@ async function comandaDinOferta(agent: Agent, client = CLIENT, montator = "Gheor
   await agent.put(`/api/oferte/${id}/preturi`).send(preturiDinEtalon(e, rp.body.oferta.linii)).expect(200);
   await agent.put(`/api/oferte/${id}/montator`).send({ montatorNou: { nume: montator, telefon: "0740 111 222", tip: "MONTATOR" }, comisionRecomandareLei: "500" }).expect(200);
   await agent.put(`/api/oferte/${id}/status`).send({ status: "TRANSMISA" }).expect(200);
-  await agent.put(`/api/oferte/${id}/status`).send({ status: "DE_COMANDAT" }).expect(200);
+  await agent.put(`/api/oferte/${id}/status`).send({ status: "DE_COMANDAT", livrareBilka: { tip: "DEPOZIT" } }).expect(200);
   await agent.put(`/api/oferte/${id}/status`).send({ status: "AVANS_LUAT", avansLei: "5000" }).expect(200);
-  const r = await agent.put(`/api/oferte/${id}/status`).send({ status: "COMANDAT" });
+  const r = await agent.put(`/api/oferte/${id}/status`).send({ status: "COMANDAT", livrareBilka: { tip: "DEPOZIT" } });
   expect(r.status, JSON.stringify(r.body)).toBe(200);
   const c = await prisma.comanda.findUniqueOrThrow({ where: { ofertaId: id } });
   return { ofertaId: id, comandaId: c.id, numarComplet: `${c.serie}-${String(c.numar).padStart(4, "0")}` };
@@ -223,7 +223,7 @@ describe("comenzile din oferta si lista comuna", () => {
     expect(d.body.comanda.notiteOferta.map((o: { text: string }) => o.text)).toEqual(["notiță de pe ofertă"]);
     expect(d.body.comanda.client.telefon).toBe("0730 000 499");
     // S22: Contabilitatea vede comanda, deci poate face retur (comanda din oferta); nimic altceva
-    expect(d.body.comanda.drepturi).toEqual({ logistic: false, detalii: false, livrare: false, alocare: false, bani: false, comision: false, retur: true, anuleazaRetur: false, notaPalet: false, statusPalet: false, aviz: true, documente: true, fisaSoferului: false, locatie: false });
+    expect(d.body.comanda.drepturi).toEqual({ logistic: false, detalii: false, livrare: false, alocare: false, bani: false, comision: false, retur: true, anuleazaRetur: false, notaPalet: false, livrareBilka: false, statusPalet: false, aviz: true, documente: true, fisaSoferului: false, locatie: false });
     expect(d.body.comanda.istoric.filter((i: { tip: string }) => i.tip === "contact").map((i: { camp: string }) => i.camp).sort()).toEqual(["clientTelefon", "montatorTelefon"]);
     expect(d.body.comanda.istoric.filter((i: { tip: string }) => i.tip === "facturare")).toHaveLength(3);
   });

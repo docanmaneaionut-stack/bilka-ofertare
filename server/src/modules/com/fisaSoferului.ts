@@ -10,6 +10,7 @@ import { benzi } from "../ofe/documente/continut.js";
 import { randeazaPdf } from "../ofe/documente/pdf.js";
 import { esc, imagineDataUri, pagina, ro } from "../ofe/documente/sablon.js";
 import { includeProduse } from "../ofe/intrareMot.js";
+import { textLivrareBilka } from "../ofe/livrareBilka.js";
 import { includeAviz, spreAviz } from "./avize.js";
 import { EroareComanda, includeRand, rezumatIncasari } from "./comenzi.js";
 import { CSS_COMENZI, dataDoar, dataLocala, dataRoDinIso, telefonApelabil } from "./sablonComenzi.js";
@@ -52,6 +53,8 @@ export interface BlocFisa {
   // "accesorii standard 92 buc", "fixare și etanșare 16 art.", "sistem pluvial 107 buc"
   categorii: string[];
   livrare: { indicatii: string | null; data: string | null };
+  // S26a (M7): "Livrare Bilka — șantier: localitate · telefon" cand Bilka livreaza direct in santier
+  livrareBilka: string | null;
   montator: { nume: string; telefon: string | null } | null;
   restLei: string;
   statusLogistic: string;
@@ -110,6 +113,7 @@ export async function dateFisa(u: Utilizator, cerere: z.infer<typeof schemaFisa>
       coli,
       categorii,
       livrare: { indicatii: c.indicatiiLivrare, data: c.dataLivrarii ? dataDoar(c.dataLivrarii) : null },
+      livrareBilka: textLivrareBilka(c),
       montator: c.montatorNume ? { nume: c.montatorNume, telefon: c.montatorTelefon } : null,
       restLei: rezumatIncasari(c).restLei,
       statusLogistic: c.statusLogistic,
@@ -142,7 +146,7 @@ export function htmlFisa(f: DateFisa): { html: string; subsolStanga: string } {
   <div class="dlb">
     <span class="k">Adresa</span><span class="v">${esc(b.adresa ?? "—")}${b.locatieUrl ? ` &nbsp;·&nbsp; <a href="${esc(b.locatieUrl)}">locația pe hartă</a>` : ""}</span>
     <span class="k">Marfa</span><span class="v">${esc(b.rezumat)}${sub ? `<br><span class="sub">${esc(sub)}</span>` : ""}</span>
-    <span class="k">Livrare</span><span class="v">${esc(b.livrare.indicatii ?? "")}${b.livrare.data ? `${b.livrare.indicatii ? " · " : ""}ziua: ${dataRoDinIso(b.livrare.data)}` : ""}${!b.livrare.indicatii && !b.livrare.data ? "—" : ""}</span>
+    <span class="k">Livrare</span><span class="v">${esc(b.livrare.indicatii ?? "")}${b.livrare.data ? `${b.livrare.indicatii ? " · " : ""}ziua: ${dataRoDinIso(b.livrare.data)}` : ""}${!b.livrare.indicatii && !b.livrare.data ? "—" : ""}${b.livrareBilka ? `<br><b>${esc(b.livrareBilka)}</b>` : ""}</span>
     <span class="k">Montator</span><span class="v">${b.montator ? `${esc(b.montator.nume)}${b.montator.telefon ? ` &nbsp;·&nbsp; ${telefonApelabil(b.montator.telefon)}` : ""}` : "—"}</span>
     <span class="k">De încasat</span><span class="v big">${ro(b.restLei)} lei</span>
     <span class="k">Predat</span><span class="v"><span class="cb"></span> marfă &nbsp;&nbsp; <span class="cb"></span> bani &nbsp;&nbsp; <span class="cb"></span> aviz semnat</span>

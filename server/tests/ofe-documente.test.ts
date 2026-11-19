@@ -270,7 +270,7 @@ describe("rezultatul salvat, variantele, permisiunile si 'marcheaza ca transmis'
     const agent = await autentificaAgent(app, EMAIL.agent1);
     const id = await ofertaNoua(agent);
     await construieste(agent, id, citesteEtalon("E01"));
-    await agent.put(`/api/oferte/${id}/status`).send({ status: "COMANDAT" }).expect(200);
+    await agent.put(`/api/oferte/${id}/status`).send({ status: "COMANDAT", livrareBilka: { tip: "DEPOZIT" } }).expect(200);
     const salvat = await prisma.oferta.findUniqueOrThrow({ where: { id }, select: { rezultatMotor: true } });
     const r = salvat.rezultatMotor as { totaluri: Record<string, string> };
     r.totaluri.documentTotalLei = "12345.67";

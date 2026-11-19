@@ -1,6 +1,6 @@
 # Fișa de modul — OFERTARE (OFE + DOC)
 
-Versiunea 1.3 · 30 octombrie 2026 (MODIFICARE la cap. 7 — lista implicită a holțșuruburilor: doar cele colorate, în ordinea 35 / 20 / 55 / 70 lemn apoi 19 / 35 metal; zincatele sub „+ Adaugă"; la învelitorile plate, șuruburile Retro Panel în listă — observațiile lui Ionuț din 30.10.2026, la prima verificare a formularului Bilka) · v1.2 · 28 octombrie 2026 (MODIFICARE la 3.5, cap. 6 și cap. 8 — **formularele Bilka**: șase locuri de pluvial pe formular (finisaj × dimensiune, o culoare pe loc), o singură variantă de șipcă pe formular, sistemele și șipcile în plus umplu întâi formularele existente; precizarea lui Ionuț din 28.10.2026, după prima verificare în ecran — cerere MODIFICARE M2 la motor) · v1.1 · 23 octombrie 2026 (MODIFICARE la cap. 11 și 13 — cele două cursuri, totalul în lei, prețul fix „achiziție + x %"; completare la cap. 19 — vânzările colaboratorilor, la 11.3 — procedura grupei, la 11.8 — totalul în lei la abatere, la cap. 9 — liniile zonei B integral manuale, cu UM și opțiuni pe linie (27.10); deciziile lui Ionuț din 23 și 27.10.2026 pe ofertele-model E01–E08, `docs/ETALON.md`) · Status: ÎNCHISĂ pentru oferta clasică (capitolele 0–16, 2b, 19, 21). Rămân deschise, deliberat: 17 Ferestre (când există listele), 18 Offline (după punerea în funcțiune), 20 Pazie și Gard (după oferta clasică), 22 Aviz de marfă (odată cu fișa COMENZI). Se reia doar printr-o cerere explicită de MODIFICARE.
+Versiunea 1.4 · 17 noiembrie 2026 (MODIFICĂRI M5–M8 din testarea în paralel, text complet în `MODIFICARI-S26.md`: cap. 2 — telefonul opțional la ofertă, obligatoriu la „Comandat”; cap. 12 — recomandarea și montatorul devin două rubrici; cap. 14 — prețul de vânzare ajustabil pe comandă de Administrator, cu motiv și istoric, prin ținta motorului; cap. 16 — livrarea de la Bilka la depozit sau în șantier, aleasă la „De comandat”) · v1.3 · 30 octombrie 2026 (MODIFICARE la cap. 7 — lista implicită a holțșuruburilor: doar cele colorate, în ordinea 35 / 20 / 55 / 70 lemn apoi 19 / 35 metal; zincatele sub „+ Adaugă"; la învelitorile plate, șuruburile Retro Panel în listă — observațiile lui Ionuț din 30.10.2026, la prima verificare a formularului Bilka) · v1.2 · 28 octombrie 2026 (MODIFICARE la 3.5, cap. 6 și cap. 8 — **formularele Bilka**: șase locuri de pluvial pe formular (finisaj × dimensiune, o culoare pe loc), o singură variantă de șipcă pe formular, sistemele și șipcile în plus umplu întâi formularele existente; precizarea lui Ionuț din 28.10.2026, după prima verificare în ecran — cerere MODIFICARE M2 la motor) · v1.1 · 23 octombrie 2026 (MODIFICARE la cap. 11 și 13 — cele două cursuri, totalul în lei, prețul fix „achiziție + x %"; completare la cap. 19 — vânzările colaboratorilor, la 11.3 — procedura grupei, la 11.8 — totalul în lei la abatere, la cap. 9 — liniile zonei B integral manuale, cu UM și opțiuni pe linie (27.10); deciziile lui Ionuț din 23 și 27.10.2026 pe ofertele-model E01–E08, `docs/ETALON.md`) · Status: ÎNCHISĂ pentru oferta clasică (capitolele 0–16, 2b, 19, 21). Rămân deschise, deliberat: 17 Ferestre (când există listele), 18 Offline (după punerea în funcțiune), 20 Pazie și Gard (după oferta clasică), 22 Aviz de marfă (odată cu fișa COMENZI). Se reia doar printr-o cerere explicită de MODIFICARE.
 Se sprijină pe: FISA-CONTURI (cine ce poate), FISA-CATALOG-PRETURI (ce produse, ce prețuri, cascada model → finisaj → grosime → culoare).
 
 Fiecare capitol are statusul lui: **PROPUS** (schița mea din descrierea ta) → **ÎNCHIS** (ok-ul tău). Un capitol închis nu se mai reia.
@@ -80,6 +80,8 @@ Un capitol per mesaj: îmi descrii cum vrei să meargă (cum ai făcut la contur
 **Decizii vechi păstrate:** prețurile fixe se introduc în lei sau euro, cu sau fără TVA, și sunt normalizate de soft; tabelul de facturare are prețuri nete, fără discount afișat.
 
 ## Capitolul 2 — Clientul — ÎNCHIS (11.09.2026)
+
+> **MODIFICARE M6 (17.11.2026, `MODIFICARI-S26.md`)**: telefonul **nu mai e obligatoriu la ofertă** (obligatorii: numele și adresa lucrării); devine **obligatoriu la „Comandat”** și la formularul Bilka cu livrare în șantier (M7). Deduplicarea rămâne pe telefon: clientul fără telefon e client nou; la completarea ulterioară a unui telefon existent, softul propune legarea la clientul existent. Textul de mai jos rămâne valabil în rest.
 
 - **Câmpuri obligatorii**: nume, telefon, **adresa** (localitatea / adresa lucrării — e adresa cu care se lucrează: livrare, locația pe WhatsApp, gestiune). Opționale: e-mail, observații.
 - **Datele de facturare** (când diferă de client: firmă, CUI, adresă de facturare) **nu** se cer la ofertă; se completează după confirmarea comenzii, în tabelul de comenzi (fișa COMENZI).
@@ -280,6 +282,8 @@ Cazul frecvent: două-trei măsurători la vecini sau rude care „fac împreun�
 
 ## Capitolul 12 — Montatorul și recomandarea — ÎNCHIS (18.09.2026)
 
+> **MODIFICARE M8 (17.11.2026, `MODIFICARI-S26.md`)**: **două rubrici** distincte — **Recomandare — comision** (persoana care a adus lucrarea + comisionul + achitat → tabelul de vânzări) și **Montator (execuție)** (nume + telefon → tabelul de comenzi, fișa șoferului; nu intră în vânzări; modificabil și de Gestiune). Butoane „același ca recomandarea” / „clientul este montatorul”. Lista rămâne a fiecărui agent, cu tipul „colaborator” în plus. Datele existente nu se migrează: câmpul de azi devine „Recomandare”, montatorul de execuție e gol la ofertele vechi. Comisionul: regulile de mai jos, neschimbate.
+
 - **Lista de montatori și constructori**: fiecare agent și-o populează singur; o vede el și oricare dintre Administratori. O persoană are **nume și telefon obligatorii**, localitatea opțională, tipul (montator / constructor). Autocompletare la ofertă.
 - **Recomandarea pe ofertă**: persoana care a recomandat (din listă sau nouă) și **comisionul, ca sumă fixă** — indiferent cum o calculează agentul sau Administratorul. Se poate completa **oricând** (la ofertă, la acceptare, la comandă). **Cine recomandă ia comisionul**; în situații compuse se notează comisionul total, iar împărțirea o fac agentul sau Administratorul între ei. Rostul notării: să nu se uite plata și să intre în calculul comisionului agentului.
 - Comisionul se modifică de cine a făcut oferta și de Administratorul lui, cu **asterisc roșu și istoric**; **„achitat"** îl bifează doar Administratorul; Gestiunea vede sumele (adesea plătește ea). În tabelul de vânzări: „de unde e recomandarea", „comision recomandare", „achitat / neachitat".
@@ -345,6 +349,8 @@ FGO are un API public, cu mediu de test separat de producție: facturile se emit
 
 ## Capitolul 14 — Statusuri, istoric, intervenții — ÎNCHIS (13.10.2026)
 
+> **MODIFICARE M5 (17.11.2026, `MODIFICARI-S26.md`)**: după „Comandat”, **prețul de vânzare al comenzii se poate ajusta doar de Administratorul firmei**, cu suma nouă (total cu TVA, lei) și **motiv obligatoriu**, cu istoric și asterisc roșu, **cât timp comanda nu e încasată integral**. Ajustarea rulează motorul neschimbat pe intrarea înghețată, cu ținta = suma nouă (garda „nu sub achiziție” rămâne); rezultatul ajustat alimentează comanda, tabelul de vânzări, tabelul de facturare, restul de încasat și retururile ulterioare. Produsele, cantitățile, modul de prezentare și oferta rămân înghețate.
+
 **Statusurile ofertei** (definite 13.10.2026; opt, cu „Neacceptată" în oglinda lui „Acceptată"):
 1. **În lucru** — oferta se construiește; nimic nu e trimis clientului; fără istoric.
 2. **Transmisă** — oferta a fost comunicată clientului (verbal sau în scris); de aici începe istoricul.
@@ -378,6 +384,8 @@ FGO are un API public, cu mediu de test separat de producție: facturile se emit
 **Pe telefon:** aceeași listă, cu coloanele esențiale (număr, client, total, status) și restul la deschiderea rândului.
 
 ## Capitolul 16 — Trecerea în comandă — ÎNCHIS (13.10.2026)
+
+> **MODIFICARE M7 (17.11.2026, `MODIFICARI-S26.md`)**: la trecerea în **„De comandat”** softul cere **livrarea de la Bilka**: *la depozitul nostru* (implicit; în formular celulele de localitate și telefon rămân goale) sau *direct în șantier — livrare Bilka* (localitatea, precompletată din adresa lucrării, și telefonul de contact intră în formular). Alegerea stă pe ofertă, trece pe comandă la „Comandat” ca text vizibil („Livrare Bilka — șantier: …”), schimbabilă pe comandă de Administrator / Gestiune cu istoric; statusurile logistice neschimbate. Telefonul clientului: obligatoriu la „Comandat” (M6).
 
 La statusul **Comandat**, oferta creează **rândul de comandă** (numărul comenzii = numărul ofertei). Toată lumea vede același lucru, cât mai bine structurat.
 

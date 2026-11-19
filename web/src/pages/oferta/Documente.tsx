@@ -63,12 +63,17 @@ export function Documente({ oferta, reincarca, mentiuni, onSchimbare }: { oferta
     }
   }
 
+  // S26a (M7): livrarea de la Bilka s-a schimbat dupa generare si nu exista inca un formular nou
+  const formulare = documente.filter((d) => d.tip === "FORMULAR_BILKA");
+  const deRegenerat = formulare.length > 0 && formulare.every((d) => d.inainteDeSchimbareaLivrarii);
+
   const marime = (n: number) => (n > 1024 * 1024 ? `${(n / 1024 / 1024).toFixed(1)} MB` : `${Math.ceil(n / 1024)} KB`);
 
   return (
     <section className="panou" id="documente">
       <h2>Documente (PDF și formulare Bilka)</h2>
       {eroare && <Mesaj tip="eroare">{eroare}</Mesaj>}
+      {deRegenerat && <Mesaj tip="avertizare">Livrarea de la Bilka s-a schimbat după generarea formularelor: regenerează-le din „Formulare Bilka”, sus. Cele vechi rămân în listă, marcate.</Mesaj>}
       <div className="actiuni" style={{ justifyContent: "flex-start", flexWrap: "wrap" }}>
         {(["OFERTA", "REZUMAT", "DETALIATA", "TABEL_FACTURARE"] as TipDocument[]).map((tip) => {
           const permis = tipuri.includes(tip);
@@ -108,6 +113,11 @@ export function Documente({ oferta, reincarca, mentiuni, onSchimbare }: { oferta
                       {d.nume} · {marime(d.marime)}
                       {d.pagini ? ` · ${d.pagini} pag.` : ""}
                     </div>
+                    {d.inainteDeSchimbareaLivrarii && (
+                      <div className="mic" style={{ color: "var(--avertizare-text)" }}>
+                        ⚠ generat înainte de schimbarea livrării
+                      </div>
+                    )}
                     {d.avertizari && (
                       <div className="mic" style={{ color: "var(--avertizare-text)", whiteSpace: "pre-line" }}>
                         ⚠ {d.avertizari}

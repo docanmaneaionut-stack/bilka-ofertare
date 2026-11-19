@@ -1,6 +1,6 @@
 # Fișa de modul — COMENZI (COM: comenzi, livrări, încasări, retururi)
 
-Versiunea 1.2 · 16 octombrie 2026 · Status: ÎNCHISĂ (capitolele 1–9; un singur punct deschis, la cap. 3, nu blochează). Se reia doar printr-o cerere explicită de MODIFICARE.
+Versiunea 1.3 · 17 noiembrie 2026 (MODIFICĂRI M5, M7, M8 — `MODIFICARI-S26.md`: prețul de vânzare ajustabil pe comandă de Administrator, cu motiv; livrarea de la Bilka la depozit / în șantier, ca text pe comandă; coloana Montator = montatorul de execuție, recomandarea separat, în vânzări) · v1.2 · 16 octombrie 2026 · Status: ÎNCHISĂ (capitolele 1–9; un singur punct deschis, la cap. 3, nu blochează). Se reia doar printr-o cerere explicită de MODIFICARE.
 Se sprijină pe: FISA-CONTURI (cine ce poate), FISA-OFERTARE cap. 16 (ce intră automat în comandă), cap. 2b (lucrări și completări), cap. 19 (tabelul de vânzări), cap. 13 (documentele).
 Machetă de ecran: `docs/design/ecran-tabel-comenzi.png` (+ `.pdf`, `.html`).
 
@@ -22,6 +22,8 @@ Machetă de ecran: `docs/design/ecran-tabel-comenzi.png` (+ `.pdf`, `.html`).
 
 ## Capitolul 1 — Tabelul de comenzi — ÎNCHIS (13.10.2026; machetă acceptată, cu completările lui Ionuț: responsabil, comenzi manuale, ordine)
 
+> **MODIFICĂRI 17.11.2026 (`MODIFICARI-S26.md`)**: **M7** — coloana Livrare și caseta „Livrare și facturare” arată, când e cazul, „Livrare Bilka — șantier: localitate · telefon” (alegerea făcută la „De comandat”, schimbabilă aici de Administrator / Gestiune, cu istoric; statusurile neschimbate). **M8** — coloana **Montator** = montatorul de execuție (nume, telefon; modificabil și de Gestiune); comisionul și „achitat” rămân la **recomandare** (cap. 4). **M5** — butonul „Ajustează prețul de vânzare” în rândul desfășurat, doar Administratorul firmei, cu motiv, cât comanda nu e încasată integral.
+
 **Capul paginii:** „Comenzi" cu numărătoarea (active · de recepționat · neîncasate complet · comisioane neachitate · neidentificate); căutare într-o singură căsuță (client, telefon, număr, localitate, montator); butoanele „🚚 Fișa șoferului (n)" (activ când sunt bifate comenzi) și „+ Comandă manuală". Fiecare rând are o **căsuță de selecție** pentru fișa șoferului.
 **Filtre:** statusul logistic ca șir de butoane (Toate · Comandat · Recepționat · Recepționat parțial · Livrat); încasarea (toate / neîncasat / parțial / încasat); perioada; agentul (Administrator) și firma (Contabilitate, Gestiune, Admin general, după setarea de acces la firme); „Comisioane neachitate (n)"; „Arată și comenzile închise".
 **Coloanele (un rând = o comandă):** Nr. și data comenzii, cu **responsabilul** dedesubt — contul care a trimis comanda la furnizor: „trimisă de Ionuț B."; la comenzile manuale: „adăugat de Maria P. pentru: Dănuț S. (colaborator)" (decis 13.10.2026) · Client (nume, localitate, telefon; la completări: „completare la IB-0147") · **Rezumat comandă** (linia generată, cap. 16) · Montator (nume, telefon; comisionul și bifa „achitat") · Total (lei mare, euro dedesubt) · **Încasat** (suma încasată, restul, eticheta neîncasat / încasat parțial / încasat) · Status logistic (etichetă; la „Recepționat parțial" asteriscul roșu și nota lipsurilor) · Livrare (indicațiile; după livrare, data) · acțiuni: **Deschide ▾** (desfășoară rândul), **Doc. ▾**, **⋯**.
@@ -42,6 +44,8 @@ Inițial **Comandat**; → **Recepționat** sau **Recepționat parțial** (mai m
 *Punct deschis (nu blochează; se decide când apar ferestrele):* o comandă de la mai mulți furnizori (Bilka + Fakro) — un singur rând cu „Recepționat parțial" până vine tot, sau rânduri per furnizor.
 
 ## Capitolul 4 — Comisioanele — ÎNCHIS (reguli din CONTURI și OFERTARE 12)
+
+> **MODIFICARE M8 (17.11.2026)**: comisionul e al **recomandării** (persoana care a adus lucrarea), nu al montatorului de execuție; cele două pot coincide, nu obligatoriu. Regulile de sumă, istoric și „achitat” rămân.
 
 Comisionul montatorului / al recomandării: sumă fixă, cu istoric (asterisc roșu, „Vezi istoric"); bifa **„achitat"** o pune Administratorul; Gestiunea vede sumele (adesea plătește ea). Comisionul agentului se lucrează în tabelul de vânzări (OFERTARE cap. 19), nu pe comandă.
 
@@ -74,6 +78,8 @@ Telefoanele: puse în PDF ca legături `tel:` (se apelează cu o atingere din Wh
 Din comandă (meniul „Doc. ▾") se generează sau se deschid: **formularele Bilka** (un formular per pachet / cheie de culoare, unul per culoare de pluvial, unul per model de șipcă — OFERTARE cap. 3.5; trimise pe e-mail la Bilka, cu data trimiterii notată), **oferta detaliată** (cu panotaj și coloana „Primit"), **tabelul de facturare** (în lei), **nota de retur** (cap. 5), **avizul de marfă** (OFERTARE cap. 22 — se proiectează la construcție pe modelul detaliatei), **fișa șoferului** (cap. 4c, din selecția de comenzi) și, când există cont FGO cu API, **„Emite factura în FGO"** (OFERTARE cap. 13.9). Documentele generate pentru client rămân în istoricul comenzii; fișa șoferului nu.
 
 ## Capitolul 7 — Tabelul de vânzări
+
+> **MODIFICĂRI 17.11.2026**: **M5** — prețul de vânzare al unei comenzi ajustate se preia din rezultatul ajustat (costul neschimbat, adaosul recalculat; asterisc roșu, „Vezi istoric”). **M8** — „Sursa recomandării” și comisionul vin din rubrica Recomandare; montatorul de execuție nu apare în tabel.
 Închis în OFERTARE cap. 19; completări din această fișă: comenzile manuale intră fără sume, completate de Administratorul contului alocat (cap. 4b); retururile recalculează adaosul lucrării (cap. 5).
 
 ## Capitolul 8 — Evidența paleților — ÎNCHIS (16.10.2026)

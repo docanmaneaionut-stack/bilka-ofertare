@@ -2,6 +2,7 @@ import type { ErrorRequestHandler } from "express";
 import { ZodError, type z } from "zod";
 import { Prisma } from "@prisma/client";
 import { EroareImport } from "../modules/imp/analiza.js";
+import { EroareClient } from "../modules/ofe/clienti.js";
 
 // textul ridicat de trigger-ul de imutabilitate din baza (migrarea 3)
 const MESAJ_ARHIVATA = "arhivata nu se modifica";
@@ -26,6 +27,7 @@ const ETICHETE: Record<string, string> = {
   note: "Note",
   mentiuni: "Mențiuni",
   status: "Status",
+  livrareBilka: "Livrarea de la Bilka",
   avansLei: "Avans (lei)",
   comisionRecomandareLei: "Comision recomandare (lei)",
   montatorId: "Montator",
@@ -145,6 +147,12 @@ export const gestioneazaErori: ErrorRequestHandler = (err, _req, res, _next) => 
   if (err instanceof ZodError) {
     const campuri = campuriDinZod(err);
     res.status(400).json({ eroare: campuri.map((c) => `${c.eticheta}: ${c.mesaj}`).join("; ") || "Date invalide", campuri });
+    return;
+  }
+
+  // S26a (M6): refuzul legat de client - campul si motivul, plus propunerea de legare cand e cazul
+  if (err instanceof EroareClient) {
+    res.status(err.status).json({ eroare: err.message, campuri: err.campuri, ...(err.propunereLegare ? { propunereLegare: err.propunereLegare } : {}) });
     return;
   }
 

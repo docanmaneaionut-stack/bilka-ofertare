@@ -1,6 +1,7 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
-import { apiDocumente, apiFormulareBilka, apiOferte, apiOptiuni, apiPreturi, apiStatus, dataRo, ETICHETA_STATUS, type ClientDate, type OfertaDetaliu as Oferta, type SursaPreluare, type TipDocument } from "../api";
+import { apiDocumente, apiFormulareBilka, apiOferte, apiOptiuni, apiPreturi, apiStatus, dataRo, EroareCerere, ETICHETA_STATUS, type Client, type ClientDate, type OfertaDetaliu as Oferta, type SursaPreluare, type TipDocument } from "../api";
+import { DialogLivrareBilka } from "../components/DialogLivrareBilka";
 import { clientGol, dinClient, FormularClient } from "../components/FormularClient";
 import { MeniuActiuni } from "../components/MeniuActiuni";
 import { Ajutor, Camp, eroareCamp, Mesaj, textEroare } from "../components/ui";
@@ -42,6 +43,12 @@ export function OfertaDetaliu() {
   const [lucru, setLucru] = useState<string | null>(null);
   const [reincarcaIstoric, setReincarcaIstoric] = useState(0);
   const navigate = useNavigate();
+  // S26a (M6): propunerea de legare - telefonul completat e deja al unui client existent;
+  // clientul ales din sugestii se leaga direct (alegerea lui e raspunsul)
+  const [propunere, setPropunere] = useState<Client | null>(null);
+  const [alesExistent, setAlesExistent] = useState(false);
+  // S26a (M7): generarea formularului fara alegerea livrarii deschide dialogul
+  const [dialogLivrare, setDialogLivrare] = useState(false);
 
   // S16b: formularele de comanda Bilka - un .xlsm per formular, de la "De comandat" si la
   // "Comandat"; raman in panoul "Documente", avertizarile (produse fara loc) se arata aici
@@ -53,10 +60,14 @@ export function OfertaDetaliu() {
     void formulareBilka();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [cereFormulare, oferta]);
-  async function formulareBilka() {
+  async function formulareBilka(livrareAleasa = false) {
     if (!oferta) return;
     setEroare(null);
     setAvertizariFormulare([]);
+    if (oferta.status === "DE_COMANDAT" && !oferta.livrareBilka && !livrareAleasa) {
+      setDialogLivrare(true);
+      return;
+    }
     setLucru("formulare");
     try {
       const r = await apiFormulareBilka.genereaza(oferta.id);
@@ -65,7 +76,8 @@ export function OfertaDetaliu() {
       setReincarcaIstoric((n) => n + 1);
       document.getElementById("documente")?.scrollIntoView({ behavior: "smooth" });
     } catch (err) {
-      setEroare(textEroare(err));
+      if (err instanceof EroareCerere && err.campuri.some((c) => c.camp === "livrareBilka")) setDialogLivrare(true);
+      else setEroare(textEroare(err));
     } finally {
       setLucru(null);
     }
@@ -116,6 +128,8 @@ export function OfertaDetaliu() {
     setNote(o.note ?? "");
     setAdresaLucrarii(o.adresaLucrarii ?? "");
     setLocalitate(o.localitate ?? "");
+    setPropunere(null);
+    setAlesExistent(false);
     setReincarcaIstoric((n) => n + 1);
   }
 
@@ -144,22 +158,29 @@ export function OfertaDetaliu() {
     }
   }
 
-  async function salveaza(e: FormEvent) {
-    e.preventDefault();
+  // "legare" = raspunsul la propunerea de legare (antetul e deja salvat atunci)
+  async function salveaza(e: FormEvent | null, legare?: "leaga" | "pastreaza") {
+    e?.preventDefault();
     if (!oferta) return;
     setEroare(null);
     setEroareFormular(null);
     setMesaj(null);
+    setPropunere(null);
     setSeSalveaza(true);
     try {
       const m = mentiuni.trim() || null;
-      await apiOferte.antet(oferta.id, { data, sursaClient: sursaClient || null, note: note || null, adresaLucrarii: adresaLucrarii || null, localitate: localitate || null, mentiuni: m });
-      const { oferta: dupa } = await apiOferte.client(oferta.id, { ...client, mentiuni: m } as ClientDate);
+      if (!legare) await apiOferte.antet(oferta.id, { data, sursaClient: sursaClient || null, note: note || null, adresaLucrarii: adresaLucrarii || null, localitate: localitate || null, mentiuni: m });
+      const raspuns = legare ?? (alesExistent ? "leaga" : undefined);
+      const { oferta: dupa } = await apiOferte.client(oferta.id, { ...client, mentiuni: m, ...(raspuns ? { legare: raspuns } : {}) });
       preia(dupa);
       setMesaj("Antetul și clientul au fost salvate.");
     } catch (err) {
-      setEroare(textEroare(err));
-      setEroareFormular(err);
+      if (err instanceof EroareCerere && err.propunereLegare) {
+        setPropunere(err.propunereLegare);
+      } else {
+        setEroare(textEroare(err));
+        setEroareFormular(err);
+      }
     } finally {
       setSeSalveaza(false);
     }
@@ -183,6 +204,11 @@ export function OfertaDetaliu() {
           <h1 style={{ marginBottom: 4 }}>
             {oferta.numarComplet}
             {oferta.versiune > 1 ? ` · varianta ${oferta.versiune}` : ""} <span className={`status-oferta ${oferta.status}`}>{ETICHETA_STATUS[oferta.status]}</span>
+            {!oferta.client.telefon && (
+              <span className="eticheta-fara-telefon" title="clientul n-are telefon; se completează înainte de „Comandat”">
+                fără telefon
+              </span>
+            )}
           </h1>
           <span className="text-secundar">
             {dataRo(oferta.data)} · {oferta.firma.denumire} · {oferta.cont.nume}
@@ -251,7 +277,30 @@ export function OfertaDetaliu() {
         </div>
       )}
 
-      <Statusuri oferta={oferta} onOferta={preia} mentiuni={mentiuni} />
+      <Statusuri
+        oferta={oferta}
+        onOferta={preia}
+        mentiuni={mentiuni}
+        onEroareClient={(e) => {
+          setEroareFormular(e);
+          document.getElementById("client")?.scrollIntoView({ behavior: "smooth", block: "center" });
+        }}
+      />
+      {dialogLivrare && (
+        <DialogLivrareBilka
+          localitateImplicita={oferta.localitate ?? oferta.client.localitate}
+          telefonImplicit={oferta.client.telefon}
+          etichetaConfirmare="Salvează și generează formularele"
+          nota="Formularele Bilka se generează după alegerea livrării."
+          onConfirma={async (alegere) => {
+            const { oferta: dupa } = await apiStatus.livrareBilka(oferta.id, alegere, mentiuni.trim() || null);
+            preia(dupa);
+            setDialogLivrare(false);
+            await formulareBilka(true);
+          }}
+          onRenunta={() => setDialogLivrare(false)}
+        />
+      )}
 
       {(oferta.versiuni?.length ?? 0) > 1 && (
         <section className="panou">
@@ -406,7 +455,7 @@ export function OfertaDetaliu() {
           </div>
         </section>
 
-        <section className="panou">
+        <section className="panou" id="client">
           <h2>
             Client{" "}
             <Link className="mic" to={`/clienti/${oferta.client.id}`} style={{ fontWeight: 400 }}>
@@ -414,12 +463,41 @@ export function OfertaDetaliu() {
             </Link>
           </h2>
           {oferta.poateModifica ? (
-            <FormularClient client={client} onSchimba={setClient} onAlegeExistent={(cl) => setClient(dinClient(cl))} eroare={eroareFormular} prefix="" />
+            <FormularClient
+              client={client}
+              onSchimba={(cl) => {
+                setClient(cl);
+                setAlesExistent(false);
+              }}
+              onAlegeExistent={(cl) => {
+                setClient(dinClient(cl));
+                setAlesExistent(true);
+              }}
+              eroare={eroareFormular}
+              prefix=""
+            />
           ) : (
             <p>
-              <strong>{oferta.client.nume}</strong> · {oferta.client.telefon} · {oferta.client.adresa}
+              <strong>{oferta.client.nume}</strong> · {oferta.client.telefon ?? "fără telefon"} · {oferta.client.adresa}
               {oferta.client.localitate ? `, ${oferta.client.localitate}` : ""}
             </p>
+          )}
+          {propunere && (
+            <Mesaj tip="avertizare">
+              <strong>Este același client?</strong> Telefonul e deja al clientului <Link to={`/clienti/${propunere.id}`}>{propunere.nume}</Link>
+              {propunere.localitate ? ` (${propunere.localitate})` : ""} · {propunere.telefon}.
+              <div className="actiuni" style={{ justifyContent: "flex-start", marginTop: 6, flexWrap: "wrap" }}>
+                <button className="buton mic" type="button" disabled={seSalveaza} onClick={() => void salveaza(null, "leaga")}>
+                  Da — leagă oferta de clientul existent
+                </button>
+                <button className="buton secundar mic" type="button" disabled={seSalveaza} onClick={() => void salveaza(null, "pastreaza")}>
+                  Nu — e alt client, păstrează-l pe cel nou
+                </button>
+                <button className="buton secundar mic" type="button" onClick={() => setPropunere(null)}>
+                  Renunță
+                </button>
+              </div>
+            </Mesaj>
           )}
         </section>
 
@@ -463,6 +541,8 @@ export function OfertaDetaliu() {
         <ul>
           <li>Statusurile se pun în orice ordine, cu revenire, toate cu istoric; doar „Comandat” e ireversibil și îngheață produsele, cantitățile și prețurile. „Avans luat” cere suma; „Acceptată” face varianta curentă.</li>
           <li>Istoricul pornește la „Transmisă”: fiecare modificare (status, produs, cantitate, preț, sumă, client, antet) se notează cu cine, când, înainte / după și mențiunile scrise sus. Sumele modificate poartă asteriscul roșu.</li>
+          <li>Telefonul clientului e opțional la ofertă și obligatoriu la „Comandat”. Când completezi un telefon care e deja al altui client, softul întreabă dacă e același client: „Da” leagă oferta de el și îi actualizează fișa; „Nu” păstrează clientul nou.</li>
+          <li>La „De comandat” alegi livrarea de la Bilka: la depozitul nostru (formularul pleacă fără localitate și telefon) sau direct în șantier (cu localitatea și telefonul de contact). Alegerea se poate schimba până la „Comandat”; după aceea, de pe comandă.</li>
           <li>Numărul, firma, agentul și cursurile sunt fixate la salvare; cât e „În lucru”, cursurile se reîmprospătează din zona de prețuri.</li>
           <li>Meniul ⋯: copiază oferta, creează variantă, completare, legare ca completare, preia prețurile în altă ofertă, istoric, notițe și atașamente.</li>
           <li>„PDF ▾” generează documentul (ofertă, rezumat, ofertă detaliată, tabel de facturare) și îl deschide; fiecare generare rămâne în panoul „Documente”, de unde se marchează ca transmis.</li>

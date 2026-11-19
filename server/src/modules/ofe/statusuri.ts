@@ -2,11 +2,13 @@ import { Prisma, type StatusOferta, type Utilizator } from "@prisma/client";
 import { z } from "zod";
 import { ZodError } from "zod";
 import { prisma } from "../../db/prisma.js";
+import type { CampInvalid } from "../../middleware/erori.js";
 import { calculeazaOferta } from "../mot/calcul.js";
 import { finisajScurt, numarRal, numeModel } from "../mot/pachete.js";
 import type { RezultatOferta } from "../mot/tipuri.js";
 import { includeProduse, intrareMot, type OfertaCuProduse } from "./intrareMot.js";
 import { scrieIstoric } from "./istoric.js";
+import { aceeasiLivrareBilka, descriereLivrareBilka, ETICHETA_LIVRARE_BILKA, MESAJ_FARA_LIVRARE_BILKA, schemaLivrareBilka, valoriLivrareBilka } from "./livrareBilka.js";
 
 // Statusurile ofertei (FISA-OFERTARE cap. 14; FISA-CONTURI §3-4): cele 8, in orice
 // ordine, cu revenire, totul cu istoric; doar "Comandat" e ireversibil. "Avans
@@ -15,6 +17,10 @@ import { scrieIstoric } from "./istoric.js";
 // cantitatile si preturile, salveaza rezultatul complet al motorului si creeaza
 // randul de comanda minim. Le schimba cine a facut oferta si Administratorul
 // firmei (verificat de ruta).
+//
+// S26a: MODIFICAREA M6 - "Comandat" cere telefonul clientului (409 cu campul si motivul);
+// MODIFICAREA M7 - "De comandat" si "Comandat" cer alegerea livrarii de la Bilka (trimisa odata cu
+// statusul sau facuta deja pe oferta; 409 cu campul cand lipseste); la "Comandat" alegerea trece pe comanda.
 
 export const STATUSURI: StatusOferta[] = ["IN_LUCRU", "TRANSMISA", "DE_REVIZIONAT", "ACCEPTATA", "NEACCEPTATA", "AVANS_LUAT", "DE_COMANDAT", "COMANDAT"];
 export const ETICHETA_STATUS: Record<StatusOferta, string> = {
@@ -33,13 +39,18 @@ export const schemaStatus = z.object({
   status: z.enum(STATUSURI as [StatusOferta, ...StatusOferta[]]),
   avansLei: suma.nullish(),
   mentiuni: z.string().trim().max(2000).nullish(),
+  // S26a (M7): unde livreaza Bilka - la "De comandat" / "Comandat"
+  livrareBilka: schemaLivrareBilka.nullish(),
 });
+
+export const MESAJ_FARA_TELEFON = "Telefonul clientului lipsește — completează-l înainte de comandă.";
 
 export class EroareStatus extends Error {
   constructor(
     message: string,
     public status = 409,
     public motive: string[] = [],
+    public campuri: CampInvalid[] = [],
   ) {
     super(message);
   }
@@ -78,6 +89,16 @@ export async function schimbaStatus(ofertaId: string, date: z.infer<typeof schem
   if (date.status === "AVANS_LUAT" && date.avansLei === undefined) throw new EroareStatus("La „Avans luat” se completează suma avansului (poate fi 0)", 400);
   if (date.avansLei !== undefined && date.avansLei !== null && Number(date.avansLei.replace(",", ".")) < 0) throw new EroareStatus("Avansul nu poate fi negativ", 400);
 
+  // S26a: ce lipseste pentru "De comandat" / "Comandat", pe campuri (regula BUG-4)
+  const cuLivrare = date.status === "DE_COMANDAT" || date.status === "COMANDAT";
+  const livrareVeche = { livrareBilka: o.livrareBilka, livrareBilkaLocalitate: o.livrareBilkaLocalitate, livrareBilkaTelefon: o.livrareBilkaTelefon };
+  const livrareNoua = cuLivrare && date.livrareBilka ? valoriLivrareBilka(date.livrareBilka) : livrareVeche;
+  const lipsuri: CampInvalid[] = [];
+  if (date.status === "COMANDAT" && !o.client.telefon) lipsuri.push({ camp: "client.telefon", eticheta: "Telefon", mesaj: MESAJ_FARA_TELEFON });
+  if (cuLivrare && !livrareNoua.livrareBilka) lipsuri.push({ camp: "livrareBilka", eticheta: ETICHETA_LIVRARE_BILKA, mesaj: MESAJ_FARA_LIVRARE_BILKA });
+  if (lipsuri.length > 0) throw new EroareStatus(lipsuri.map((l) => l.mesaj).join(" "), 409, [], lipsuri);
+  const livrareSchimbata = !aceeasiLivrareBilka(livrareVeche, livrareNoua);
+
   let rezultat: RezultatOferta | null = null;
   if (date.status === "COMANDAT") {
     if (o.invelitori.length === 0 && o.linii.length === 0) throw new EroareStatus("Oferta nu are produse; nu se poate comanda");
@@ -96,6 +117,7 @@ export async function schimbaStatus(ofertaId: string, date: z.infer<typeof schem
   await prisma.$transaction(async (tx) => {
     const data: Prisma.OfertaUpdateInput = { status: date.status, statusLa: acum, modificatDe: { connect: { id: u.id } } };
     if (date.avansLei !== undefined) data.avansLei = avansNou;
+    if (livrareSchimbata) Object.assign(data, livrareNoua, { livrareBilkaLa: acum });
     if (date.status === "COMANDAT") {
       data.comandatLa = acum;
       data.rezultatMotor = rezultat as unknown as Prisma.InputJsonValue;
@@ -115,6 +137,7 @@ export async function schimbaStatus(ofertaId: string, date: z.infer<typeof schem
       if (date.avansLei !== undefined && (o.avansLei?.toString() ?? null) !== (avansNou?.toString() ?? null)) {
         intrari.push({ tip: "suma", camp: "avansLei", inainte: o.avansLei?.toString() ?? null, dupa: avansNou?.toString() ?? null });
       }
+      if (livrareSchimbata) intrari.push({ tip: "livrare", camp: "livrareBilka", inainte: descriereLivrareBilka(livrareVeche), dupa: descriereLivrareBilka(livrareNoua) });
       await scrieIstoric(tx, { id: ofertaId, status: date.status === "IN_LUCRU" ? o.status : date.status }, u, intrari, date.mentiuni);
     }
 
@@ -139,7 +162,7 @@ export async function schimbaStatus(ofertaId: string, date: z.infer<typeof schem
           numar: o.numar,
           data: new Date(`${new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Bucharest", year: "numeric", month: "2-digit", day: "2-digit" }).format(acum)}T00:00:00Z`),
           clientNume: o.client.nume,
-          clientTelefon: o.client.telefon,
+          clientTelefon: o.client.telefon ?? "",
           clientLocalitate: o.localitate ?? o.client.localitate,
           montatorNume: o.montator?.nume ?? null,
           montatorTelefon: o.montator?.telefon ?? null,
@@ -148,8 +171,12 @@ export async function schimbaStatus(ofertaId: string, date: z.infer<typeof schem
           totalLei: total,
           avansLei: avans,
           restLei: new Prisma.Decimal(total).minus(avans),
+          // S26a (M7): alegerea livrarii de la Bilka trece pe comanda
+          ...livrareNoua,
+          livrareBilkaLa: livrareSchimbata ? acum : o.livrareBilkaLa,
         },
       });
+      // (telefonul clientului e verificat mai sus: la "Comandat" nu lipseste)
       await tx.comandaIstoric.create({ data: { comandaId: comanda.id, utilizatorId: u.id, numeUtilizatorLaMoment: u.nume, tip: "status", camp: "statusLogistic", valoareInainte: null, valoareDupa: "Comandat" } });
       // S20 (cap. 2): avansul de la "Avans luat" intra ca incasare PROPUSA, confirmata de
       // Administratorul firmei cand banii ajung la birou; pana atunci nu intra in suma incasata

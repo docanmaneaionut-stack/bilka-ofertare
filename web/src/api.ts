@@ -18,15 +18,18 @@ export type CampInvalid = { camp: string; eticheta: string; mesaj: string };
 export class EroareCerere extends Error {
   readonly status: number;
   readonly campuri: CampInvalid[];
-  constructor(message: string, status: number, campuri: CampInvalid[] = []) {
+  // S26a (M6): la telefonul unui client existent, raspunsul poarta clientul propus pentru legare
+  readonly propunereLegare: Client | null;
+  constructor(message: string, status: number, campuri: CampInvalid[] = [], propunereLegare: Client | null = null) {
     super(message);
     this.status = status;
     this.campuri = campuri;
+    this.propunereLegare = propunereLegare;
   }
 }
 
-export function eroareDinRaspuns(status: number, corp: { eroare?: string; campuri?: CampInvalid[] }): EroareCerere {
-  return new EroareCerere(corp.eroare ?? `Cerere esuata (${status})`, status, Array.isArray(corp.campuri) ? corp.campuri : []);
+export function eroareDinRaspuns(status: number, corp: { eroare?: string; campuri?: CampInvalid[]; propunereLegare?: Client | null }): EroareCerere {
+  return new EroareCerere(corp.eroare ?? `Cerere esuata (${status})`, status, Array.isArray(corp.campuri) ? corp.campuri : [], corp.propunereLegare ?? null);
 }
 
 async function cerere<T>(cale: string, optiuni?: RequestInit): Promise<T> {
@@ -566,7 +569,11 @@ export type ClientDate = {
   email?: string | null;
   observatii?: string | null;
 };
-export type Client = ClientDate & { id: string };
+// S26a (M6): telefonul clientului e optional (null = fara telefon); in formular e text, gol cand lipseste
+export type Client = Omit<ClientDate, "telefon"> & { id: string; telefon: string | null };
+// S26a (M7): livrarea de la Bilka - la depozit / direct in santier; "text" doar la santier
+export type AlegereLivrareBilka = { tip: "DEPOZIT" | "SANTIER"; localitate?: string | null; telefon?: string | null };
+export type LivrareBilka = { tip: "DEPOZIT" | "SANTIER"; localitate: string | null; telefon: string | null; text: string | null; la: string | null };
 
 export type RandOferta = {
   id: string;
@@ -580,8 +587,10 @@ export type RandOferta = {
   comandatLa: string | null;
   avertizareCurs: string | null;
   avansLei: string | null;
-  client: { id: string; nume: string; localitate: string | null; telefon: string };
+  client: { id: string; nume: string; localitate: string | null; telefon: string | null };
   clientMultiplu: boolean;
+  faraTelefon?: boolean;
+  telefonDublat?: boolean;
   agent: { id: string; nume: string };
   firma: { id: string; denumire: string };
   invelitoare: string | null;
@@ -639,6 +648,7 @@ export type OfertaDetaliu = {
   adresaLucrarii: string | null;
   localitate: string | null;
   precizariZonaB: string | null;
+  livrareBilka?: LivrareBilka | null;
   invelitori: unknown[];
   linii: unknown[];
   sipci: unknown[];
@@ -785,14 +795,17 @@ export const apiPretRapid = {
 };
 
 export type Montator = { id: string; nume: string; telefon: string; localitate: string | null; tip: "MONTATOR" | "CONSTRUCTOR"; activ?: boolean; utilizator?: { id: string; nume: string } };
-export type ComandaMinima = { id: string; rezumat: string; totalCuTvaEur: string; totalLei: string; avansLei: string; restLei: string; statusLogistic: string; data: string; responsabil: string };
+export type ComandaMinima = { id: string; rezumat: string; totalCuTvaEur: string; totalLei: string; avansLei: string; restLei: string; statusLogistic: string; data: string; responsabil: string; livrareBilka?: LivrareBilka | null };
 export type IntrareIstoric = { id: string; moment: string; numeUtilizatorLaMoment: string; tip: string; camp: string | null; valoareInainte: string | null; valoareDupa: string | null; mentiuni: string | null };
 export type Notita = { id: string; text: string; numeUtilizatorLaMoment: string; moment: string };
 export type Atasament = { id: string; nume: string; tipMime: string | null; marime: number | null; moment: string; incarcatDe: string | null };
 
 export const apiStatus = {
-  schimba: (id: string, status: StatusOferta, extra: { avansLei?: string | null; mentiuni?: string | null } = {}) =>
+  schimba: (id: string, status: StatusOferta, extra: { avansLei?: string | null; mentiuni?: string | null; livrareBilka?: AlegereLivrareBilka } = {}) =>
     cererePreturi<{ oferta: OfertaDetaliu }>(`/api/oferte/${id}/status`, { method: "PUT", body: JSON.stringify({ status, ...extra }) }),
+  // S26a (M7): alegerea livrarii de la Bilka, cat oferta nu e "Comandat"
+  livrareBilka: (id: string, alegere: AlegereLivrareBilka, mentiuni: string | null) =>
+    cerere<{ oferta: OfertaDetaliu }>(`/api/oferte/${id}/livrare-bilka`, { method: "PUT", body: JSON.stringify({ ...alegere, mentiuni }) }),
   istoric: (id: string) => cerere<{ areIstoric: boolean; intrari: IntrareIstoric[]; sumeModificate: string[] }>(`/api/oferte/${id}/istoric`),
   montator: (id: string, date: { montatorId?: string | null; montatorNou?: { nume: string; telefon: string; localitate?: string | null; tip: "MONTATOR" | "CONSTRUCTOR" }; comisionRecomandareLei?: string | null; mentiuni?: string | null }) =>
     cerere<{ oferta: OfertaDetaliu }>(`/api/oferte/${id}/montator`, { method: "PUT", body: JSON.stringify(date) }),
@@ -804,7 +817,7 @@ export const apiStatus = {
 export type TipDocument = "OFERTA" | "REZUMAT" | "DETALIATA" | "TABEL_FACTURARE";
 // S16b: formularul de comanda Bilka apare in lista documentelor, dar nu se genereaza din "PDF ▾"
 export type TipDocumentOrice = TipDocument | "FORMULAR_BILKA";
-export type DocumentOferta = { id: string; tip: TipDocumentOrice; eticheta: string; versiune: number; nume: string; marime: number; pagini: number | null; generatLa: string; generatDe: string | null; transmisLa: string | null; canal: string | null; formularNr: number | null; avertizari: string | null };
+export type DocumentOferta = { id: string; tip: TipDocumentOrice; eticheta: string; versiune: number; nume: string; marime: number; pagini: number | null; generatLa: string; generatDe: string | null; transmisLa: string | null; canal: string | null; formularNr: number | null; avertizari: string | null; inainteDeSchimbareaLivrarii?: boolean };
 
 export const apiDocumente = {
   lista: (id: string) => cerere<{ documente: DocumentOferta[]; tipuriPermise: TipDocument[] }>(`/api/oferte/${id}/documente`),
@@ -855,7 +868,8 @@ export const apiOferte = {
   creeaza: (client: ClientDate, antet?: AntetOferta) => cerere<{ oferta: OfertaDetaliu }>(BAZA_OFE, { method: "POST", body: JSON.stringify({ client, antet }) }),
   detaliu: (id: string) => cerere<{ oferta: OfertaDetaliu }>(`${BAZA_OFE}/${id}`),
   antet: (id: string, antet: AntetOferta) => cerere<{ oferta: OfertaDetaliu }>(`${BAZA_OFE}/${id}/antet`, { method: "PUT", body: JSON.stringify(antet) }),
-  client: (id: string, client: ClientDate) => cerere<{ oferta: OfertaDetaliu }>(`${BAZA_OFE}/${id}/client`, { method: "PUT", body: JSON.stringify(client) }),
+  // "legare" = raspunsul la propunerea de legare (S26a, M6): acelasi client / client nou cu telefonul dublat
+  client: (id: string, client: ClientDate & { mentiuni?: string | null; legare?: "leaga" | "pastreaza" }) => cerere<{ oferta: OfertaDetaliu }>(`${BAZA_OFE}/${id}/client`, { method: "PUT", body: JSON.stringify(client) }),
   contor: (serie: string) => cerere<{ serie: string; ultimulNumar: number }>(`${BAZA_OFE}/contor/${serie}`),
   seteazaContor: (serie: string, ultimulNumar: number) => cerere<{ serie: string; ultimulNumar: number }>(`${BAZA_OFE}/contor/${serie}`, { method: "PUT", body: JSON.stringify({ ultimulNumar }) }),
 };
@@ -1123,6 +1137,8 @@ export type RandComanda = {
   retururi: { id: string; numar: number; sumaCuTvaLei: string; deRegularizat: boolean }[];
   // S23: linkul la locatia lucrarii
   locatieUrl: string | null;
+  // S26a (M7): livrarea de la Bilka (textul doar la "direct in santier")
+  livrareBilka: LivrareBilka | null;
 };
 // S23: avizul de insotire a marfii (unul per livrare) si fisa soferului
 export type LinieAviz = { id: string; linieId: string | null; pozitieId: string | null; cod: string | null; denumire: string; um: string; cantitate: string; lungimeM: string | null; bucati: number | null };
@@ -1142,6 +1158,7 @@ export type BlocFisa = {
   coli: string | null;
   categorii: string[];
   livrare: { indicatii: string | null; data: string | null };
+  livrareBilka: string | null;
   montator: { nume: string; telefon: string | null } | null;
   restLei: string;
   statusLogistic: StatusLogistic;
@@ -1179,9 +1196,9 @@ export type IncasareComanda = { id: string; sumaLei: string; data: string; ceRep
 export type IntrareIstoricComanda = { id: string; moment: string; numeUtilizatorLaMoment: string; tip: string; camp: string | null; valoareInainte: string | null; valoareDupa: string | null; mentiuni: string | null };
 export type ObservatieComanda = { id: string; moment: string; numeUtilizatorLaMoment: string; text: string };
 export type AtasamentComanda = { id: string; nume: string; tipMime: string | null; marime: number | null; moment: string; incarcatDe: string | null };
-export type DocumentComanda = { id: string; tip: string; eticheta: string; versiune: number; nume: string; marime: number; generatLa: string; generatDe: string | null; transmisLa: string | null; canal: string | null; formularNr: number | null };
+export type DocumentComanda = { id: string; tip: string; eticheta: string; versiune: number; nume: string; marime: number; generatLa: string; generatDe: string | null; transmisLa: string | null; canal: string | null; formularNr: number | null; inainteDeSchimbareaLivrarii?: boolean };
 export type ComandaDetaliu = Omit<RandComanda, "retururi"> & {
-  drepturi: { logistic: boolean; detalii: boolean; livrare: boolean; alocare: boolean; bani: boolean; comision: boolean; retur: boolean; anuleazaRetur: boolean; notaPalet: boolean; statusPalet: boolean; aviz: boolean; documente: boolean; fisaSoferului: boolean; locatie: boolean };
+  drepturi: { logistic: boolean; detalii: boolean; livrare: boolean; alocare: boolean; bani: boolean; comision: boolean; retur: boolean; anuleazaRetur: boolean; notaPalet: boolean; statusPalet: boolean; aviz: boolean; documente: boolean; fisaSoferului: boolean; locatie: boolean; livrareBilka: boolean };
   incasari: IncasareComanda[];
   retururi: ReturComanda[];
   avize: AvizComanda[];
@@ -1232,6 +1249,7 @@ export const apiComenzi = {
   creeazaManuala: (date: ComandaManualaNoua) => cerere<{ comanda: RandComanda }>(BAZA_COM, { method: "POST", body: JSON.stringify(date) }),
   statusLogistic: (id: string, status: StatusLogistic, notaLipsuri: string | null, mentiuni: string | null) => cerere<{ comanda: RandComanda }>(`${BAZA_COM}/${id}/status-logistic`, { method: "PUT", body: JSON.stringify({ status, notaLipsuri, mentiuni }) }),
   livrare: (id: string, indicatii: string | null, dataLivrarii: string | null) => cerere<{ comanda: RandComanda }>(`${BAZA_COM}/${id}/livrare`, { method: "PUT", body: JSON.stringify({ indicatii, dataLivrarii }) }),
+  livrareBilka: (id: string, alegere: AlegereLivrareBilka, mentiuni: string | null) => cerere<{ comanda: RandComanda }>(`${BAZA_COM}/${id}/livrare-bilka`, { method: "PUT", body: JSON.stringify({ ...alegere, mentiuni }) }),
   facturare: (id: string, f: { firma: string | null; cui: string | null; adresa: string | null }) => cerere<{ comanda: RandComanda }>(`${BAZA_COM}/${id}/facturare`, { method: "PUT", body: JSON.stringify(f) }),
   contacte: (id: string, c: { clientTelefon?: string; montatorNume?: string | null; montatorTelefon?: string | null }) => cerere<{ comanda: RandComanda }>(`${BAZA_COM}/${id}/contacte`, { method: "PUT", body: JSON.stringify(c) }),
   alocare: (id: string, contAlocatId: string | null, mentiuni: string | null) => cerere<{ comanda: RandComanda }>(`${BAZA_COM}/${id}/alocare`, { method: "PUT", body: JSON.stringify({ contAlocatId, mentiuni }) }),

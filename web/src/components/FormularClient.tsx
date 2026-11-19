@@ -4,14 +4,15 @@ import { apiClienti, type Client, type ClientDate } from "../api";
 import { Camp, eroareCamp } from "./ui";
 
 // formularul clientului (FISA-OFERTARE cap. 2), cu autocompletare dupa telefon:
-// la un telefon existent softul propune clientul existent
+// la un telefon existent softul propune clientul existent. S26a (M6): telefonul e optional la
+// oferta (devine obligatoriu la „Comandat”); numele si adresa lucrarii raman obligatorii.
 
 export function clientGol(): ClientDate {
   return { nume: "", telefon: "", adresa: "", localitate: "", email: "", observatii: "" };
 }
 
 export function dinClient(c: Client): ClientDate {
-  return { nume: c.nume, telefon: c.telefon, adresa: c.adresa, localitate: c.localitate ?? "", email: c.email ?? "", observatii: c.observatii ?? "" };
+  return { nume: c.nume, telefon: c.telefon ?? "", adresa: c.adresa, localitate: c.localitate ?? "", email: c.email ?? "", observatii: c.observatii ?? "" };
 }
 
 function cifreTelefon(t: string): string {
@@ -38,7 +39,7 @@ export function FormularClient({ client, onSchimba, onAlegeExistent, eroare, pre
   }, [cifre]);
 
   const vizibile = cifre.length >= 4 ? sugestii : [];
-  const exact = vizibile.find((s) => cifreTelefon(s.telefon) === cifre);
+  const exact = vizibile.find((s) => cifreTelefon(s.telefon ?? "") === cifre);
   const alege = (s: Client) => {
     onAlegeExistent(s);
     setSugestii([]);
@@ -47,8 +48,8 @@ export function FormularClient({ client, onSchimba, onAlegeExistent, eroare, pre
   return (
     <>
       <div className="rand-campuri">
-        <Camp eticheta="Telefon" obligatoriu eroare={la("telefon")}>
-          <input type="tel" value={client.telefon} onChange={(e) => set("telefon", e.target.value)} required autoComplete="off" />
+        <Camp eticheta="Telefon (obligatoriu la „Comandat”)" eroare={la("telefon")}>
+          <input type="tel" value={client.telefon} onChange={(e) => set("telefon", e.target.value)} autoComplete="off" />
           {vizibile.length > 0 && !(exact && exact.nume === client.nume) && (
             <ul className="lista-sugestii" aria-label="Clienți existenți">
               {vizibile.map((s) => (

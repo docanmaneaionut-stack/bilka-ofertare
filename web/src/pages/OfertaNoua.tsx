@@ -108,6 +108,7 @@ export function OfertaNoua() {
         <ul>
           <li>Numărul ofertei (SERIE-NUMĂR) se dă automat la salvare, continuu pe seria contului tău.</li>
           <li>Cursurile se îngheață pe ofertă la salvare: cursul BNR al zilei pentru document și BNR × 1,01 pentru achiziție. Până la 13:00 cursul zilei e cel din ziua precedentă.</li>
+          <li>Obligatorii sunt numele și adresa lucrării; telefonul se poate completa și mai târziu (e obligatoriu la „Comandat”). O ofertă fără telefon creează un client nou, fără telefon.</li>
           <li>La un telefon care există deja, softul propune clientul existent; oferta se leagă de el, iar datele scrise aici îi actualizează fișa (baza de clienți e comună).</li>
           <li>Adresa e adresa lucrării (livrare, locația pe WhatsApp). Datele de facturare se cer abia la comandă.</li>
         </ul>

@@ -68,8 +68,8 @@ async function comanda(agent: Agent, etalon: string, client = CLIENT, extra?: { 
   expect(r.status, JSON.stringify(r.body)).toBe(200);
   if (etalon === "E01") await agent.put(`/api/oferte/${id}/montator`).send({ montatorNou: { nume: "Gheorghe V.", telefon: "0740 111 222", tip: "MONTATOR" }, comisionRecomandareLei: "500" }).expect(200);
   await agent.put(`/api/oferte/${id}/status`).send({ status: "TRANSMISA" }).expect(200);
-  await agent.put(`/api/oferte/${id}/status`).send({ status: "DE_COMANDAT" }).expect(200);
-  const c = await agent.put(`/api/oferte/${id}/status`).send({ status: "COMANDAT" });
+  await agent.put(`/api/oferte/${id}/status`).send({ status: "DE_COMANDAT", livrareBilka: { tip: "DEPOZIT" } }).expect(200);
+  const c = await agent.put(`/api/oferte/${id}/status`).send({ status: "COMANDAT", livrareBilka: { tip: "DEPOZIT" } });
   expect(c.status, JSON.stringify(c.body)).toBe(200);
   const cmd = await prisma.comanda.findUniqueOrThrow({ where: { ofertaId: id } });
   return { ofertaId: id, comandaId: cmd.id, numarComplet: `${cmd.serie}-${String(cmd.numar).padStart(4, "0")}` };

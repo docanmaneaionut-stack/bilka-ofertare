@@ -8,8 +8,9 @@ import { z } from "zod";
 import { prisma } from "../../db/prisma.js";
 import { env } from "../../env.js";
 import { idsCuTextul } from "../../lib/normalizare.js";
-import { gasesteSauCreeazaClient, normalizeazaTelefon, numarComplet, schemaClient } from "../ofe/clienti.js";
-import { EroareDocument, ETICHETA_ORICE_DOCUMENT, genereazaDocument } from "../ofe/documente/index.js";
+import { gasesteSauCreeazaClient, normalizeazaTelefon, numarComplet, schemaClientCuTelefon } from "../ofe/clienti.js";
+import { EroareDocument, ETICHETA_ORICE_DOCUMENT, genereazaDocument, inainteDeSchimbareaLivrarii } from "../ofe/documente/index.js";
+import { aceeasiLivrareBilka, descriereLivrareBilka, livrareBilkaPublic, schemaSchimbareLivrareBilka, valoriLivrareBilka } from "../ofe/livrareBilka.js";
 import { urmatorulNumar } from "../ofe/numerotare.js";
 import { avizeRouter, includeAviz, spreAviz } from "./avize.js";
 import { fisaRouter } from "./fisaSoferului.js";
@@ -95,8 +96,8 @@ const schemaFiltre = z.object({
 const schemaComandaManuala = z.object({
   firmaId: z.string().trim().min(1).optional(),
   // clientul: nume, telefon, localitate (cap. 4b) - adresa e optionala aici, baza
-  // comuna o primeste din localitate cand lipseste
-  client: schemaClient.extend({ adresa: z.string().trim().max(300).optional() }),
+  // comuna o primeste din localitate cand lipseste; S26a (M6): telefonul ramane obligatoriu aici
+  client: schemaClientCuTelefon.extend({ adresa: z.string().trim().max(300).optional() }),
   rezumat: z.string().trim().min(1, "rezumatul comenzii lipsește").max(2000),
   totalLei: suma,
   totalCuTvaEur: suma.optional(),
@@ -217,6 +218,8 @@ export function spreRand(c: ComandaCuRelatii) {
     retururi: c.retururi.map((x) => ({ id: x.id, numar: x.numar, sumaCuTvaLei: x.sumaCuTvaLei.toFixed(2), deRegularizat: x.deRegularizat })),
     // S23: linkul la locatia lucrarii (cap. 4c)
     locatieUrl: c.locatieUrl,
+    // S26a (M7): livrarea de la Bilka - textul apare doar la "direct in santier"; null = fara alegere
+    livrareBilka: livrareBilkaPublic(c),
   };
 }
 
@@ -364,6 +367,8 @@ function drepturi(u: Utilizator, c: ComandaCuRelatii) {
     retur: c.tip === "DIN_OFERTA",
     anuleazaRetur: poateScrieBani(u, c),
     notaPalet: poateOperaLogistic(u),
+    // S26a (M7): alegerea livrarii de la Bilka pe comanda - Administrator, Gestiune, Admin general
+    livrareBilka: poateOperaLogistic(u),
     statusPalet: poateSchimbaStatusPalet(u),
     // S23: avizul si generarea detaliatei / tabelului de facturare din comanda - orice cont care vede
     // comanda, in afara colaboratorului, doar la comenzile din oferta; fisa soferului - Gestiune /
@@ -425,7 +430,7 @@ comenziRouter.get("/:id", async (req, res) => {
       // documentele ofertei (cap. 6) - doar cele pe care rolul le poate vedea
       documente: documente
         .filter((d) => vedeDocumentulComenzii(u, d.tip))
-        .map((d) => ({ id: d.id, tip: d.tip, eticheta: ETICHETA_ORICE_DOCUMENT[d.tip], versiune: d.versiune, nume: d.nume, marime: d.marime, generatLa: d.generatLa, generatDe: d.generatDe?.nume ?? null, transmisLa: d.transmisLa, canal: d.canal, formularNr: d.formularNr })),
+        .map((d) => ({ id: d.id, tip: d.tip, eticheta: ETICHETA_ORICE_DOCUMENT[d.tip], versiune: d.versiune, nume: d.nume, marime: d.marime, generatLa: d.generatLa, generatDe: d.generatDe?.nume ?? null, transmisLa: d.transmisLa, canal: d.canal, formularNr: d.formularNr, inainteDeSchimbareaLivrarii: inainteDeSchimbareaLivrarii(d, c.livrareBilkaLa) })),
       // "formular Bilka: N formulare, trimise la ..." (cap. 16): din documentele marcate ca transmise
       formulareBilka: { generate: formulare.length, transmise: formulare.filter((d) => d.transmisLa).length, ultimaTrimitere: formulare.map((d) => d.transmisLa).filter((d): d is Date => d !== null).sort((a, b) => b.getTime() - a.getTime())[0] ?? null },
       // notitele si atasamentele ofertei raman accesibile din comanda (cap. 14), in citire
@@ -598,6 +603,30 @@ comenziRouter.put("/:id/livrare", async (req, res) => {
         ...(indicatii !== c.indicatiiLivrare ? [{ tip: "livrare", camp: "indicatiiLivrare", inainte: c.indicatiiLivrare, dupa: indicatii }] : []),
         ...(text(dataLivrarii) !== text(c.dataLivrarii) ? [{ tip: "livrare", camp: "dataLivrarii", inainte: text(c.dataLivrarii), dupa: text(dataLivrarii) }] : []),
       ]);
+      return d;
+    });
+    res.json({ comanda: spreRand(dupa) });
+  } catch (e) {
+    raspunde(res, e);
+  }
+});
+
+// S26a (MODIFICAREA M7): livrarea de la Bilka pe comanda - la depozit / direct in santier; o schimba
+// Administratorul, Gestiunea si Admin general, cu istoric (daca masina Bilka nu ajunge, livrarea
+// devine proprie); statusurile logistice nu se ating; formularele generate inainte raman, marcate
+comenziRouter.put("/:id/livrare-bilka", async (req, res) => {
+  const u = req.utilizator!;
+  const date = schemaSchimbareLivrareBilka.parse(req.body);
+  try {
+    const c = await cuDrepturi(req, u, () => poateOperaLogistic(u), "Livrarea de la Bilka o schimbă pe comandă Administratorii și Gestiunea");
+    const noi = valoriLivrareBilka(date);
+    if (aceeasiLivrareBilka(c, noi)) {
+      res.json({ comanda: spreRand(c) });
+      return;
+    }
+    const dupa = await prisma.$transaction(async (tx) => {
+      const d = await tx.comanda.update({ where: { id: c.id }, data: { ...noi, livrareBilkaLa: new Date() }, include: includeRand });
+      await scrieIstoricComanda(tx, c.id, u, [{ tip: "livrare", camp: "livrareBilka", inainte: descriereLivrareBilka(c), dupa: descriereLivrareBilka(noi), mentiuni: date.mentiuni }]);
       return d;
     });
     res.json({ comanda: spreRand(dupa) });

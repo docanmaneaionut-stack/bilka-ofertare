@@ -30,7 +30,7 @@ export function ClientFisa() {
         <div>
           <h1 style={{ marginBottom: 4 }}>{c.nume}</h1>
           <span className="text-secundar">
-            {c.telefon} · {c.adresa}
+            {c.telefon ?? "fără telefon"} · {c.adresa}
             {c.localitate ? `, ${c.localitate}` : ""}
             {c.email ? ` · ${c.email}` : ""}
           </span>

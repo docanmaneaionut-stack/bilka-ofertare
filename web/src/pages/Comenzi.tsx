@@ -16,6 +16,7 @@ import {
   type RandComanda,
   type StatusLogistic,
 } from "../api";
+import { DialogLivrareBilka } from "../components/DialogLivrareBilka";
 import { Ajutor, Camp, Mesaj, textEroare } from "../components/ui";
 import { euro, lei, textRo } from "../lib/numere";
 import { useUtilizator } from "../contextUtilizator";
@@ -372,6 +373,7 @@ function RandComandaTr({ comanda: c, vedeAgent, deschisa, selectata, onSelecteaz
         <td className="col-optional mic" onClick={onComuta}>
           {c.statusLogistic === "LIVRAT" ? `livrat ${dataRo(c.livratLa)}` : c.livrare.indicatii ? c.livrare.indicatii : <span className="text-secundar">de programat</span>}
           {c.livrare.data && c.statusLogistic !== "LIVRAT" && <div className="text-secundar">ziua: {dataRo(c.livrare.data)}</div>}
+          {c.livrareBilka?.text && <div className="eticheta-livrare-bilka">{c.livrareBilka.text}</div>}
         </td>
         <td className="col-optional" onClick={(e) => e.stopPropagation()}>
           <div className="actiuni" style={{ gap: 6 }}>
@@ -421,6 +423,8 @@ function DetaliuComanda({ id, onSchimbat }: { id: string; onSchimbat: () => void
   // S23: linkul la locatie
   const [editLocatie, setEditLocatie] = useState(false);
   const [locatieUrl, setLocatieUrl] = useState("");
+  // S26a (M7): livrarea de la Bilka pe comanda
+  const [dialogLivrareBilka, setDialogLivrareBilka] = useState(false);
 
   const incarca = () =>
     apiComenzi
@@ -512,6 +516,33 @@ function DetaliuComanda({ id, onSchimbat }: { id: string; onSchimbat: () => void
               </button>
             </div>
           </form>
+        )}
+        {(c.livrareBilka?.text || d.livrareBilka) && (
+          <p>
+            {c.livrareBilka?.text && <span className="eticheta-livrare-bilka">{c.livrareBilka.text}</span>}
+            {d.livrareBilka && (
+              <button className="buton secundar mic" style={{ marginLeft: c.livrareBilka?.text ? 8 : 0 }} onClick={() => setDialogLivrareBilka(true)}>
+                {c.livrareBilka?.text ? "Schimbă" : "Livrarea de la Bilka…"}
+              </button>
+            )}
+          </p>
+        )}
+        {dialogLivrareBilka && (
+          <DialogLivrareBilka
+            initial={c.livrareBilka}
+            localitateImplicita={c.client.localitate}
+            telefonImplicit={c.client.telefon}
+            etichetaConfirmare="Salvează"
+            cuMentiuni
+            nota="Schimbarea se notează în istoricul comenzii. Formularele Bilka generate până acum rămân, marcate."
+            onConfirma={async (alegere, mentiuni) => {
+              await apiComenzi.livrareBilka(c.id, alegere, mentiuni);
+              setDialogLivrareBilka(false);
+              await incarca();
+              onSchimbat();
+            }}
+            onRenunta={() => setDialogLivrareBilka(false)}
+          />
         )}
         <p>
           <strong>Locația:</strong>{" "}
@@ -666,6 +697,7 @@ function DetaliuComanda({ id, onSchimbat }: { id: string; onSchimbat: () => void
                     {" "}
                     · {dataRo(doc.generatLa)}
                     {doc.transmisLa ? ` · transmis ${dataRo(doc.transmisLa)}` : ""}
+                    {doc.inainteDeSchimbareaLivrarii ? " · ⚠ generat înainte de schimbarea livrării" : ""}
                   </span>
                 </li>
               ))}
@@ -738,7 +770,8 @@ function DetaliuComanda({ id, onSchimbat }: { id: string; onSchimbat: () => void
               {altIstoric.map((i) => (
                 <li key={i.id}>
                   {i.tip}
-                  {i.camp ? ` · ${i.camp}` : ""}: {i.valoareInainte ?? "—"} → {i.valoareDupa ?? "—"} <span className="text-secundar">({dataOra(i.moment)}, {i.numeUtilizatorLaMoment})</span>
+                  {i.camp ? ` · ${i.camp === "livrareBilka" ? "livrarea de la Bilka" : i.camp}` : ""}: {i.valoareInainte ?? "—"} → {i.valoareDupa ?? "—"}
+                  {i.mentiuni ? ` — ${i.mentiuni}` : ""} <span className="text-secundar">({dataOra(i.moment)}, {i.numeUtilizatorLaMoment})</span>
                 </li>
               ))}
             </ul>

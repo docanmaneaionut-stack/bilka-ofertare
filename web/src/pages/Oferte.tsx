@@ -85,8 +85,10 @@ export function Oferte() {
 
   const n = rezultat?.numaratori;
   const totalPagini = rezultat ? Math.max(1, Math.ceil(rezultat.total / rezultat.pageSize)) : 1;
-  const necomandate = rezultat?.oferte.filter((o) => o.status !== "COMANDAT") ?? [];
+  // S26a (BUG-14): active -> blocul „Comandat” -> blocul „Neacceptată”, ultimul
+  const necomandate = rezultat?.oferte.filter((o) => o.status !== "COMANDAT" && o.status !== "NEACCEPTATA") ?? [];
   const comandate = rezultat?.oferte.filter((o) => o.status === "COMANDAT") ?? [];
+  const neacceptate = rezultat?.oferte.filter((o) => o.status === "NEACCEPTATA") ?? [];
 
   return (
     <>
@@ -225,6 +227,14 @@ export function Oferte() {
                 {comandate.map((o) => (
                   <RandOfertaGrup key={o.id} oferta={o} vedeAgent={vedeAgent} adminGeneral={adminGeneral} onDeschide={(id) => navigate(`/oferte/${id}`)} />
                 ))}
+                {neacceptate.length > 0 && (
+                  <tr className="bloc-comandate">
+                    <td colSpan={vedeAgent ? 8 : 7}>Neacceptate — la sfârșitul listei</td>
+                  </tr>
+                )}
+                {neacceptate.map((o) => (
+                  <RandOfertaGrup key={o.id} oferta={o} vedeAgent={vedeAgent} adminGeneral={adminGeneral} onDeschide={(id) => navigate(`/oferte/${id}`)} />
+                ))}
               </tbody>
             </table>
           </div>
@@ -245,12 +255,12 @@ export function Oferte() {
       <Ajutor>
         <ul>
           <li>Căutarea găsește după numele clientului, telefon (indiferent cum e scris), numărul ofertei (ex. IB-0147) sau localitate. Perioada implicită: ultimele 90 de zile.</li>
-          <li>Ordinea: cele mai noi sus, indiferent de status; ofertele comandate trec la sfârșitul listei, după data comenzii. Completările apar indentate sub oferta inițială.</li>
+          <li>Ordinea: cele mai noi sus, indiferent de status; ofertele comandate trec la sfârșitul listei, după data comenzii, iar după ele cele neacceptate. Completările apar indentate sub oferta inițială.</li>
           <li>
             {administrator
               ? "Lista arată implicit ofertele tale; din „Agent” alegi un agent al firmei sau pe toți."
               : adminGeneral
-                ? "Vezi toate firmele; filtrul „Firma” și marcajul „Client cu mai multe oferte” (același telefon) sunt doar aici."
+                ? "Vezi toate firmele; filtrul „Firma” și marcajele „Client cu mai multe oferte” și „telefon dublat” (același număr pe doi clienți, legarea refuzată) sunt doar aici."
                 : "Vezi doar ofertele tale."}
           </li>
           <li>„+ Ofertă nouă” cere antetul și clientul și salvează oferta „În lucru”. Prețurile și „Află preț” sunt gata; PDF-urile vin în S16.</li>
@@ -290,6 +300,16 @@ function RandOfertaTr({ oferta: o, vedeAgent, adminGeneral, onDeschide, completa
       <td>
         {adminGeneral && o.clientMultiplu && <span className="punct-client" title="client cu mai multe oferte" />}
         <strong>{o.client.nume}</strong>
+        {o.faraTelefon && (
+          <span className="eticheta-fara-telefon" title="clientul n-are telefon; se completează înainte de „Comandat”">
+            fără telefon
+          </span>
+        )}
+        {adminGeneral && o.telefonDublat && (
+          <span className="eticheta-telefon-dublat" title="același telefon ca alt client din bază (legarea a fost refuzată)">
+            telefon dublat
+          </span>
+        )}
         <div className="mic text-secundar">
           {o.completareLa ? `completare la ${o.completareLa.numarComplet}${o.completareLa.motiv ? ` · ${o.completareLa.motiv}` : ""}` : [o.client.localitate, o.client.telefon].filter(Boolean).join(" · ")}
         </div>

@@ -598,8 +598,16 @@ enum VariantaSipca {
 model Client {
   id                String      @id @default(uuid())
   nume              String
-  telefon           String
-  telefonNormalizat String      @unique
+  // S26a (MODIFICAREA M6, migrarea 20): telefonul e optional la oferta (obligatoriu la "Comandat").
+  // Unicitatea pe telefonul normalizat ramane IN BAZA printr-un index unic PARTIAL scris de mana in
+  // SQL-ul migrarii 20 ("client_telefonNormalizat_key", WHERE "telefonNormalizat" IS NOT NULL AND
+  // "telefonDublat" = false): doi clienti nemarcati nu pot avea acelasi numar. Prisma nu stie de
+  // indexurile partiale (nu le vede si nu le atinge), de aceea aici NU e @unique - nu-l adauga.
+  // "telefonDublat" = clientul nou pe care agentul a refuzat sa-l lege de clientul existent cu acelasi
+  // numar - singura exceptie, marcata pentru Admin general. Cautarea: findFirst cu telefonDublat = false.
+  telefon           String?
+  telefonNormalizat String?
+  telefonDublat     Boolean     @default(false)
   adresa            String
   localitate        String?
   email             String?
@@ -668,6 +676,15 @@ model Oferta {
   localitate     String?
   // campul liber de precizari al zonei B (cap. 9)
   precizariZonaB String?
+
+  // S26a (MODIFICAREA M7, migrarea 20; OFERTARE cap. 16): livrarea de la Bilka, aleasa la "De comandat" -
+  // la depozitul nostru (in formular celulele de localitate si telefon raman goale) sau direct in santier
+  // (localitatea si telefonul de contact intra in formular); momentul ultimei alegeri (formularele generate
+  // inainte de el se marcheaza "generat inainte de schimbarea livrarii"). Fara alegere = ofertele dinainte de S26a.
+  livrareBilka           LivrareBilka?
+  livrareBilkaLocalitate String?
+  livrareBilkaTelefon    String?
+  livrareBilkaLa         DateTime?
 
   // cele doua cursuri inghetate la creare (11.8): documentul = BNR al zilei,
   // achizitia = BNR x 1,01; data si sursa cursului; avertizare cand nu s-a
@@ -987,6 +1004,12 @@ model Montator {
 // (ComandaIstoric); observatiile se adauga, nu se rescriu (ComandaObservatie);
 // atasamentele stau in folderul de date (ComandaAtasament). Incasarile, comisioanele,
 // retururile si paletii vin in S20-S23 cu tabelele lor.
+// S26a (M7): unde livreaza Bilka marfa comenzii
+enum LivrareBilka {
+  DEPOZIT
+  SANTIER
+}
+
 enum TipComanda {
   DIN_OFERTA
   MANUALA
@@ -1072,6 +1095,14 @@ model Comanda {
   // S23 (migrarea 19; FISA-COMENZI cap. 4c): adresa web a locatiei lucrarii (link la harta), optionala,
   // scrisa de cine modifica detaliile comenzii, cu istoric; pe fisa soferului ca "locatia pe harta"
   locatieUrl String?
+
+  // S26a (MODIFICAREA M7, migrarea 20): livrarea de la Bilka, copiata din oferta la "Comandat"; pe comanda
+  // apare ca text ("Livrare Bilka — șantier: localitate · telefon"), schimbabila de Administrator / Gestiune /
+  // Admin general cu istoric; fara alegere = comenzile dinainte de S26a (formularul ca pana atunci)
+  livrareBilka           LivrareBilka?
+  livrareBilkaLocalitate String?
+  livrareBilkaTelefon    String?
+  livrareBilkaLa         DateTime?
 
   istoric    ComandaIstoric[]
   observatii ComandaObservatie[]

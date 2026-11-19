@@ -31,7 +31,7 @@ export interface Garantie {
 export interface ContextDocument {
   firma: { denumire: string; cui: string; nrRegCom: string; adresa: string; localitate: string | null; judet: string | null; telefon: string; email: string; logo: string | null };
   agent: { nume: string; telefon: string | null; email: string };
-  client: { nume: string; telefon: string; adresa: string; localitate: string | null };
+  client: { nume: string; telefon: string | null; adresa: string; localitate: string | null };
   numarComplet: string;
   data: string; // dd.mm.yyyy
   versiune: number;
@@ -177,7 +177,7 @@ export function antet(ctx: ContextDocument, titlu: string, etichetaNr: string): 
 </div>
 <div class="title"><h1>${esc(titlu)}</h1><div class="nr">${esc(etichetaNr)} <b>${esc(ctx.numarComplet)}</b> / ${esc(ctx.data)}${esc(varianta)}</div></div>
 <div class="parties">
-  <div class="box"><div class="lbl">Client</div><b>${esc(ctx.client.nume)}</b><br>${esc([ctx.client.adresa, ctx.client.localitate].filter(Boolean).join(", "))}<br>Tel. ${esc(ctx.client.telefon)}</div>
+  <div class="box"><div class="lbl">Client</div><b>${esc(ctx.client.nume)}</b><br>${esc([ctx.client.adresa, ctx.client.localitate].filter(Boolean).join(", "))}${ctx.client.telefon ? `<br>Tel. ${esc(ctx.client.telefon)}` : ""}</div>
   <div class="box"><div class="lbl">Agent</div><b>${esc(ctx.agent.nume)}</b><br>${ctx.agent.telefon ? `Tel. ${esc(ctx.agent.telefon)}<br>` : ""}${esc(ctx.agent.email)}</div>
 </div>`;
 }

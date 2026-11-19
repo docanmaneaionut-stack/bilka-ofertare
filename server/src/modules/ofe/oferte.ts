@@ -7,7 +7,8 @@ import { env } from "../../env.js";
 import { cereAutentificare, cereRol } from "../accounts/middleware.js";
 import { scrieCreare, scrieModificari } from "../adm/jurnal.js";
 import { cursulZilei, EroareCurs } from "../curs/serviciu.js";
-import { clientPublic, gasesteSauCreeazaClient, normalizeazaTelefon, numarComplet, schemaClient } from "./clienti.js";
+import { clientPublic, clientulOfertei, gasesteSauCreeazaClient, normalizeazaTelefon, numarComplet, schemaClient } from "./clienti.js";
+import { aceeasiLivrareBilka, descriereLivrareBilka, livrareBilkaPublic, schemaSchimbareLivrareBilka, valoriLivrareBilka } from "./livrareBilka.js";
 import { optiunileListei } from "../adm/optiuniListe.js";
 import { finisajScurt, numarRal, numeModel } from "../mot/pachete.js";
 import { campuriCuIstoric, diferenteCampuri, diferenteProduse, istoricRouter, produsePentruIstoric, scrieIstoric } from "./istoric.js";
@@ -111,7 +112,7 @@ const selectLista = {
   localitate: true,
   createdAt: true,
   updatedAt: true,
-  client: { select: { id: true, nume: true, localitate: true, telefon: true, telefonNormalizat: true } },
+  client: { select: { id: true, nume: true, localitate: true, telefon: true, telefonNormalizat: true, telefonDublat: true } },
   utilizator: { select: { id: true, nume: true } },
   firma: { select: { id: true, denumire: true } },
   completareLa: { select: { serie: true, numar: true } },
@@ -132,8 +133,11 @@ interface RandOferta {
   comandatLa: Date | null;
   avertizareCurs: string | null;
   avansLei: string | null;
-  client: { id: string; nume: string; localitate: string | null; telefon: string };
+  client: { id: string; nume: string; localitate: string | null; telefon: string | null };
   clientMultiplu: boolean;
+  // S26a (M6): semnul "fără telefon"; "telefon dublat" doar pentru Admin general
+  faraTelefon: boolean;
+  telefonDublat: boolean;
   agent: { id: string; nume: string };
   firma: { id: string; denumire: string };
   invelitoare: string | null;
@@ -157,7 +161,9 @@ function spreRandSimplu(o: RandLista, clientiMultipli: Set<string> | null): Rand
     avertizareCurs: o.avertizareCurs,
     avansLei: o.avansLei?.toString() ?? null,
     client: { id: o.client.id, nume: o.client.nume, localitate: o.localitate ?? o.client.localitate, telefon: o.client.telefon },
-    clientMultiplu: clientiMultipli ? clientiMultipli.has(o.client.telefonNormalizat) : false,
+    clientMultiplu: clientiMultipli ? clientiMultipli.has(o.client.id) : false,
+    faraTelefon: !o.client.telefon,
+    telefonDublat: clientiMultipli ? o.client.telefonDublat : false,
     agent: o.utilizator,
     firma: o.firma,
     // invelitoarea si totalul vin cu produsele (S13) si preturile (S14)
@@ -174,14 +180,17 @@ function spreRand(o: RandLista, clientiMultipli: Set<string> | null): RandOferta
 }
 
 // ordinea din cap. 15: cronologic descrescator indiferent de status; blocul
-// "Comandat" la sfarsit, dupa data comenzii, ultima comandata prima
+// "Comandat" la sfarsit, dupa data comenzii, ultima comandata prima; S26a (BUG-14):
+// dupa el blocul "Neacceptata", ultimul, cronologic descrescator (o oferta revenita
+// pe alt status urca la locul ei)
 function ordoneaza(oferte: RandLista[]): RandLista[] {
   const dupaData = (a: RandLista, b: RandLista) => b.data.getTime() - a.data.getTime() || b.createdAt.getTime() - a.createdAt.getTime();
-  const necomandate = oferte.filter((o) => o.status !== "COMANDAT").sort(dupaData);
+  const active = oferte.filter((o) => o.status !== "COMANDAT" && o.status !== "NEACCEPTATA").sort(dupaData);
   const comandate = oferte
     .filter((o) => o.status === "COMANDAT")
     .sort((a, b) => (b.comandatLa?.getTime() ?? 0) - (a.comandatLa?.getTime() ?? 0) || dupaData(a, b));
-  return [...necomandate, ...comandate];
+  const neacceptate = oferte.filter((o) => o.status === "NEACCEPTATA").sort(dupaData);
+  return [...active, ...comandate, ...neacceptate];
 }
 
 oferteRouter.get("/", async (req, res) => {
@@ -226,15 +235,15 @@ oferteRouter.get("/", async (req, res) => {
     prisma.oferta.groupBy({ by: ["status"], where: whereFaraStatus, _count: { _all: true } }),
   ]);
 
-  // marcajul "client cu mai multe oferte" (Admin general): acelasi telefon pe mai multe oferte
+  // marcajul "client cu mai multe oferte" (Admin general): acelasi client pe mai multe oferte
+  // (S26a: dupa client, nu dupa telefon - clientii fara telefon nu se amesteca intre ei)
   let clientiMultipli: Set<string> | null = null;
   if (u.rol === "ADMIN_GENERAL") {
     const grupuri = await prisma.oferta.groupBy({ by: ["clientId"], where: { curenta: true }, _count: { _all: true }, having: { clientId: { _count: { gt: 1 } } } });
-    const clienti = await prisma.client.findMany({ where: { id: { in: grupuri.map((g) => g.clientId) } }, select: { telefonNormalizat: true } });
-    clientiMultipli = new Set(clienti.map((c) => c.telefonNormalizat));
+    clientiMultipli = new Set(grupuri.map((g) => g.clientId));
   }
   let filtrate = toate;
-  if (f.clientMultiplu && clientiMultipli) filtrate = toate.filter((o) => clientiMultipli!.has(o.client.telefonNormalizat));
+  if (f.clientMultiplu && clientiMultipli) filtrate = toate.filter((o) => clientiMultipli!.has(o.client.id));
 
   // completarile apar sub oferta initiala (cand initiala e in lista), indentate
   const ids = new Set(filtrate.map((o) => o.id));
@@ -368,7 +377,7 @@ async function detaliu(id: string, u: Utilizator) {
       completareLa: { select: { id: true, serie: true, numar: true } },
       preluataDin: { select: { id: true, serie: true, numar: true } },
       montator: true,
-      comanda: { select: { id: true, rezumat: true, totalCuTvaEur: true, totalLei: true, avansLei: true, restLei: true, statusLogistic: true, data: true, responsabil: { select: { nume: true } } } },
+      comanda: { select: { id: true, rezumat: true, totalCuTvaEur: true, totalLei: true, avansLei: true, restLei: true, statusLogistic: true, data: true, responsabil: { select: { nume: true } }, livrareBilka: true, livrareBilkaLocalitate: true, livrareBilkaTelefon: true, livrareBilkaLa: true } },
       _count: { select: { notite: true, atasamente: true, istoric: true, documente: true } },
       completari: { where: { curenta: true }, select: { id: true, serie: true, numar: true, motivCompletare: true, status: true } },
       listaPret: { select: { id: true, denumire: true, status: true } },
@@ -404,6 +413,8 @@ async function detaliu(id: string, u: Utilizator) {
     adresaLucrarii: o.adresaLucrarii,
     localitate: o.localitate,
     precizariZonaB: o.precizariZonaB,
+    // S26a (M7): alegerea livrarii de la Bilka (null = inca nealeasa)
+    livrareBilka: livrareBilkaPublic(o),
     curs: { cursBnr: o.cursBnr.toFixed(4), cursAchizitie: o.cursAchizitie.toFixed(4), dataCurs: dataDoar(o.dataCurs), sursaCurs: o.sursaCurs, avertizareCurs: o.avertizareCurs },
     listaPret: o.listaPret,
     tvaPct: o.tvaPct.toString(),
@@ -419,7 +430,7 @@ async function detaliu(id: string, u: Utilizator) {
     montator: o.montator ? { id: o.montator.id, nume: o.montator.nume, telefon: o.montator.telefon, localitate: o.montator.localitate, tip: o.montator.tip } : null,
     comisionRecomandareLei: o.comisionRecomandareLei?.toString() ?? null,
     comisionAchitat: o.comisionAchitat,
-    comanda: o.comanda ? { ...o.comanda, totalCuTvaEur: o.comanda.totalCuTvaEur.toString(), totalLei: o.comanda.totalLei.toString(), avansLei: o.comanda.avansLei.toString(), restLei: o.comanda.restLei.toString(), data: dataDoar(o.comanda.data), responsabil: o.comanda.responsabil.nume } : null,
+    comanda: o.comanda ? { ...o.comanda, totalCuTvaEur: o.comanda.totalCuTvaEur.toString(), totalLei: o.comanda.totalLei.toString(), avansLei: o.comanda.avansLei.toString(), restLei: o.comanda.restLei.toString(), data: dataDoar(o.comanda.data), responsabil: o.comanda.responsabil.nume, livrareBilka: livrareBilkaPublic(o.comanda) } : null,
     rezultatSalvatLa: o.rezultatSalvatLa,
     areIstoric: o.status !== "IN_LUCRU",
     sumeModificate: await campuriCuIstoric(o.id),
@@ -499,18 +510,20 @@ oferteRouter.put("/:id/client", async (req, res) => {
     return;
   }
   const date = schemaClient.parse(req.body);
-  const { mentiuni } = z.object({ mentiuni: z.string().trim().max(2000).nullish() }).parse(req.body);
+  // S26a (M6): raspunsul la propunerea de legare - "leaga" (acelasi client) / "pastreaza" (client nou, telefon dublat)
+  const { mentiuni, legare } = z.object({ mentiuni: z.string().trim().max(2000).nullish(), legare: z.enum(["leaga", "pastreaza"]).optional() }).parse(req.body);
   const u = req.utilizator!;
   const inainte = await prisma.oferta.findUniqueOrThrow({ where: { id: r.oferta.id }, select: { clientId: true, client: { select: { nume: true, telefon: true, adresa: true, localitate: true } } } });
+  // un refuz (EroareClient: propunerea de legare, numar existent) ajunge la raspuns prin middleware-ul de erori
   await prisma.$transaction(async (tx) => {
-    const { client } = await gasesteSauCreeazaClient(tx, date, u);
+    const client = { id: await clientulOfertei(tx, inainte.clientId, date, legare, u) };
     if (client.id !== inainte.clientId) {
       await tx.oferta.update({ where: { id: r.oferta.id }, data: { clientId: client.id, modificatDeId: u.id } });
       await tx.jurnalIntrare.create({ data: { utilizatorId: u.id, numeUtilizatorLaMoment: u.nume, entitate: "Oferta", entitateId: r.oferta.id, actiune: "modificare", camp: "clientId", valoareInainte: inainte.clientId, valoareDupa: client.id } });
     }
     // istoricul (cap. 14): clientul schimbat sau datele lui modificate
     const dupa = await tx.client.findUniqueOrThrow({ where: { id: client.id }, select: { nume: true, telefon: true, adresa: true, localitate: true } });
-    const textClient = (c: { nume: string; telefon: string; adresa: string; localitate: string | null }) => [c.nume, c.telefon, c.adresa, c.localitate].filter(Boolean).join(" · ");
+    const textClient = (c: { nume: string; telefon: string | null; adresa: string; localitate: string | null }) => [c.nume, c.telefon, c.adresa, c.localitate].filter(Boolean).join(" · ");
     if (textClient(inainte.client) !== textClient(dupa)) await scrieIstoric(tx, r.oferta, u, [{ tip: "client", camp: "client", inainte: textClient(inainte.client), dupa: textClient(dupa) }], mentiuni);
   });
   res.json({ oferta: await detaliu(r.oferta.id, u) });
@@ -699,11 +712,42 @@ oferteRouter.put("/:id/status", async (req, res) => {
     await schimbaStatus(r.oferta.id, date, u);
   } catch (e) {
     if (e instanceof EroareStatus) {
-      res.status(e.status).json({ eroare: e.message, motive: e.motive });
+      // S26a: ce lipseste, pe campuri (telefonul clientului, alegerea livrarii de la Bilka)
+      res.status(e.status).json({ eroare: e.message, motive: e.motive, ...(e.campuri.length > 0 ? { campuri: e.campuri } : {}) });
       return;
     }
     if (raspundeEroarePreturi(res, e)) return;
     throw e;
+  }
+  res.json({ oferta: await detaliu(r.oferta.id, u) });
+});
+
+// S26a (MODIFICAREA M7): alegerea livrarii de la Bilka se poate schimba cat oferta nu e "Comandat"
+// (formularele generate inainte raman in lista, marcate; ecranul cere regenerarea), cu istoric;
+// dupa "Comandat" se schimba pe comanda
+oferteRouter.put("/:id/livrare-bilka", async (req, res) => {
+  const r = await incarcaCuDrepturi(req, false);
+  if (r.eroare) {
+    res.status(r.eroare.status).json({ eroare: r.eroare.mesaj });
+    return;
+  }
+  const u = req.utilizator!;
+  if (!poateModificaOferta(u, r.oferta)) {
+    res.status(403).json({ eroare: "Livrarea de la Bilka o alege cine a făcut oferta și Administratorul firmei" });
+    return;
+  }
+  if (r.oferta.status === "COMANDAT") {
+    res.status(409).json({ eroare: "Oferta e comandată: livrarea de la Bilka se schimbă pe comandă (Administrator sau Gestiune)" });
+    return;
+  }
+  const date = schemaSchimbareLivrareBilka.parse(req.body);
+  const inainte = await prisma.oferta.findUniqueOrThrow({ where: { id: r.oferta.id }, select: { livrareBilka: true, livrareBilkaLocalitate: true, livrareBilkaTelefon: true } });
+  const dupa = valoriLivrareBilka(date);
+  if (!aceeasiLivrareBilka(inainte, dupa)) {
+    await prisma.$transaction(async (tx) => {
+      await tx.oferta.update({ where: { id: r.oferta.id }, data: { ...dupa, livrareBilkaLa: new Date(), modificatDeId: u.id } });
+      await scrieIstoric(tx, r.oferta, u, [{ tip: "livrare", camp: "livrareBilka", inainte: descriereLivrareBilka(inainte), dupa: descriereLivrareBilka(dupa) }], date.mentiuni);
+    });
   }
   res.json({ oferta: await detaliu(r.oferta.id, u) });
 });

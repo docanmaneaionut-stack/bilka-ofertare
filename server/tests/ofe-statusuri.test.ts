@@ -80,7 +80,7 @@ describe("statusurile (cap. 14) si drepturile (FISA-CONTURI §3)", () => {
     expect(cuAvans.body.oferta.avansLei).toBe("1000");
     // revenire (regula de ordine) si inapoi
     await agent.put(`/api/oferte/${id}/status`).send({ status: "NEACCEPTATA" }).expect(200);
-    await agent.put(`/api/oferte/${id}/status`).send({ status: "DE_COMANDAT" }).expect(200);
+    await agent.put(`/api/oferte/${id}/status`).send({ status: "DE_COMANDAT", livrareBilka: { tip: "DEPOZIT" } }).expect(200);
     const ist = await istoricul(agent, id);
     const statusuri = ist.intrari.filter((i) => i.tip === "status").map((i) => `${i.valoareInainte}→${i.valoareDupa}`);
     expect(statusuri).toEqual(["Avans luat→Neacceptată", "Neacceptată→De comandat"].reverse().concat(["De revizionat→Avans luat", "Transmisă→De revizionat", "În lucru→Transmisă"]).sort().length === 5 ? statusuri : []);
@@ -144,7 +144,7 @@ describe("'Comandat' (cap. 16, 3.2)", () => {
     const corp = await corpDinEtalon(e01);
     corp.invelitori = corp.invelitori.map((i, k) => (k === 0 ? { ...i, panotaj: [], mpDirect: "180.481" } : i));
     await agent.put(`/api/oferte/${id}/produse`).send(corp).expect(200);
-    const r = await agent.put(`/api/oferte/${id}/status`).send({ status: "COMANDAT" });
+    const r = await agent.put(`/api/oferte/${id}/status`).send({ status: "COMANDAT", livrareBilka: { tip: "DEPOZIT" } });
     expect(r.status).toBe(409);
     expect(r.body.eroare).toMatch(/lungimi × bucăți/);
     expect(r.body.motive[0]).toMatch(/180.481 mp sunt dati ca suprafata/);
@@ -158,7 +158,7 @@ describe("'Comandat' (cap. 16, 3.2)", () => {
     await agent.put(`/api/oferte/${id}/montator`).send({ montatorNou: { nume: "Vasile Montatorul", telefon: "0740 111 222", tip: "MONTATOR" }, comisionRecomandareLei: "500" }).expect(200);
     await agent.put(`/api/oferte/${id}/status`).send({ status: "AVANS_LUAT", avansLei: "5000" }).expect(200);
     const inainte = (await admin.get(`/api/oferte/${id}`).expect(200)).body.oferta.preturi.rezultat;
-    const r = await agent.put(`/api/oferte/${id}/status`).send({ status: "COMANDAT", mentiuni: "trimis la Bilka" });
+    const r = await agent.put(`/api/oferte/${id}/status`).send({ status: "COMANDAT", livrareBilka: { tip: "DEPOZIT" }, mentiuni: "trimis la Bilka" });
     expect(r.status, JSON.stringify(r.body)).toBe(200);
     const o = r.body.oferta;
     expect(o.status).toBe("COMANDAT");
@@ -177,7 +177,7 @@ describe("'Comandat' (cap. 16, 3.2)", () => {
     const comanda = await prisma.comanda.findUniqueOrThrow({ where: { ofertaId: id } });
     expect(comanda).toMatchObject({ clientNume: "Client Statusuri", clientTelefon: "0730000201", montatorNume: "Vasile Montatorul", serie: o.serie, numar: o.numar });
     // ireversibil si inghetat; avansul / montatorul / notitele raman
-    await agent.put(`/api/oferte/${id}/status`).send({ status: "DE_COMANDAT" }).expect(409);
+    await agent.put(`/api/oferte/${id}/status`).send({ status: "DE_COMANDAT", livrareBilka: { tip: "DEPOZIT" } }).expect(409);
     await agent.put(`/api/oferte/${id}/produse`).send(await corpDinEtalon(citesteEtalon("E01"))).expect(409);
     await agent.put(`/api/oferte/${id}/preturi`).send({ tinta: { tip: "ADAOS_PCT", valoare: "20" } }).expect(409);
     await agent.put(`/api/oferte/${id}/antet`).send({ note: "x" }).expect(409);
@@ -197,7 +197,7 @@ describe("legarea ulterioara ca completare (cap. 2b) si lucrarea", () => {
     const e10 = citesteEtalon("E10");
     const initiala = await ofertaNoua(agent);
     await construieste(agent, initiala, e01);
-    await agent.put(`/api/oferte/${initiala}/status`).send({ status: "COMANDAT" }).expect(200); // si dupa comanda se poate lega
+    await agent.put(`/api/oferte/${initiala}/status`).send({ status: "COMANDAT", livrareBilka: { tip: "DEPOZIT" } }).expect(200); // si dupa comanda se poate lega
     const b = await ofertaNoua(agent);
     const corp = await corpDinEtalon(e10);
     await agent.put(`/api/oferte/${b}/produse`).send(corp).expect(200);

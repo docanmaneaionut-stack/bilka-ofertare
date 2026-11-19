@@ -1,6 +1,6 @@
 # Fișa de modul — CONTURI (CON)
 
-Versiunea 1.1 · 4 septembrie 2026 · Status: **ÎNCHISĂ** (aprobată de Ionuț; nu se mai reia fără cerere explicită de tip MODIFICARE)
+Versiunea 1.2 · 17 noiembrie 2026 (MODIFICARE M5 — `MODIFICARI-S26.md`: prețul de vânzare al unei comenzi îl ajustează **doar Administratorul firmei**, cu motiv obligatoriu, cât comanda nu e încasată integral; M8 — montatorul de execuție îl poate modifica și Gestiunea) · v1.1 · 4 septembrie 2026 · Status: **ÎNCHISĂ** (aprobată de Ionuț; nu se mai reia fără cerere explicită de tip MODIFICARE)
 Sursa: descrierea lui Ionuț din 03.09.2026 și răspunsurile din 03–04.09.2026. Înlocuiește ARH §3 și punctele 1–4 din ARH §12.
 
 ---
@@ -53,8 +53,10 @@ Regula istoricului: **istoricul unei oferte sau comenzi e vizibil oricui poate v
 | Intervine pe oferta unui subordonat (cu istoric) | Administratorul lui |
 | Trimite comanda — statusul ofertei devine **Comandat** | Administrator, Agent, Colaborator |
 | Adaugă detalii pe o comandă (contacte, detalii apărute pe parcurs) — note care se adaugă, nu se rescriu | cine a făcut oferta; Administratorul; Gestiune |
-| Modifică **prețul de vânzare** și **sumele de încasat** (avans, rest) ale unei comenzi — cu istoric | cine a făcut oferta (Agent / Colaborator / Administrator) **și** Administratorul firmei |
-| Modifică comisionul montatorului (cu istoric) | cine a făcut oferta; Administratorul |
+| Modifică **prețul de vânzare** al unei comenzi — cu motiv obligatoriu și istoric, cât comanda nu e încasată integral *(MODIFICARE M5, 17.11.2026)* | **doar Administratorul firmei** |
+| Modifică **sumele de încasat** (avans, rest) ale unei comenzi — cu istoric | cine a făcut oferta (Agent / Colaborator / Administrator) **și** Administratorul firmei |
+| Modifică comisionul **recomandării** (cu istoric) *(M8: comisionul e al recomandării)* | cine a făcut oferta; Administratorul |
+| Modifică **montatorul de execuție** (nume, telefon; cu istoric) *(M8)* | cine a făcut oferta; Administratorii; Gestiune |
 | Schimbă statusul logistic (cu istoric) | orice Administrator, pe **toate** comenzile; Gestiune |
 | Notează lipsurile la „Recepționat parțial" | Gestiune; Administrator |
 | Bifează avans încasat / rest încasat / comision achitat | **doar** Administratorul firmei, pe comenzile subordonaților lui |

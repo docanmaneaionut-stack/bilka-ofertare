@@ -172,6 +172,12 @@ export function FisaSoferului() {
           <p>
             <strong>Livrare:</strong> {b.livrare.indicatii ?? <span className="text-secundar">fără indicații</span>}
             {b.livrare.data ? ` · ziua: ${dataRo(b.livrare.data)}` : ""}
+            {b.livrareBilka && (
+              <>
+                {" "}
+                · <span className="eticheta-livrare-bilka">{b.livrareBilka}</span>
+              </>
+            )}
           </p>
           <p>
             <strong>Montator:</strong>{" "}

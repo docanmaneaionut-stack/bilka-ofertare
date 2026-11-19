@@ -8,6 +8,7 @@ import { numarComplet } from "../clienti.js";
 import { EroareDocument } from "../documente/index.js";
 import { includeProduse } from "../intrareMot.js";
 import { scrieIstoric } from "../istoric.js";
+import { ETICHETA_LIVRARE_BILKA, MESAJ_FARA_LIVRARE_BILKA } from "../livrareBilka.js";
 import { rezultatSauSalvat } from "../preturi.js";
 import { poateVedeaOferta } from "../vizibilitate.js";
 import { EroareNumeLipsa, umpleFormulare, type FormularUmplut } from "./continut.js";
@@ -23,6 +24,12 @@ import { EroareZip, rescrieZip } from "./zip.js";
 // generarii; intrare in istoric. Colaboratorul nu primeste formularul (e comanda
 // firmei catre furnizor). Nicio comanda nu pleaca de aici: agentul deschide
 // fisierul in Excel si il trimite in SAP ca pana acum.
+//
+// S26a (MODIFICAREA M7): localitatea si telefonul din antet urmeaza alegerea livrarii de la Bilka -
+// a comenzii dupa "Comandat", altfel a ofertei: la DEPOZIT celulele raman goale (cum se completau de
+// mana), la SANTIER se scriu localitatea si telefonul de contact alese. Fara alegere: la "De comandat"
+// generarea e refuzata cu campul (ecranul deschide dialogul); la o comanda dinainte de S26a formularul
+// iese ca pana atunci (localitatea lucrarii, telefonul clientului). Restul generatorului e neschimbat.
 
 export const formulareBilkaRouter = Router({ mergeParams: true });
 
@@ -59,8 +66,16 @@ export function fisiereDinUmplere(sablon: Sablon, formulare: FormularUmplut[]): 
 }
 
 export async function genereazaFormulareBilka(ofertaId: string, u: Utilizator) {
-  const o = await prisma.oferta.findUniqueOrThrow({ where: { id: ofertaId }, include: { ...includeProduse, client: { select: { nume: true, telefon: true, localitate: true } }, firma: { select: { denumire: true, sablonBilka: true, sablonBilkaVersiune: true } } } });
+  const o = await prisma.oferta.findUniqueOrThrow({ where: { id: ofertaId }, include: { ...includeProduse, client: { select: { nume: true, telefon: true, localitate: true } }, comanda: { select: { livrareBilka: true, livrareBilkaLocalitate: true, livrareBilkaTelefon: true } }, firma: { select: { denumire: true, sablonBilka: true, sablonBilkaVersiune: true } } } });
   if (!(STATUSURI_FORMULAR as readonly string[]).includes(o.status)) throw new EroareDocument("Formularele Bilka se generează de la statusul „De comandat” (și la „Comandat”, din rezultatul salvat)", 409);
+  const livrare = o.status === "COMANDAT" && o.comanda ? o.comanda : o;
+  if (!livrare.livrareBilka && o.status !== "COMANDAT") throw new EroareDocument(MESAJ_FARA_LIVRARE_BILKA, 409, [{ camp: "livrareBilka", eticheta: ETICHETA_LIVRARE_BILKA, mesaj: MESAJ_FARA_LIVRARE_BILKA }]);
+  const antetLivrare =
+    livrare.livrareBilka === "DEPOZIT"
+      ? { localitate: null, telefon: null }
+      : livrare.livrareBilka === "SANTIER"
+        ? { localitate: livrare.livrareBilkaLocalitate, telefon: livrare.livrareBilkaTelefon }
+        : { localitate: o.localitate ?? o.client.localitate, telefon: o.client.telefon };
   const cale = caleSablonFirma(o.firma);
   if (!cale) throw new EroareDocument(`Firma ${o.firma.denumire} nu are încărcat șablonul formularului de comandă Bilka — Admin general îl încarcă din Zona tehnică → Firme`, 409);
   let sablon: Sablon;
@@ -87,7 +102,7 @@ export async function genereazaFormulareBilka(ofertaId: string, u: Utilizator) {
       rezultat,
       corespondente,
       produse,
-      antet: { numarComplet: nrComplet, localitate: o.localitate ?? o.client.localitate, telefon: o.client.telefon },
+      antet: { numarComplet: nrComplet, ...antetLivrare },
     });
   } catch (e) {
     // G6: tabela de corespondenta si sablonul nu se potrivesc - oprire cu mesaj, nu formular gresit
@@ -141,12 +156,12 @@ formulareBilkaRouter.post("/", async (req, res) => {
   try {
     const r = await genereazaFormulareBilka(o.id, u);
     res.status(201).json({
-      documente: r.documente.map((d) => ({ id: d.id, tip: d.tip, eticheta: "Formular Bilka", versiune: d.versiune, nume: d.nume, marime: d.marime, pagini: null, generatLa: d.generatLa, generatDe: d.generatDe?.nume ?? null, transmisLa: d.transmisLa, canal: d.canal, formularNr: d.formularNr, avertizari: d.avertizari })),
+      documente: r.documente.map((d) => ({ inainteDeSchimbareaLivrarii: false, id: d.id, tip: d.tip, eticheta: "Formular Bilka", versiune: d.versiune, nume: d.nume, marime: d.marime, pagini: null, generatLa: d.generatLa, generatDe: d.generatDe?.nume ?? null, transmisLa: d.transmisLa, canal: d.canal, formularNr: d.formularNr, avertizari: d.avertizari })),
       avertizari: r.avertizari,
     });
   } catch (e) {
     if (e instanceof EroareDocument) {
-      res.status(e.status).json({ eroare: e.message });
+      res.status(e.status).json({ eroare: e.message, ...(e.campuri.length > 0 ? { campuri: e.campuri } : {}) });
       return;
     }
     throw e;

@@ -267,13 +267,14 @@ describe("antetul si clientul", () => {
     expect(r1.body.oferta.client.email).toBe("popescu@exemplu.local");
     const releagat = await agent.put(`/api/oferte/${id}/client`).send({ nume: "Altcineva", telefon: "0700000001", adresa: "Bulevard 5" });
     expect(releagat.status, JSON.stringify(releagat.body)).toBe(200);
-    const clientNou = await prisma.client.findUnique({ where: { telefonNormalizat: "0700000001" } });
+    // S26a (M6): unicitatea e un index partial in baza - cautarea dupa telefon e findFirst
+    const clientNou = await prisma.client.findFirst({ where: { telefonNormalizat: "0700000001" } });
     expect(releagat.body.oferta.client.id).toBe(clientNou!.id);
     expect(releagat.body.oferta.client.nume).toBe("Altcineva");
   });
 
   it("fisa clientului arata ofertele lui in limita vizibilitatii", async () => {
-    const client = await prisma.client.findUniqueOrThrow({ where: { telefonNormalizat: "0728192569" } });
+    const client = await prisma.client.findFirstOrThrow({ where: { telefonNormalizat: "0728192569" } });
     const agent = await autentificaAgent(app, EMAIL.agent1);
     const { body } = await agent.get(`/api/clienti/${client.id}`).expect(200);
     expect(body.client.nume).toBe("Popescu Andrei");

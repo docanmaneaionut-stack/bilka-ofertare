@@ -5,6 +5,7 @@ import { Router } from "express";
 import { z } from "zod";
 import { prisma } from "../../../db/prisma.js";
 import { env } from "../../../env.js";
+import type { CampInvalid } from "../../../middleware/erori.js";
 import { numarComplet } from "../clienti.js";
 import { includeProduse } from "../intrareMot.js";
 import { scrieIstoric } from "../istoric.js";
@@ -30,6 +31,8 @@ export class EroareDocument extends Error {
   constructor(
     message: string,
     public status = 400,
+    // S26a: campul si motivul, cand refuzul tine de un camp (alegerea livrarii de la Bilka)
+    public campuri: CampInvalid[] = [],
   ) {
     super(message);
   }
@@ -108,6 +111,15 @@ async function ofertaVizibila(u: Utilizator, id: string) {
   return o && poateVedeaOferta(u, o) ? o : null;
 }
 
+// S26a (M7): momentul ultimei alegeri a livrarii de la Bilka - al comenzii dupa "Comandat", altfel al
+// ofertei; formularele generate inainte de el poarta marcajul "generat inainte de schimbarea livrarii"
+export async function momentulLivrariiBilka(ofertaId: string): Promise<Date | null> {
+  const o = await prisma.oferta.findUnique({ where: { id: ofertaId }, select: { status: true, livrareBilkaLa: true, comanda: { select: { livrareBilkaLa: true } } } });
+  if (!o) return null;
+  return o.status === "COMANDAT" && o.comanda ? o.comanda.livrareBilkaLa : o.livrareBilkaLa;
+}
+export const inainteDeSchimbareaLivrarii = (d: { tip: TipDocumentDb; generatLa: Date }, moment: Date | null): boolean => d.tip === "FORMULAR_BILKA" && moment !== null && d.generatLa.getTime() < moment.getTime();
+
 const spreRaspuns = (d: { id: string; tip: TipDocumentDb; versiune: number; nume: string; marime: number; pagini: number | null; generatLa: Date; transmisLa: Date | null; canal: string | null; generatDe: { nume: string } | null; formularNr?: number | null; avertizari?: string | null }) => ({
   id: d.id,
   tip: d.tip,
@@ -132,7 +144,8 @@ documenteRouter.get("/", async (req, res) => {
     return;
   }
   const documente = await prisma.ofertaDocument.findMany({ where: { ofertaId: o.id }, orderBy: { generatLa: "desc" }, include: { generatDe: { select: { nume: true } } } });
-  res.json({ documente: documente.filter((d) => poateVedeaDocument(u, o, d.tip)).map(spreRaspuns), tipuriPermise: TIPURI.filter((t) => poateVedeaDocument(u, o, t)) });
+  const moment = await momentulLivrariiBilka(o.id);
+  res.json({ documente: documente.filter((d) => poateVedeaDocument(u, o, d.tip)).map((d) => ({ ...spreRaspuns(d), inainteDeSchimbareaLivrarii: inainteDeSchimbareaLivrarii(d, moment) })), tipuriPermise: TIPURI.filter((t) => poateVedeaDocument(u, o, t)) });
 });
 
 documenteRouter.post("/", async (req, res) => {

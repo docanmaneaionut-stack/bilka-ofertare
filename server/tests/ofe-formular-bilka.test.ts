@@ -75,9 +75,10 @@ async function construieste(agent: Agent, id: string, e: FisierEtalon, corp?: Co
   return r.body.oferta as { numarComplet: string };
 }
 
-async function deComandat(agent: Agent, id: string) {
+// S26a (M7): la "De comandat" se alege livrarea de la Bilka - implicit la depozit
+async function deComandat(agent: Agent, id: string, livrareBilka: { tip: "DEPOZIT" | "SANTIER"; localitate?: string; telefon?: string } = { tip: "DEPOZIT" }) {
   await agent.put(`/api/oferte/${id}/status`).send({ status: "TRANSMISA" }).expect(200);
-  await agent.put(`/api/oferte/${id}/status`).send({ status: "DE_COMANDAT" }).expect(200);
+  await agent.put(`/api/oferte/${id}/status`).send({ status: "DE_COMANDAT", livrareBilka }).expect(200);
 }
 
 type DocumentFormular = { id: string; nume: string; formularNr: number; avertizari: string | null; tip: string };
@@ -161,10 +162,11 @@ describe("formularele Bilka (S16b)", () => {
     expect(doc.tip).toBe("FORMULAR_BILKA");
     expect(doc.avertizari).toBeNull();
     verificaHash(buf);
-    // antetul: numarul ofertei, localitatea lucrarii, telefonul; mesajul de productie ramane gol
+    // antetul: numarul ofertei; S26a (M7) - livrare la DEPOZIT: celulele de localitate si telefon raman goale
+    // (cum se completa de mana); mesajul de productie ramane gol
     expect(v(s, "comanda", "F14")).toBe(o.numarComplet);
-    expect(v(s, "comanda", "P17")).toBe("Câmpineanca");
-    expect(v(s, "comanda", "P18")).toBe("0730000301");
+    expect(v(s, "comanda", "P17")).toBeUndefined();
+    expect(v(s, "comanda", "P18")).toBeUndefined();
     expect(v(s, "comanda", "F20")).toBeUndefined();
     // invelitoarea principala: Iberic mat 0,50 RAL 3005, modul 35, fara membrana, 4 lungimi x coli
     expect(v(s, "comanda", "H22")).toBe("TIGLA_METALICA");
@@ -230,6 +232,48 @@ describe("formularele Bilka (S16b)", () => {
     expect(JSON.stringify(istoric.body)).toMatch(/Formulare Bilka generate din șablonul „Formular comanda v10/);
     expect(JSON.stringify(istoric.body)).toContain(`${o.numarComplet}-F1.xlsm`);
   }, 120_000);
+
+  it("M7: livrare direct in santier -> localitatea si telefonul ALESE in antet (nu ale clientului); schimbarea alegerii marcheaza formularele vechi; fara alegere la De comandat -> 409 cu campul; comanda veche fara alegere -> ca pana acum", async () => {
+    const agent = await autentificaAgent(app, EMAIL.agent1);
+    const id = await ofertaNoua(agent);
+    const o = await construieste(agent, id, citesteEtalon("E01"));
+    await deComandat(agent, id, { tip: "SANTIER", localitate: "Cotești", telefon: "0787 877 989" });
+    const santier = await genereaza(agent, id);
+    verificaHash(santier.fisiere[0].buf);
+    expect(v(santier.fisiere[0].s, "comanda", "F14")).toBe(o.numarComplet);
+    expect(v(santier.fisiere[0].s, "comanda", "P17")).toBe("Cotești");
+    expect(v(santier.fisiere[0].s, "comanda", "P18")).toBe("0787 877 989");
+    // schimbarea alegerii cat oferta nu e "Comandat": formularul vechi ramane in lista, marcat; cel nou are celulele goale
+    await new Promise((r) => setTimeout(r, 20));
+    const s1 = await agent.put(`/api/oferte/${id}/livrare-bilka`).send({ tip: "DEPOZIT" });
+    expect(s1.status, JSON.stringify(s1.body)).toBe(200);
+    expect(s1.body.oferta.livrareBilka).toMatchObject({ tip: "DEPOZIT", localitate: null, telefon: null });
+    const depozit = await genereaza(agent, id);
+    verificaHash(depozit.fisiere[0].buf);
+    expect(v(depozit.fisiere[0].s, "comanda", "P17")).toBeUndefined();
+    expect(v(depozit.fisiere[0].s, "comanda", "P18")).toBeUndefined();
+    const lista = (await agent.get(`/api/oferte/${id}/documente`).expect(200)).body.documente as { id: string; tip: string; inainteDeSchimbareaLivrarii: boolean }[];
+    const formulare = lista.filter((d) => d.tip === "FORMULAR_BILKA");
+    expect(formulare.find((d) => d.id === santier.fisiere[0].doc.id)!.inainteDeSchimbareaLivrarii).toBe(true);
+    expect(formulare.find((d) => d.id === depozit.fisiere[0].doc.id)!.inainteDeSchimbareaLivrarii).toBe(false);
+    // o oferta "De comandat" dinainte de S26a (fara alegere): generarea cere alegerea, cu campul
+    await prisma.oferta.update({ where: { id }, data: { livrareBilka: null, livrareBilkaLocalitate: null, livrareBilkaTelefon: null, livrareBilkaLa: null } });
+    const fara = await agent.post(`/api/oferte/${id}/formulare-bilka`).send({});
+    expect(fara.status).toBe(409);
+    expect(fara.body.campuri).toEqual([expect.objectContaining({ camp: "livrareBilka" })]);
+    // o comanda dinainte de S26a (fara alegere nici pe comanda): formularul ca pana acum - localitatea lucrarii si telefonul clientului
+    await agent.put(`/api/oferte/${id}/status`).send({ status: "COMANDAT", livrareBilka: { tip: "DEPOZIT" } }).expect(200);
+    await prisma.comanda.update({ where: { ofertaId: id }, data: { livrareBilka: null, livrareBilkaLocalitate: null, livrareBilkaTelefon: null, livrareBilkaLa: null } });
+    await prisma.oferta.update({ where: { id }, data: { livrareBilka: null, livrareBilkaLa: null } });
+    const veche = await genereaza(agent, id);
+    expect(v(veche.fisiere[0].s, "comanda", "P17")).toBe("Câmpineanca");
+    expect(v(veche.fisiere[0].s, "comanda", "P18")).toBe("0730000301");
+    // dupa "Comandat" alegerea e a comenzii: schimbata acolo, formularul o urmeaza
+    await prisma.comanda.update({ where: { ofertaId: id }, data: { livrareBilka: "SANTIER", livrareBilkaLocalitate: "Panciu", livrareBilkaTelefon: "0744 111 222", livrareBilkaLa: new Date() } });
+    const dupaComanda = await genereaza(agent, id);
+    expect(v(dupaComanda.fisiere[0].s, "comanda", "P17")).toBe("Panciu");
+    expect(v(dupaComanda.fisiere[0].s, "comanda", "P18")).toBe("0744 111 222");
+  }, 180_000);
 
   it("E11 -> 2 formulare: Clasic 8017 + Retro Plus Standard 7016, fiecare cu pluvialul mat pe locul lui si culoarea blocului", async () => {
     const agent = await autentificaAgent(app, EMAIL.agent1);
@@ -354,7 +398,7 @@ describe("formularele Bilka (S16b)", () => {
     expect(fisiere[0].doc.avertizari).toMatch(/Nu au loc în formularul Bilka/);
     // la "Comandat": din rezultatul salvat, fara recalcul
     await agent.put(`/api/oferte/${id}/status`).send({ status: "AVANS_LUAT", avansLei: "1000" }).expect(200);
-    await agent.put(`/api/oferte/${id}/status`).send({ status: "COMANDAT" }).expect(200);
+    await agent.put(`/api/oferte/${id}/status`).send({ status: "COMANDAT", livrareBilka: { tip: "DEPOZIT" } }).expect(200);
     const dupa = await genereaza(agent, id);
     expect(v(dupa.fisiere[0].s, "comanda", "E23")).toBe("IBERIC");
     expect(v(dupa.fisiere[0].s, "comanda", "F64")).toBe("13");
