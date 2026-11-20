@@ -992,6 +992,9 @@ model Montator {
   localitate        String?
   tip               TipMontator @default(MONTATOR)
   activ             Boolean     @default(true)
+  // S27 (BUG-16, migrarea 22): cine a adaugat persoana in lista, cand nu e chiar agentul listei - montatorul
+  // de executie scris de mana pe comanda de Gestiune / un Administrator intra in lista autorului ofertei
+  adaugatDeNume     String?
   createdAt         DateTime    @default(now())
   updatedAt         DateTime    @updatedAt
 

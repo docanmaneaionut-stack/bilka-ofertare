@@ -47,6 +47,8 @@ export function OfertaDetaliu() {
   // clientul ales din sugestii se leaga direct (alegerea lui e raspunsul)
   const [propunere, setPropunere] = useState<Client | null>(null);
   const [alesExistent, setAlesExistent] = useState(false);
+  // S27 (BUG-15): clientul ales din sugestii (si pe nume) - id-ul lui pleaca odata cu salvarea
+  const [alesClient, setAlesClient] = useState<Client | null>(null);
   // S26a (M7): generarea formularului fara alegerea livrarii deschide dialogul
   const [dialogLivrare, setDialogLivrare] = useState(false);
 
@@ -130,6 +132,7 @@ export function OfertaDetaliu() {
     setLocalitate(o.localitate ?? "");
     setPropunere(null);
     setAlesExistent(false);
+    setAlesClient(null);
     setReincarcaIstoric((n) => n + 1);
   }
 
@@ -171,7 +174,7 @@ export function OfertaDetaliu() {
       const m = mentiuni.trim() || null;
       if (!legare) await apiOferte.antet(oferta.id, { data, sursaClient: sursaClient || null, note: note || null, adresaLucrarii: adresaLucrarii || null, localitate: localitate || null, mentiuni: m });
       const raspuns = legare ?? (alesExistent ? "leaga" : undefined);
-      const { oferta: dupa } = await apiOferte.client(oferta.id, { ...client, mentiuni: m, ...(raspuns ? { legare: raspuns } : {}) });
+      const { oferta: dupa } = await apiOferte.client(oferta.id, { ...client, mentiuni: m, ...(raspuns ? { legare: raspuns } : {}), ...(alesClient ? { clientExistentId: alesClient.id } : {}) });
       preia(dupa);
       setMesaj("Antetul și clientul au fost salvate.");
     } catch (err) {
@@ -468,10 +471,12 @@ export function OfertaDetaliu() {
               onSchimba={(cl) => {
                 setClient(cl);
                 setAlesExistent(false);
+                if (alesClient && cl.nume.trim() !== alesClient.nume.trim()) setAlesClient(null);
               }}
               onAlegeExistent={(cl) => {
                 setClient(dinClient(cl));
                 setAlesExistent(true);
+                setAlesClient(cl);
               }}
               eroare={eroareFormular}
               prefix=""

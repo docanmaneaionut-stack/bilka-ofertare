@@ -67,8 +67,9 @@ export function Rubrica({ rubrica, titlu, catalog, stare, set, poate, categorieP
   );
 }
 
-// alegerea cheii pentru o sectiune de sine statatoare (comanda doar de accesorii, completari)
-function NouaSectiuneDeSine({ catalog, onAdauga }: { catalog: Catalog; onAdauga: (c: Cheie) => void }) {
+// alegerea cheii pentru o sectiune de sine statatoare (comanda doar de accesorii, completari);
+// S27 (M9): folosita si de rubrica accesoriilor speciale 2 ML, cu eticheta ei
+export function NouaSectiuneDeSine({ catalog, onAdauga, eticheta = "+ Secțiune de sine stătătoare (altă cheie, fără învelitoare)" }: { catalog: Catalog; onAdauga: (c: Cheie) => void; eticheta?: string }) {
   const [deschis, setDeschis] = useState(false);
   const [finisaj, setFinisaj] = useState("");
   const [grosime, setGrosime] = useState("");
@@ -79,7 +80,7 @@ function NouaSectiuneDeSine({ catalog, onAdauga }: { catalog: Catalog; onAdauga:
   if (!deschis)
     return (
       <button className="buton secundar mic" type="button" tabIndex={-1} onClick={() => setDeschis(true)}>
-        + Secțiune de sine stătătoare (altă cheie, fără învelitoare)
+        {eticheta}
       </button>
     );
   return (

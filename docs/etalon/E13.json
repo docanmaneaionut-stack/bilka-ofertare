@@ -1,0 +1,171 @@
+{
+ "id": "E13",
+ "titlu": "Accesorii speciale 2 ML de sine stătătoare, în două chei (MODIFICARE M9): închideri perimetrale mat 0,50 RAL 8017 (D05 × 16, D08 × 6) + glafuri lucios 0,50 RAL 9005 (D06 × 10) + fixare de sine stătătoare 8017 (holțșuruburi × 2), fără învelitoare — agent 1 %, țintă 20 %, prezentare simplă",
+ "status": "aprobat (Ionuț, 20.11.2026, prin mesajul S27; forma pachetelor adusă la convenția etaloanelor după proba lui Code — motorul dădea deja cifrele și formularele)",
+ "intrari": {
+  "curs_bnr": "5.3485",
+  "tva_pct": 21,
+  "adaos_cont_pct": "1.00",
+  "grupa_pct": "0",
+  "data_ofertei": "2026-11-20",
+  "cont": "Agent",
+  "client": "persoană fizică",
+  "mod_prezentare": "simplu",
+  "tinta": {
+   "tip": "adaos_pct",
+   "valoare": "20"
+  },
+  "linii": [
+   {
+    "rubrica": "Accesorii speciale 2 ML",
+    "cod_bilka": "ASP05MAT050",
+    "denumire": "Accesoriu special 2 ML – D05 (201–250 mm) – mat – 0,50 mm",
+    "um": "buc",
+    "cantitate": "16",
+    "culoare": {
+     "ral": "RAL 8017",
+     "finisaj": "mat",
+     "grosime": "0,50 mm"
+    },
+    "pachet": "Secțiune de sine stătătoare 1 — 8017 mat 0,50",
+    "cheie_culoare": "RAL 8017 mat 0,50 (ales)",
+    "nr": 1
+   },
+   {
+    "rubrica": "Accesorii speciale 2 ML",
+    "cod_bilka": "ASP08MAT050",
+    "denumire": "Accesoriu special 2 ML – D08 (351–400 mm) – mat – 0,50 mm",
+    "um": "buc",
+    "cantitate": "6",
+    "culoare": {
+     "ral": "RAL 8017",
+     "finisaj": "mat",
+     "grosime": "0,50 mm"
+    },
+    "pachet": "Secțiune de sine stătătoare 1 — 8017 mat 0,50",
+    "cheie_culoare": "RAL 8017 mat 0,50 (ales)",
+    "nr": 2
+   },
+   {
+    "rubrica": "Accesorii speciale 2 ML (a doua rubrică)",
+    "cod_bilka": "ASP06LUC050",
+    "denumire": "Accesoriu special 2 ML – D06 (251–300 mm) – lucios – 0,50 mm",
+    "um": "buc",
+    "cantitate": "10",
+    "culoare": {
+     "ral": "RAL 9005",
+     "finisaj": "lucios",
+     "grosime": "0,50 mm"
+    },
+    "pachet": "Secțiune de sine stătătoare 2 — 9005 lucios 0,50",
+    "cheie_culoare": "RAL 9005 lucios 0,50 (ales)",
+    "nr": 3
+   },
+   {
+    "rubrica": "Fixare și etanșare",
+    "cod_bilka": "SUCLE408035",
+    "denumire": "Holțșuruburi în culoare, lemn – 4,8 × 35 mm",
+    "um": "cutie",
+    "cantitate": "2",
+    "culoare": {
+     "ral": "RAL 8017",
+     "finisaj": "mat",
+     "grosime": "0,50 mm"
+    },
+    "pachet": "Secțiune de sine stătătoare 1 — 8017 mat 0,50",
+    "cheie_culoare": "RAL 8017 mat 0,50 (ales)",
+    "nr": 4
+   }
+  ]
+ },
+ "asteptat": {
+  "curs_achizitie": "5.4020",
+  "linii": [
+   {
+    "cod_bilka": "ASP05MAT050",
+    "cantitate": "16",
+    "baza_eur": "4.41",
+    "achizitie_cont_eur": "4.45",
+    "achizitie_cont_lei_cu_tva": "29.09",
+    "pret_document_eur": "5.39",
+    "valoare_eur": "86.24",
+    "nr": 1
+   },
+   {
+    "cod_bilka": "ASP08MAT050",
+    "cantitate": "6",
+    "baza_eur": "7.06",
+    "achizitie_cont_eur": "7.13",
+    "achizitie_cont_lei_cu_tva": "46.60",
+    "pret_document_eur": "8.65",
+    "valoare_eur": "51.90",
+    "nr": 2
+   },
+   {
+    "cod_bilka": "ASP06LUC050",
+    "cantitate": "10",
+    "baza_eur": "5.09",
+    "achizitie_cont_eur": "5.14",
+    "achizitie_cont_lei_cu_tva": "33.60",
+    "pret_document_eur": "6.23",
+    "valoare_eur": "62.30",
+    "nr": 3
+   },
+   {
+    "cod_bilka": "SUCLE408035",
+    "cantitate": "2",
+    "baza_eur": "6.25",
+    "achizitie_cont_eur": "6.31",
+    "achizitie_cont_lei_cu_tva": "41.24",
+    "pret_document_eur": "7.65",
+    "valoare_eur": "15.30",
+    "nr": 4
+   }
+  ],
+  "totaluri": {
+   "achizitie_cont_eur_fara_tva": "178.00",
+   "achizitie_cont_lei_fara_tva": "961.56",
+   "achizitie_cont_lei_cu_tva": "1163.49",
+   "tinta_lei_cu_tva": "1396.19",
+   "adaos_real_pct": "20.00",
+   "marja_lei": "232.70",
+   "document_fara_tva_eur": "215.74",
+   "tva_eur": "45.31",
+   "document_cu_tva_eur": "261.05",
+   "document_total_lei": "1396.23",
+   "vanzari": {
+    "pret_vanzare_lei": "1396.23",
+    "cost_achizitie_lei": "1163.49",
+    "adaos_net_lei": "232.74",
+    "adaos_brut_lei": "192.35"
+   }
+  },
+  "comandabil": true,
+  "nota_comandabil": "fără învelitori — nimic nu blochează comanda",
+  "pachete": [
+   {
+    "pachet": "Secțiune de sine stătătoare 1 — 8017 mat 0,50",
+    "linii": 3,
+    "achizitie_eur": "126.60"
+   },
+   {
+    "pachet": "Secțiune de sine stătătoare 2 — 9005 lucios 0,50",
+    "linii": 1,
+    "achizitie_eur": "51.40"
+   }
+  ],
+  "formulare_bilka": [
+   {
+    "nr": 1,
+    "continut": "formular fără învelitoare, cheia 8017 mat 0,50: accesoriile speciale 2 ML (D05 × 16, D08 × 6) + fixarea de sine stătătoare cu aceeași cheie (holțșuruburi × 2) — același formular (M9: secțiunile de sine stătătoare cu aceeași cheie stau împreună)"
+   },
+   {
+    "nr": 2,
+    "continut": "formular fără învelitoare, cheia 9005 lucios 0,50: accesoriile speciale 2 ML (D06 × 10) — cheie diferită → formular separat (M9)"
+   }
+  ],
+  "nota": "secțiunile de sine stătătoare se împachetează pe cheie: 2 secțiuni (8017 mat 0,50 — specialele D05, D08 și fixarea; 9005 lucios 0,50 — specialele D06) → 2 formulare fără învelitoare (R10 + M9); rest de rotunjire 6 cenți → +0,01 EUR pe D08 (6 buc), fără abatere (R5)"
+ },
+ "reguli": "ETALON.md §0 (R1–R7, R10 completată cu M9)",
+ "format": "v1.3 (28.10.2026): `invelitori[].id` și `linii[].invelitoare` = id-ul învelitorii (nu codul), pe liniile legate și pe linia învelitorii însăși; `sipci[]` cu `id`, iar linia de șipcă poartă `sipca` = id; `linii[].nr` = poziția; `asteptat.mp_invelitori` și `asteptat.sipci` pe id · restul ca v1.1 / v1.2"
+}

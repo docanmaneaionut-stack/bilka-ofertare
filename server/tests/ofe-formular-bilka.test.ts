@@ -275,6 +275,41 @@ describe("formularele Bilka (S16b)", () => {
     expect(v(dupaComanda.fisiere[0].s, "comanda", "P18")).toBe("0744 111 222");
   }, 180_000);
 
+  it("M9 (E13): speciale 2 ML de sine statatoare -> 2 formulare fara invelitoare, fiecare cu cheia lui (finisaj, culoare, grosime) si cu specialele pe randul treptei; fixarea cu aceeasi cheie pe primul; VBA neatins", async () => {
+    const agent = await autentificaAgent(app, EMAIL.agent1);
+    const id = await ofertaNoua(agent);
+    const o = await construieste(agent, id, citesteEtalon("E13"));
+    await deComandat(agent, id);
+    const { fisiere, avertizari } = await genereaza(agent, id);
+    expect(avertizari).toEqual([]);
+    expect(fisiere.map((f) => f.doc.nume)).toEqual([`${o.numarComplet}-F1.xlsm`, `${o.numarComplet}-F2.xlsm`]);
+    const [f1, f2] = fisiere;
+    for (const f of fisiere) {
+      verificaHash(f.buf);
+      expect(f.doc.avertizari).toBeNull();
+      expect(v(f.s, "comanda", "F14")).toBe(o.numarComplet);
+      // fara invelitoare: tipul, modelul si lungimile raman goale
+      expect(v(f.s, "comanda", "H22")).toBeUndefined();
+      expect(v(f.s, "comanda", "E23")).toBeUndefined();
+      expect(v(f.s, "comanda", "D27")).toBeUndefined();
+    }
+    // formularul 1: cheia 8017 mat 0,50; D05 x 16 si D08 x 6 pe randurile treptelor (D08 = randul 88, ca la E03)
+    expect([v(f1.s, "comanda", "E24"), v(f1.s, "comanda", "I24"), v(f1.s, "comanda", "S24")]).toEqual(["MAT", "8017", "0.50"]);
+    expect(v(f1.s, "comanda", "F85")).toBe("16");
+    expect(v(f1.s, "comanda", "F88")).toBe("6");
+    expect(v(f1.s, "comanda", "F86")).toBeUndefined();
+    // fixarea de sine statatoare cu aceeasi cheie e pe acelasi formular: holtsuruburile 4,8 x 35, 2 cutii
+    const cantitati = (s: Sablon) => s.harta.accesorii.map((r) => ({ nume: String(v(s, "comanda", `${r.coloanaNume}${r.rand}`) ?? ""), cantitate: v(s, "comanda", `${r.coloanaCantitate}${r.rand}`) })).filter((r) => r.cantitate !== undefined);
+    expect(cantitati(f1.s).map((r) => r.cantitate).sort()).toEqual(["16", "2", "6"]);
+    expect(cantitati(f1.s).find((r) => r.cantitate === "2")!.nume).toMatch(/SURUB|HOLT/i);
+    // formularul 2: cheia 9005 lucios 0,50; doar D06 x 10
+    expect([v(f2.s, "comanda", "E24"), v(f2.s, "comanda", "I24"), v(f2.s, "comanda", "S24")]).toEqual(["LUCIOS", "9005", "0.50"]);
+    expect(v(f2.s, "comanda", "F86")).toBe("10");
+    expect(v(f2.s, "comanda", "F85")).toBeUndefined();
+    expect(v(f2.s, "comanda", "F88")).toBeUndefined();
+    expect(cantitati(f2.s).map((r) => [r.nume, r.cantitate])).toEqual([["ACCESORIU SPECIAL D06", "10"]]);
+  }, 180_000);
+
   it("E11 -> 2 formulare: Clasic 8017 + Retro Plus Standard 7016, fiecare cu pluvialul mat pe locul lui si culoarea blocului", async () => {
     const agent = await autentificaAgent(app, EMAIL.agent1);
     const id = await ofertaNoua(agent);

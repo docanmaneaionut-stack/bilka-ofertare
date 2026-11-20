@@ -11,7 +11,7 @@ import { idsCuTextul } from "../../lib/normalizare.js";
 import { gasesteSauCreeazaClient, normalizeazaTelefon, numarComplet, schemaClientCuTelefon } from "../ofe/clienti.js";
 import { EroareDocument, ETICHETA_ORICE_DOCUMENT, genereazaDocument, inainteDeSchimbareaLivrarii } from "../ofe/documente/index.js";
 import { aceeasiLivrareBilka, descriereLivrareBilka, livrareBilkaPublic, schemaSchimbareLivrareBilka, valoriLivrareBilka } from "../ofe/livrareBilka.js";
-import { schemaMontatorExecutie, textPersoana } from "../ofe/montatori.js";
+import { retineMontatorul, schemaMontatorExecutie, textPersoana } from "../ofe/montatori.js";
 import { ajustareRouter } from "./ajustarePret.js";
 import { ajustarePublica, pretAjustat, selectAjustare } from "./pretAjustat.js";
 import { urmatorulNumar } from "../ofe/numerotare.js";
@@ -180,7 +180,9 @@ export const includeRand = {
   firma: { select: { id: true, denumire: true } },
   responsabil: { select: { id: true, nume: true, rol: true } },
   contAlocat: { select: { id: true, nume: true, rol: true } },
-  oferta: { select: { id: true, utilizatorId: true, localitate: true, completareLa: { select: { serie: true, numar: true } }, motivCompletare: true } },
+  // S27 (M10): adresa lucrarii (a ofertei comandate); la comenzile manuale, adresa clientului din baza comuna
+  oferta: { select: { id: true, utilizatorId: true, localitate: true, adresaLucrarii: true, completareLa: { select: { serie: true, numar: true } }, motivCompletare: true } },
+  client: { select: { adresa: true } },
   incasari: { orderBy: [{ data: "asc" as const }, { moment: "asc" as const }] },
   // S22: retururile active, pe scurt (numarul, suma, "de regularizat")
   retururi: { where: { stare: "ACTIV" as const }, select: { id: true, numar: true, sumaCuTvaLei: true, deRegularizat: true }, orderBy: { numar: "asc" as const } },
@@ -189,6 +191,14 @@ export const includeRand = {
 } satisfies Prisma.ComandaInclude;
 
 export type ComandaCuRelatii = Prisma.ComandaGetPayload<{ include: typeof includeRand }>;
+
+// S27 (M10): adresa lucrarii de pe rand - a ofertei comandate; la comenzile manuale adresa clientului, daca a
+// fost scrisa (la creare, fara adresa, clientul primeste localitatea sau "-" in locul ei - aceea nu se arata)
+function adresaComenzii(c: ComandaCuRelatii): string | null {
+  const adresa = (c.oferta ? (c.oferta.adresaLucrarii ?? c.client?.adresa) : c.client?.adresa)?.trim();
+  if (!adresa || adresa === "-" || adresa === (c.clientLocalitate ?? "").trim()) return null;
+  return adresa;
+}
 
 export function spreRand(c: ComandaCuRelatii) {
   const manuala = c.tip === "MANUALA";
@@ -207,7 +217,7 @@ export function spreRand(c: ComandaCuRelatii) {
     neidentificata: manuala && !c.contAlocatId,
     ofertaId: c.ofertaId,
     completareLa: c.oferta?.completareLa ? { numarComplet: numarComplet(c.oferta.completareLa.serie, c.oferta.completareLa.numar), motiv: c.oferta.motivCompletare } : null,
-    client: { nume: c.clientNume, telefon: c.clientTelefon, localitate: c.clientLocalitate },
+    client: { nume: c.clientNume, telefon: c.clientTelefon, localitate: c.clientLocalitate, adresa: adresaComenzii(c) },
     rezumat: c.rezumat,
     // S26b (M8): coloana Montator = montatorul de executie; recomandarea (persoana cu comisionul) separat
     montator: c.montatorExecutieNume ? { nume: c.montatorExecutieNume, telefon: c.montatorExecutieTelefon } : null,
@@ -277,6 +287,9 @@ comenziRouter.get("/", async (req, res) => {
       OR: [
         // S25 BUG-10: clientul, localitatea si montatorul fara diacritice
         { id: { in: await idsCuTextul("comanda", ["clientNume", "clientLocalitate", "montatorNume", "montatorExecutieNume"], q) } },
+        // S27 (M10): si dupa adresa lucrarii (a ofertei; la manuale, a clientului)
+        { ofertaId: { in: await idsCuTextul("oferta", ["adresaLucrarii"], q) } },
+        { tip: "MANUALA" as const, clientId: { in: await idsCuTextul("client", ["adresa"], q) } },
         ...(cifre.length >= 4 ? [{ clientTelefon: { contains: cifre } }, { montatorTelefon: { contains: cifre } }, { montatorExecutieTelefon: { contains: cifre } }] : []),
         ...(numar ? [{ serie: { equals: numar[1].toUpperCase() }, numar: Number(numar[2]) }] : []),
       ],
@@ -527,6 +540,8 @@ export async function creeazaComandaManuala(date: z.infer<typeof schemaComandaMa
       { tip: "alocare", camp: "contAlocat", inainte: null, dupa: contAlocat?.nume ?? "neidentificată" },
     ]);
     if (date.observatie?.trim()) await tx.comandaObservatie.create({ data: { comandaId: c.id, utilizatorId: u.id, numeUtilizatorLaMoment: u.nume, text: date.observatie.trim() } });
+    // S27 (BUG-16): montatorul scris la introducere intra in lista contului alocat (daca exista)
+    await retineMontatorul(tx, contAlocat?.id, date.montator, u);
     return c;
   });
 }
@@ -717,6 +732,8 @@ comenziRouter.put("/:id/montator", async (req, res) => {
     const dupa = await prisma.$transaction(async (tx) => {
       const d = await tx.comanda.update({ where: { id: c.id }, data: { montatorExecutieNume: date.montator?.nume ?? null, montatorExecutieTelefon: date.montator?.telefon ?? null }, include: includeRand });
       if (inainte !== dupaText) await scrieIstoricComanda(tx, c.id, u, [{ tip: "contact", camp: "montatorExecutie", inainte, dupa: dupaText, mentiuni: date.mentiuni }]);
+      // S27 (BUG-16): montatorul scris pe comanda intra in lista autorului ofertei (la manuale: a contului alocat)
+      await retineMontatorul(tx, c.oferta?.utilizatorId ?? c.contAlocatId, date.montator, u);
       return d;
     });
     res.json({ comanda: spreRand(dupa) });

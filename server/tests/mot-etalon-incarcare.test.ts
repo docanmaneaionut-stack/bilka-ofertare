@@ -52,8 +52,8 @@ describe("catalogul din CSV-urile Bilka", () => {
 describe("incarcarea ofertelor-model", () => {
   const ids = listeazaEtaloane();
 
-  it("gaseste E01-E12", () => {
-    expect(ids).toEqual(["E01", "E02", "E03", "E04", "E05", "E06", "E07", "E08", "E09", "E10", "E11", "E12"]);
+  it("gaseste E01-E13", () => {
+    expect(ids).toEqual(["E01", "E02", "E03", "E04", "E05", "E06", "E07", "E08", "E09", "E10", "E11", "E12", "E13"]);
   });
 
   for (const id of ids) {

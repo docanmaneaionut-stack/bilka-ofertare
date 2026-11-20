@@ -34,13 +34,15 @@ const MIGRARI_ETAPA_3 = [
   "20261119102251_telefon_optional_livrare_bilka",
   // S26b: ajustarea pretului de vanzare (M5), montatorul de executie (M8)
   "20261119114721_ajustare_pret_montator_executie",
+  // S27: "adaugat de ..." pe lista de persoane (BUG-16)
+  "20261120112908_montator_adaugat_de",
 ];
 
 afterAll(async () => {
   await prisma.$disconnect();
 });
 
-describe("migrarile Etapei 3 si 5 (6-21) sunt aditive", () => {
+describe("migrarile Etapei 3 si 5 (6-22) sunt aditive", () => {
   it("fiecare SQL exista si nu contine instructiuni distructive", () => {
     const existente = fs.readdirSync(FOLDER).filter((d) => /^\d{14}_/.test(d));
     for (const m of MIGRARI_ETAPA_3) expect(existente, m).toContain(m);
@@ -89,6 +91,11 @@ describe("migrarile Etapei 3 si 5 (6-21) sunt aditive", () => {
     expect(m21).toMatch(/ALTER TABLE "comanda" ADD COLUMN\s+"montatorExecutieNume" TEXT,\s+ADD COLUMN\s+"montatorExecutieTelefon" TEXT/);
     // nimic redenumit, nimic mutat: coloanele recomandarii (montatorNume / montatorTelefon, comisionLei) nu apar in migrare
     expect(m21.replace(/--[^\n]*/g, "")).not.toMatch(/RENAME|UPDATE\s+"|"montatorNume"|"comisionLei"/);
+  });
+
+  it("migrarea 22 (S27): o singura coloana optionala pe lista de persoane", () => {
+    const m22 = fs.readFileSync(path.join(FOLDER, "20261120112908_montator_adaugat_de", "migration.sql"), "utf8").replace(/--[^\n]*/g, "").trim();
+    expect(m22).toMatch(/^ALTER TABLE "montator" ADD COLUMN\s+"adaugatDeNume" TEXT;$/);
   });
 
   it("M6: indexul unic partial din baza - doi clienti nemarcati nu pot avea acelasi telefon; fara telefon si dublatul marcat sunt exceptiile", async () => {

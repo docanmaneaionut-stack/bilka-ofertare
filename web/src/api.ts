@@ -802,7 +802,8 @@ export const apiPretRapid = {
 // S26b (M8): lista de persoane a agentului - montatori, constructori, colaboratori
 export type TipPersoana = "MONTATOR" | "CONSTRUCTOR" | "COLABORATOR";
 export const ETICHETA_TIP_PERSOANA: Record<TipPersoana, string> = { MONTATOR: "montator", CONSTRUCTOR: "constructor", COLABORATOR: "colaborator" };
-export type Montator = { id: string; nume: string; telefon: string; localitate: string | null; tip: TipPersoana; activ?: boolean; utilizator?: { id: string; nume: string } };
+// "adaugatDeNume" (S27, BUG-16): cine a adaugat persoana in lista, cand nu e chiar agentul listei
+export type Montator = { id: string; nume: string; telefon: string; localitate: string | null; tip: TipPersoana; activ?: boolean; utilizator?: { id: string; nume: string }; adaugatDeNume?: string | null };
 // S26b (M8): montatorul de executie (nume + telefon, ca text); recomandarea de pe comanda
 export type Persoana = { nume: string; telefon: string | null };
 // S26b (M5): pretul de vanzare ajustat pe comanda dupa "Comandat"
@@ -878,20 +879,23 @@ export const apiOferte = {
     }
     return cerere<ListaOferte>(`${BAZA_OFE}?${p.toString()}`);
   },
-  creeaza: (client: ClientDate, antet?: AntetOferta) => cerere<{ oferta: OfertaDetaliu }>(BAZA_OFE, { method: "POST", body: JSON.stringify({ client, antet }) }),
+  // "clientExistentId" (S27, BUG-15) = clientul ales din sugestii
+  creeaza: (client: ClientDate, antet?: AntetOferta, clientExistentId?: string | null) => cerere<{ oferta: OfertaDetaliu }>(BAZA_OFE, { method: "POST", body: JSON.stringify({ client, antet, ...(clientExistentId ? { clientExistentId } : {}) }) }),
   detaliu: (id: string) => cerere<{ oferta: OfertaDetaliu }>(`${BAZA_OFE}/${id}`),
   antet: (id: string, antet: AntetOferta) => cerere<{ oferta: OfertaDetaliu }>(`${BAZA_OFE}/${id}/antet`, { method: "PUT", body: JSON.stringify(antet) }),
   // "legare" = raspunsul la propunerea de legare (S26a, M6): acelasi client / client nou cu telefonul dublat
-  client: (id: string, client: ClientDate & { mentiuni?: string | null; legare?: "leaga" | "pastreaza" }) => cerere<{ oferta: OfertaDetaliu }>(`${BAZA_OFE}/${id}/client`, { method: "PUT", body: JSON.stringify(client) }),
+  client: (id: string, client: ClientDate & { mentiuni?: string | null; legare?: "leaga" | "pastreaza"; clientExistentId?: string | null }) => cerere<{ oferta: OfertaDetaliu }>(`${BAZA_OFE}/${id}/client`, { method: "PUT", body: JSON.stringify(client) }),
   contor: (serie: string) => cerere<{ serie: string; ultimulNumar: number }>(`${BAZA_OFE}/contor/${serie}`),
   seteazaContor: (serie: string, ultimulNumar: number) => cerere<{ serie: string; ultimulNumar: number }>(`${BAZA_OFE}/contor/${serie}`, { method: "PUT", body: JSON.stringify({ ultimulNumar }) }),
 };
 
 export const apiClienti = {
-  cauta: (f: { telefon?: string; q?: string }) => {
+  // "nume" (S27, BUG-15): sugestiile pe numele clientului, in vizibilitatea contului
+  cauta: (f: { telefon?: string; q?: string; nume?: string }) => {
     const p = new URLSearchParams();
     if (f.telefon) p.set("telefon", f.telefon);
     if (f.q) p.set("q", f.q);
+    if (f.nume) p.set("nume", f.nume);
     return cerere<{ clienti: Client[] }>(`/api/clienti?${p.toString()}`);
   },
   fisa: (id: string) =>
@@ -1127,7 +1131,8 @@ export type RandComanda = {
   neidentificata: boolean;
   ofertaId: string | null;
   completareLa: { numarComplet: string; motiv: string | null } | null;
-  client: { nume: string; telefon: string; localitate: string | null };
+  // "adresa" (S27, M10) = adresa lucrarii
+  client: { nume: string; telefon: string; localitate: string | null; adresa?: string | null };
   rezumat: string;
   // S26b (M8): coloana Montator = montatorul de executie; recomandarea (persoana cu comisionul) separat
   montator: Persoana | null;

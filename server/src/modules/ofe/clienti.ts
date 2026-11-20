@@ -17,6 +17,11 @@ import { filtruVizibilitateOferte, ROLURI_CU_OFERTE } from "./vizibilitate.js";
 // nemarcati nu pot avea acelasi numar); singura exceptie e clientul marcat "telefon dublat" -
 // cel pe care agentul a refuzat sa-l lege de clientul existent cu acelasi numar. Clientii se
 // creeaza printr-o singura functie (creeazaClientNou), cu lacat pe numar in tranzactie.
+//
+// S27 (BUG-15): sugestii si pe NUMELE clientului (de la 3 litere, fara diacritice) - doar clientii cu
+// oferte vizibile contului si cei creati de el; cautarea dupa telefon ramane pe toata baza. Alegerea din
+// lista vine ca "clientExistentId": la un client cu telefon legarea se face tot prin numar (cheia de
+// deduplicare); la unul FARA telefon oferta se leaga de el prin alegere, ca sa nu apara o dublura.
 
 // doar cifre; prefixul +40 / 0040 devine 0 ("+40 728 192 569" = "0728192569")
 export function normalizeazaTelefon(telefon: string): string {
@@ -132,9 +137,35 @@ async function actualizeazaClient(tx: Prisma.TransactionClient, existent: Client
   await scrieModificariTx(tx, utilizator, "Client", existent.id, campuri, existent, { ...curate });
 }
 
-// clientul cu acest telefon (cel nemarcat "telefon dublat"), sau unul nou; fara telefon = client nou
-export async function gasesteSauCreeazaClient(tx: Prisma.TransactionClient, date: DateClient, utilizator: Utilizator): Promise<{ client: { id: string }; nou: boolean }> {
+// clientii pe care contul ii poate primi ca sugestie pe nume / alege din lista: cei cu oferte vizibile lui
+// (Agent / Colaborator - ofertele lui; Administrator - ale firmei; Admin general - toate) si cei creati de el
+export function filtruClientiVizibili(u: Utilizator): Prisma.ClientWhereInput {
+  const oferte = filtruVizibilitateOferte(u);
+  return { OR: [...(oferte ? [{ oferte: { some: oferte } }] : []), { creatDeId: u.id }] };
+}
+
+// clientul ales din lista de sugestii, daca e vizibil contului si NU are telefon (cel cu telefon se leaga prin numar)
+async function clientAlesFaraTelefon(tx: Prisma.TransactionClient, alesId: string | null | undefined, utilizator: Utilizator): Promise<Client | null> {
+  if (!alesId) return null;
+  const ales = await tx.client.findFirst({ where: { AND: [{ id: alesId }, filtruClientiVizibili(utilizator)] } });
+  return ales && !ales.telefonNormalizat ? ales : null;
+}
+
+// clientul cu acest telefon (cel nemarcat "telefon dublat"), sau unul nou; fara telefon = client nou.
+// "alesId" (BUG-15) = clientul ales din sugestiile pe nume: daca n-are telefon, oferta se leaga de el
+// (i se pune si telefonul scris acum, cand numarul e nou in baza)
+export async function gasesteSauCreeazaClient(tx: Prisma.TransactionClient, date: DateClient, utilizator: Utilizator, alesId?: string | null): Promise<{ client: { id: string }; nou: boolean }> {
   const curate = dateCurate(date);
+  const ales = await clientAlesFaraTelefon(tx, alesId, utilizator);
+  if (ales) {
+    if (curate.telefonNormalizat) await lacatPeTelefon(tx, curate.telefonNormalizat);
+    const alAltuia = curate.telefonNormalizat ? await tx.client.findFirst({ where: { telefonNormalizat: curate.telefonNormalizat, telefonDublat: false } }) : null;
+    if (!alAltuia) {
+      await actualizeazaClient(tx, ales, curate, utilizator);
+      return { client: ales, nou: false };
+    }
+    // numarul scris e al altui client: legarea obisnuita, pe numar (mai jos)
+  }
   if (!curate.telefonNormalizat) return { client: await creeazaClientNou(tx, curate, utilizator), nou: true };
   await lacatPeTelefon(tx, curate.telefonNormalizat);
   const existent = await tx.client.findFirst({ where: { telefonNormalizat: curate.telefonNormalizat, telefonDublat: false } });
@@ -152,9 +183,22 @@ export async function gasesteSauCreeazaClient(tx: Prisma.TransactionClient, date
 //   existent si ii actualizeaza fisa, "pastreaza" lasa telefonul pe clientul ofertei, marcat "telefon dublat";
 // - clientul avea telefon si numarul se schimba sau se sterge: ca pana acum - clientul cu noul numar
 //   (existent sau nou); cel vechi ramane neatins.
-export async function clientulOfertei(tx: Prisma.TransactionClient, clientCurentId: string, date: DateClient, legare: "leaga" | "pastreaza" | undefined, utilizator: Utilizator): Promise<string> {
+export async function clientulOfertei(tx: Prisma.TransactionClient, clientCurentId: string, date: DateClient, legare: "leaga" | "pastreaza" | undefined, utilizator: Utilizator, alesId?: string | null): Promise<string> {
   const curate = dateCurate(date);
   const curent = await tx.client.findUniqueOrThrow({ where: { id: clientCurentId } });
+  // S27 (BUG-15): clientul ales din sugestiile pe nume - fara telefon: oferta se muta pe el prin alegere;
+  // cu telefon: alegerea e raspunsul "leaga" la propunerea de legare (numarul ramane cheia)
+  if (alesId && alesId !== curent.id) {
+    const ales = await clientAlesFaraTelefon(tx, alesId, utilizator);
+    if (ales && !curate.telefonNormalizat) {
+      await actualizeazaClient(tx, ales, curate, utilizator);
+      return ales.id;
+    }
+    if (!ales && curate.telefonNormalizat && !legare) {
+      const cuTelefon = await tx.client.findFirst({ where: { AND: [{ id: alesId, telefonNormalizat: curate.telefonNormalizat }, filtruClientiVizibili(utilizator)] }, select: { id: true } });
+      if (cuTelefon) legare = "leaga";
+    }
+  }
   if (curate.telefonNormalizat === curent.telefonNormalizat) {
     await actualizeazaClient(tx, curent, curate, utilizator);
     return curent.id;
@@ -208,7 +252,17 @@ clientiRouter.use((req, res, next) => {
 
 // cautare pentru autocompletare: dupa telefon (normalizat, prefix) sau nume
 clientiRouter.get("/", async (req, res) => {
-  const { telefon, q } = z.object({ telefon: z.string().trim().optional(), q: z.string().trim().optional() }).parse(req.query);
+  const { telefon, q, nume } = z.object({ telefon: z.string().trim().optional(), q: z.string().trim().optional(), nume: z.string().trim().max(100).optional() }).parse(req.query);
+  // S27 (BUG-15): sugestiile pe nume - de la 3 litere, fara diacritice, doar clientii vizibili contului
+  if (nume !== undefined) {
+    if (nume.length < 3) {
+      res.json({ clienti: [] });
+      return;
+    }
+    const gasiti = await prisma.client.findMany({ where: { AND: [{ id: { in: await idsCuTextul("client", ["nume"], nume) } }, filtruClientiVizibili(req.utilizator!)] }, orderBy: [{ nume: "asc" }, { createdAt: "asc" }], take: 10 });
+    res.json({ clienti: gasiti.map(clientPublic) });
+    return;
+  }
   const where: Prisma.ClientWhereInput = {};
   if (telefon && normalizeazaTelefon(telefon).length >= 4) where.telefonNormalizat = { startsWith: normalizeazaTelefon(telefon) };
   // S25 BUG-10: numele si localitatea fara diacritice

@@ -120,10 +120,10 @@ describe("/api/mot/produse", () => {
 });
 
 describe("/api/mot/etaloane", () => {
-  it("listeaza cele 11 oferte-model", async () => {
+  it("listeaza cele 13 oferte-model", async () => {
     const admin = await autentificaAgent(app, EMAIL_ADMIN);
     const { body } = await admin.get("/api/mot/etaloane").expect(200);
-    expect(body.etaloane.map((e: { id: string }) => e.id)).toEqual(["E01", "E02", "E03", "E04", "E05", "E06", "E07", "E08", "E09", "E10", "E11", "E12"]);
+    expect(body.etaloane.map((e: { id: string }) => e.id)).toEqual(["E01", "E02", "E03", "E04", "E05", "E06", "E07", "E08", "E09", "E10", "E11", "E12", "E13"]);
     expect(body.etaloane[0].titlu).toMatch(/Iberic/);
   });
 

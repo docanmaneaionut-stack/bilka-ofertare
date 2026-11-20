@@ -635,3 +635,27 @@ Fiecare intrare: data, obiectivul sesiunii, rezultatul, următorul pas propus.
 - La comenzile reale existente (IDM-…) persoana trecută azi la „montator” apare acum ca **recomandare**, iar coloana Montator e goală până se completează.
 
 **Următorul pas propus:** Faza 3 — punerea în funcțiune (`docs/PREGATIRE-FAZA-3.md`), după ce Ionuț verifică S26a și S26b pe baza lui.
+
+
+## 2026-11-20 — S27: speciale 2 ML de sine stătătoare (M9, E13), tabelul de comenzi (M10), BUG-15 / BUG-16
+
+**Obiectiv:** PLAN v0.35 S27 — lotul 3 din testarea în paralel (`docs/MODIFICARI-S27.md` v0.3): **M9** (accesorii speciale 2 ML de sine stătătoare, cu etalonul E13), **M10** (tabelul de comenzi), **BUG-15** (sugestii pe numele clientului), **BUG-16** (montatorul scris de mână reținut în listă). Planul aprobat de Ionuț cu varianta A la M9 și cele cinci decizii la BUG-15 / BUG-16.
+
+**Rezultat:**
+- **M9 — motorul n-a trebuit atins.** Proba făcută înaintea oricărui cod: motorul de azi primește deja liniile de speciale 2 ML cu cheia lor și fără învelitoare, le pune pe cheie și face câte un formular fără învelitoare; E13 ieșea la ban (1.396,23 lei), cu cele două formulare. E13.json pica doar pe forma pachetelor — l-a corectat Claude (chat); eu nu l-am modificat. **De acum: 13 oferte-model (E01–E13) la zero, 14 teste în suita de etaloane.** Fără etichetă nouă pe motor.
+- **M9 în editor**: butonul „+ Accesorii speciale 2 ML de sine stătătoare”, cu alegerea finisaj → grosime → culoare, 6 rânduri presetate pe D01 și „+”; o rubrică per cheie, și fără învelitoare pe ofertă, și pe lângă ea. Generatorul Bilka și PDF-urile n-au cerut nicio schimbare — confirmate prin teste: pe E13 ies două fișiere fără învelitoare, fiecare cu cheia lui și cu specialele pe rândul treptei (fixarea cu aceeași cheie pe primul), cu hash-urile VBA neschimbate; în PDF specialele apar la locul lor, câte o bandă pe cheie.
+- **M10**: coloana 1 a tabelului de comenzi are doar numărul și data (pastila „neidentificată” rămâne acolo); responsabilul e prima linie din rândul desfășurat; clientul apare cu localitatea și adresa lucrării; căutarea găsește și după adresă; pe telefon cardul are localitatea și adresa.
+- **BUG-15**: la ofertă nouă și pe pagina ofertei, numele propune clienții contului (de la 3 litere, fără diacritice, cu telefonul și localitatea); alegerea completează datele și leagă oferta — și când clientul ales n-are telefon.
+- **BUG-16** (migrarea 22, o coloană): montatorul de execuție scris de mână intră singur în lista autorului ofertei; de pe comandă, scris de Gestiune sau de un Administrator, intră tot acolo, cu „adăugat de …”.
+
+**Verificare:** `npm test` verde — **40 de fișiere, 400 de teste** (13 noi; ultima rulare curată dinainte: 38 / 387, la S26b, pe același cod); suita de etaloane — **13 oferte-model la zero, 14 teste**; web `npm test` 7 teste, `tsc` și build curate; `git diff v0.4-comenzi -- server/src/modules/mot` gol. **În browser**: pe baza de lucru, cu contul de probă — sugestiile pe nume, oferta de probă **TST-0005** fără învelitoare cu două rubrici de speciale (8017 mat: D05 × 16, D08 × 6; 9005 lucios: D06 × 10 → „Se vor genera 2 formulare Bilka”), rubrica de sine stătătoare pe lângă învelitoare pe TST-0001 (rândul de probă scos la final), montatorul reținut și propus: 20 din 21 la prima rulare (a căzut numărul de rânduri presetate — 12 în loc de 6, vezi mai jos), apoi 3 din 3 după corecție. Tabelul de comenzi pe instanța de pe baza de test, desktop și 390 px: 11 din 11. Capturi în `docs/verificari/S27-capturi/` (`06-m9-dupa-reincarcare-…` și `08-…` sunt dinaintea corecției, cu 12 rânduri). Niciun formular generat pe baza de lucru, nicio comandă creată sau atinsă acolo.
+
+**De știut:**
+- **Rânduri presetate dublate**: în modul de dezvoltare (cel pe care rulează softul acum) rubricile de speciale arătau 12 rânduri goale în loc de 6 — și cea legată de învelitoare, dinainte de S27. Corectat.
+- **Pe baza de lucru au rămas date de probă**: oferta TST-0005 („Neacceptată”, legată de clientul de probă „Client Verificare Browser”) și persoana „Montator Probă S27” în lista contului de probă.
+- **Rularea de dinainte a suitei** a fost stricată de mine (am pornit un test separat cât rula, iar pornirea goleşte baza de test) — de aceea reperul de dinainte e rularea S26b.
+- **Generarea clientului Prisma** a dat eroare la ultimul pas, fiindcă serverul de lucru ținea ocupat un fișier; partea necesară s-a generat și tot ce urmează a mers. În `server/node_modules/.prisma/client` au rămas câteva fișiere temporare (nu sunt în git; nu le-am șters).
+- **Observat pe drum, neatins**: la o comandă manuală introdusă fără adresă pentru un client care există deja, fișa clientului primește localitatea în locul adresei (din S19). Acum că adresa apare în tabel, merită o corecție separată.
+- Exemplul M5 din `MODIFICARI-S26.md` a fost corectat de Claude (chat) între timp (fișierul e modificat pe disc și intră în acest commit).
+
+**Următorul pas propus:** verificarea lui Ionuț pe baza lui (S26a, S26b, S27), apoi Faza 3 — punerea în funcțiune.

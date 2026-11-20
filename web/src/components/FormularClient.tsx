@@ -6,6 +6,8 @@ import { Camp, eroareCamp } from "./ui";
 // formularul clientului (FISA-OFERTARE cap. 2), cu autocompletare dupa telefon:
 // la un telefon existent softul propune clientul existent. S26a (M6): telefonul e optional la
 // oferta (devine obligatoriu la „Comandat”); numele si adresa lucrarii raman obligatorii.
+// S27 (BUG-15): sugestii si pe NUME - de la 3 litere, fara diacritice, doar clientii vizibili contului,
+// cu telefonul si localitatea alaturi; alegerea completeaza datele (parintele tine minte clientul ales).
 
 export function clientGol(): ClientDate {
   return { nume: "", telefon: "", adresa: "", localitate: "", email: "", observatii: "" };
@@ -23,6 +25,21 @@ function cifreTelefon(t: string): string {
 // `prefix`: calea campurilor clientului in corpul cererii ("client." la "Oferta noua")
 export function FormularClient({ client, onSchimba, onAlegeExistent, eroare, prefix = "client." }: { client: ClientDate; onSchimba: (c: ClientDate) => void; onAlegeExistent: (c: Client) => void; eroare?: unknown; prefix?: string }) {
   const [sugestii, setSugestii] = useState<Client[]>([]);
+  // sugestiile pe nume; dupa o alegere nu mai apar pana cand numele se schimba
+  const [sugestiiNume, setSugestiiNume] = useState<Client[]>([]);
+  const [numeAles, setNumeAles] = useState<string | null>(null);
+  const numeCautat = client.nume.trim();
+  useEffect(() => {
+    if (numeCautat.length < 3 || numeCautat === numeAles) return;
+    const t = setTimeout(() => {
+      apiClienti
+        .cauta({ nume: numeCautat })
+        .then(({ clienti }) => setSugestiiNume(clienti))
+        .catch(() => setSugestiiNume([]));
+    }, 250);
+    return () => clearTimeout(t);
+  }, [numeCautat, numeAles]);
+  const vizibileNume = numeCautat.length >= 3 && numeCautat !== numeAles ? sugestiiNume : [];
   const set = (k: keyof ClientDate, v: string) => onSchimba({ ...client, [k]: v });
   const cifre = cifreTelefon(client.telefon);
   const la = (camp: keyof ClientDate) => eroareCamp(eroare, `${prefix}${camp}`, camp);
@@ -43,6 +60,8 @@ export function FormularClient({ client, onSchimba, onAlegeExistent, eroare, pre
   const alege = (s: Client) => {
     onAlegeExistent(s);
     setSugestii([]);
+    setSugestiiNume([]);
+    setNumeAles(s.nume.trim());
   };
 
   return (
@@ -62,7 +81,17 @@ export function FormularClient({ client, onSchimba, onAlegeExistent, eroare, pre
           )}
         </Camp>
         <Camp eticheta="Nume" obligatoriu eroare={la("nume")}>
-          <input type="text" value={client.nume} onChange={(e) => set("nume", e.target.value)} required />
+          <input type="text" value={client.nume} onChange={(e) => set("nume", e.target.value)} required autoComplete="off" />
+          {vizibileNume.length > 0 && (
+            <ul className="lista-sugestii" aria-label="Clienți cu acest nume">
+              {vizibileNume.map((s) => (
+                <li key={s.id} tabIndex={0} onClick={() => alege(s)} onKeyDown={(e) => e.key === "Enter" && alege(s)}>
+                  <strong>{s.nume}</strong> · {s.telefon ?? "fără telefon"}
+                  {s.localitate ? ` · ${s.localitate}` : ""}
+                </li>
+              ))}
+            </ul>
+          )}
         </Camp>
         <Camp eticheta="Adresa lucrării" obligatoriu eroare={la("adresa")}>
           <input type="text" value={client.adresa} onChange={(e) => set("adresa", e.target.value)} required />

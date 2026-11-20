@@ -1,6 +1,6 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { apiCurs, apiOfertare, apiOferte, dataRo, type ClientDate, type CursAzi } from "../api";
+import { apiCurs, apiOfertare, apiOferte, dataRo, type Client, type ClientDate, type CursAzi } from "../api";
 import { clientGol, dinClient, FormularClient } from "../components/FormularClient";
 import { Ajutor, Camp, eroareCamp, Mesaj, textEroare } from "../components/ui";
 import { useUtilizator } from "../contextUtilizator";
@@ -13,6 +13,8 @@ export function OfertaNoua() {
   const [firma, setFirma] = useState<string>("");
   const [curs, setCurs] = useState<{ azi: CursAzi | null; eroare?: string } | null>(null);
   const [client, setClient] = useState<ClientDate>(clientGol());
+  // S27 (BUG-15): clientul ales din sugestii (pe telefon sau pe nume); alt nume scris dupa = nu mai e el
+  const [ales, setAles] = useState<Client | null>(null);
   const [data, setData] = useState(new Date().toISOString().slice(0, 10));
   const [sursaClient, setSursaClient] = useState("");
   // eroarea cererii, nu doar textul: motivele validarii se arata la camp (BUG-4)
@@ -35,7 +37,7 @@ export function OfertaNoua() {
     setEroare(null);
     setSeSalveaza(true);
     try {
-      const { oferta } = await apiOferte.creeaza(client, { data, sursaClient: sursaClient || null });
+      const { oferta } = await apiOferte.creeaza(client, { data, sursaClient: sursaClient || null }, ales?.id);
       navigate(`/oferte/${oferta.id}`);
     } catch (err) {
       setEroare(err);
@@ -89,7 +91,25 @@ export function OfertaNoua() {
 
         <section className="panou">
           <h2>Client</h2>
-          <FormularClient client={client} onSchimba={setClient} onAlegeExistent={(c) => setClient(dinClient(c))} eroare={eroare} prefix="client." />
+          <FormularClient
+            client={client}
+            onSchimba={(c) => {
+              setClient(c);
+              if (ales && c.nume.trim() !== ales.nume.trim()) setAles(null);
+            }}
+            onAlegeExistent={(c) => {
+              setClient(dinClient(c));
+              setAles(c);
+            }}
+            eroare={eroare}
+            prefix="client."
+          />
+          {ales && (
+            <p className="mic text-secundar">
+              Oferta se leagă de clientul existent <strong>{ales.nume}</strong>
+              {ales.telefon ? ` · ${ales.telefon}` : " (fără telefon)"}; datele scrise aici îi actualizează fișa.
+            </p>
+          )}
         </section>
 
         {eroare !== null && <Mesaj tip="eroare">{textEroare(eroare)}</Mesaj>}
@@ -109,6 +129,7 @@ export function OfertaNoua() {
           <li>Numărul ofertei (SERIE-NUMĂR) se dă automat la salvare, continuu pe seria contului tău.</li>
           <li>Cursurile se îngheață pe ofertă la salvare: cursul BNR al zilei pentru document și BNR × 1,01 pentru achiziție. Până la 13:00 cursul zilei e cel din ziua precedentă.</li>
           <li>Obligatorii sunt numele și adresa lucrării; telefonul se poate completa și mai târziu (e obligatoriu la „Comandat”). O ofertă fără telefon creează un client nou, fără telefon.</li>
+          <li>Și numele propune clienții tăi existenți (de la 3 litere, cu telefonul și localitatea alături): alegerea completează datele și leagă oferta de acel client. Fără alegere, un client fără telefon e client nou — cheia de deduplicare rămâne telefonul.</li>
           <li>La un telefon care există deja, softul propune clientul existent; oferta se leagă de el, iar datele scrise aici îi actualizează fișa (baza de clienți e comună).</li>
           <li>Adresa e adresa lucrării (livrare, locația pe WhatsApp). Datele de facturare se cer abia la comandă.</li>
         </ul>

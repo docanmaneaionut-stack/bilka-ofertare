@@ -310,7 +310,8 @@ const schemaAntet = z.object({
 
 oferteRouter.post("/", cereRol(...ROLURI_CU_OFERTE), async (req, res) => {
   const u = req.utilizator!;
-  const corp = z.object({ client: schemaClient, antet: schemaAntet.optional() }).parse(req.body);
+  // S27 (BUG-15): "clientExistentId" = clientul ales din sugestiile pe nume
+  const corp = z.object({ client: schemaClient, antet: schemaAntet.optional(), clientExistentId: z.string().min(1).nullish() }).parse(req.body);
   if (!u.serieOferta) {
     res.status(400).json({ eroare: "Contul nu are serie de ofertă; Administratorul o setează în Utilizatori" });
     return;
@@ -333,7 +334,7 @@ oferteRouter.post("/", cereRol(...ROLURI_CU_OFERTE), async (req, res) => {
   const serie = u.serieOferta;
 
   const oferta = await prisma.$transaction(async (tx) => {
-    const { client } = await gasesteSauCreeazaClient(tx, corp.client, u);
+    const { client } = await gasesteSauCreeazaClient(tx, corp.client, u, corp.clientExistentId);
     const numar = await urmatorulNumar(tx, serie);
     return tx.oferta.create({
       data: {
@@ -520,12 +521,12 @@ oferteRouter.put("/:id/client", async (req, res) => {
   }
   const date = schemaClient.parse(req.body);
   // S26a (M6): raspunsul la propunerea de legare - "leaga" (acelasi client) / "pastreaza" (client nou, telefon dublat)
-  const { mentiuni, legare } = z.object({ mentiuni: z.string().trim().max(2000).nullish(), legare: z.enum(["leaga", "pastreaza"]).optional() }).parse(req.body);
+  const { mentiuni, legare, clientExistentId } = z.object({ mentiuni: z.string().trim().max(2000).nullish(), legare: z.enum(["leaga", "pastreaza"]).optional(), clientExistentId: z.string().min(1).nullish() }).parse(req.body);
   const u = req.utilizator!;
   const inainte = await prisma.oferta.findUniqueOrThrow({ where: { id: r.oferta.id }, select: { clientId: true, client: { select: { nume: true, telefon: true, adresa: true, localitate: true } } } });
   // un refuz (EroareClient: propunerea de legare, numar existent) ajunge la raspuns prin middleware-ul de erori
   await prisma.$transaction(async (tx) => {
-    const client = { id: await clientulOfertei(tx, inainte.clientId, date, legare, u) };
+    const client = { id: await clientulOfertei(tx, inainte.clientId, date, legare, u, clientExistentId) };
     if (client.id !== inainte.clientId) {
       await tx.oferta.update({ where: { id: r.oferta.id }, data: { clientId: client.id, modificatDeId: u.id } });
       await tx.jurnalIntrare.create({ data: { utilizatorId: u.id, numeUtilizatorLaMoment: u.nume, entitate: "Oferta", entitateId: r.oferta.id, actiune: "modificare", camp: "clientId", valoareInainte: inainte.clientId, valoareDupa: client.id } });

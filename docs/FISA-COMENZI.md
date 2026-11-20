@@ -1,6 +1,6 @@
 # Fișa de modul — COMENZI (COM: comenzi, livrări, încasări, retururi)
 
-Versiunea 1.3 · 17 noiembrie 2026 (MODIFICĂRI M5, M7, M8 — `MODIFICARI-S26.md`: prețul de vânzare ajustabil pe comandă de Administrator, cu motiv; livrarea de la Bilka la depozit / în șantier, ca text pe comandă; coloana Montator = montatorul de execuție, recomandarea separat, în vânzări) · v1.2 · 16 octombrie 2026 · Status: ÎNCHISĂ (capitolele 1–9; un singur punct deschis, la cap. 3, nu blochează). Se reia doar printr-o cerere explicită de MODIFICARE.
+Versiunea 1.4 · 20 noiembrie 2026 (MODIFICARE M10, `MODIFICARI-S27.md`: coloana 1 doar numărul și data, responsabilul în rândul desfășurat; coloana Client cu localitatea și adresa lucrării) · v1.3 · 17 noiembrie 2026 (MODIFICĂRI M5, M7, M8 — `MODIFICARI-S26.md`: prețul de vânzare ajustabil pe comandă de Administrator, cu motiv; livrarea de la Bilka la depozit / în șantier, ca text pe comandă; coloana Montator = montatorul de execuție, recomandarea separat, în vânzări) · v1.2 · 16 octombrie 2026 · Status: ÎNCHISĂ (capitolele 1–9; un singur punct deschis, la cap. 3, nu blochează). Se reia doar printr-o cerere explicită de MODIFICARE.
 Se sprijină pe: FISA-CONTURI (cine ce poate), FISA-OFERTARE cap. 16 (ce intră automat în comandă), cap. 2b (lucrări și completări), cap. 19 (tabelul de vânzări), cap. 13 (documentele).
 Machetă de ecran: `docs/design/ecran-tabel-comenzi.png` (+ `.pdf`, `.html`).
 
@@ -21,6 +21,8 @@ Machetă de ecran: `docs/design/ecran-tabel-comenzi.png` (+ `.pdf`, `.html`).
 ---
 
 ## Capitolul 1 — Tabelul de comenzi — ÎNCHIS (13.10.2026; machetă acceptată, cu completările lui Ionuț: responsabil, comenzi manuale, ordine)
+
+> **MODIFICARE M10 (20.11.2026, `MODIFICARI-S27.md`)**: **coloana 1** arată doar seria și numărul, cu data dedesubt; **responsabilul** („trimisă de …”, „adăugat de … pentru …”) apare în **rândul desfășurat**, ca primă linie; pastila „neidentificată” rămâne în coloana 1. **Coloana Client** arată numele, **localitatea și adresa lucrării**, telefonul; căutarea găsește și după adresă. Restul rămâne.
 
 > **MODIFICĂRI 17.11.2026 (`MODIFICARI-S26.md`)**: **M7** — coloana Livrare și caseta „Livrare și facturare” arată, când e cazul, „Livrare Bilka — șantier: localitate · telefon” (alegerea făcută la „De comandat”, schimbabilă aici de Administrator / Gestiune, cu istoric; statusurile neschimbate). **M8** — coloana **Montator** = montatorul de execuție (nume, telefon; modificabil și de Gestiune); comisionul și „achitat” rămân la **recomandare** (cap. 4). **M5** — butonul „Ajustează prețul de vânzare” în rândul desfășurat, doar Administratorul firmei, cu motiv, cât comanda nu e încasată integral.
 

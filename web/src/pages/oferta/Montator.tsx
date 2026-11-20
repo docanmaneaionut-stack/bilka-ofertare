@@ -205,6 +205,7 @@ export function Montator({ oferta, onOferta, mentiuni }: { oferta: OfertaDetaliu
                     <button type="button" className="buton secundar mic" disabled={lucru} onClick={() => void salveaza({ montatorExecutie: { nume: m.nume, telefon: m.telefon } })}>
                       {m.nume} · {m.telefon}
                       {m.localitate ? ` · ${m.localitate}` : ""}
+                      {m.adaugatDeNume ? ` · adăugat de ${m.adaugatDeNume}` : ""}
                     </button>
                   </li>
                 ))}
@@ -238,7 +239,7 @@ export function Montator({ oferta, onOferta, mentiuni }: { oferta: OfertaDetaliu
           )}
         </div>
       )}
-      <p className="mic text-secundar">Recomandarea și comisionul ei merg în tabelul de vânzări; montatorul de execuție în tabelul de comenzi și pe fișa șoferului. Pot fi aceeași persoană sau nu; oricare poate lipsi. „Achitat” îl bifează Administratorul, în tabelul de comenzi. Nimic de aici nu apare pe documente.</p>
+      <p className="mic text-secundar">Recomandarea și comisionul ei merg în tabelul de vânzări; montatorul de execuție în tabelul de comenzi și pe fișa șoferului. Pot fi aceeași persoană sau nu; oricare poate lipsi. Un montator scris de mână intră singur în lista ta și e propus data viitoare. „Achitat” îl bifează Administratorul, în tabelul de comenzi. Nimic de aici nu apare pe documente.</p>
     </section>
   );
 }

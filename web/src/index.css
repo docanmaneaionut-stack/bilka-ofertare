@@ -928,6 +928,17 @@ table.tabel td.total-oferta .numar-mare {
 
 /* --- Comenzi (S19; FISA-COMENZI cap. 1, macheta docs/design/ecran-tabel-comenzi) --- */
 
+/* S27 (M10): responsabilul, prima linie din randul desfasurat */
+.responsabil-comanda {
+  font-size: var(--text-sec);
+  color: var(--text-secundar);
+  padding: 2px 4px 0;
+}
+
+.responsabil-comanda strong {
+  color: var(--text);
+}
+
 table.tabel-comenzi td.rezumat-comanda {
   font-size: var(--text-sec);
   line-height: 1.35;

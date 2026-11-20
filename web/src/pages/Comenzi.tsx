@@ -130,7 +130,7 @@ export function Comenzi() {
               setQ(e.target.value);
               setPage(1);
             }}
-            placeholder="Caută după client, telefon, număr comandă, localitate, montator…"
+            placeholder="Caută după client, telefon, număr comandă, localitate, adresă, montator…"
             aria-label="Caută"
             style={{ minWidth: 320 }}
           />
@@ -239,7 +239,7 @@ export function Comenzi() {
               <thead>
                 <tr>
                   <th className="col-optional"></th>
-                  <th>Nr. · responsabil</th>
+                  <th>Nr. · data</th>
                   <th>Client</th>
                   <th>Rezumat comandă</th>
                   <th className="col-optional">Montator</th>
@@ -275,6 +275,7 @@ export function Comenzi() {
         <ul>
           <li>Ordinea: după data intrării în tabel, cele mai noi sus; comenzile livrate trec la sfârșitul listei și sunt ascunse până bifezi „Arată și comenzile închise” (livrate și încasate).</li>
           <li>„Deschide ▾” desfășoară rândul: livrarea și facturarea, statusurile cu istoric, observațiile cu istoric și atașamentele, documentele ofertei (formularele Bilka, detaliata, tabelul de facturare). Încasările (doar Administratorul firmei le notează, confirmă și anulează) și comisionul recomandării cu „achitat” sunt în rândul desfășurat.</li>
+          <li>Prima coloană arată doar numărul și data comenzii; cine a trimis-o („Responsabil: trimisă de …”, la cele manuale „adăugat de … pentru: …”) e prima linie din rândul desfășurat. Clientul apare cu localitatea și adresa lucrării; căutarea găsește și după adresă.</li>
           <li>Coloana „Montator” arată montatorul de execuție (cine montează și e în șantier la livrare — apare și pe fișa șoferului); îl schimbă contul comenzii, orice Administrator și Gestiunea. Recomandarea (cine a adus lucrarea) și comisionul ei sunt dedesubt și merg în tabelul de vânzări; le schimbă contul ofertei și Administratorul firmei.</li>
           <li>„Ajustează prețul de vânzare” (doar Administratorul firmei comenzii, în caseta Încasări): suma nouă cu TVA și motivul; cât comanda nu e încasată integral și nu sub achiziție. Totalul ajustat poartă asteriscul roșu, iar istoricul e în aceeași casetă.</li>
           <li>Responsabilul e contul care a trimis comanda la furnizor; comenzile manuale (seria CM) arată „adăugat de … pentru: …” sau „neidentificată” până se află a cui e — alocarea o schimbă doar Administratorii.</li>
@@ -297,19 +298,29 @@ export function Comenzi() {
   );
 }
 
+// S27 (MODIFICAREA M10; FISA-COMENZI cap. 1): responsabilul nu mai sta in coloana 1 - e prima linie din
+// randul desfasurat („trimisă de …” / „adăugat de … pentru: …”; la comanda manuala fara cont: „cont nealocat”)
 function Responsabil({ c }: { c: RandComanda }) {
   if (!c.manuala) {
     return (
-      <div className="mic text-secundar">
-        trimisă de <strong>{c.responsabil.nume}</strong>
+      <div className="responsabil-comanda">
+        <strong>Responsabil:</strong> trimisă de <strong>{c.responsabil.nume}</strong>
         {c.responsabil.rol !== "AGENT" && c.responsabil.rol !== "ADMINISTRATOR" ? ` (${ETICHETA_ROL[c.responsabil.rol] ?? c.responsabil.rol})` : ""}
       </div>
     );
   }
   return (
-    <div className="mic text-secundar">
-      adăugat de <strong>{c.responsabil.nume}</strong> pentru: {c.contAlocat ? <strong>{c.contAlocat.nume}</strong> : <span className="eticheta-neidentificata">neidentificată</span>}
-      {c.contAlocat && c.contAlocat.rol === "COLABORATOR" ? " (colaborator)" : ""}
+    <div className="responsabil-comanda">
+      <strong>Responsabil:</strong> adăugat de <strong>{c.responsabil.nume}</strong>
+      {c.contAlocat ? (
+        <>
+          {" "}
+          pentru: <strong>{c.contAlocat.nume}</strong>
+          {c.contAlocat.rol === "COLABORATOR" ? " (colaborator)" : ""}
+        </>
+      ) : (
+        "; cont nealocat"
+      )}
     </div>
   );
 }
@@ -325,17 +336,14 @@ function RandComandaTr({ comanda: c, vedeAgent, deschisa, selectata, onSelecteaz
         <td className="numar-oferta" onClick={onComuta}>
           {c.numarComplet}
           {c.manuala && <span className="eticheta-manuala">manuală</span>}
+          {c.neidentificata && <span className="eticheta-neidentificata">neidentificată</span>}
           <div className="mic text-secundar" style={{ fontWeight: 400 }}>
             {dataRo(c.data)}
           </div>
-          <Responsabil c={c} />
         </td>
         <td onClick={onComuta}>
           <strong>{c.client.nume}</strong>
-          <div className="mic text-secundar">
-            {c.completareLa ? `completare la ${c.completareLa.numarComplet}` : c.client.localitate}
-            {c.client.localitate && c.completareLa ? ` · ${c.client.localitate}` : ""}
-          </div>
+          <div className="mic text-secundar">{[c.completareLa ? `completare la ${c.completareLa.numarComplet}` : null, c.client.localitate, c.client.adresa].filter(Boolean).join(" · ")}</div>
           <div className="mic text-secundar">{c.client.telefon}</div>
         </td>
         <td className="rezumat-comanda" onClick={onComuta}>
@@ -477,6 +485,9 @@ function DetaliuComanda({ id, onSchimbat }: { id: string; onSchimbat: () => void
 
   return (
     <div className="casete-comanda">
+      <div style={{ gridColumn: "1 / -1" }}>
+        <Responsabil c={c} />
+      </div>
       {eroare && (
         <div style={{ gridColumn: "1 / -1" }}>
           <Mesaj tip="eroare">{eroare}</Mesaj>

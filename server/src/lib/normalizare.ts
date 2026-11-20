@@ -25,7 +25,9 @@ export function normalizeazaText(text: string): string {
 // tabelele si coloanele in care se cauta (lista inchisa - identificatorii nu vin de la client)
 const COLOANE_PERMISE: Record<string, string[]> = {
   produs: ["denumire"],
-  client: ["nume", "localitate"],
+  client: ["nume", "localitate", "adresa"],
+  // S27 (M10): tabelul de comenzi cauta si dupa adresa lucrarii (a ofertei comandate)
+  oferta: ["adresaLucrarii"],
   montator: ["nume", "localitate"],
   comanda: ["clientNume", "clientLocalitate", "montatorNume", "montatorExecutieNume"],
 };

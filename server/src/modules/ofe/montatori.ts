@@ -38,6 +38,18 @@ export const schemaMontatorExecutie = z.object({
     .refine((t) => !/[a-zA-Z]/.test(t), "conține litere")
     .refine((t) => normalizeazaTelefon(t).length >= 6, "trebuie să aibă cel puțin 6 cifre — fișa șoferului îl sună"),
 });
+// S27 (BUG-16): montatorul de executie scris de mana intra in lista autorului ofertei (tip montator), daca
+// telefonul lui nu e deja acolo - ca sa apara la autocompletare data urmatoare; cand il scrie altcineva
+// decat agentul listei (Administratorul, Gestiunea pe comanda), persoana poarta "adaugat de ..."
+export async function retineMontatorul(tx: Prisma.TransactionClient, agentListeiId: string | null | undefined, persoana: { nume: string; telefon: string } | null | undefined, deCine: Utilizator): Promise<void> {
+  if (!agentListeiId || !persoana) return;
+  const telefonNormalizat = normalizeazaTelefon(persoana.telefon);
+  if (!telefonNormalizat) return;
+  const exista = await tx.montator.findFirst({ where: { utilizatorId: agentListeiId, telefonNormalizat }, select: { id: true } });
+  if (exista) return;
+  await tx.montator.create({ data: { utilizatorId: agentListeiId, nume: persoana.nume, telefon: persoana.telefon, telefonNormalizat, tip: "MONTATOR", adaugatDeNume: deCine.id === agentListeiId ? null : deCine.nume } });
+}
+
 // "Nume · telefon" pentru istoric
 export const textPersoana = (nume: string | null | undefined, telefon: string | null | undefined): string | null => (nume ? [nume, telefon].filter(Boolean).join(" · ") : null);
 
@@ -130,6 +142,8 @@ export async function seteazaMontatorOferta(ofertaId: string, date: z.infer<type
     const executieInainte = textPersoana(o.montatorExecutieNume, o.montatorExecutieTelefon);
     const executieDupa = textPersoana(executie.nume, executie.telefon);
     if (executieInainte !== executieDupa) intrari.push({ tip: "montator", camp: "montatorExecutie", inainte: executieInainte, dupa: executieDupa });
+    // S27 (BUG-16): montatorul pus acum intra in lista autorului ofertei
+    if (date.montatorExecutie) await retineMontatorul(tx, o.utilizatorId, date.montatorExecutie, u);
     if ((o.montatorId ?? null) !== (montatorId ?? null)) intrari.push({ tip: "montator", camp: "montator", inainte: o.montator?.nume ?? null, dupa: montatorNume });
     if ((o.comisionRecomandareLei?.toString() ?? null) !== (comisionNou?.toString() ?? null)) intrari.push({ tip: "suma", camp: "comisionRecomandareLei", inainte: o.comisionRecomandareLei?.toString() ?? null, dupa: comisionNou?.toString() ?? null });
     await scrieIstoric(tx, o, u, intrari, date.mentiuni);
