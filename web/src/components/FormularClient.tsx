@@ -14,7 +14,8 @@ export function clientGol(): ClientDate {
 }
 
 export function dinClient(c: Client): ClientDate {
-  return { nume: c.nume, telefon: c.telefon ?? "", adresa: c.adresa, localitate: c.localitate ?? "", email: c.email ?? "", observatii: c.observatii ?? "" };
+  // S27b (BUG-17): "-" = adresa necompletata (client creat de o comanda manuala fara adresa) - campul ramane gol
+  return { nume: c.nume, telefon: c.telefon ?? "", adresa: c.adresa === "-" ? "" : c.adresa, localitate: c.localitate ?? "", email: c.email ?? "", observatii: c.observatii ?? "" };
 }
 
 function cifreTelefon(t: string): string {

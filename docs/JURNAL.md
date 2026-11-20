@@ -659,3 +659,23 @@ Fiecare intrare: data, obiectivul sesiunii, rezultatul, următorul pas propus.
 - Exemplul M5 din `MODIFICARI-S26.md` a fost corectat de Claude (chat) între timp (fișierul e modificat pe disc și intră în acest commit).
 
 **Următorul pas propus:** verificarea lui Ionuț pe baza lui (S26a, S26b, S27), apoi Faza 3 — punerea în funcțiune.
+
+## 2026-11-20 — S27b: comanda manuală fără adresă nu mai suprascrie fișa clientului (BUG-17)
+
+**Obiectiv:** BUG-17 din `docs/CERERI-BUG-S25.md` v1.9 (observat de Code la S27): un câmp lăsat gol nu atinge fișa unui client existent; adresa nu se completează niciodată din localitate; aceeași regulă pe toate drumurile care scriu în fișa clientului; lista clienților deja atinși pe baza de lucru, fără nicio modificare făcută singur.
+
+**Rezultat:**
+- **Regula e într-un singur loc** — funcția care actualizează fișa unui client existent scrie acum doar ce a fost scris efectiv, cu jurnal. Un câmp lipsă sau gol (adresă, localitate, telefon, e-mail, observații) nu mai șterge și nu mai înlocuiește nimic.
+- **Problema era mai largă decât adresa**: testele scrise înaintea codului au arătat că un câmp gol ștergea și localitatea, e-mailul și observațiile clientului existent — la comanda manuală de fiecare dată (formularul ei are doar nume, telefon, localitate), la ofertă când telefonul era scris fără alegerea clientului din listă, la legare și la copierea ofertei. 9 din cele 10 teste noi cădeau pe codul vechi.
+- **Comanda manuală**: fără adresă, clientul existent rămâne cum e; clientul nou rămâne cu adresa necompletată („-”) — tabelul de comenzi nu o arată, iar formularul de ofertă o lasă goală, de completat.
+- **Baza de lucru (doar citită)**: o singură comandă manuală, CM-0001 (19.11.2026), pentru un client **nou** — nicio fișă existentă n-a fost suprascrisă și jurnalul fișelor nu are nicio golire de câmp. Nimic de readus. Clientul comenzii CM-0001 a fost creat cu adresa egală cu localitatea („Vulturu”); nu există o valoare veche — adresa reală o scrie Ionuț, dacă o vrea.
+
+**Verificare:** `npm test` verde — **41 de fișiere, 410 teste** (10 noi; înainte, pe același cod: 40 / 400, rulare curată la începutul sesiunii); **13 oferte-model la zero, 14 teste** în suita de etaloane; web `npm test` 7 teste, `tsc` curat; `git diff v0.4-comenzi -- server/src/modules/mot` gol. **În browser**, pe instanța de pe baza de test: comandă manuală din ecran (fără adresă — ecranul nici nu are câmpul) pentru un client existent → adresa, localitatea, e-mailul și observațiile lui rămân; a doua, cu localitatea goală → localitatea rămâne; client nou → fără adresă inventată; ofertă nouă pentru el → „Adresa lucrării” goală, de completat: 15 din 15. Capturi în `docs/verificari/S27b-capturi/`. Baza de lucru: doar citită.
+
+**De știut:**
+- **De pe pagina ofertei un câmp al fișei nu se mai poate goli, doar înlocui** — e urmarea directă a regulii (softul nu poate deosebi „lăsat gol” de „golit”). Dacă e nevoie de ștergerea unui e-mail sau a unei observații greșite, se hotărăște separat (un buton anume, nu un câmp gol).
+- **Rândul unei comenzi manuale arată adresa din fișa clientului** (M10: „adresa dacă a fost scrisă”). Comanda manuală nu are o adresă a ei; dacă clientul are în fișă adresa altei lucrări, aceea apare. De hotărât dacă deranjează.
+- Pe baza de lucru, 12 clienți au adresa egală cu localitatea — scrisă așa de agenți la ofertă, nu de vreo comandă manuală (în afară de clientul comenzii CM-0001).
+- La prima rulare a verificării în browser scriptul meu a căutat greșit butonul „Adaugă comanda”; corectat, baza de test reîncărcată, rulat din nou de la capăt.
+
+**Următorul pas propus:** verificarea lui Ionuț pe baza lui (S26a, S26b, S27, S27b), apoi Faza 3 — punerea în funcțiune.

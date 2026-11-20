@@ -100,8 +100,9 @@ const schemaFiltre = z.object({
 
 const schemaComandaManuala = z.object({
   firmaId: z.string().trim().min(1).optional(),
-  // clientul: nume, telefon, localitate (cap. 4b) - adresa e optionala aici, baza
-  // comuna o primeste din localitate cand lipseste; S26a (M6): telefonul ramane obligatoriu aici
+  // clientul: nume, telefon, localitate (cap. 4b) - adresa e optionala aici; S26a (M6): telefonul ramane
+  // obligatoriu aici. S27b (BUG-17): fara adresa, fisa unui client existent ramane neatinsa (adresa nu se
+  // completeaza niciodata din localitate); clientul nou ramane cu adresa necompletata
   client: schemaClientCuTelefon.extend({ adresa: z.string().trim().max(300).optional() }),
   rezumat: z.string().trim().min(1, "rezumatul comenzii lipsește").max(2000),
   totalLei: suma,
@@ -193,7 +194,8 @@ export const includeRand = {
 export type ComandaCuRelatii = Prisma.ComandaGetPayload<{ include: typeof includeRand }>;
 
 // S27 (M10): adresa lucrarii de pe rand - a ofertei comandate; la comenzile manuale adresa clientului, daca a
-// fost scrisa (la creare, fara adresa, clientul primeste localitatea sau "-" in locul ei - aceea nu se arata)
+// fost scrisa. Nu se arata adresa necompletata ("-") si nici cea egala cu localitatea (pana la S27b clientul
+// creat de o comanda manuala fara adresa primea localitatea in locul ei - BUG-17; fisele vechi au ramas asa)
 function adresaComenzii(c: ComandaCuRelatii): string | null {
   const adresa = (c.oferta ? (c.oferta.adresaLucrarii ?? c.client?.adresa) : c.client?.adresa)?.trim();
   if (!adresa || adresa === "-" || adresa === (c.clientLocalitate ?? "").trim()) return null;
@@ -502,7 +504,7 @@ export async function creeazaComandaManuala(date: z.infer<typeof schemaComandaMa
   const avans = new Prisma.Decimal(date.avansLei ?? "0");
   const acum = new Date();
   return prisma.$transaction(async (tx) => {
-    const { client } = await gasesteSauCreeazaClient(tx, { ...date.client, adresa: date.client.adresa || date.client.localitate || "-" }, u);
+    const { client } = await gasesteSauCreeazaClient(tx, { ...date.client, adresa: date.client.adresa || null }, u);
     const numar = await urmatorulNumar(tx, SERIE_MANUALA);
     const c = await tx.comanda.create({
       data: {

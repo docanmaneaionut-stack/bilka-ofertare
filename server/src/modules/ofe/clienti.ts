@@ -22,6 +22,11 @@ import { filtruVizibilitateOferte, ROLURI_CU_OFERTE } from "./vizibilitate.js";
 // oferte vizibile contului si cei creati de el; cautarea dupa telefon ramane pe toata baza. Alegerea din
 // lista vine ca "clientExistentId": la un client cu telefon legarea se face tot prin numar (cheia de
 // deduplicare); la unul FARA telefon oferta se leaga de el prin alegere, ca sa nu apara o dublura.
+//
+// S27b (BUG-17): un camp LASAT GOL (adresa, localitate, telefon, e-mail, observatii) NU atinge fisa unui
+// client existent - fisa se actualizeaza doar cu ce a fost scris efectiv, cu jurnal (actualizeazaClient,
+// singurul loc care scrie intr-o fisa existenta). Adresa nu se completeaza niciodata din localitate: la
+// comanda manuala fara adresa clientul existent ramane cum e, iar cel nou primeste "-" (necompletata).
 
 // doar cifre; prefixul +40 / 0040 devine 0 ("+40 728 192 569" = "0728192569")
 export function normalizeazaTelefon(telefon: string): string {
@@ -59,6 +64,10 @@ export const schemaClient = z.object({
 // comenzile manuale (FISA-COMENZI cap. 4b) pastreaza telefonul obligatoriu
 export const schemaClientCuTelefon = schemaClient.extend({ telefon: telefonObligatoriu });
 export type DateClient = z.infer<typeof schemaClient>;
+// datele scrise pe un drum pe care adresa poate lipsi (comanda manuala - FISA-COMENZI cap. 4b)
+export type DateClientScrise = Omit<DateClient, "adresa"> & { adresa?: string | null };
+// adresa unui client NOU creat fara adresa (coloana e obligatorie in baza); tabelul de comenzi n-o arata
+export const ADRESA_NECOMPLETATA = "-";
 
 const CAMPURI_CLIENT = ["nume", "telefon", "adresa", "localitate", "email", "observatii"] as const;
 
@@ -66,20 +75,20 @@ export interface DateClientCurate {
   nume: string;
   telefon: string | null;
   telefonNormalizat: string | null;
-  adresa: string;
+  adresa: string | null;
   localitate: string | null;
   email: string | null;
   observatii: string | null;
   telefonDublat?: boolean;
 }
 
-function dateCurate(date: DateClient): DateClientCurate {
+function dateCurate(date: DateClientScrise): DateClientCurate {
   const telefon = date.telefon?.trim() || null;
   return {
     nume: date.nume,
     telefon,
     telefonNormalizat: telefon ? normalizeazaTelefon(telefon) : null,
-    adresa: date.adresa,
+    adresa: date.adresa?.trim() || null,
     localitate: date.localitate || null,
     email: date.email || null,
     observatii: date.observatii || null,
@@ -114,7 +123,7 @@ async function lacatPeTelefon(tx: Prisma.TransactionClient, telefonNormalizat: s
 export async function creeazaClientNou(tx: Prisma.TransactionClient, curate: DateClientCurate, utilizator: Utilizator): Promise<Client> {
   let client: Client;
   try {
-    client = await tx.client.create({ data: { ...curate, creatDeId: utilizator.id } });
+    client = await tx.client.create({ data: { ...curate, adresa: curate.adresa ?? ADRESA_NECOMPLETATA, creatDeId: utilizator.id } });
   } catch (e) {
     if (esteIncalcareDeUnicitate(e)) throw eroareTelefonExistent();
     throw e;
@@ -123,18 +132,35 @@ export async function creeazaClientNou(tx: Prisma.TransactionClient, curate: Dat
   return client;
 }
 
-// datele trimise actualizeaza fisa clientului (baza e comuna, ultimele date sunt cele bune), cu jurnal
+// datele trimise actualizeaza fisa clientului (baza e comuna, ultimele date sunt cele bune), cu jurnal.
+// S27b (BUG-17): DOAR ce a fost scris efectiv - un camp lasat gol (lipsa, null sau text gol) nu sterge si
+// nu inlocuieste nimic din fisa unui client existent. E singurul loc care scrie intr-o fisa existenta.
 async function actualizeazaClient(tx: Prisma.TransactionClient, existent: Client, curate: DateClientCurate, utilizator: Utilizator): Promise<void> {
-  const campuri = [...CAMPURI_CLIENT, ...(curate.telefonDublat !== undefined ? (["telefonDublat"] as const) : [])];
-  const schimbat = campuri.some((c) => (existent[c] ?? null) !== (curate[c] ?? null));
-  if (!schimbat) return;
+  const scrise: Prisma.ClientUncheckedUpdateInput = {};
+  const dupa: Record<string, unknown> = { ...existent };
+  const campuri: string[] = [];
+  for (const c of CAMPURI_CLIENT) {
+    const valoare = curate[c];
+    if (valoare === null || valoare === undefined || valoare === "" || valoare === existent[c]) continue;
+    scrise[c] = valoare;
+    dupa[c] = valoare;
+    campuri.push(c);
+  }
+  // telefonul scris isi aduce si forma normalizata (cheia de deduplicare)
+  if (campuri.includes("telefon")) scrise.telefonNormalizat = curate.telefonNormalizat;
+  if (curate.telefonDublat !== undefined && curate.telefonDublat !== existent.telefonDublat) {
+    scrise.telefonDublat = curate.telefonDublat;
+    dupa.telefonDublat = curate.telefonDublat;
+    campuri.push("telefonDublat");
+  }
+  if (campuri.length === 0) return;
   try {
-    await tx.client.update({ where: { id: existent.id }, data: curate });
+    await tx.client.update({ where: { id: existent.id }, data: scrise });
   } catch (e) {
     if (esteIncalcareDeUnicitate(e)) throw eroareTelefonExistent();
     throw e;
   }
-  await scrieModificariTx(tx, utilizator, "Client", existent.id, campuri, existent, { ...curate });
+  await scrieModificariTx(tx, utilizator, "Client", existent.id, campuri, existent, dupa);
 }
 
 // clientii pe care contul ii poate primi ca sugestie pe nume / alege din lista: cei cu oferte vizibile lui
@@ -154,7 +180,7 @@ async function clientAlesFaraTelefon(tx: Prisma.TransactionClient, alesId: strin
 // clientul cu acest telefon (cel nemarcat "telefon dublat"), sau unul nou; fara telefon = client nou.
 // "alesId" (BUG-15) = clientul ales din sugestiile pe nume: daca n-are telefon, oferta se leaga de el
 // (i se pune si telefonul scris acum, cand numarul e nou in baza)
-export async function gasesteSauCreeazaClient(tx: Prisma.TransactionClient, date: DateClient, utilizator: Utilizator, alesId?: string | null): Promise<{ client: { id: string }; nou: boolean }> {
+export async function gasesteSauCreeazaClient(tx: Prisma.TransactionClient, date: DateClientScrise, utilizator: Utilizator, alesId?: string | null): Promise<{ client: { id: string }; nou: boolean }> {
   const curate = dateCurate(date);
   const ales = await clientAlesFaraTelefon(tx, alesId, utilizator);
   if (ales) {
