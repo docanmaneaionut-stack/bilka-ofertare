@@ -29,7 +29,8 @@ const COLOANE_PERMISE: Record<string, string[]> = {
   // S27 (M10): tabelul de comenzi cauta si dupa adresa lucrarii (a ofertei comandate)
   oferta: ["adresaLucrarii"],
   montator: ["nume", "localitate"],
-  comanda: ["clientNume", "clientLocalitate", "montatorNume", "montatorExecutieNume"],
+  // S28 (BUG-18): si dupa localitatea si adresa lucrarii scrise pe comanda manuala
+  comanda: ["clientNume", "clientLocalitate", "montatorNume", "montatorExecutieNume", "localitateLucrarii", "adresaLucrarii"],
 };
 
 const escapeLike = (s: string) => s.replace(/[\\%_]/g, (c) => `\\${c}`);

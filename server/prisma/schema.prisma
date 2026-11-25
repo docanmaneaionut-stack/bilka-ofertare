@@ -1043,6 +1043,11 @@ model Comanda {
   clientNume       String
   clientTelefon    String
   clientLocalitate String?
+  // S28 (BUG-18, migrarea 23): localitatea si adresa LUCRARII scrise pe comanda manuala (la comenzile din
+  // oferta raman cele ale ofertei); tabelul de comenzi, cautarea si fisa soferului arata localitatea si
+  // adresa comenzii, niciodata pe cele din fisa clientului
+  localitateLucrarii String?
+  adresaLucrarii     String?
   montatorNume     String?
   montatorTelefon  String?
   rezumat          String

@@ -1,6 +1,6 @@
 # Fișa de modul — CONTURI (CON)
 
-Versiunea 1.2 · 17 noiembrie 2026 (MODIFICARE M5 — `MODIFICARI-S26.md`: prețul de vânzare al unei comenzi îl ajustează **doar Administratorul firmei**, cu motiv obligatoriu, cât comanda nu e încasată integral; M8 — montatorul de execuție îl poate modifica și Gestiunea) · v1.1 · 4 septembrie 2026 · Status: **ÎNCHISĂ** (aprobată de Ionuț; nu se mai reia fără cerere explicită de tip MODIFICARE)
+Versiunea 1.4 · 25 noiembrie 2026 (M11 precizat de Ionuț: comisionul recomandării rămâne vizibil agentului pe **toate** comenzile, cum era în §2 din septembrie — restrângerea din v1.3 cade) · v1.3 · 23 noiembrie 2026 (MODIFICARE M11 — `MODIFICARI-S28.md`: lista de comenzi a agentului = toate comenzile, de la toate firmele; comisionul recomandării vizibil agentului doar pe comenzile lui) · v1.2 · 17 noiembrie 2026 (MODIFICARE M5 — `MODIFICARI-S26.md`: prețul de vânzare al unei comenzi îl ajustează **doar Administratorul firmei**, cu motiv obligatoriu, cât comanda nu e încasată integral; M8 — montatorul de execuție îl poate modifica și Gestiunea) · v1.1 · 4 septembrie 2026 · Status: **ÎNCHISĂ** (aprobată de Ionuț; nu se mai reia fără cerere explicită de tip MODIFICARE)
 Sursa: descrierea lui Ionuț din 03.09.2026 și răspunsurile din 03–04.09.2026. Înlocuiește ARH §3 și punctele 1–4 din ARH §12.
 
 ---
@@ -28,8 +28,8 @@ Rolul „Director zonal" din discuțiile anterioare nu mai există.
 |---|---|---|---|---|---|---|
 | Catalog și prețurile de bază de la furnizor | vede și modifică | vede | nu — vede doar prețul lui de achiziție | la fel ca agentul | nu | nu |
 | Oferte | toate | toate; lista standard arată ofertele lui, iar dintr-un selector alege ofertele oricărui cont | doar ale lui | doar ale lui | prin comenzi (PDF ofertă), pe firmele la care are acces | prin comenzi (PDF ofertă), pe firmele la care are acces |
-| Lista de comenzi | toate | toate | lista completă | doar ale lui | pe firmele la care are acces | pe firmele la care are acces |
-| Sume de încasat (avans, rest) și comisioane | toate | toate | toate | doar ale lui | toate (în accesul lui) | toate (în accesul lui) |
+| Lista de comenzi | toate | toate | lista completă — **toate firmele** *(M11, 23.11.2026; construită inițial doar pe firma lui)* | doar ale lui | pe firmele la care are acces | pe firmele la care are acces |
+| Sume de încasat (avans, rest) și comisioane | toate | toate | toate *(M11, precizat 25.11.2026: și comisionul recomandării, pe toate comenzile — îl vede peste tot, îl modifică doar pe ale lui)* | doar ale lui | toate (în accesul lui) | toate (în accesul lui) |
 | Tabel de facturare și aviz | orice comandă | orice comandă | orice comandă | **nu** — vede doar PDF-ul ofertei lui | orice comandă | orice comandă |
 | Locația comenzii și panotajul (trimitere pe WhatsApp) | da | da | da | pe ale lui | — | da |
 | Liste de montatori predefiniți | toate | a lui + listele tuturor conturilor | a lui | a lui | — | — |

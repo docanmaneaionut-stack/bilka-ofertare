@@ -1,6 +1,6 @@
 # Observații de ecran — pentru S18 (finisajul vizual)
 
-Versiunea 1.3 · 10 noiembrie 2026 · Scris de Claude (chat) din observațiile lui Ionuț și ale testerilor. Se completează pe măsură ce apar, pe ecrane; înainte de S18, Claude chat face simulări grafice pentru punctele mai mari, Ionuț le alege, iar planul S18 pornește de la lista finală. **Nimic de funcționalitate aici** — acelea sunt în `CERERI-BUG-S25.md`.
+Versiunea 1.6 · 25 noiembrie 2026 · Scris de Claude (chat) din observațiile lui Ionuț și ale testerilor. Se completează pe măsură ce apar, pe ecrane; înainte de S18, Claude chat face simulări grafice pentru punctele mai mari, Ionuț le alege, iar planul S18 pornește de la lista finală. **Nimic de funcționalitate aici** — acelea sunt în `CERERI-BUG-S25.md`.
 
 Legendă priorități: **A** deranjează la fiecare folosire · **B** vizibil, de făcut în S18 · **C** gust, dacă încape.
 
@@ -24,7 +24,7 @@ Legendă priorități: **A** deranjează la fiecare folosire · **B** vizibil, d
 ## Pagina ofertei — antet, client, prețuri
 | Nr | Observația | Prioritate | Simulare / decizie |
 |---|---|---|---|
-| — | | | |
+| V12 | (25.11) „să grupăm zonele din partea de ofertă: date generale (client, recomandare, montator, locație — tot ce nu e produs sau preț), produse, preț… e enervant să tot derulezi pagina; fie mai multe «sheet-uri», fie un cap de tabel pe care apeși și te duce la zonă” | A | `design/simulari/S29-simulare-navigare-oferta.pdf` (3 pagini): A = bandă de salt pe o singură pagină; B = trei file — Date generale · Produse · Prețuri și documente — cu bandă fixă de context, bară de rubrici în Produse și rubricile goale strânse (recomandarea lui Claude chat). **Decizia lui Ionuț (25.11): varianta B**, cu statusurile pe rândul lor, între rândul ofertei și file, și categoriile strânse / deschise cu clic pe bandă — simularea `S29-simulare-navigare-oferta-v2.pdf`; se construiește în S29 (M12, `MODIFICARI-S29.md`). **Precizarea lui Ionuț (25.11, după v2):** rubricile rămân **toate deschise, cu lista lor întreagă, ca până acum**; se strâng doar la clic pe bandă — simularea de referință devine `S29-simulare-navigare-oferta-v3.pdf` |
 
 ## Editorul — zona produselor
 | Nr | Observația | Prioritate | Simulare / decizie |

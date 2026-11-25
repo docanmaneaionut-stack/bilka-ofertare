@@ -141,7 +141,7 @@ describe("M9 prin API - E13: accesorii speciale 2 ML de sine statatoare, fara in
 });
 
 describe("M10 - tabelul de comenzi: adresa lucrarii la client, cautarea dupa adresa", () => {
-  it("randul comenzii poarta localitatea si adresa lucrarii (din oferta; la manuale adresa clientului, daca a fost scrisa); cautarea gaseste si dupa adresa, fara diacritice", async () => {
+  it("randul comenzii poarta localitatea si adresa lucrarii (din oferta; la manuale adresa scrisa pe comanda - BUG-18, S28); cautarea gaseste si dupa adresa, fara diacritice", async () => {
     const agent = await autentificaAgent(app, EMAIL.agent1);
     const gestiune = await autentificaAgent(app, EMAIL.gestiune);
     const { id } = await ofertaNoua(agent, { nume: "Agrovest Test", telefon: "0730 128 010", adresa: "Str. Mărășești nr. 12", localitate: "Focșani" });
@@ -155,7 +155,7 @@ describe("M10 - tabelul de comenzi: adresa lucrarii la client, cautarea dupa adr
     expect((await lista("marasesti nr. 12")).map((x) => x.id)).toEqual([rand.id]);
     expect((await lista("Mărășești")).map((x) => x.id)).toContain(rand.id);
     // adresa lucrarii schimbata pe oferta nu e cazul dupa "Comandat"; la manuale: cu si fara adresa
-    const cuAdresa = await gestiune.post("/api/comenzi").send({ firmaId: firma1, client: { nume: "Manual Cu Adresa", telefon: "0730 128 011", localitate: "Panciu", adresa: "Str. Viilor nr. 3" }, rezumat: "accesorii", totalLei: "100" });
+    const cuAdresa = await gestiune.post("/api/comenzi").send({ firmaId: firma1, client: { nume: "Manual Cu Adresa", telefon: "0730 128 011", localitate: "Panciu" }, adresaLucrarii: "Str. Viilor nr. 3", rezumat: "accesorii", totalLei: "100" });
     expect(cuAdresa.status, JSON.stringify(cuAdresa.body)).toBe(201);
     expect(cuAdresa.body.comanda.client).toEqual({ nume: "Manual Cu Adresa", telefon: "0730 128 011", localitate: "Panciu", adresa: "Str. Viilor nr. 3" });
     const faraAdresa = await gestiune.post("/api/comenzi").send({ firmaId: firma1, client: { nume: "Manual Fara Adresa", telefon: "0730 128 012", localitate: "Panciu" }, rezumat: "accesorii", totalLei: "100" });

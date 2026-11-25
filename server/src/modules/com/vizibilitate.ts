@@ -10,6 +10,12 @@ import { prisma } from "../../db/prisma.js";
 // nota lipsurilor: orice Administrator, pe toate comenzile, si Gestiunea. Alocarea
 // comenzilor manuale: Administratorii si Admin general. Banii (incasari, "achitat")
 // raman pe firma - doar Administratorul firmei agentului (S20).
+//
+// S28 (MODIFICAREA M11, docs/MODIFICARI-S28.md): AGENTUL vede TOATE comenzile, de la toate firmele - aceeasi
+// lista ca Administratorii (pana la S28: doar firma lui). Ce poate MODIFICA ramane neschimbat: detaliile doar
+// pe comenzile lui (poateModificaDetalii / poateModificaComision). Documentele, avizul si returul raman dupa
+// regula "cine vede comanda" (avizul si documentele - in afara colaboratorului), fara conditie pe firma.
+// Colaboratorul ramane doar cu ale lui; Contabilitatea si Gestiunea - pe firmele setarii lor de acces.
 
 export interface ComandaPentruDrepturi {
   firmaId: string;
@@ -28,9 +34,8 @@ export async function filtruVizibilitateComenzi(u: Utilizator): Promise<Prisma.C
   switch (u.rol) {
     case "ADMIN_GENERAL":
     case "ADMINISTRATOR":
+    case "AGENT": // S28 (M11): toate comenzile, de la toate firmele
       return {};
-    case "AGENT":
-      return u.firmaId ? { firmaId: u.firmaId } : { contAlocatId: u.id };
     case "COLABORATOR":
       return { contAlocatId: u.id };
     case "CONTABILITATE":
@@ -47,9 +52,8 @@ export async function poateVedeaComanda(u: Utilizator, c: ComandaPentruDrepturi)
   switch (u.rol) {
     case "ADMIN_GENERAL":
     case "ADMINISTRATOR":
+    case "AGENT": // S28 (M11)
       return true;
-    case "AGENT":
-      return u.firmaId ? c.firmaId === u.firmaId : c.contAlocatId === u.id;
     case "COLABORATOR":
       return c.contAlocatId === u.id;
     case "CONTABILITATE":

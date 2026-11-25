@@ -111,10 +111,11 @@ describe("comenzile din oferta si lista comuna", () => {
     expect(c.istoric.map((i) => `${i.tip}:${i.valoareDupa}`)).toEqual(["status:Comandat"]);
   });
 
-  it("cine vede ce: agentul lista firmei, colaboratorul doar ale lui, Administratorii si Admin general toate, Contabilitatea pe firmele ei, Gestiunea cu acces general tot", async () => {
+  it("cine vede ce: agentul toate comenzile, de la toate firmele (M11, S28), colaboratorul doar ale lui, Administratorii si Admin general toate, Contabilitatea pe firmele ei, Gestiunea cu acces general tot", async () => {
     const numere = (r: { comenzi: Record<string, any>[] }) => r.comenzi.map((c) => c.numarComplet).sort();
     const toateFirma1 = [c1.numarComplet, c2.numarComplet, cColab.numarComplet].sort();
-    expect(numere(await lista(await autentificaAgent(app, EMAIL.agent1)))).toEqual(toateFirma1);
+    // S28 (MODIFICAREA M11): agentul vede aceeasi lista ca Administratorii (pana la S28: doar firma lui)
+    expect(numere(await lista(await autentificaAgent(app, EMAIL.agent1)))).toEqual([...toateFirma1, cFirma2.numarComplet].sort());
     expect(numere(await lista(await autentificaAgent(app, EMAIL.colab)))).toEqual([cColab.numarComplet]);
     expect(numere(await lista(await autentificaAgent(app, EMAIL.admin1)))).toEqual([...toateFirma1, cFirma2.numarComplet].sort());
     expect(numere(await lista(await autentificaAgent(app, EMAIL.admin2)))).toEqual([...toateFirma1, cFirma2.numarComplet].sort());
@@ -140,7 +141,7 @@ describe("comenzile din oferta si lista comuna", () => {
     expect((await lista(agent, { q: "Pavel" })).comenzi.map((x) => x.numarComplet)).toEqual([c2.numarComplet]);
     expect((await lista(agent, { q: "0730 000 402" })).comenzi.map((x) => x.numarComplet)).toEqual([c2.numarComplet]);
     expect((await lista(agent, { q: "Colaborator" })).comenzi.map((x) => x.numarComplet)).toEqual([cColab.numarComplet]);
-    expect((await lista(agent, { q: "Panciu" })).total).toBe(3);
+    expect((await lista(agent, { q: "Panciu", firmaId: firma1 })).total).toBe(3);
   });
 
   it("tranzitiile logistice cu istoric: Comandat -> Receptionat partial (cu nota lipsurilor) -> Receptionat -> Livrat; nu se sare peste etape", async () => {
@@ -180,14 +181,15 @@ describe("comenzile din oferta si lista comuna", () => {
 
   it("ordinea si 'Arata si comenzile inchise': cele mai noi sus; Livrat la sfarsit, ascuns implicit; filtrul pe status; numaratorile din cap", async () => {
     const agent = await autentificaAgent(app, EMAIL.agent1);
-    const implicit = await lista(agent);
+    // S28 (M11): agentul vede toate firmele; testul ramane pe comenzile firmei lui, prin filtrul Firma
+    const implicit = await lista(agent, { firmaId: firma1 });
     // S20: c1 e livrata, dar neincasata (avansul doar propus) -> nu e "inchisa", ramane in lista
     expect(implicit.comenzi.map((c) => c.numarComplet)).toEqual([cColab.numarComplet, c2.numarComplet, c1.numarComplet]);
     expect(implicit.numaratori).toMatchObject({ active: 2, deReceptionat: 1, livrate: 1, neincasate: 3, comisioaneNeachitate: 3, neidentificate: 0 });
-    const cuInchise = await lista(agent, { inchise: "da" });
+    const cuInchise = await lista(agent, { inchise: "da", firmaId: firma1 });
     expect(cuInchise.comenzi.map((c) => c.numarComplet)).toEqual([cColab.numarComplet, c2.numarComplet, c1.numarComplet]);
-    expect((await lista(agent, { status: "LIVRAT" })).comenzi.map((c) => c.numarComplet)).toEqual([c1.numarComplet]);
-    expect((await lista(agent, { status: "RECEPTIONAT" })).comenzi.map((c) => c.numarComplet)).toEqual([c2.numarComplet]);
+    expect((await lista(agent, { status: "LIVRAT", firmaId: firma1 })).comenzi.map((c) => c.numarComplet)).toEqual([c1.numarComplet]);
+    expect((await lista(agent, { status: "RECEPTIONAT", firmaId: firma1 })).comenzi.map((c) => c.numarComplet)).toEqual([c2.numarComplet]);
     // perioada: o comanda de ieri nu intra intr-un interval de azi? intra (deLa = azi); una din afara intervalului nu
     expect((await lista(agent, { deLa: dataLocala(1), panaLa: dataLocala(2) })).total).toBe(0);
   });

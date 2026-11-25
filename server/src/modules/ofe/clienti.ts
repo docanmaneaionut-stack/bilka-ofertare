@@ -262,6 +262,20 @@ async function scrieModificariTx(tx: Prisma.TransactionClient, utilizator: Utili
   if (randuri.length > 0) await tx.jurnalIntrare.createMany({ data: randuri });
 }
 
+// S28 (BUG-19): stergerea EXPLICITA dintr-o fisa (cosul de pe fisa clientului) - singurul drum pe care un camp
+// se goleste (BUG-17: un camp lasat gol la salvare nu sterge nimic). Doar e-mailul, observatiile si adresa;
+// telefonul e cheia de deduplicare si se inlocuieste, nu se sterge. Adresa stearsa ramane "necompletata"
+// (coloana e obligatorie in baza); ofertele isi pastreaza adresa lucrarii lor.
+const CAMPURI_DE_STERS = ["email", "observatii", "adresa"] as const;
+type CampDeSters = (typeof CAMPURI_DE_STERS)[number];
+const ETICHETA_CAMP_DE_STERS: Record<CampDeSters, string> = { email: "e-mailul", observatii: "observațiile", adresa: "adresa" };
+
+// cosul il au conturile care fac oferte, pe clientii pe care ii vad (regula sugestiilor pe nume, BUG-15), si Admin general
+async function poateStergeDinFisa(u: Utilizator, clientId: string): Promise<boolean> {
+  if (u.rol === "ADMIN_GENERAL") return true;
+  return (await prisma.client.count({ where: { AND: [{ id: clientId }, filtruClientiVizibili(u)] } })) > 0;
+}
+
 export function clientPublic(c: { id: string; nume: string; telefon: string | null; adresa: string; localitate: string | null; email: string | null; observatii: string | null }) {
   return { id: c.id, nume: c.nume, telefon: c.telefon, adresa: c.adresa, localitate: c.localitate, email: c.email, observatii: c.observatii };
 }
@@ -316,7 +330,41 @@ clientiRouter.get("/:id", async (req, res) => {
         select: { id: true, serie: true, numar: true, data: true, status: true, statusLa: true, updatedAt: true, utilizator: { select: { id: true, nume: true } }, completareLa: { select: { serie: true, numar: true } }, motivCompletare: true },
       })
     : [];
-  res.json({ client: clientPublic(client), oferte: oferte.map((o) => ({ ...o, numarComplet: numarComplet(o.serie, o.numar) })) });
+  // S28 (BUG-19): "poateSterge" = contul are cosul pe aceasta fisa
+  res.json({ client: clientPublic(client), poateSterge: await poateStergeDinFisa(req.utilizator!, client.id), oferte: oferte.map((o) => ({ ...o, numarComplet: numarComplet(o.serie, o.numar) })) });
+});
+
+// S28 (BUG-19): cosul - goleste un camp al fisei, cu jurnal (cine, cand, valoarea stearsa)
+clientiRouter.delete("/:id/campuri/:camp", async (req, res) => {
+  const u = req.utilizator!;
+  const camp = String(req.params.camp) as CampDeSters;
+  if (!CAMPURI_DE_STERS.includes(camp)) {
+    res.status(400).json({
+      eroare: String(req.params.camp) === "telefon" ? "Telefonul nu se șterge — se înlocuiește cu numărul corect (după el recunoaște softul clientul)" : "Din fișa clientului se pot șterge doar e-mailul, observațiile și adresa",
+    });
+    return;
+  }
+  const client = await prisma.client.findUnique({ where: { id: req.params.id } });
+  if (!client) {
+    res.status(404).json({ eroare: "Clientul nu există" });
+    return;
+  }
+  if (!(await poateStergeDinFisa(u, client.id))) {
+    res.status(403).json({ eroare: `Din fișa clientului șterg doar conturile care au oferte pentru el și Admin general (${ETICHETA_CAMP_DE_STERS[camp]} rămâne)` });
+    return;
+  }
+  const veche = client[camp];
+  const goala = camp === "adresa" ? ADRESA_NECOMPLETATA : null;
+  if (veche === null || veche.trim() === "" || veche === goala) {
+    res.json({ client: clientPublic(client) }); // deja gol: nimic de sters, nimic in jurnal
+    return;
+  }
+  const dupa = await prisma.$transaction(async (tx) => {
+    const d = await tx.client.update({ where: { id: client.id }, data: { [camp]: goala } });
+    await tx.jurnalIntrare.create({ data: { utilizatorId: u.id, numeUtilizatorLaMoment: u.nume, entitate: "Client", entitateId: client.id, actiune: "modificare", camp, valoareInainte: veche, valoareDupa: null } });
+    return d;
+  });
+  res.json({ client: clientPublic(dupa) });
 });
 
 export function numarComplet(serie: string, numar: number): string {

@@ -272,7 +272,7 @@ describe("fisa soferului (S23, cap. 4c)", () => {
     a = await comanda(agent1, "E01", { ...CLIENT, nume: "Fisa Popescu", telefon: "0722000444" });
     await agent1.put(`/api/comenzi/${a.comandaId}/livrare`).send({ indicatii: "marți după 14:00; sună înainte", dataLivrarii: "2026-11-17" }).expect(200);
     const gestiune = await autentificaAgent(app, EMAIL.gestiune);
-    const m = await gestiune.post("/api/comenzi").send({ firmaId: firma1, client: { nume: "Asociația Cercul Unirea", telefon: "0744 000 333", localitate: "Câmpineanca", adresa: "Str. Mărului nr. 7" }, rezumat: "accesorii tinichigerie 8019 Grande Mat 0,5 (fără învelitoare)", totalLei: "862.13", montator: { nume: "Gheorghe V.", telefon: "0733 000 222" }, indicatiiLivrare: "jgheaburile rămân pe paleți" }).expect(201);
+    const m = await gestiune.post("/api/comenzi").send({ firmaId: firma1, client: { nume: "Asociația Cercul Unirea", telefon: "0744 000 333", localitate: "Câmpineanca" }, adresaLucrarii: "Str. Mărului nr. 7", rezumat: "accesorii tinichigerie 8019 Grande Mat 0,5 (fără învelitoare)", totalLei: "862.13", montator: { nume: "Gheorghe V.", telefon: "0733 000 222" }, indicatiiLivrare: "jgheaburile rămân pe paleți" }).expect(201);
     manualaId = m.body.comanda.id;
   }, 300_000);
 

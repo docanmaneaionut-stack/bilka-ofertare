@@ -483,7 +483,7 @@ export function OfertaDetaliu() {
             />
           ) : (
             <p>
-              <strong>{oferta.client.nume}</strong> · {oferta.client.telefon ?? "fără telefon"} · {oferta.client.adresa}
+              <strong>{oferta.client.nume}</strong> · {oferta.client.telefon ?? "fără telefon"} · {oferta.client.adresa === "-" ? "fără adresă" : oferta.client.adresa}
               {oferta.client.localitate ? `, ${oferta.client.localitate}` : ""}
             </p>
           )}

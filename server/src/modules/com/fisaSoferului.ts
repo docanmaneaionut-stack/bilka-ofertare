@@ -12,7 +12,7 @@ import { esc, imagineDataUri, pagina, ro } from "../ofe/documente/sablon.js";
 import { includeProduse } from "../ofe/intrareMot.js";
 import { textLivrareBilka } from "../ofe/livrareBilka.js";
 import { includeAviz, spreAviz } from "./avize.js";
-import { EroareComanda, includeRand, rezumatIncasari } from "./comenzi.js";
+import { EroareComanda, includeRand, localitateaComenzii, rezumatIncasari } from "./comenzi.js";
 import { CSS_COMENZI, dataDoar, dataLocala, dataRoDinIso, telefonApelabil } from "./sablonComenzi.js";
 import { poateFaceFisaSoferului, poateVedeaComanda } from "./vizibilitate.js";
 
@@ -81,9 +81,9 @@ export async function dateFisa(u: Utilizator, cerere: z.infer<typeof schemaFisa>
   for (const id of ids) {
     const c = comenzi.find((x) => x.id === id);
     if (!c || !(await poateVedeaComanda(u, c))) throw new EroareComanda("O comandă din listă nu există sau nu e vizibilă", 404);
-    // adresa: a lucrarii (de pe oferta) + localitatea; la manuale adresa clientului din baza comuna
-    const client = c.clientId ? await prisma.client.findUnique({ where: { id: c.clientId }, select: { adresa: true } }) : null;
-    let adresa: string | null = [client?.adresa, c.clientLocalitate].filter(Boolean).join(", ") || null;
+    // adresa: a lucrarii (de pe oferta) + localitatea; S28 (BUG-18): la comenzile manuale adresa si
+    // localitatea scrise pe comanda (cele vechi: localitatea de pe comanda) - niciodata cele din fisa clientului
+    let adresa: string | null = [c.adresaLucrarii, localitateaComenzii(c)].filter(Boolean).join(", ") || null;
     let coli: string | null = null;
     const categorii: string[] = [];
     if (c.ofertaId) {

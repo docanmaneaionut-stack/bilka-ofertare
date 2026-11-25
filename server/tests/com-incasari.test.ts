@@ -140,26 +140,27 @@ describe("incasarile (cap. 2)", () => {
   it("restul -> incasat; 'inchis' = Livrat si incasat: la sfarsit, ascuns implicit, vizibil cu 'inchise' sau cu filtrul incasare=incasat; numaratorile", async () => {
     const gestiune = await autentificaAgent(app, EMAIL.gestiune);
     const agent1 = await autentificaAgent(app, EMAIL.agent1);
-    const inainte = await lista(agent1);
+    // S28 (M11): agentul vede toate firmele; testul ramane pe comenzile firmei lui, prin filtrul Firma
+    const inainte = await lista(agent1, { firmaId: firma1 });
     expect(inainte.numaratori.neincasate).toBe(1);
     expect(inainte.comenzi.map((x) => x.id)).toContain(c.comandaId);
-    expect((await lista(agent1, { incasare: "partial" })).comenzi.map((x) => x.id)).toEqual([c.comandaId]);
-    expect((await lista(agent1, { incasare: "neincasat" })).total).toBe(0);
+    expect((await lista(agent1, { incasare: "partial", firmaId: firma1 })).comenzi.map((x) => x.id)).toEqual([c.comandaId]);
+    expect((await lista(agent1, { incasare: "neincasat", firmaId: firma1 })).total).toBe(0);
 
     const rest = await admin1.post(`/api/comenzi/${c.comandaId}/incasari`).send({ sumaLei: "12000", data: dataLocala(0), ceReprezinta: "rest la livrare, transfer bancar" });
     expect(rest.status).toBe(201);
     expect(rest.body.comanda.incasare).toMatchObject({ status: "INCASAT", incasatLei: "17000.00", restLei: "0.00" });
     expect(rest.body.comanda.inchisa).toBe(false); // nu e livrata
-    expect((await lista(agent1)).comenzi.map((x) => x.id)).toContain(c.comandaId);
+    expect((await lista(agent1, { firmaId: firma1 })).comenzi.map((x) => x.id)).toContain(c.comandaId);
 
     await gestiune.put(`/api/comenzi/${c.comandaId}/status-logistic`).send({ status: "RECEPTIONAT" }).expect(200);
     const livrat = await gestiune.put(`/api/comenzi/${c.comandaId}/status-logistic`).send({ status: "LIVRAT" });
     expect(livrat.body.comanda.inchisa).toBe(true);
-    const implicit = await lista(agent1);
+    const implicit = await lista(agent1, { firmaId: firma1 });
     expect(implicit.comenzi.map((x) => x.id)).not.toContain(c.comandaId);
     expect(implicit.numaratori.neincasate).toBe(0);
-    expect((await lista(agent1, { inchise: "da" })).comenzi.map((x) => x.id)).toContain(c.comandaId);
-    expect((await lista(agent1, { incasare: "incasat" })).comenzi.map((x) => x.id)).toEqual([c.comandaId]);
+    expect((await lista(agent1, { inchise: "da", firmaId: firma1 })).comenzi.map((x) => x.id)).toContain(c.comandaId);
+    expect((await lista(agent1, { incasare: "incasat", firmaId: firma1 })).comenzi.map((x) => x.id)).toEqual([c.comandaId]);
   });
 });
 

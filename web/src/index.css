@@ -1467,3 +1467,38 @@ table.tabel.editabil tbody tr:focus-within td:last-child {
     white-space: nowrap;
   }
 }
+
+/* --- S28 (BUG-19): fisa clientului - datele pe randuri, cu cosul de stergere si confirmarea lui --- */
+.date-client {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 4px 16px;
+  margin: 8px 0 12px;
+}
+.date-client dt {
+  color: var(--text-secundar, #6b7280);
+  line-height: var(--casuta);
+}
+.date-client dd {
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-height: var(--casuta);
+  overflow-wrap: anywhere;
+}
+.confirmare-stergere {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  margin: 0 0 12px;
+  border: 1px solid #fecaca;
+  border-radius: 6px;
+  background: #fef2f2;
+}
+.confirmare-stergere span {
+  flex: 1 1 240px;
+  overflow-wrap: anywhere;
+}

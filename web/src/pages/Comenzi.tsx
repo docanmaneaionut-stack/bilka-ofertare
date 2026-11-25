@@ -51,7 +51,9 @@ export function Comenzi() {
   const administrator = eu.rol === "ADMINISTRATOR";
   const gestiune = eu.rol === "GESTIUNE";
   const vedeAgent = adminGeneral || administrator;
-  const vedeFirma = adminGeneral || administrator || gestiune || eu.rol === "CONTABILITATE";
+  // S28 (M11): agentul vede toate comenzile, de la toate firmele - primeste filtrul Firma si "Doar ale mele"
+  const agentul = eu.rol === "AGENT";
+  const vedeFirma = adminGeneral || administrator || gestiune || agentul || eu.rol === "CONTABILITATE";
   const adaugaManuala = adminGeneral || administrator || gestiune;
   // S23: fisa soferului - Gestiune, Administratori, Admin general (FISA-COMENZI cap. 4c)
   const faceFisa = adminGeneral || administrator || gestiune;
@@ -66,6 +68,7 @@ export function Comenzi() {
   const [agent, setAgent] = useState("");
   const [firmaId, setFirmaId] = useState("");
   const [inchise, setInchise] = useState(false);
+  const [aleMele, setAleMele] = useState(false);
   const [page, setPage] = useState(1);
   const [conturi, setConturi] = useState<(ContScurt & { firmaId: string | null })[]>([]);
   const [firme, setFirme] = useState<{ id: string; denumire: string }[]>([]);
@@ -85,6 +88,7 @@ export function Comenzi() {
     const filtre: FiltreComenzi = { q: q.trim() || undefined, status: status || undefined, incasare: incasareFiltru || undefined, ...perioadaInDate(perioada, deLa, panaLa), inchise, page, pageSize: 25 };
     if (vedeAgent && agent) filtre.agent = agent;
     if (vedeFirma && firmaId) filtre.firmaId = firmaId;
+    if (agentul && aleMele) filtre.aleMele = true;
     const t = setTimeout(() => {
       apiComenzi
         .lista(filtre)
@@ -95,7 +99,7 @@ export function Comenzi() {
         .catch((e) => setEroare(textEroare(e)));
     }, q ? 250 : 0);
     return () => clearTimeout(t);
-  }, [q, status, incasareFiltru, perioada, deLa, panaLa, agent, firmaId, inchise, page, vedeAgent, vedeFirma, versiune]);
+  }, [q, status, incasareFiltru, perioada, deLa, panaLa, agent, firmaId, inchise, aleMele, agentul, page, vedeAgent, vedeFirma, versiune]);
 
   const n = rezultat?.numaratori;
   const totalPagini = rezultat ? Math.max(1, Math.ceil(rezultat.total / rezultat.pageSize)) : 1;
@@ -223,6 +227,19 @@ export function Comenzi() {
             </select>
           </Camp>
         )}
+        {agentul && (
+          <label className="camp-bifa">
+            <input
+              type="checkbox"
+              checked={aleMele}
+              onChange={(e) => {
+                setAleMele(e.target.checked);
+                setPage(1);
+              }}
+            />
+            <span>Doar ale mele</span>
+          </label>
+        )}
         <label className="camp-bifa">
           <input type="checkbox" checked={inchise} onChange={(e) => setInchise(e.target.checked)} />
           <span>Arată și comenzile închise (livrate și încasate)</span>
@@ -275,7 +292,8 @@ export function Comenzi() {
         <ul>
           <li>Ordinea: după data intrării în tabel, cele mai noi sus; comenzile livrate trec la sfârșitul listei și sunt ascunse până bifezi „Arată și comenzile închise” (livrate și încasate).</li>
           <li>„Deschide ▾” desfășoară rândul: livrarea și facturarea, statusurile cu istoric, observațiile cu istoric și atașamentele, documentele ofertei (formularele Bilka, detaliata, tabelul de facturare). Încasările (doar Administratorul firmei le notează, confirmă și anulează) și comisionul recomandării cu „achitat” sunt în rândul desfășurat.</li>
-          <li>Prima coloană arată doar numărul și data comenzii; cine a trimis-o („Responsabil: trimisă de …”, la cele manuale „adăugat de … pentru: …”) e prima linie din rândul desfășurat. Clientul apare cu localitatea și adresa lucrării; căutarea găsește și după adresă.</li>
+          <li>Prima coloană arată doar numărul și data comenzii; cine a trimis-o („Responsabil: trimisă de …”, la cele manuale „adăugat de … pentru: …”) e prima linie din rândul desfășurat. Clientul apare cu localitatea și adresa lucrării (ale ofertei sau cele scrise pe comanda manuală — niciodată cele din fișa clientului); căutarea găsește și după adresă.</li>
+          <li>Agentul vede toate comenzile, de la toate firmele, ca Administratorii: filtrul „Firma” alege una, „Doar ale mele” le lasă doar pe ale lui, iar numărătorile din cap urmează ce e afișat. Detaliile (contacte, observații, livrare, montator, comision) le modifică doar pe comenzile lui; documentele, avizul și returul le poate face pe orice comandă pe care o vede.</li>
           <li>Coloana „Montator” arată montatorul de execuție (cine montează și e în șantier la livrare — apare și pe fișa șoferului); îl schimbă contul comenzii, orice Administrator și Gestiunea. Recomandarea (cine a adus lucrarea) și comisionul ei sunt dedesubt și merg în tabelul de vânzări; le schimbă contul ofertei și Administratorul firmei.</li>
           <li>„Ajustează prețul de vânzare” (doar Administratorul firmei comenzii, în caseta Încasări): suma nouă cu TVA și motivul; cât comanda nu e încasată integral și nu sub achiziție. Totalul ajustat poartă asteriscul roșu, iar istoricul e în aceeași casetă.</li>
           <li>Responsabilul e contul care a trimis comanda la furnizor; comenzile manuale (seria CM) arată „adăugat de … pentru: …” sau „neidentificată” până se află a cui e — alocarea o schimbă doar Administratorii.</li>
@@ -1259,7 +1277,9 @@ export function CasetaAviz({ c, ocupat, ruleaza, deschisInitial = false }: { c: 
 
 function FormularComandaManuala({ firme, conturi, onInchide, onCreata }: { firme: { id: string; denumire: string }[]; conturi: (ContScurt & { firmaId: string | null })[]; onInchide: () => void; onCreata: () => void }) {
   const eu = useUtilizator();
-  const [date, setDate] = useState<ComandaManualaNoua>({ firmaId: firme.length === 1 ? firme[0].id : eu.firmaId ?? "", client: { nume: "", telefon: "", localitate: "" }, rezumat: "", totalLei: "", totalCuTvaEur: "", avansLei: "", montator: null, contAlocatId: null, indicatiiLivrare: "", observatie: "" });
+  const [date, setDate] = useState<ComandaManualaNoua>({ firmaId: firme.length === 1 ? firme[0].id : eu.firmaId ?? "", client: { nume: "", telefon: "", localitate: "" }, localitateLucrarii: "", adresaLucrarii: "", rezumat: "", totalLei: "", totalCuTvaEur: "", avansLei: "", montator: null, contAlocatId: null, indicatiiLivrare: "", observatie: "" });
+  // S28 (BUG-18): pana o schimba cineva, localitatea lucrarii urmeaza localitatea clientului
+  const [localitateLucrariiAtinsa, setLocalitateLucrariiAtinsa] = useState(false);
   const [montatorNume, setMontatorNume] = useState("");
   const [montatorTelefon, setMontatorTelefon] = useState("");
   // S26b (M8): recomandarea (cine a adus lucrarea), separat de montatorul de executie
@@ -1280,6 +1300,9 @@ function FormularComandaManuala({ firme, conturi, onInchide, onCreata }: { firme
     const corp: ComandaManualaNoua = {
       ...date,
       firmaId: date.firmaId || undefined,
+      // S28 (BUG-18): localitatea lucrarii neatinsa = localitatea clientului
+      localitateLucrarii: (localitateLucrariiAtinsa ? date.localitateLucrarii : date.client.localitate)?.trim() || null,
+      adresaLucrarii: date.adresaLucrarii?.trim() || null,
       totalCuTvaEur: date.totalCuTvaEur || undefined,
       avansLei: date.avansLei || undefined,
       montator: montatorNume.trim() ? { nume: montatorNume.trim(), telefon: montatorTelefon.trim() } : null,
@@ -1323,6 +1346,21 @@ function FormularComandaManuala({ firme, conturi, onInchide, onCreata }: { firme
           </Camp>
           <Camp eticheta="Localitate">
             <input value={date.client.localitate ?? ""} onChange={(e) => setDate({ ...date, client: { ...date.client, localitate: e.target.value } })} />
+          </Camp>
+        </div>
+        {/* S28 (BUG-18): perechea lucrarii, tinuta pe comanda; localitatea porneste de la a clientului */}
+        <div className="rand-campuri">
+          <Camp eticheta="Localitatea lucrării">
+            <input
+              value={(localitateLucrariiAtinsa ? date.localitateLucrarii : date.client.localitate) ?? ""}
+              onChange={(e) => {
+                setLocalitateLucrariiAtinsa(true);
+                setDate({ ...date, localitateLucrarii: e.target.value });
+              }}
+            />
+          </Camp>
+          <Camp eticheta="Adresa lucrării">
+            <input value={date.adresaLucrarii ?? ""} onChange={(e) => setDate({ ...date, adresaLucrarii: e.target.value })} placeholder="strada și numărul (opțional)" />
           </Camp>
         </div>
         <Camp eticheta="Rezumatul comenzii" obligatoriu>

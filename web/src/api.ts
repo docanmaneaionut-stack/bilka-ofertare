@@ -901,8 +901,12 @@ export const apiClienti = {
   fisa: (id: string) =>
     cerere<{
       client: Client;
+      // S28 (BUG-19): contul are cosul de stergere pe aceasta fisa
+      poateSterge: boolean;
       oferte: { id: string; numarComplet: string; data: string; status: StatusOferta; statusLa: string; updatedAt: string; utilizator: { id: string; nume: string }; completareLa: { serie: string; numar: number } | null; motivCompletare: string | null }[];
     }>(`/api/clienti/${id}`),
+  // S28 (BUG-19): stergerea explicita a unui camp din fisa (e-mail, observatii, adresa), cu jurnal
+  stergeCamp: (id: string, camp: "email" | "observatii" | "adresa") => cerere<{ client: Client }>(`/api/clienti/${id}/campuri/${camp}`, { method: "DELETE" }),
 };
 
 export const apiCurs = {
@@ -1233,7 +1237,7 @@ export type ComandaDetaliu = Omit<RandComanda, "retururi"> & {
   notiteOferta: ObservatieComanda[];
   atasamenteOferta: AtasamentComanda[];
 };
-export type FiltreComenzi = { q?: string; status?: StatusLogistic | ""; incasare?: "" | "neincasat" | "partial" | "incasat"; deLa?: string; panaLa?: string; agent?: string; firmaId?: string; inchise?: boolean; page?: number; pageSize?: number };
+export type FiltreComenzi = { q?: string; status?: StatusLogistic | ""; incasare?: "" | "neincasat" | "partial" | "incasat"; deLa?: string; panaLa?: string; agent?: string; firmaId?: string; aleMele?: boolean; inchise?: boolean; page?: number; pageSize?: number };
 export type ListaComenzi = {
   comenzi: RandComanda[];
   total: number;
@@ -1244,7 +1248,10 @@ export type ListaComenzi = {
 };
 export type ComandaManualaNoua = {
   firmaId?: string;
-  client: { nume: string; telefon: string; localitate?: string | null; adresa?: string };
+  client: { nume: string; telefon: string; localitate?: string | null };
+  // S28 (BUG-18): localitatea si adresa lucrarii, tinute pe comanda (optionale)
+  localitateLucrarii?: string | null;
+  adresaLucrarii?: string | null;
   rezumat: string;
   totalLei: string;
   totalCuTvaEur?: string;

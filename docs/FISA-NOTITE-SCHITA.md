@@ -1,6 +1,6 @@
 # Fișa de modul — NOTIȚE, ATAȘAMENTE, LOCAȚIE (NOT)
 
-Versiunea 1.0 · 16 octombrie 2026 · Status: ÎNCHISĂ (deciziile lui Ionuț din 16.10.2026). Se reia doar printr-o cerere explicită de MODIFICARE.
+Versiunea 1.1 · 25 noiembrie 2026 (MODIFICARE M13, `MODIFICARI-S30.md`: §3 — locația se salvează pe ofertă, lângă adresa lucrării; trei feluri de a o pune; pragul de 100 m) · v1.0 · 16 octombrie 2026 · Status: ÎNCHISĂ (deciziile lui Ionuț din 16.10.2026). Se reia doar printr-o cerere explicită de MODIFICARE.
 Se sprijină pe: FISA-OFERTARE cap. 14 (notițele și atașamentele stau pe ofertă), FISA-COMENZI cap. 1 și 4c (observații pe comandă, locația pe fișa șoferului), FISA-CONTURI (Gestiunea vede locația și trimite pe WhatsApp).
 
 ## 1. Notițe
@@ -19,6 +19,8 @@ Se sprijină pe: FISA-OFERTARE cap. 14 (notițele și atașamentele stau pe ofer
 - Se pot **trimite pe WhatsApp** (vezi 4) și descărca.
 
 ## 3. Locația lucrării
+
+> **MODIFICARE M13 (25.11.2026, `MODIFICARI-S30.md`; aprobată de Ionuț)**: locația stă pe **ofertă**, lângă adresa lucrării (ține de lucrare, nu de fișa clientului), și trece pe comandă la „Comandat” (câmpul construit în S23). Trei feluri de a o pune: link lipit, **coordonate scrise** (nou — pentru laptop, care nu are GPS) și „Ia locația de aici” (poziția aparatului, cu precizia afișată; peste 100 m nu se salvează; lucrează doar pe adresă securizată, deci de la punerea în funcțiune pe `roofdata.ro`). Textul de mai jos rămâne valabil în rest.
 
 - Stă pe **adresa lucrării** (clientul ofertei) și se vede pe ofertă, pe comandă și pe **fișa șoferului** („locația pe hartă").
 - Două surse, ambele acceptate (decis 16.10.2026): **link de hartă primit** de la client sau colaborator (Google Maps, Waze — se lipește în câmp) sau **pinul salvat la fața locului** de agentul care măsoară („folosește locația mea", de pe telefon). Softul păstrează coordonatele și le arată ca link de hartă, oricare ar fi sursa.

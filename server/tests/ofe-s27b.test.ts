@@ -85,7 +85,8 @@ describe("BUG-17 - comanda manuala nu mai suprascrie fisa clientului", () => {
     await manuala(gestiune, { nume: "Georgescu Paul", telefon: "0730 129 011", localitate: "Focșani" }).expect(201);
     expect(await fisa(c.clientId)).toEqual({ ...c.date, localitate: "Focșani" });
     expect(await jurnal(c.clientId)).toEqual([["localitate", "Golești", "Focșani"]]);
-    await manuala(gestiune, { nume: "Georgescu Paul", telefon: "0730 129 011", localitate: "Focșani", adresa: "Str. Unirii nr. 2" }).expect(201);
+    // S28 (BUG-18): adresa se scrie pe comanda ("Adresa lucrarii") si, fiind scrisa efectiv, ajunge si in fisa
+    await gestiune.post("/api/comenzi").send({ firmaId: firma1, client: { nume: "Georgescu Paul", telefon: "0730 129 011", localitate: "Focșani" }, adresaLucrarii: "Str. Unirii nr. 2", rezumat: "accesorii", totalLei: "100" }).expect(201);
     expect(await fisa(c.clientId)).toEqual({ ...c.date, localitate: "Focșani", adresa: "Str. Unirii nr. 2" });
     expect(await jurnal(c.clientId)).toEqual([
       ["localitate", "Golești", "Focșani"],

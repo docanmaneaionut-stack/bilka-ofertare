@@ -93,6 +93,8 @@ const schemaFiltre = z.object({
   panaLa: dataIso.optional(),
   agent: z.string().trim().max(400).optional(),
   firmaId: z.string().trim().optional(),
+  // S28 (M11): comutatorul agentului "Doar ale mele" - comenzile alocate contului lui
+  aleMele: z.enum(["da"]).optional(),
   inchise: z.enum(["da"]).optional(),
   page: z.coerce.number().int().min(1).default(1),
   pageSize: z.coerce.number().int().min(1).max(100).default(25),
@@ -100,10 +102,14 @@ const schemaFiltre = z.object({
 
 const schemaComandaManuala = z.object({
   firmaId: z.string().trim().min(1).optional(),
-  // clientul: nume, telefon, localitate (cap. 4b) - adresa e optionala aici; S26a (M6): telefonul ramane
-  // obligatoriu aici. S27b (BUG-17): fara adresa, fisa unui client existent ramane neatinsa (adresa nu se
-  // completeaza niciodata din localitate); clientul nou ramane cu adresa necompletata
-  client: schemaClientCuTelefon.extend({ adresa: z.string().trim().max(300).optional() }),
+  // clientul: nume, telefon, localitate (cap. 4b); S26a (M6): telefonul ramane obligatoriu aici
+  client: schemaClientCuTelefon.omit({ adresa: true }),
+  // S28 (BUG-18): localitatea si adresa LUCRARII, tinute pe comanda (ca la oferta), amandoua optionale.
+  // Localitatea lucrarii porneste de la localitatea clientului. Ce e scris efectiv ajunge si in fisa
+  // clientului, cu jurnal (ca la oferta); S27b (BUG-17): un camp gol nu atinge fisa unui client existent,
+  // adresa nu se completeaza niciodata din localitate, clientul nou fara adresa ramane cu ea necompletata
+  localitateLucrarii: z.string().trim().max(200).nullish(),
+  adresaLucrarii: z.string().trim().max(300).nullish(),
   rezumat: z.string().trim().min(1, "rezumatul comenzii lipsește").max(2000),
   totalLei: suma,
   totalCuTvaEur: suma.optional(),
@@ -181,9 +187,8 @@ export const includeRand = {
   firma: { select: { id: true, denumire: true } },
   responsabil: { select: { id: true, nume: true, rol: true } },
   contAlocat: { select: { id: true, nume: true, rol: true } },
-  // S27 (M10): adresa lucrarii (a ofertei comandate); la comenzile manuale, adresa clientului din baza comuna
+  // S27 (M10): adresa lucrarii (a ofertei comandate); S28 (BUG-18): la comenzile manuale, cea scrisa pe comanda
   oferta: { select: { id: true, utilizatorId: true, localitate: true, adresaLucrarii: true, completareLa: { select: { serie: true, numar: true } }, motivCompletare: true } },
-  client: { select: { adresa: true } },
   incasari: { orderBy: [{ data: "asc" as const }, { moment: "asc" as const }] },
   // S22: retururile active, pe scurt (numarul, suma, "de regularizat")
   retururi: { where: { stare: "ACTIV" as const }, select: { id: true, numar: true, sumaCuTvaLei: true, deRegularizat: true }, orderBy: { numar: "asc" as const } },
@@ -193,12 +198,16 @@ export const includeRand = {
 
 export type ComandaCuRelatii = Prisma.ComandaGetPayload<{ include: typeof includeRand }>;
 
-// S27 (M10): adresa lucrarii de pe rand - a ofertei comandate; la comenzile manuale adresa clientului, daca a
-// fost scrisa. Nu se arata adresa necompletata ("-") si nici cea egala cu localitatea (pana la S27b clientul
-// creat de o comanda manuala fara adresa primea localitatea in locul ei - BUG-17; fisele vechi au ramas asa)
+// S27 (M10) + S28 (BUG-18): localitatea si adresa de pe rand sunt ale COMENZII - ale ofertei comandate sau cele
+// scrise pe comanda manuala -, NICIODATA cele din fisa clientului (care pot fi ale altei lucrari). Fara adresa
+// apare doar localitatea; comanda manuala fara localitate proprie (cele dinainte de S28) arata localitatea
+// scrisa atunci la client, ca pana acum. Adresa egala cu localitatea nu se repeta.
+export function localitateaComenzii(c: { tip: string; clientLocalitate: string | null; localitateLucrarii: string | null }): string | null {
+  return (c.tip === "MANUALA" ? c.localitateLucrarii?.trim() || null : null) ?? c.clientLocalitate;
+}
 function adresaComenzii(c: ComandaCuRelatii): string | null {
-  const adresa = (c.oferta ? (c.oferta.adresaLucrarii ?? c.client?.adresa) : c.client?.adresa)?.trim();
-  if (!adresa || adresa === "-" || adresa === (c.clientLocalitate ?? "").trim()) return null;
+  const adresa = (c.oferta ? c.oferta.adresaLucrarii : c.adresaLucrarii)?.trim();
+  if (!adresa || adresa === "-" || adresa === (localitateaComenzii(c) ?? "").trim()) return null;
   return adresa;
 }
 
@@ -219,7 +228,7 @@ export function spreRand(c: ComandaCuRelatii) {
     neidentificata: manuala && !c.contAlocatId,
     ofertaId: c.ofertaId,
     completareLa: c.oferta?.completareLa ? { numarComplet: numarComplet(c.oferta.completareLa.serie, c.oferta.completareLa.numar), motiv: c.oferta.motivCompletare } : null,
-    client: { nume: c.clientNume, telefon: c.clientTelefon, localitate: c.clientLocalitate, adresa: adresaComenzii(c) },
+    client: { nume: c.clientNume, telefon: c.clientTelefon, localitate: localitateaComenzii(c), adresa: adresaComenzii(c) },
     rezumat: c.rezumat,
     // S26b (M8): coloana Montator = montatorul de executie; recomandarea (persoana cu comisionul) separat
     montator: c.montatorExecutieNume ? { nume: c.montatorExecutieNume, telefon: c.montatorExecutieTelefon } : null,
@@ -288,10 +297,10 @@ comenziRouter.get("/", async (req, res) => {
     conditii.push({
       OR: [
         // S25 BUG-10: clientul, localitatea si montatorul fara diacritice
-        { id: { in: await idsCuTextul("comanda", ["clientNume", "clientLocalitate", "montatorNume", "montatorExecutieNume"], q) } },
-        // S27 (M10): si dupa adresa lucrarii (a ofertei; la manuale, a clientului)
+        // S28 (BUG-18): si localitatea si adresa lucrarii scrise pe comanda manuala
+        { id: { in: await idsCuTextul("comanda", ["clientNume", "clientLocalitate", "montatorNume", "montatorExecutieNume", "localitateLucrarii", "adresaLucrarii"], q) } },
+        // S27 (M10): si dupa adresa lucrarii a ofertei comandate (niciodata dupa cea din fisa clientului)
         { ofertaId: { in: await idsCuTextul("oferta", ["adresaLucrarii"], q) } },
-        { tip: "MANUALA" as const, clientId: { in: await idsCuTextul("client", ["adresa"], q) } },
         ...(cifre.length >= 4 ? [{ clientTelefon: { contains: cifre } }, { montatorTelefon: { contains: cifre } }, { montatorExecutieTelefon: { contains: cifre } }] : []),
         ...(numar ? [{ serie: { equals: numar[1].toUpperCase() }, numar: Number(numar[2]) }] : []),
       ],
@@ -302,14 +311,18 @@ comenziRouter.get("/", async (req, res) => {
     if (f.agent === "neidentificate") conditii.push({ contAlocatId: null, tip: "MANUALA" });
     else conditii.push({ contAlocatId: { in: f.agent.split(",").map((s) => s.trim()).filter(Boolean) } });
   }
-  if (f.firmaId && (u.rol === "ADMIN_GENERAL" || u.rol === "ADMINISTRATOR" || u.rol === "CONTABILITATE" || u.rol === "GESTIUNE")) conditii.push({ firmaId: f.firmaId });
+  // S28 (M11): filtrul Firma si la agent (vede toate firmele); "Doar ale mele" = comenzile alocate contului lui
+  if (f.firmaId && (u.rol === "ADMIN_GENERAL" || u.rol === "ADMINISTRATOR" || u.rol === "AGENT" || u.rol === "CONTABILITATE" || u.rol === "GESTIUNE")) conditii.push({ firmaId: f.firmaId });
+  const doarAleMele = f.aleMele === "da" && u.rol === "AGENT";
+  if (doarAleMele) conditii.push({ contAlocatId: u.id });
 
   // toate comenzile vizibile din perioada; statusul incasarii e derivat, deci filtrele pe
   // status / incasare si numaratorile se fac aici, nu in SQL
   const [toate, paletiNerecuperati] = await Promise.all([
     prisma.comanda.findMany({ where: { AND: conditii }, include: includeRand }).then((l) => l.map((c) => ({ c, r: spreRand(c) }))),
     // S22: paletii nerecuperati - peste toate comenzile vizibile, indiferent de perioada (cap. 8)
-    prisma.comanda.count({ where: { AND: [vizibilitate, { notaPalet: { not: null }, paletRecuperat: false }] } }),
+    // (S28, M11: cu "Doar ale mele", doar paletii comenzilor agentului - numaratorile urmeaza ce e afisat)
+    prisma.comanda.count({ where: { AND: [vizibilitate, ...(doarAleMele ? [{ contAlocatId: u.id }] : []), { notaPalet: { not: null }, paletRecuperat: false }] } }),
   ]);
   const numar = (s: StatusLogistic) => toate.filter((x) => x.c.statusLogistic === s).length;
   let filtrate = toate;
@@ -354,7 +367,8 @@ comenziRouter.get("/firme", async (req, res) => {
     res.status(403).json({ eroare: "Contul nu are acces la comenzi" });
     return;
   }
-  const where = u.rol === "AGENT" || u.rol === "COLABORATOR" ? { id: u.firmaId ?? "" } : "firmaId" in vizibilitate && vizibilitate.firmaId && typeof vizibilitate.firmaId === "object" && "in" in vizibilitate.firmaId ? { id: { in: vizibilitate.firmaId.in as string[] } } : {};
+  // S28 (M11): agentul vede comenzile tuturor firmelor, deci filtrul lui le are pe toate; colaboratorul doar pe a lui
+  const where = u.rol === "COLABORATOR" ? { id: u.firmaId ?? "" } : "firmaId" in vizibilitate && vizibilitate.firmaId && typeof vizibilitate.firmaId === "object" && "in" in vizibilitate.firmaId ? { id: { in: vizibilitate.firmaId.in as string[] } } : {};
   const firme = await prisma.firma.findMany({ where: { ...where, activ: true }, select: { id: true, denumire: true }, orderBy: { denumire: "asc" } });
   res.json({ firme });
 });
@@ -430,7 +444,7 @@ comenziRouter.get("/paleti", async (req, res) => {
   const f = schemaFiltrePaleti.parse(req.query);
   const conditii: Prisma.ComandaWhereInput[] = [vizibilitate, { notaPalet: { not: null } }];
   if (f.recuperati !== "toti") conditii.push({ paletRecuperat: f.recuperati === "da" });
-  if (f.q) conditii.push({ id: { in: await idsCuTextul("comanda", ["clientNume", "clientLocalitate"], f.q) } });
+  if (f.q) conditii.push({ id: { in: await idsCuTextul("comanda", ["clientNume", "clientLocalitate", "localitateLucrarii"], f.q) } });
   const comenzi = await prisma.comanda.findMany({ where: { AND: conditii }, include: includeRand, orderBy: [{ paletRecuperat: "asc" }, { notaPaletLa: "asc" }] });
   const nerecuperati = await prisma.comanda.count({ where: { AND: [vizibilitate, { notaPalet: { not: null }, paletRecuperat: false }] } });
   res.json({ paleti: comenzi.map(spreRand), nerecuperati, poateSchimbaStatus: poateSchimbaStatusPalet(u) });
@@ -504,7 +518,10 @@ export async function creeazaComandaManuala(date: z.infer<typeof schemaComandaMa
   const avans = new Prisma.Decimal(date.avansLei ?? "0");
   const acum = new Date();
   return prisma.$transaction(async (tx) => {
-    const { client } = await gasesteSauCreeazaClient(tx, { ...date.client, adresa: date.client.adresa || null }, u);
+    // S28 (BUG-18): adresa lucrarii scrisa efectiv ajunge si in fisa clientului (ca la oferta), cu jurnal;
+    // lasata goala nu atinge fisa (BUG-17). Localitatea din fisa ramane cea scrisa la client.
+    const adresaLucrarii = date.adresaLucrarii?.trim() || null;
+    const { client } = await gasesteSauCreeazaClient(tx, { ...date.client, adresa: adresaLucrarii }, u);
     const numar = await urmatorulNumar(tx, SERIE_MANUALA);
     const c = await tx.comanda.create({
       data: {
@@ -519,6 +536,9 @@ export async function creeazaComandaManuala(date: z.infer<typeof schemaComandaMa
         clientNume: date.client.nume,
         clientTelefon: date.client.telefon,
         clientLocalitate: date.client.localitate ?? null,
+        // S28 (BUG-18): perechea lucrarii, pe comanda; localitatea lucrarii porneste de la a clientului
+        localitateLucrarii: date.localitateLucrarii?.trim() || date.client.localitate?.trim() || null,
+        adresaLucrarii,
         montatorNume: date.recomandare?.nume ?? null,
         montatorTelefon: date.recomandare?.telefon?.trim() || null,
         montatorExecutieNume: date.montator?.nume ?? null,
