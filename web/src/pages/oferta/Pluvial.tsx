@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { apiCatalogEditor, type ProdusEditor, type StructuraOferta } from "../../api";
 import { BtnSterge } from "../../components/BtnSterge";
 import { CasutaCantitate } from "../../components/CasutaCantitate";
@@ -109,9 +109,27 @@ function SectiunePluvial({ s, idx, finisaje, catalog, stare, set, poate, onSchim
     });
   };
   const scoate = (cheie: string) => set((st) => ({ ...st, linii: st.linii.filter((l) => l.cheie !== cheie) }));
+  // S29 (BUG-20): piesa adaugata cu "+" apare FARA cantitate, cu cursorul in casuta ei, si ramane pana e
+  // scoasa din cos; una deja pe ecran nu se dubleaza si nu-si pierde cantitatea
+  const deFocalizat = useRef<string | null>(null);
+  const adaugaGol = (produs: ProdusEditor) => {
+    if (!linii.some((l) => l.produs.id === produs.id) && !implicite.some((p) => p.id === produs.id)) seteazaCantitate(produs, "");
+    deFocalizat.current = produs.id;
+    setCautare("");
+  };
   // S25 BUG-10: cautarea locala fara diacritice, in ambele sensuri
   const gasite = cautare.trim().length >= 2 ? restul.filter((p) => potriveste(`${p.denumire} ${p.cod}`, cautare)).slice(0, 12) : [];
   const randuri = [...implicite.map((p) => ({ produs: p as ProdusEditor, numeLista: p.numeLista as string | null, linie: linii.find((l) => l.produs.id === p.id) ?? null })), ...linii.filter((l) => !implicite.some((p) => p.id === l.produs.id)).map((l) => ({ produs: l.produs, numeLista: null, linie: l }))];
+  // cursorul in casuta piesei abia adaugate (dupa ce randul apare pe ecran)
+  const grupCasute = `pluvial-${s.cheie}`;
+  useEffect(() => {
+    if (!deFocalizat.current) return;
+    const rand = randuri.findIndex((r) => r.produs.id === deFocalizat.current);
+    if (rand < 0) return;
+    const casuta = [...document.querySelectorAll<HTMLInputElement>('input[data-camp="cantitate"]')].find((c) => c.dataset.grup === grupCasute && c.dataset.rand === String(rand));
+    casuta?.focus();
+    deFocalizat.current = null;
+  });
 
   return (
     <div className="panou" style={{ borderStyle: "dashed" }}>
@@ -171,7 +189,7 @@ function SectiunePluvial({ s, idx, finisaje, catalog, stare, set, poate, onSchim
               </thead>
               <tbody>
                 {randuri.map((r, idx) => (
-                  <tr key={r.produs.id} className={r.linie ? undefined : "inactiv"}>
+                  <tr key={r.produs.id} className={r.linie && r.linie.cantitate.trim() ? undefined : "inactiv"}>
                     <td className="produs">
                       <span className="celula-produs" title={`${r.numeLista ?? r.produs.denumire} · ${r.produs.denumire} · ${r.produs.cod}`}>
                         {r.numeLista ?? r.produs.denumire}{" "}
@@ -182,7 +200,7 @@ function SectiunePluvial({ s, idx, finisaje, catalog, stare, set, poate, onSchim
                     </td>
                     <td>{r.produs.um.toLowerCase()}</td>
                     <td>
-                      <CasutaCantitate value={r.linie?.cantitate ?? ""} onChange={(v) => (v.trim() === "" && r.linie ? scoate(r.linie.cheie) : seteazaCantitate(r.produs, v))} eticheta={`Cantitate ${r.produs.denumire}`} disabled={!poate} grup={`pluvial-${s.cheie}`} rand={idx} camp="cantitate" />
+                      <CasutaCantitate value={r.linie?.cantitate ?? ""} onChange={(v) => (v.trim() === "" && r.linie && r.numeLista !== null ? scoate(r.linie.cheie) : seteazaCantitate(r.produs, v))} eticheta={`Cantitate ${r.produs.denumire}`} disabled={!poate} grup={`pluvial-${s.cheie}`} rand={idx} camp="cantitate" />
                     </td>
                     <td>
                       {r.linie && poate && <BtnSterge onClick={() => scoate(r.linie!.cheie)} eticheta={`Scoate ${r.produs.denumire}`} />}
@@ -201,15 +219,9 @@ function SectiunePluvial({ s, idx, finisaje, catalog, stare, set, poate, onSchim
                     <li
                       key={p.id}
                       tabIndex={0}
-                      onClick={() => {
-                        seteazaCantitate(p, "1");
-                        setCautare("");
-                      }}
+                      onClick={() => adaugaGol(p)}
                       onKeyDown={(e) => {
-                        if (e.key === "Enter") {
-                          seteazaCantitate(p, "1");
-                          setCautare("");
-                        }
+                        if (e.key === "Enter") adaugaGol(p);
                       }}
                     >
                       {p.denumire} <span className="mic text-secundar">· {p.cod}</span>

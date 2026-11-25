@@ -748,6 +748,8 @@ model Oferta {
 
   invelitori OfertaInvelitoare[]
   linii      OfertaLinie[]
+  // S29 (BUG-20): randurile adaugate cu "+" si lasate fara cantitate
+  randuriGoale OfertaRandGol[]
   sipci      OfertaSipca[]
   zonaB      OfertaZonaB[]
   istoric    OfertaIstoric[]
@@ -796,6 +798,7 @@ model OfertaInvelitoare {
 
   panotaj OfertaPozitie[]
   linii   OfertaLinie[]
+  randuriGoale OfertaRandGol[]
 
   @@index([ofertaId])
   @@map("oferta_invelitoare")
@@ -895,6 +898,41 @@ model OfertaTronson {
 }
 
 // zona B (cap. 9): linii integral manuale, in lei
+// S29 (BUG-20, migrarea 24): un rand adaugat cu "+ Adauga..." si lasat FARA cantitate. Nu e linie a ofertei:
+// sta separat, ca sa nu poata ajunge la motor, pe documente sau in formularul Bilka. Editorul il arata gol, la
+// locul lui, pana e scos din cos; cand primeste cantitate devine linie obisnuita (oferta_linie) si dispare de aici.
+// "dupaLinii" = cate linii cu cantitate (fara cele ale invelitorilor) stau inaintea lui in ordinea editorului -
+// din ea se reface locul randului la redeschidere. Datele produsului sunt copiate (ca la linii), fara pret.
+model OfertaRandGol {
+  id        String @id @default(uuid())
+  ofertaId  String
+  oferta    Oferta @relation(fields: [ofertaId], references: [id])
+  ordine    Int
+  dupaLinii Int
+  rubrica   String
+
+  produsId String?
+  cod      String
+  denumire String
+  um       String
+  finisaj  String?
+  grosime  String?
+  grup     String?
+  familie  String?
+  optiune  String?
+  sistem   String?
+
+  // legat de o invelitoare (mosteneste cheia ei) sau independent, cu cheia lui - ca la linii
+  invelitoareId  String?
+  invelitoare    OfertaInvelitoare? @relation(fields: [invelitoareId], references: [id])
+  culoareRal     String?
+  culoareFinisaj String?
+  culoareGrosime String?
+
+  @@index([ofertaId])
+  @@map("oferta_rand_gol")
+}
+
 model OfertaZonaB {
   id             String  @id @default(uuid())
   ofertaId       String

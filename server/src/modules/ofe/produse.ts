@@ -47,6 +47,21 @@ export const schemaProduse = z.object({
       pozitii: z.array(schemaPozitie).optional(),
     }),
   ),
+  // S29 (BUG-20): randurile adaugate cu "+ Adauga..." si lasate FARA cantitate - raman pe ecran, goale, pana
+  // sunt scoase din cos. Nu sunt linii ale ofertei (nu ajung la motor sau pe documente): se tin separat.
+  // "dupaLinii" = cate linii cu cantitate stau inaintea randului in ordinea editorului (locul lui pe ecran).
+  randuriGoale: z
+    .array(
+      z.object({
+        rubrica: z.string().trim().min(1),
+        produsId: z.string().min(1),
+        invelitoare: z.string().min(1).nullish(),
+        // culoarea poate lipsi inca (randul de accesorii la lungimi abia adaugat): cheia fara RAL se pastreaza
+        culoare: z.object({ ral: z.string().trim(), finisaj: z.string().trim().nullish(), grosime: z.string().trim().nullish() }).nullish(),
+        dupaLinii: z.number().int().min(0),
+      }),
+    )
+    .default([]),
   // rubricile de sipca (cap. 8, M1): oricate, fiecare cu linia ei
   sipci: z
     .array(
@@ -128,6 +143,17 @@ export async function salveazaProduse(ofertaId: string, date: DateProduse, u: Ut
     if (l.invelitoare && !cheiInvelitori.has(l.invelitoare)) throw new EroareProduse(`Linia ${l.cheie} e legată de o învelitoare care nu există`);
     if (l.invelitoare && l.culoare) throw new EroareProduse(`Linia ${l.cheie}: o linie are fie învelitoarea, fie cheia ei de culoare, nu amândouă`);
   }
+  // S29 (BUG-20): randurile fara cantitate - aceeasi regula de legare ca la linii; produsul lor se ia din
+  // catalog fara conditia de pret (un produs iesit din catalog nu blocheaza salvarea: randul lui se lasa deoparte)
+  for (const [k, g] of date.randuriGoale.entries()) {
+    if (g.invelitoare && !cheiInvelitori.has(g.invelitoare)) throw new EroareProduse(`Rândul fără cantitate ${k + 1} e legat de o învelitoare care nu există`);
+    if (g.invelitoare && g.culoare) throw new EroareProduse(`Rândul fără cantitate ${k + 1}: fie învelitoarea, fie cheia lui de culoare, nu amândouă`);
+  }
+  const produseGoale = new Map<string, ProdusEditor>();
+  if (date.randuriGoale.length > 0) {
+    const randuri = await prisma.produs.findMany({ where: { id: { in: [...new Set(date.randuriGoale.map((g) => g.produsId))] }, activ: true }, select: selectProdusEditor });
+    for (const r of randuri) produseGoale.set(r.id, spreProdusEditor(r));
+  }
   const liniiSipci = new Set<string>();
   for (const [k, s] of date.sipci.entries()) {
     if (!date.linii.some((l) => l.cheie === s.linie)) throw new EroareProduse(`Rubrica de șipcă ${k + 1} nu are linie în ofertă`);
@@ -140,7 +166,8 @@ export async function salveazaProduse(ofertaId: string, date: DateProduse, u: Ut
   }
 
   await prisma.$transaction(async (tx) => {
-    // copiii vechi, in ordinea cheilor straine
+    // copiii vechi, in ordinea cheilor straine (randurile goale inaintea invelitorilor de care sunt legate)
+    await tx.ofertaRandGol.deleteMany({ where: { ofertaId } });
     await tx.ofertaTronson.deleteMany({ where: { sipca: { ofertaId } } });
     await tx.ofertaSipca.deleteMany({ where: { ofertaId } });
     await tx.ofertaPozitie.deleteMany({ where: { OR: [{ linie: { ofertaId } }, { invelitoare: { ofertaId } }] } });
@@ -212,6 +239,34 @@ export async function salveazaProduse(ofertaId: string, date: DateProduse, u: Ut
           latimeSipcaMm: latime,
           varianta: s.varianta === "calcul" ? "CALCUL" : "COMANDA",
           tronsoane: { create: (s.tronsoane ?? []).map((t, j) => ({ ordine: j + 1, lungimeSipcaM: nr(t.lungimeSipcaM), lungimeTronsonM: nr(t.lungimeTronsonM), distantaMm: nr(t.distantaMm) })) },
+        },
+      });
+    }
+    // S29 (BUG-20): randurile fara cantitate, in ordinea lor, cu datele produsului copiate (fara pret)
+    let ordineGol = 0;
+    for (const g of date.randuriGoale) {
+      const p = produseGoale.get(g.produsId);
+      if (!p) continue;
+      await tx.ofertaRandGol.create({
+        data: {
+          ofertaId,
+          ordine: ++ordineGol,
+          dupaLinii: Math.min(g.dupaLinii, date.linii.length),
+          rubrica: g.rubrica,
+          produsId: p.id,
+          cod: p.cod,
+          denumire: p.denumire,
+          um: p.um,
+          finisaj: p.finisaj,
+          grosime: p.grosime,
+          grup: p.grup,
+          familie: p.familie,
+          optiune: p.optiune,
+          sistem: p.sistem,
+          invelitoareId: g.invelitoare ? idInvelitoare.get(g.invelitoare)! : null,
+          culoareRal: g.culoare?.ral || null,
+          culoareFinisaj: g.culoare?.finisaj ?? null,
+          culoareGrosime: g.culoare?.grosime ?? null,
         },
       });
     }

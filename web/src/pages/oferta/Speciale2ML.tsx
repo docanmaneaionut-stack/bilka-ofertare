@@ -111,21 +111,27 @@ function SectiuneSpeciale({ catalog, stare, set, poate, tinta, titlu }: { catalo
     setPresetate((pr) => pr.filter((x) => x.cheie !== cheie));
   };
   const schimbaLinie = (cheie: string, c: Partial<LinieUI>) => set((s) => ({ ...s, linii: s.linii.map((l) => (l.cheie === cheie ? { ...l, ...c } : l)) }));
-  // linia golita redevine rand presetat, pe acelasi loc, cu treapta ei
-  const goleste = (l: LinieUI) => {
-    set((s) => ({ ...s, linii: s.linii.filter((x) => x.cheie !== l.cheie) }));
-    setPresetate((pr) => [...pr, { cheie: l.cheie, treapta: l.produs.treapta ?? "D01" }]);
-  };
+  // S29 (BUG-20): linia golita ramane rand, pe acelasi loc, cu treapta ei, fara cantitate - si dupa salvare
+  // si redeschidere; o scoate doar cosul (pana la S29 redevenea rand presetat, pierdut la redeschidere)
+  const goleste = (l: LinieUI) => schimbaLinie(l.cheie, { cantitate: "" });
   // cosul scoate randul de tot
   const scoate = (cheie: string) => {
     set((s) => ({ ...s, linii: s.linii.filter((x) => x.cheie !== cheie) }));
     setPresetate((pr) => pr.filter((x) => x.cheie !== cheie));
     setOrdine((o) => o.filter((x) => x !== cheie));
   };
+  // S29 (BUG-20): randul adaugat cu "+" e un rand al ofertei, fara cantitate - se pastreaza la salvare si
+  // la redeschidere, pana e scos din cos (daca treptele nu s-au incarcat inca, ramane rand presetat local)
   const adaugaPresetat = () => {
-    const n = { cheie: cheieNoua("spec"), treapta: "D01" };
-    setPresetate((pr) => [...pr, n]);
-    setOrdine((o) => [...o, n.cheie]);
+    const cheie = cheieNoua("spec");
+    const p = produsTreapta("D01") ?? produse[0] ?? null;
+    if (p) {
+      const noua: LinieUI = { cheie, rubrica: RUBRICI.speciale2ml, produs: p, cantitate: "", invelitoare: tinta.invelitoare, culoare: culoareLinie, pozitii: null, sectiune, dinLista: false };
+      set((s) => ({ ...s, linii: [...s.linii, noua] }));
+    } else {
+      setPresetate((pr) => [...pr, { cheie, treapta: "D01" }]);
+    }
+    setOrdine((o) => [...o, cheie]);
   };
 
   // randurile in ordinea aparitiei: liniile salvate (fara loc in ordine) primele, apoi ordinea locala
@@ -157,7 +163,7 @@ function SectiuneSpeciale({ catalog, stare, set, poate, tinta, titlu }: { catalo
           </thead>
           <tbody>
             {randuri.map((r, idx) => (
-              <tr key={r.cheie} className={r.linie ? undefined : "inactiv"}>
+              <tr key={r.cheie} className={r.linie && r.linie.cantitate.trim() ? undefined : "inactiv"}>
                 <td>
                   <select
                     value={r.treapta}

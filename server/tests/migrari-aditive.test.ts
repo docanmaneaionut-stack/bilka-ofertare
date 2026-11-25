@@ -38,13 +38,15 @@ const MIGRARI_ETAPA_3 = [
   "20261120112908_montator_adaugat_de",
   // S28: localitatea si adresa lucrarii pe comanda manuala (BUG-18)
   "20261125140443_comanda_localitate_adresa_lucrarii",
+  // S29: randurile adaugate cu "+" si lasate fara cantitate (BUG-20) - un tabel nou
+  "20261125145814_oferta_rand_gol",
 ];
 
 afterAll(async () => {
   await prisma.$disconnect();
 });
 
-describe("migrarile Etapei 3 si 5 (6-23) sunt aditive", () => {
+describe("migrarile Etapei 3 si 5 (6-24) sunt aditive", () => {
   it("fiecare SQL exista si nu contine instructiuni distructive", () => {
     const existente = fs.readdirSync(FOLDER).filter((d) => /^\d{14}_/.test(d));
     for (const m of MIGRARI_ETAPA_3) expect(existente, m).toContain(m);
@@ -103,6 +105,15 @@ describe("migrarile Etapei 3 si 5 (6-23) sunt aditive", () => {
   it("migrarea 23 (S28): doar doua coloane optionale pe comanda (ADD COLUMN), nimic altceva", () => {
     const m23 = fs.readFileSync(path.join(FOLDER, "20261125140443_comanda_localitate_adresa_lucrarii", "migration.sql"), "utf8").replace(/--[^\n]*/g, "").trim();
     expect(m23).toMatch(/^ALTER TABLE "comanda" ADD COLUMN\s+"adresaLucrarii" TEXT,\s*ADD COLUMN\s+"localitateLucrarii" TEXT;$/);
+  });
+
+  it("migrarea 24 (S29): doar un tabel nou (CREATE TABLE cu indexul si cheile lui straine); niciun tabel existent nu e atins", () => {
+    const m24 = fs.readFileSync(path.join(FOLDER, "20261125145814_oferta_rand_gol", "migration.sql"), "utf8").replace(/--[^\n]*/g, "").trim();
+    const instructiuni = m24.split(";").map((x) => x.trim()).filter(Boolean);
+    expect(instructiuni).toHaveLength(4);
+    expect(instructiuni[0]).toMatch(/^CREATE TABLE "oferta_rand_gol" \(/);
+    expect(instructiuni[1]).toMatch(/^CREATE INDEX "oferta_rand_gol_ofertaId_idx" ON "oferta_rand_gol"/);
+    for (const fk of instructiuni.slice(2)) expect(fk).toMatch(/^ALTER TABLE "oferta_rand_gol" ADD CONSTRAINT "oferta_rand_gol_\w+_fkey" FOREIGN KEY/);
   });
 
   it("M6: indexul unic partial din baza - doi clienti nemarcati nu pot avea acelasi telefon; fara telefon si dublatul marcat sunt exceptiile", async () => {

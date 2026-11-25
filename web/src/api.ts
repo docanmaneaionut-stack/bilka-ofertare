@@ -656,6 +656,8 @@ export type OfertaDetaliu = {
   linii: unknown[];
   sipci: unknown[];
   zonaB: unknown[];
+  // S29 (BUG-20)
+  randuriGoale?: RandGolSalvat[];
   structura?: { rezultat: StructuraOferta | null; eroare: string | null } | null;
   // S14: preturile (filtrate pe rol pe server), versiunile, "preturi vechi", preluarea
   preturi?: { rezultat: RezultatPreturi | null; eroare: string | null } | null;
@@ -714,6 +716,8 @@ export type RezultatPreturi = {
   cursBnr: string;
   cursAchizitie: string;
   linii: LiniePret[];
+  // S29 (BUG-21): id-urile liniilor in ordinea de afisare (ecranul ofertei, de sus in jos)
+  ordineAfisare?: string[];
   totaluri: {
     achizitieContEurFaraTva: string;
     achizitieContLeiFaraTva: string;
@@ -1016,6 +1020,31 @@ export type StareProduse = {
   // rubricile de sipca, oricate (M1)
   sipci: SipcaEditor[];
   zonaB: ZonaBEditor[];
+  // S29 (BUG-20): randurile adaugate cu "+" si lasate fara cantitate; "dupaLinii" = cate linii cu cantitate
+  // stau inaintea randului in ordinea editorului (locul lui pe ecran)
+  randuriGoale: RandGolEditor[];
+};
+export type RandGolEditor = { rubrica: string; produsId: string; invelitoare: string | null; culoare: { ral: string; finisaj: string | null; grosime: string | null } | null; dupaLinii: number };
+// randul fara cantitate, asa cum vine din oferta salvata (datele produsului copiate, ca la linii)
+export type RandGolSalvat = {
+  id: string;
+  ordine: number;
+  dupaLinii: number;
+  rubrica: string;
+  produsId: string | null;
+  cod: string;
+  denumire: string;
+  um: string;
+  finisaj: string | null;
+  grosime: string | null;
+  grup: string | null;
+  familie: string | null;
+  optiune: string | null;
+  sistem: string | null;
+  invelitoareId: string | null;
+  culoareRal: string | null;
+  culoareFinisaj: string | null;
+  culoareGrosime: string | null;
 };
 
 export type StructuraOferta = {

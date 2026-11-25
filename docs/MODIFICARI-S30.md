@@ -1,6 +1,6 @@
 # MODIFICĂRI S30 — locația lucrării pe ofertă
 
-Versiunea 1.0 · 25 noiembrie 2026 (**APROBAT** de Ionuț: câmpul lângă adresa lucrării, pragul de 100 m) · v0.2 · 25 noiembrie 2026 (locul câmpului precizat: lângă adresa lucrării **a ofertei**) · v0.1 · 25 noiembrie 2026 · Scris de Claude (chat) din cererea lui Ionuț (25.11: „ar fi ideal să poți salva locația de la client, din curte") și din fișa `FISA-NOTITE-SCHITA.md` §3 (închisă 16.10.2026: locația lucrării se vede pe ofertă, pe comandă și pe fișa șoferului; două surse — link de hartă primit sau „folosește locația mea"). Pe **comandă** linkul la locație există din S23; pe **ofertă** încă nu. Lotul S30 = **M13**. Motorul nu e atins. Simulare: `docs/design/simulari/S29-simulare-navigare-oferta-v3.pdf`, paginile 3 și 4.
+Versiunea 1.1 · 25 noiembrie 2026 (lotul S30 primește și corecțiile **BUG-22** și **BUG-23**, aprobate de Ionuț după închiderea S28) · v1.0 · 25 noiembrie 2026 (**APROBAT** de Ionuț: câmpul lângă adresa lucrării, pragul de 100 m) · v0.2 · 25 noiembrie 2026 (locul câmpului precizat: lângă adresa lucrării **a ofertei**) · v0.1 · 25 noiembrie 2026 · Scris de Claude (chat) din cererea lui Ionuț (25.11: „ar fi ideal să poți salva locația de la client, din curte") și din fișa `FISA-NOTITE-SCHITA.md` §3 (închisă 16.10.2026: locația lucrării se vede pe ofertă, pe comandă și pe fișa șoferului; două surse — link de hartă primit sau „folosește locația mea"). Pe **comandă** linkul la locație există din S23; pe **ofertă** încă nu. Lotul S30 = **M13** + corecțiile **BUG-22** și **BUG-23** din `CERERI-BUG-S25.md`. Motorul nu e atins. Simulare: `docs/design/simulari/S29-simulare-navigare-oferta-v3.pdf`, paginile 3 și 4.
 
 ---
 
@@ -29,3 +29,12 @@ Versiunea 1.0 · 25 noiembrie 2026 (**APROBAT** de Ionuț: câmpul lângă adres
 **Nu se atinge.** Motorul; documentele pentru client (locația nu apare pe niciun PDF de ofertă); fișa șoferului și caseta „Livrare și facturare" (primesc doar valoarea); fișa clientului; regulile statusurilor. Migrare aditivă.
 
 **Decizii (Ionuț, 25.11.2026):** locul câmpului — în fila Date generale, lângă adresa lucrării; pragul de 100 m pentru poziția luată cu butonul. Corectarea locației după „Comandat” rămâne **din comandă**, cum e azi (S23) — Ionuț nu a cerut altceva.
+
+---
+
+## Corecțiile luate în S30 (din `CERERI-BUG-S25.md`) — aprobate de Ionuț (25.11.2026)
+
+- **BUG-22** — adresa lucrării se scrie în fișa clientului **doar când localitatea lucrării e aceeași cu a clientului** (sau nu e scrisă); când diferă, fișa clientului nu primește adresa (la clientul existent rămâne cum era, la cel nou rămâne „fără adresă”). Azi, o lucrare din Mărășești a unui client din Golești lasă în fișă „Str. Probei nr. 4, Golești”. La plan, Code spune dacă și oferta poate ajunge în aceeași situație; dacă da, aceeași regulă acolo.
+- **BUG-23** — comanda manuală se poate **corecta după creare**, cu istoric: rezumatul, totalul (lei și euro), localitatea lucrării și adresa lucrării — de către cei care introduc comenzi manuale (Administratorii, Gestiunea, Admin general), cât comanda nu e livrată și încasată integral. Totalul nu poate coborî sub ce s-a încasat deja. Numele și localitatea clientului nu se corectează de aici.
+
+Legătura cu M13: locația lucrării stă lângă adresa lucrării; la comanda manuală, corectarea adresei (BUG-23) și locația de pe comandă (S23) rămân două câmpuri separate, ca azi.

@@ -14,6 +14,7 @@ import { randeazaPdf } from "../ofe/documente/pdf.js";
 import { esc, pagina, ro } from "../ofe/documente/sablon.js";
 import { comandaVizibila, cuDrepturi, EroareComanda, raspunde, scrieIstoricComanda, spreRand } from "./comenzi.js";
 import { includeUltimaAjustare, rezultatCurent } from "./pretAjustat.js";
+import { inOrdineaDeAfisare, rangDeAfisarePentruOferta } from "../ofe/ordineAfisare.js";
 import { poateScrieBani } from "./vizibilitate.js";
 
 // Retururile (S22; FISA-COMENZI cap. 5, OFERTARE cap. 19): din comanda, orice cont care vede
@@ -83,10 +84,12 @@ export async function liniileReturnabile(comandaId: string) {
   const returnat = new Map<string, Prisma.Decimal>();
   for (const r of c.retururi) for (const l of r.linii) returnat.set(l.linieId, (returnat.get(l.linieId) ?? new Prisma.Decimal(0)).plus(l.cantitate));
   const dupaId = new Map(c.oferta.linii.map((l) => [l.id, l]));
+  // S29 (BUG-21): lista produselor de returnat, in ordinea de pe ecranul ofertei
+  const rang = await rangDeAfisarePentruOferta(c.oferta.id);
   return {
     comanda: c,
     rezultat,
-    linii: rezultat.linii.map((l) => {
+    linii: inOrdineaDeAfisare(rezultat.linii, (l) => l.id, rang).map((l) => {
       const o = dupaId.get(l.id);
       return {
         linieId: l.id,

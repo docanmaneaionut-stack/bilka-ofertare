@@ -12,6 +12,7 @@ import { contextDocument } from "../ofe/documente/index.js";
 import { randeazaPdf } from "../ofe/documente/pdf.js";
 import { esc, pagina, ro } from "../ofe/documente/sablon.js";
 import { includeProduse, type OfertaCuProduse } from "../ofe/intrareMot.js";
+import { rangDeAfisare } from "../ofe/ordineAfisare.js";
 import { comandaVizibila, EroareComanda, scrieIstoricComanda } from "./comenzi.js";
 import { CSS_COMENZI, dataDoar, dataLocala, dataRoDinIso, marcaFisier, paginiPdf } from "./sablonComenzi.js";
 import { poateGeneraAviz } from "./vizibilitate.js";
@@ -75,9 +76,9 @@ interface LinieDoc {
   invelitoare: { id: string; latimeTotalaM: string; panotaj: { pozitieId: string; lungimeM: string; bucati: number }[] } | null;
 }
 
-export function liniileDocumentului(o: OfertaCuProduse, r: RezultatOferta): LinieDoc[] {
+export function liniileDocumentului(o: OfertaCuProduse, r: RezultatOferta, rang: Map<string, number>): LinieDoc[] {
   const linii: LinieDoc[] = [];
-  for (const b of benzi(o, r)) {
+  for (const b of benzi(o, r, rang)) {
     for (const { l, c, invelitoare } of b.linii) {
       const esteInv = invelitoare !== null && /^învelitori/i.test(l.rubrica);
       linii.push({
@@ -110,7 +111,8 @@ export async function structuraAvizului(comandaId: string) {
       else if (l.linieId) livrateLinii.set(l.linieId, (livrateLinii.get(l.linieId) ?? new Prisma.Decimal(0)).plus(l.cantitate));
     }
   }
-  const linii = liniileDocumentului(o, rezultat);
+  // S29 (BUG-21): liniile avizului in ordinea de pe ecranul ofertei
+  const linii = liniileDocumentului(o, rezultat, await rangDeAfisare(o));
   const rest = (comandat: string, livrat: Prisma.Decimal | undefined) => {
     const r = new Prisma.Decimal(comandat).minus(livrat ?? 0);
     return (r.lt(0) ? new Prisma.Decimal(0) : r).toFixed(3);

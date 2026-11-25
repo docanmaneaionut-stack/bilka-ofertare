@@ -79,6 +79,8 @@ beforeAll(async () => {
   const sipca = await prisma.ofertaSipca.create({ data: { ofertaId: o1.id, linieId: linie.id, model: "Oslo, capăt drept", latimeSipcaMm: "92.9", varianta: "CALCUL", culoare: "RAL 7016" } });
   await prisma.ofertaTronson.create({ data: { sipcaId: sipca.id, ordine: 1, lungimeSipcaM: "1.5", lungimeTronsonM: "14", distantaMm: "30" } });
   await prisma.ofertaZonaB.create({ data: { ofertaId: o1.id, ordine: 1, denumire: "Lemn", um: "mc", cantitate: "2", sumaLei: "1500", contineTva: true, preiaInFactura: false } });
+  // S29 (BUG-20): un rand adaugat cu "+" si lasat fara cantitate, legat de invelitoare
+  await prisma.ofertaRandGol.create({ data: { ofertaId: o1.id, ordine: 1, dupaLinii: 1, rubrica: "Accesorii standard", cod: "ACMAREMAT050", denumire: "Coamă mare", um: "BUC", finisaj: "mat", grosime: "0,50 mm", invelitoareId: inv.id } });
   await prisma.ofertaIstoric.create({ data: { ofertaId: o1.id, utilizatorId: adminFirma.id, numeUtilizatorLaMoment: adminFirma.nume, tip: "status", camp: "status", valoareInainte: "IN_LUCRU", valoareDupa: "TRANSMISA" } });
   await prisma.ofertaAtasament.create({ data: { ofertaId: o1.id, nume: "poza.jpg", fisier: `oferte/${o1.id}/atasamente/poza.jpg`, marime: 4, incarcatDeId: adminFirma.id } });
   await prisma.ofertaNotita.create({ data: { ofertaId: o1.id, utilizatorId: adminFirma.id, numeUtilizatorLaMoment: adminFirma.nume, text: "notiță de test" } });
@@ -100,6 +102,7 @@ beforeAll(async () => {
   await writeFile(path.join(env.dateDir, "comenzi", comandaA.id, "necesar.txt"), "test");
   comandaA1 = comandaA.id;
   await prisma.ofertaLinie.create({ data: { ofertaId: oB.id, ordine: 1, rubrica: "Accesorii standard", cod: "ACMICMAT050", denumire: "Coamă mică", um: "BUC", pretBazaEur: "4.9", cantitate: "3" } });
+  await prisma.ofertaRandGol.create({ data: { ofertaId: oB.id, ordine: 1, dupaLinii: 1, rubrica: "Accesorii standard", cod: "ACMAREMAT050", denumire: "Coamă mare", um: "BUC", culoareRal: "RAL 8017", culoareFinisaj: "mat", culoareGrosime: "0,50 mm" } });
   // fisierele firmelor: sigla, sablonul Bilka, documentul si atasamentul ofertei
   for (const [folder, nume] of [["sigle", `${firmaA}.png`], ["sigle", `${firmaB}.png`], ["sabloane-bilka", `${firmaA}.xlsm`], [`oferte/${o1.id}/documente`, "EXF-0001-F1.xlsm"], [`oferte/${o1.id}/atasamente`, "poza.jpg"], [`oferte/${oB.id}/documente`, "EXB-0001-oferta.pdf"]]) {
     await mkdir(path.join(env.dateDir, ...folder.split("/")), { recursive: true });
@@ -198,6 +201,9 @@ describe("Export 'descarca tot' si restaurare", () => {
     expect(o1.linii[0].pozitii[0].lungimeM.toString()).toBe("1.5");
     expect(o1.sipci[0].tronsoane[0].distantaMm.toString()).toBe("30");
     expect(o1.zonaB[0].sumaLei.toString()).toBe("1500");
+    // S29 (BUG-20): randul fara cantitate se restaureaza cu locul lui si cu legatura la invelitoare
+    const goale = await prismaRestore.ofertaRandGol.findMany({ where: { ofertaId: o1.id } });
+    expect(goale.map((g) => [g.ordine, g.dupaLinii, g.rubrica, g.cod, g.denumire, g.invelitoareId])).toEqual([[1, 1, "Accesorii standard", "ACMAREMAT050", "Coamă mare", o1.invelitori[0].id]]);
     expect(o1.istoric).toHaveLength(1);
     expect(o1.atasamente[0].nume).toBe("poza.jpg");
     expect(o1.notite[0].text).toBe("notiță de test");
@@ -239,6 +245,7 @@ describe("Export 'descarca tot' si restaurare", () => {
     expect(numaratori.comanda_aviz_linie).toBe(2);
     expect(numaratori.montator).toBe(1);
     expect(numaratori.oferta_linie).toBe(1); // linia firmei B nu intra
+    expect(numaratori.oferta_rand_gol).toBe(1); // S29: randul gol al firmei B nu intra
     expect(numaratori.produs).toBe(await prisma.produs.count()); // catalogul e comun
     const firme = zip.getEntry("date/firma.csv")!.getData().toString("utf8");
     expect(firme).toContain("Firma Export A");

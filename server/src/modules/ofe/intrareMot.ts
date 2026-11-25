@@ -15,6 +15,9 @@ export const includeProduse = {
   linii: { orderBy: { ordine: "asc" as const }, include: { pozitii: { orderBy: { ordine: "asc" as const } } } },
   sipci: { orderBy: { ordine: "asc" as const }, include: { tronsoane: { orderBy: { ordine: "asc" as const } } } },
   zonaB: { orderBy: { ordine: "asc" as const } },
+  // S29 (BUG-20): randurile adaugate cu "+" si lasate fara cantitate - NU sunt linii, nu intra in motor;
+  // stau aici doar ca sa fie duse mai departe la copie / varianta
+  randuriGoale: { orderBy: { ordine: "asc" as const } },
 } satisfies Prisma.OfertaInclude;
 
 export type OfertaCuProduse = Prisma.OfertaGetPayload<{ include: typeof includeProduse }>;

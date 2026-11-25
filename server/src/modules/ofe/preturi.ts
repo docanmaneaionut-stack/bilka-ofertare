@@ -13,6 +13,7 @@ import { la2, la4, z as zec } from "../mot/zecimal.js";
 import { gasesteSauCreeazaClient, numarComplet, type DateClient } from "./clienti.js";
 import { scrieIstoric } from "./istoric.js";
 import { includeProduse, intrareMot, type OfertaCuProduse } from "./intrareMot.js";
+import { inOrdineaDeAfisare, rangDeAfisare } from "./ordineAfisare.js";
 import { urmatorulNumar } from "./numerotare.js";
 import { filtruVizibilitateOferte, poateVedeaOferta, vedePreturiDeBaza } from "./vizibilitate.js";
 
@@ -51,6 +52,9 @@ export interface RezultatPreturi extends Omit<RezultatOferta, "linii" | "vanzari
   vanzari: RandVanzari | null;
   // lucrarea (cap. 2b, 19): oferta initiala + completarile ei, pe oferta initiala
   lucrare: RandVanzari | null;
+  // S29 (BUG-21): id-urile liniilor in ORDINEA DE AFISARE (ecranul ofertei, de sus in jos) - asa le insira
+  // lista "Preturi pe linii"; "linii" raman in ordinea motorului, neatinse
+  ordineAfisare: string[];
 }
 
 export async function rezultatOfertei(o: OfertaCuProduse): Promise<{ rezultat: RezultatOferta | null; eroare: string | null }> {
@@ -65,7 +69,9 @@ export async function rezultatOfertei(o: OfertaCuProduse): Promise<{ rezultat: R
 
 // ce pleaca spre ecran, dupa rol: Agentul / Colaboratorul nu primesc pretul de
 // baza; randul de vanzari al Administratorului (colaborator) nu pleaca spre colaborator
-export function filtreazaPeRol(r: RezultatOferta, o: OfertaCuProduse, u: Utilizator, lucrare: RandVanzari | null): RezultatPreturi {
+// S29 (BUG-21): rezultatul motorului pleaca spre ecran neatins (liniile in ordinea lui); alaturi, ordinea de
+// afisare a liniilor ("rang"), dupa care ecranul insira lista "Preturi pe linii"
+export function filtreazaPeRol(r: RezultatOferta, o: OfertaCuProduse, u: Utilizator, lucrare: RandVanzari | null, rang: Map<string, number>): RezultatPreturi {
   const complet = vedePreturiDeBaza(u);
   const denumiri = new Map(o.linii.map((l) => [l.id, { denumire: l.denumire, preluat: l.pretFixPreluat }]));
   const linii = r.linii.map((l) => {
@@ -74,7 +80,7 @@ export function filtreazaPeRol(r: RezultatOferta, o: OfertaCuProduse, u: Utiliza
     return { ...rest, ...(complet ? { bazaEur } : {}), denumire: d?.denumire ?? l.cod, pretFixPreluat: d?.preluat ?? false };
   });
   const vanzari = complet || r.vanzari.tabel === "propriu" ? r.vanzari : null;
-  return { ...r, linii, vanzari, lucrare };
+  return { ...r, linii, vanzari, lucrare, ordineAfisare: inOrdineaDeAfisare(r.linii, (l) => l.id, rang).map((l) => l.id) };
 }
 
 // la "Comandat" rezultatul motorului e cel salvat atunci (cap. 14, 16): o viitoare
@@ -95,7 +101,7 @@ export async function blocPreturi(ofertaId: string, u: Utilizator): Promise<{ re
     const rezultate = (await Promise.all(completari.map((c) => rezultatSauSalvat(c)))).map((r) => r.rezultat).filter((x): x is RezultatOferta => x !== null);
     if (rezultate.length > 0) lucrare = agregaLucrare(rezultat, rezultate, Number(o.tvaPct));
   }
-  return { rezultat: filtreazaPeRol(rezultat, o, u, lucrare), eroare: null };
+  return { rezultat: filtreazaPeRol(rezultat, o, u, lucrare, await rangDeAfisare(o)), eroare: null };
 }
 
 // ------------------------------------------------------------- salvarea
@@ -302,6 +308,15 @@ async function copiazaCopiii(tx: Prisma.TransactionClient, baza: OfertaCuProduse
       void _z;
       void _o;
       await tx.ofertaZonaB.create({ data: { ...rest, ofertaId: nouaId } });
+    }
+    // S29 (BUG-20): randurile fara cantitate merg si ele; cel legat de o invelitoare care nu are
+    // corespondent in oferta noua se lasa deoparte
+    for (const g of baza.randuriGoale) {
+      const { id: _g, ofertaId: _o, invelitoareId, ...rest } = g;
+      void _g;
+      void _o;
+      if (invelitoareId && !idInvelitoare.has(invelitoareId)) continue;
+      await tx.ofertaRandGol.create({ data: { ...rest, ofertaId: nouaId, invelitoareId: invelitoareId ? idInvelitoare.get(invelitoareId)! : null } });
     }
 }
 

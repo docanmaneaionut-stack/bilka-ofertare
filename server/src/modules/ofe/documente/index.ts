@@ -8,6 +8,7 @@ import { env } from "../../../env.js";
 import type { CampInvalid } from "../../../middleware/erori.js";
 import { numarComplet } from "../clienti.js";
 import { includeProduse } from "../intrareMot.js";
+import { rangDeAfisare } from "../ordineAfisare.js";
 import { scrieIstoric } from "../istoric.js";
 import { rezultatSauSalvat } from "../preturi.js";
 import { poateVedeaOferta } from "../vizibilitate.js";
@@ -90,7 +91,8 @@ export async function htmlPentru(ofertaId: string, tip: TipDocument): Promise<{ 
     if (ajustare) rezultat = ajustare.rezultatMotor as unknown as typeof rezultat;
   }
   if (!rezultat) throw new EroareDocument(`Oferta nu se poate calcula: ${eroare ?? "fără rezultat"}`, 409);
-  const ctx = await contextDocument(o);
+  // S29 (BUG-21): produsele in ordinea de pe ecranul ofertei - un singur loc pentru toate documentele
+  const ctx = { ...(await contextDocument(o)), rang: await rangDeAfisare(o) };
   const html = htmlDocument(tip, o, rezultat, ctx);
   return { html, subsolStanga: `${ctx.firma.denumire} · ${ETICHETA_DOCUMENT[tip]} ${ctx.numarComplet} / ${ctx.data} · ${ctx.client.nume}`, versiune: o.versiune, numarComplet: ctx.numarComplet };
 }

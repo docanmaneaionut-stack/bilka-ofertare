@@ -10,6 +10,7 @@ import { benzi } from "../ofe/documente/continut.js";
 import { randeazaPdf } from "../ofe/documente/pdf.js";
 import { esc, imagineDataUri, pagina, ro } from "../ofe/documente/sablon.js";
 import { includeProduse } from "../ofe/intrareMot.js";
+import { rangDeAfisare } from "../ofe/ordineAfisare.js";
 import { textLivrareBilka } from "../ofe/livrareBilka.js";
 import { includeAviz, spreAviz } from "./avize.js";
 import { EroareComanda, includeRand, localitateaComenzii, rezumatIncasari } from "./comenzi.js";
@@ -93,7 +94,8 @@ export async function dateFisa(u: Utilizator, cerere: z.infer<typeof schemaFisa>
       if (r) {
         const bucati = o.invelitori.filter((i) => i.panotaj.length > 0).map((i) => `${i.panotaj.reduce((s, p) => s + p.bucati, 0)} coli (${i.panotaj.map((p) => `${ro(p.lungimeM.toString(), 2)} × ${p.bucati}`).join(" · ")})`);
         coli = bucati.length ? bucati.join("; ") : null;
-        for (const b of benzi(o, r).filter((x) => x.eticheta !== "Învelitori")) {
+        // S29 (BUG-21): categoriile in ordinea clasica a rubricilor
+        for (const b of benzi(o, r, await rangDeAfisare(o)).filter((x) => x.eticheta !== "Învelitori")) {
           const ume = new Set(b.linii.map((x) => x.c.um.toLowerCase()));
           const total = b.linii.reduce((s, x) => s + Number(x.c.cantitate), 0);
           const nr = Number.isInteger(total) ? String(total) : ro(total, 3);

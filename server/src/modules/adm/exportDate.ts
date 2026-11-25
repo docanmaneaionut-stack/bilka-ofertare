@@ -50,6 +50,8 @@ export const MODELE_EXPORT = [
   "OfertaSipca",
   "OfertaTronson",
   "OfertaZonaB",
+  // S29 (BUG-20): randurile adaugate cu "+" si lasate fara cantitate (dupa invelitorile de care sunt legate)
+  "OfertaRandGol",
   "OfertaIstoric",
   "OfertaAtasament",
   "OfertaNotita",
@@ -121,6 +123,7 @@ function filtruFirma(model: ModelExport, firmaId: string): Record<string, unknow
     case "OfertaLinie":
     case "OfertaSipca":
     case "OfertaZonaB":
+    case "OfertaRandGol":
     case "OfertaIstoric":
     case "OfertaAtasament":
     case "OfertaNotita":

@@ -1,4 +1,4 @@
-import type { InvelitoareSalvata, LinieSalvata, OfertaDetaliu, ProdusEditor, ReferinteEditor, SipcaSalvata, StareProduse, ZonaBSalvata } from "../../api";
+import type { InvelitoareSalvata, LinieSalvata, OfertaDetaliu, ProdusEditor, RandGolEditor, ReferinteEditor, SipcaSalvata, StareProduse, ZonaBSalvata } from "../../api";
 import { cuVirgula } from "../../lib/numere";
 
 // Logica editorului de produse (FISA-OFERTARE cap. 3-10), fara apeluri de retea:
@@ -266,11 +266,30 @@ export function stareDinOferta(o: OfertaDetaliu, invelitoriCatalog: ProdusEditor
       tronsoane: sipcaSalvata.tronsoane.length ? sipcaSalvata.tronsoane.map((t) => ({ lungimeSipcaM: cuVirgula(t.lungimeSipcaM), lungimeTronsonM: cuVirgula(t.lungimeTronsonM), distantaMm: cuVirgula(t.distantaMm) })) : [{ lungimeSipcaM: "", lungimeTronsonM: "", distantaMm: "" }],
     };
   });
+  // S29 (BUG-20): randurile adaugate cu "+" si lasate fara cantitate revin la locul lor - fiecare dupa atatea
+  // linii cu cantitate cate avea inainte la salvare ("dupaLinii"), in ordinea in care au fost adaugate
+  const liniiCuGoale = [...linii];
+  for (const [k, g] of [...(o.randuriGoale ?? [])].sort((a, b) => a.ordine - b.ordine).entries()) {
+    const invelitoare = g.invelitoareId ? (cheiInv.get(g.invelitoareId) ?? null) : null;
+    const culoare = !invelitoare && (g.culoareRal || g.culoareFinisaj) ? { ral: g.culoareRal ?? "", finisaj: g.culoareFinisaj ?? g.finisaj ?? "", grosime: g.culoareGrosime ?? g.grosime } : null;
+    const goala: LinieUI = {
+      cheie: cheieNoua("lin"),
+      rubrica: g.rubrica,
+      produs: { ...produsDinSnapshot(g as unknown as LinieSalvata, g.rubrica, catalogLinii), sistem: g.sistem },
+      cantitate: "",
+      invelitoare,
+      culoare,
+      pozitii: g.rubrica === RUBRICI.lungimi ? [{ lungimeM: "", bucati: "" }] : null,
+      sectiune: sectiuneaLiniei(g.rubrica, invelitoare, culoare && culoare.ral ? culoare : null),
+      dinLista: false,
+    };
+    liniiCuGoale.splice(Math.min(g.dupaLinii + k, liniiCuGoale.length), 0, goala);
+  }
   return {
     grupaPct: o.grupaPct ?? "0",
     precizariZonaB: o.precizariZonaB ?? "",
     invelitori: invelitori.length ? invelitori : [invelitoareGoala()],
-    linii,
+    linii: liniiCuGoale,
     sipci,
     zonaB: (o.zonaB as ZonaBSalvata[]).map((z) => ({ denumire: z.denumire, um: z.um, cantitate: cuVirgula(z.cantitate), sumaLei: cuVirgula(z.sumaLei), contineTva: z.contineTva, preiaInFactura: z.preiaInFactura })),
   };
@@ -294,6 +313,35 @@ export function sipciTrimise(s: StareEditor, cheiLiniiTrimise: string[]): SipcaU
   return s.sipci.filter((x) => cheiLiniiTrimise.includes(x.linie));
 }
 
+// o linie "are cantitate" cand intra in oferta: cantitate scrisa sau pozitii lungime x bucati completate
+// (S29, BUG-20: la accesoriile la lungimi cantitatea vine DOAR din pozitii - randul fara pozitii e un rand gol)
+const pozitieCompletata = (p: { lungimeM: string; bucati: string }) => Boolean(p.lungimeM.trim()) && Number(p.bucati) > 0;
+export function areCantitate(l: LinieUI): boolean {
+  if (!l.produs.id) return false;
+  const cuPozitii = Boolean(l.pozitii && l.pozitii.some(pozitieCompletata));
+  if (l.rubrica === RUBRICI.lungimi) return cuPozitii;
+  return Number(l.cantitate.replace(",", ".")) > 0 || cuPozitii;
+}
+
+// S29 (BUG-20): randurile adaugate cu "+" si lasate fara cantitate - raman pe ecran pana sunt scoase din
+// cos; pleaca separat de linii (nu intra in calcul), fiecare cu locul lui: cate linii cu cantitate are inainte
+export function randuriGoaleTrimise(s: StareEditor, cheiInvelitori: Set<string>): RandGolEditor[] {
+  const goale: RandGolEditor[] = [];
+  let inainte = 0;
+  for (const l of s.linii) {
+    if (!l.produs.id) continue;
+    if (areCantitate(l)) {
+      inainte += 1;
+      continue;
+    }
+    // rubrica de sipca isi tine singura randurile (linia ei pleaca oricum, cu cantitatea calculata de motor)
+    if (l.rubrica === RUBRICI.sipca) continue;
+    const legata = l.invelitoare && cheiInvelitori.has(l.invelitoare) ? l.invelitoare : null;
+    goale.push({ rubrica: l.rubrica, produsId: l.produs.id, invelitoare: legata, culoare: legata || !l.culoare ? null : { ral: l.culoare.ral, finisaj: l.culoare.finisaj, grosime: l.culoare.grosime }, dupaLinii: inainte });
+  }
+  return goale;
+}
+
 // ce pleaca spre server: doar invelitorile cu produs si liniile cu cantitate
 export function spreServer(s: StareEditor): StareProduse {
   const invelitori = invelitoriTrimise(s)
@@ -310,7 +358,7 @@ export function spreServer(s: StareEditor): StareProduse {
     }));
   const cheiInv = new Set(invelitori.map((i) => i.cheie));
   const linii = s.linii
-    .filter((l) => l.produs.id && (Number(l.cantitate.replace(",", ".")) > 0 || (l.pozitii && l.pozitii.some((p) => p.lungimeM.trim() && Number(p.bucati) > 0))))
+    .filter((l) => (l.rubrica === RUBRICI.sipca ? Boolean(l.produs.id) && Number(l.cantitate.replace(",", ".")) > 0 : areCantitate(l)))
     .map((l) => {
       const pozitii = l.pozitii?.filter((p) => p.lungimeM.trim() && Number(p.bucati) > 0).map((p) => ({ lungimeM: p.lungimeM.trim(), bucati: Number(p.bucati) }));
       return {
@@ -340,5 +388,6 @@ export function spreServer(s: StareEditor): StareProduse {
     linii,
     sipci,
     zonaB: s.zonaB.filter((z) => z.denumire.trim() && Number(z.cantitate.replace(",", ".")) > 0).map((z) => ({ ...z, denumire: z.denumire.trim(), um: z.um.trim() || "buc", cantitate: z.cantitate.trim(), sumaLei: z.sumaLei.trim() || "0" })),
+    randuriGoale: randuriGoaleTrimise(s, cheiInv),
   };
 }

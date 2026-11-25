@@ -3,6 +3,7 @@ import { fileURLToPath } from "node:url";
 import type { Prisma } from "@prisma/client";
 import { env } from "../../../env.js";
 import { finisajScurt, numarRal, numeModel } from "../../mot/pachete.js";
+import { inOrdineaDeAfisare } from "../ordineAfisare.js";
 import type { RezultatOferta } from "../../mot/tipuri.js";
 import { desparteTva, la2, la3, la4, z } from "../../mot/zecimal.js";
 import type { OfertaCuProduse } from "../intrareMot.js";
@@ -40,7 +41,10 @@ export interface ContextDocument {
   // compartimentele (furnizorii) produselor de pe oferta - pentru sigle
   furnizori: string[];
   tvaPct: number;
+  // S29 (BUG-21): rangul de afisare al liniilor (ofe/ordineAfisare.ts); fara el, ordinea salvata
+  rang?: Map<string, number>;
 }
+const FARA_RANG = new Map<string, number>();
 
 const FOLDER_SIGLE_FURNIZORI = fileURLToPath(new URL("../../../../../docs/design/sigle/", import.meta.url));
 
@@ -77,13 +81,17 @@ export function numeInvelitoare(i: OfertaCuProduse["invelitori"][number]): strin
   return [`${numeModel(p)}${i.variantaProfil ? ` ${i.variantaProfil}` : ""}`, finisajScurt(i.finisaj ?? undefined), i.grosime, numarRal(i.culoare ?? undefined) ? `RAL ${numarRal(i.culoare ?? undefined)}` : ""].filter(Boolean).join(" · ");
 }
 
-// liniile ofertei grupate pe benzi: rubrica + cheia de culoare, in ordinea aparitiei;
-// invelitorile pe o banda proprie, cate o linie per invelitoare, doar cu suprafata
-export function benzi(o: OfertaCuProduse, r: RezultatOferta): Banda[] {
+// liniile ofertei grupate pe benzi: rubrica + cheia de culoare; invelitorile pe o banda proprie, cate o linie
+// per invelitoare, doar cu suprafata.
+// S29 (BUG-21): liniile se parcurg in ORDINEA DE AFISARE ("rang", din ofe/ordineAfisare.ts - ecranul ofertei,
+// de sus in jos), nu in ordinea salvata (cea in care li s-a completat cantitatea); benzile ies astfel in
+// ordinea clasica a rubricilor, iar in fiecare banda produsele in ordinea listei, apoi cele adaugate cu "+".
+// Ordinea salvata si cea in care liniile pleaca spre motor nu se ating.
+export function benzi(o: OfertaCuProduse, r: RezultatOferta, rang: Map<string, number>): Banda[] {
   const calc = new Map(r.linii.map((c) => [c.id, c]));
   const inv = new Map(o.invelitori.map((i) => [i.id, i]));
   const rezultat: Banda[] = [];
-  for (const l of o.linii) {
+  for (const l of inOrdineaDeAfisare(o.linii, (x) => x.id, rang)) {
     const c = calc.get(l.id);
     if (!c) continue;
     const esteInv = /^învelitori/i.test(l.rubrica);
@@ -97,7 +105,7 @@ export function benzi(o: OfertaCuProduse, r: RezultatOferta): Banda[] {
     }
     banda.linii.push({ l, c, invelitoare: i });
   }
-  // invelitorile primele (ordinea clasica a rubricilor), restul in ordinea aparitiei
+  // invelitorile primele (ordinea clasica a rubricilor), restul in ordinea de afisare
   return [...rezultat.filter((b) => b.eticheta === "Învelitori"), ...rezultat.filter((b) => b.eticheta !== "Învelitori")];
 }
 
@@ -230,7 +238,7 @@ export function htmlOferta(o: OfertaCuProduse, r: RezultatOferta, ctx: ContextDo
   const randuri: string[] = [];
   let nr = 0;
   const mp = new Map(r.cantitati.invelitori.map((i) => [i.id, i]));
-  for (const b of benzi(o, r)) {
+  for (const b of benzi(o, r, ctx.rang ?? FARA_RANG)) {
     const subtotal = la2(b.linii.reduce((s, x) => s.plus(z(x.c.valoareEur)), z(0)));
     randuri.push(`<tr class="cat"><td colspan="${coloane}">${esc(b.eticheta)}</td><td class="r subv">${ro(subtotal)}</td>${detaliata ? "<td></td>" : ""}</tr>`);
     for (const { l, c, invelitoare } of b.linii) {
@@ -280,7 +288,7 @@ export function htmlRezumat(o: OfertaCuProduse, r: RezultatOferta, ctx: ContextD
     blocuri.push(`<div class="block"><div class="bh"><span class="bn">${n}.</span><span class="bt">Învelitoare</span><span class="bs">— ${esc(numeInvelitoare(i))}</span></div>
 <div class="bb"><span class="k">Suprafață</span><span class="v"><b>${ro(mp.get(i.id)?.mp ?? "0", 3)} mp</b></span>${g ? `<span class="k">Garanție</span><span class="v">${esc(g)}</span>` : ""}</div></div>`);
   }
-  for (const b of benzi(o, r).filter((x) => x.eticheta !== "Învelitori")) {
+  for (const b of benzi(o, r, ctx.rang ?? FARA_RANG).filter((x) => x.eticheta !== "Învelitori")) {
     n += 1;
     const familii = [...new Set(b.linii.map((x) => (x.l.familie ?? numeProdus(x.l)).toLowerCase()))];
     const ume = new Set(b.linii.map((x) => x.c.um.toLowerCase()));
@@ -312,7 +320,7 @@ export function htmlTabelFacturare(o: OfertaCuProduse, r: RezultatOferta, ctx: C
   const curs = r.cursBnr;
   const randuri: string[] = [];
   let nr = 0;
-  for (const b of benzi(o, r)) {
+  for (const b of benzi(o, r, ctx.rang ?? FARA_RANG)) {
     for (const { l, c, invelitoare } of b.linii) {
       nr += 1;
       const nume = invelitoare && /^învelitori/i.test(l.rubrica) ? numeInvelitoare(invelitoare) : `${numeProdus(l)}${b.cheie ? ` · ${textCheie(b.cheie)}` : ""}`;

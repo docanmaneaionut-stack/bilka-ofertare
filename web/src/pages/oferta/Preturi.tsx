@@ -104,6 +104,11 @@ export function Preturi({ oferta, onOferta, mentiuni = "" }: { oferta: OfertaDet
     );
   }
 
+  // S29 (BUG-21): liniile in ordinea de pe ecranul ofertei (rubricile in ordinea clasica, in rubrica lista
+  // implicita, apoi cele adaugate cu "+") - ordinea vine de la server; cifrele sunt cele ale motorului
+  const locAfisare = new Map((r.ordineAfisare ?? []).map((id, i) => [id, i]));
+  const liniiAfisate = [...r.linii].sort((a, b) => (locAfisare.get(a.id) ?? Number.MAX_SAFE_INTEGER) - (locAfisare.get(b.id) ?? Number.MAX_SAFE_INTEGER));
+
   const aplicaTinta = (tip: "ADAOS_PCT" | "TOTAL_CU_TVA_LEI", valoare: string) => {
     const v = valoare.trim().replace(",", ".");
     if (!v || !/^-?\d+(\.\d+)?$/.test(v)) return;
@@ -224,7 +229,7 @@ export function Preturi({ oferta, onOferta, mentiuni = "" }: { oferta: OfertaDet
             </tr>
           </thead>
           <tbody>
-            {r.linii.map((l) => (
+            {liniiAfisate.map((l) => (
               <RandLinie key={l.id} l={l} mod={mod} vinovata={idVinovate.has(l.id)} poate={poate && !lucru} exceptie={exceptii[l.id] ?? ""} setExceptie={(v) => setExceptii((e) => ({ ...e, [l.id]: v }))} salveazaExceptie={() => void salveaza({ linii: [{ id: l.id, discountPct: exceptii[l.id]?.trim() ? exceptii[l.id].trim() : null }] })} fixDeschis={fixPentru === l.id} deschideFix={() => {
                 setFixPentru(fixPentru === l.id ? null : l.id);
                 setFix({ tip: "eur_fara_tva", valoare: l.pretNetEur ?? l.pretDocumentEur });

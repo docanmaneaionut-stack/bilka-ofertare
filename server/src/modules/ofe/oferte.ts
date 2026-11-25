@@ -387,6 +387,7 @@ async function detaliu(id: string, u: Utilizator) {
       linii: { orderBy: { ordine: "asc" }, include: { pozitii: { orderBy: { ordine: "asc" } } } },
       sipci: { orderBy: { ordine: "asc" }, include: { tronsoane: { orderBy: { ordine: "asc" } } } },
       zonaB: { orderBy: { ordine: "asc" } },
+      randuriGoale: { orderBy: { ordine: "asc" } },
     },
   });
   const cuPreturi = vedePreturiDeBaza(u);
@@ -456,6 +457,8 @@ async function detaliu(id: string, u: Utilizator) {
     linii: o.linii.map((l) => faraBaza({ ...l, cantitate: l.cantitate.toString(), pretFixValoare: l.pretFixValoare?.toString() ?? null, discountPct: l.discountPct?.toString() ?? null, pozitii: l.pozitii.map((p) => ({ ...p, lungimeM: p.lungimeM.toString() })) })),
     sipci: o.sipci.map((s) => ({ ...s, latimeSipcaMm: s.latimeSipcaMm.toString(), tronsoane: s.tronsoane.map((t) => ({ ...t, lungimeSipcaM: t.lungimeSipcaM.toString(), lungimeTronsonM: t.lungimeTronsonM.toString(), distantaMm: t.distantaMm.toString() })) })),
     zonaB: o.zonaB.map((zb) => ({ ...zb, cantitate: zb.cantitate.toString(), sumaLei: zb.sumaLei.toString() })),
+    // S29 (BUG-20): randurile adaugate cu "+" si lasate fara cantitate (editorul le arata goale, la locul lor)
+    randuriGoale: o.randuriGoale,
     structura: await calculeazaStructura(o.id),
     preturi: await blocPreturi(o.id, u),
     // "Comandat" ingheata produsele, cantitatile si preturile (cap. 14); sumele,
