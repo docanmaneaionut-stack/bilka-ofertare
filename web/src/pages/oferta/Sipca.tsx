@@ -1,10 +1,13 @@
 import { useEffect, useState } from "react";
 import { apiCatalogEditor, type ProdusEditor, type StructuraOferta } from "../../api";
 import { BtnSterge } from "../../components/BtnSterge";
+import { ScoateBloc } from "../../components/ScoateBloc";
 import { CasutaCantitate } from "../../components/CasutaCantitate";
 import { Camp, Mesaj, textEroare } from "../../components/ui";
 import type { Catalog } from "./Produse";
 import { cheieNoua, culoriPentru, ral, RUBRICI, sectiuneaLiniei, sipciTrimise, type LinieUI, type SipcaUI, type StareEditor } from "./editor";
+import { locCuloare, MESAJ_RAND, MESAJ_TRONSON, stareaRandului, stareaTronsonului } from "./probleme";
+import { useRandInLucru } from "./randInLucru";
 
 type Props = { catalog: Catalog; stare: StareEditor; set: (f: (s: StareEditor) => StareEditor) => void; poate: boolean; structura: StructuraOferta | null };
 
@@ -98,6 +101,22 @@ function RubricaSipca({ idx, litera, s, produse, catalog, stare, set, poate, cal
   const setSipca = (f: (x: SipcaUI) => SipcaUI) => set((st) => ({ ...st, sipci: st.sipci.map((x) => (x.linie === s.linie ? f(x) : x)) }));
   const setLinie = (c: Partial<LinieUI>) => set((st) => ({ ...st, linii: st.linii.map((l) => (l.cheie === s.linie ? { ...l, ...c } : l)) }));
   const scoate = () => set((st) => ({ ...st, sipci: st.sipci.filter((x) => x.linie !== s.linie), linii: st.linii.filter((l) => l.cheie !== s.linie) }));
+  // S29b: randul in care scrii nu se marcheaza; cosul scoate doar randul (ultimul ramas se goleste - BUG-25)
+  const inLucru = useRandInLucru();
+  const pozitii = linie?.pozitii ?? [];
+  const stariPozitii = pozitii.map(stareaRandului);
+  const stariTronsoane = s.tronsoane.map(stareaTronsonului);
+  const completate = s.varianta === "comanda" ? stariPozitii.filter((x) => x !== "gol").length : stariTronsoane.filter((x) => x !== "gol").length;
+  const faraCuloare = Boolean(linie) && !(linie?.culoare?.ral ?? "").trim();
+  const scoatePozitia = (i: number) => {
+    const rest = pozitii.filter((_, j) => j !== i);
+    setLinie({ pozitii: rest.length > 0 ? rest : [{ lungimeM: "", bucati: "" }] });
+  };
+  const scoateTronsonul = (i: number) =>
+    setSipca((x) => {
+      const rest = x.tronsoane.filter((_, j) => j !== i);
+      return { ...x, tronsoane: rest.length > 0 ? rest : [{ lungimeSipcaM: "", lungimeTronsonM: "", distantaMm: "" }] };
+    });
 
   // alegerea produsului dupa profil + finisaj + grosime; culoarea se pastreaza daca exista
   const alegeProdus = (profil: string, fin: string, gro: string) => {
@@ -125,11 +144,7 @@ function RubricaSipca({ idx, litera, s, produse, catalog, stare, set, poate, cal
           {litera ? ` · Șipcă ${litera}` : ""}
           {idx > 0 ? " (formular Bilka separat)" : ""}
         </h3>
-        {poate && (
-          <button className="buton sterge mic" type="button" tabIndex={-1} onClick={scoate}>
-            Scoate rubrica
-          </button>
-        )}
+        {poate && <ScoateBloc eticheta="Scoate rubrica" intrebare={`Ștergi rubrica ${idx + 1} de șipcă${s.profil ? ` (${s.profil})` : ""} cu ${completate === 1 ? "rândul ei" : `cele ${completate} rânduri`}?`} cuConfirmare={completate > 0} onScoate={scoate} />}
       </div>
       <div className="rand-campuri">
         <Camp eticheta="Profil">
@@ -169,7 +184,7 @@ function RubricaSipca({ idx, litera, s, produse, catalog, stare, set, poate, cal
           </select>
         </Camp>
         <Camp eticheta="Culoare">
-          <select value={linie?.culoare?.ral ?? ""} onChange={(e) => linie && setLinie({ culoare: { ...linie.culoare!, ral: e.target.value }, sectiune: sectiuneaLiniei(RUBRICI.sipca, null, { ...linie.culoare!, ral: e.target.value }) })} disabled={!poate || !linie}>
+          <select value={linie?.culoare?.ral ?? ""} onChange={(e) => linie && setLinie({ culoare: { ...linie.culoare!, ral: e.target.value }, sectiune: sectiuneaLiniei(RUBRICI.sipca, null, { ...linie.culoare!, ral: e.target.value }) })} disabled={!poate || !linie} data-loc={locCuloare(s.linie)} className={faraCuloare ? "cu-problema" : undefined}>
             <option value="">alege…</option>
             {culori.map((c) => (
               <option key={c} value={ral(c)}>
@@ -191,25 +206,34 @@ function RubricaSipca({ idx, litera, s, produse, catalog, stare, set, poate, cal
         </p>
       )}
 
+      {faraCuloare && <p className="mesaj-rand">Alege culoarea: fără ea oferta nu se poate salva.</p>}
+
       {linie && s.varianta === "comanda" && (
-        <table className="tabel editabil" style={{ maxWidth: 420 }}>
+        <table className="tabel editabil" style={{ maxWidth: 560 }}>
           <thead>
             <tr>
               <th>Lungime șipcă (m)</th>
               <th>Bucăți</th>
+              <th></th>
+              <th></th>
             </tr>
           </thead>
-          <tbody>
-            {(linie.pozitii ?? []).map((p, i) => (
-              <tr key={i}>
+          <tbody {...inLucru.pe}>
+            {pozitii.map((p, i) => {
+              const st = inLucru.este(`sipca-${s.linie}`, i) ? "bun" : stariPozitii[i];
+              return (
+              <tr key={i} className={MESAJ_RAND[st] ? "rand-cu-problema" : undefined}>
                 <td>
-                  <CasutaCantitate value={p.lungimeM} onChange={(v) => setLinie({ pozitii: (linie.pozitii ?? []).map((x, j) => (j === i ? { ...x, lungimeM: v } : x)) })} eticheta={`Lungime șipcă poziția ${i + 1}`} disabled={!poate} grup={`sipca-${s.linie}`} rand={i} camp="lungime" />
+                  <CasutaCantitate value={p.lungimeM} onChange={(v) => setLinie({ pozitii: (linie.pozitii ?? []).map((x, j) => (j === i ? { ...x, lungimeM: v } : x)) })} eticheta={`Lungime șipcă poziția ${i + 1}`} disabled={!poate} grup={`sipca-${s.linie}`} rand={i} camp="lungime" className={st === "lungimeGresita" || st === "faraLungime" ? "cu-problema" : undefined} />
                 </td>
                 <td>
-                  <CasutaCantitate value={p.bucati} onChange={(v) => setLinie({ pozitii: (linie.pozitii ?? []).map((x, j) => (j === i ? { ...x, bucati: v } : x)) })} tip="intreg" eticheta={`Bucăți poziția ${i + 1}`} disabled={!poate} grup={`sipca-${s.linie}`} rand={i} camp="bucati" />
+                  <CasutaCantitate value={p.bucati} onChange={(v) => setLinie({ pozitii: (linie.pozitii ?? []).map((x, j) => (j === i ? { ...x, bucati: v } : x)) })} tip="intreg" eticheta={`Bucăți poziția ${i + 1}`} disabled={!poate} grup={`sipca-${s.linie}`} rand={i} camp="bucati" className={st === "faraBucati" ? "cu-problema" : undefined} />
                 </td>
+                <td>{poate && <BtnSterge onClick={() => scoatePozitia(i)} eticheta={`Scoate rândul ${i + 1}`} />}</td>
+                <td className="mesaj-rand">{MESAJ_RAND[st]}</td>
               </tr>
-            ))}
+              );
+            })}
           </tbody>
         </table>
       )}
@@ -230,16 +254,19 @@ function RubricaSipca({ idx, litera, s, produse, catalog, stare, set, poate, cal
                 <th>Bucăți</th>
                 <th>ml</th>
                 <th></th>
+                <th></th>
               </tr>
             </thead>
-            <tbody>
-              {s.tronsoane.map((t, i) => (
-                <tr key={i}>
+            <tbody {...inLucru.pe}>
+              {s.tronsoane.map((t, i) => {
+                const st = inLucru.este(`tronsoane-${s.linie}`, i) ? "bun" : stariTronsoane[i];
+                return (
+                <tr key={i} className={MESAJ_TRONSON[st] ? "rand-cu-problema" : undefined}>
                   <td>
-                    <CasutaCantitate value={t.lungimeSipcaM} onChange={(v) => setSipca((x) => ({ ...x, tronsoane: x.tronsoane.map((y, j) => (j === i ? { ...y, lungimeSipcaM: v } : y)) }))} eticheta={`Lungime șipcă tronsonul ${i + 1}`} disabled={!poate} grup={`tronsoane-${s.linie}`} rand={i} camp="lungime" />
+                    <CasutaCantitate value={t.lungimeSipcaM} onChange={(v) => setSipca((x) => ({ ...x, tronsoane: x.tronsoane.map((y, j) => (j === i ? { ...y, lungimeSipcaM: v } : y)) }))} eticheta={`Lungime șipcă tronsonul ${i + 1}`} disabled={!poate} grup={`tronsoane-${s.linie}`} rand={i} camp="lungime" className={st === "faraLungimeaSipcii" || st === "lungimeGresita" ? "cu-problema" : undefined} />
                   </td>
                   <td>
-                    <CasutaCantitate value={t.lungimeTronsonM} onChange={(v) => setSipca((x) => ({ ...x, tronsoane: x.tronsoane.map((y, j) => (j === i ? { ...y, lungimeTronsonM: v } : y)) }))} eticheta={`Lungime tronsonul ${i + 1}`} disabled={!poate} grup={`tronsoane-${s.linie}`} rand={i} camp="lungimeTronson" />
+                    <CasutaCantitate value={t.lungimeTronsonM} onChange={(v) => setSipca((x) => ({ ...x, tronsoane: x.tronsoane.map((y, j) => (j === i ? { ...y, lungimeTronsonM: v } : y)) }))} eticheta={`Lungime tronsonul ${i + 1}`} disabled={!poate} grup={`tronsoane-${s.linie}`} rand={i} camp="lungimeTronson" className={st === "tronsonGresit" ? "cu-problema" : undefined} />
                   </td>
                   <td>
                     <CasutaCantitate value={t.distantaMm} onChange={(v) => setSipca((x) => ({ ...x, tronsoane: x.tronsoane.map((y, j) => (j === i ? { ...y, distantaMm: v } : y)) }))} eticheta={`Distanța tronsonul ${i + 1}`} disabled={!poate} grup={`tronsoane-${s.linie}`} rand={i} camp="distanta" />
@@ -247,10 +274,12 @@ function RubricaSipca({ idx, litera, s, produse, catalog, stare, set, poate, cal
                   <td>{calcul?.tronsoane[i]?.bucati ?? "—"}</td>
                   <td>{calcul?.tronsoane[i]?.ml ?? "—"}</td>
                   <td>
-                    {poate && s.tronsoane.length > 1 && <BtnSterge onClick={() => setSipca((x) => ({ ...x, tronsoane: x.tronsoane.filter((_, j) => j !== i) }))} eticheta={`Scoate tronsonul ${i + 1}`} />}
+                    {poate && <BtnSterge onClick={() => scoateTronsonul(i)} eticheta={`Scoate tronsonul ${i + 1}`} />}
                   </td>
+                  <td className="mesaj-rand">{MESAJ_TRONSON[st]}</td>
                 </tr>
-              ))}
+                );
+              })}
             </tbody>
           </table>
           {poate && (

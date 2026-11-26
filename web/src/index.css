@@ -1932,3 +1932,99 @@ table.tabel.editabil tbody tr:focus-within td:last-child {
     scrollbar-width: none;
   }
 }
+
+/* --- S29b (BUG-24, BUG-25; docs/MODIFICARI-S29B.md): salvarea refuzata la vedere, randurile cu probleme,
+   eliminarea blocului intreg in antetul lui, cu confirmare --------------------------------------------- */
+
+/* casuta cu text neterminat („5,”) se marcheaza singura la iesirea din ea; randul neterminat / incomplet si
+   culoarea nealeasa - marcate de rubrica lor (cat scrii in rand, nu) */
+.casuta-cantitate.neterminata:not(:focus),
+.casuta-cantitate.cu-problema,
+select.cu-problema {
+  border-color: var(--rosu);
+  background: #fef2f2;
+}
+
+.mesaj-rand {
+  color: #b91c1c;
+  font-size: var(--text-sec, 12.5px);
+}
+
+p.mesaj-rand {
+  margin: 2px 0 4px;
+}
+
+td.mesaj-rand {
+  white-space: normal;
+  min-width: 140px;
+}
+
+/* randul la care te-a dus pagina (clic pe banda „Oferta NU e salvată” sau o actiune oprita) */
+.dus-aici {
+  outline: 2px solid var(--rosu);
+  outline-offset: 2px;
+  border-radius: 4px;
+  transition: outline-color 0.6s;
+}
+
+/* metrii din oferta salvata, cand randurile de pe ecran dau alta suma */
+.ml-vechi {
+  color: var(--text-secundar);
+  font-weight: 400;
+}
+
+/* antetul unui bloc cu randuri: numele in stanga, eliminarea blocului in dreapta (departe de „+ Adaugă…”) */
+.antet-bloc {
+  align-items: center;
+}
+
+.confirmare-stergere.in-antet {
+  display: inline-flex;
+  margin: 0;
+  padding: 4px 8px;
+  max-width: 100%;
+}
+
+.confirmare-stergere.in-antet span {
+  flex: 1 1 160px;
+}
+
+/* banda de sub randul ofertei, cat salvarea e refuzata: spune ce e de corectat si duce la rand */
+.banda-nesalvat {
+  display: block;
+  width: 100%;
+  margin: 0 0 4px;
+  padding: 5px 12px;
+  border: 1px solid #fecaca;
+  border-radius: 6px;
+  background: #fef2f2;
+  color: #991b1b;
+  font: inherit;
+  font-size: var(--text-sec, 12.5px);
+  text-align: left;
+  cursor: pointer;
+}
+
+.banda-nesalvat:hover {
+  background: #fee2e2;
+}
+
+.banda-nesalvat-salt {
+  white-space: nowrap;
+  text-decoration: underline;
+}
+
+.stare-salvare.eroare {
+  background: var(--rosu);
+  color: #fff;
+}
+
+@media (max-width: 720px) {
+  .banda-nesalvat {
+    padding: 3px 8px;
+    line-height: 1.3;
+  }
+  td.mesaj-rand {
+    min-width: 0;
+  }
+}

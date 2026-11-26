@@ -1,17 +1,23 @@
 import { useEffect, useRef, useState } from "react";
 import { apiCatalogEditor, type ProdusEditor, type StructuraOferta } from "../../api";
 import { BtnSterge } from "../../components/BtnSterge";
+import { ScoateBloc } from "../../components/ScoateBloc";
 import { CasutaCantitate } from "../../components/CasutaCantitate";
 import { Camp, Mesaj, textEroare } from "../../components/ui";
 import { potriveste } from "../../lib/text";
 import type { Catalog } from "./Produse";
-import { cheieNoua, culoriPentru, ral, RUBRICI, sectiuneaLiniei, type LinieUI, type StareEditor } from "./editor";
+import { cheieNoua, culoriPentru, ral, RUBRICI, sectiuneaLiniei, SISTEME_PLUVIAL, sistemulLiniei, type LinieUI, type StareEditor } from "./editor";
 
 type Props = { catalog: Catalog; stare: StareEditor; set: (f: (s: StareEditor) => StareEditor) => void; poate: boolean; structura: StructuraOferta | null };
 
 type SistemUI = { cheie: string; finisaj: string; sistem: string; ral: string };
 
-const SISTEME = ["125 / 90", "150 / 100"];
+const SISTEME = SISTEME_PLUVIAL;
+
+// liniile unei sectiuni: acelasi finisaj, aceeasi culoare si acelasi sistem (al liniei, din catalog)
+type Sistemul = (l: LinieUI, toate: LinieUI[]) => string;
+const aSectiunii = (l: LinieUI, s: SistemUI, toate: LinieUI[], sistemul: Sistemul): boolean => l.rubrica === RUBRICI.pluvial && l.culoare !== null && l.culoare.finisaj === s.finisaj && l.culoare.ral === s.ral && sistemul(l, toate) === s.sistem;
+const alePluvialului = (linii: LinieUI[]) => linii.filter((l) => l.rubrica === RUBRICI.pluvial && l.culoare);
 
 // Sistemul pluvial (FISA-OFERTARE cap. 6): 125/90 implicit, clic -> 150/100;
 // finisaj + culoare; lista implicita; "+ Adauga sistem pluvial" pentru alta
@@ -29,8 +35,12 @@ export function Pluvial({ catalog, stare, set, poate }: Props) {
 
   // sectiunile din liniile existente (finisaj + sistem + culoare), plus cele deschise si inca goale
   const dinLinii = new Map<string, SistemUI>();
-  for (const l of stare.linii.filter((l) => l.rubrica === RUBRICI.pluvial && l.culoare)) {
-    const sistem = /150/.test(l.produs.sistem ?? "") && !/125/.test(l.produs.sistem ?? "") ? "150 / 100" : "125 / 90";
+  // S29b (BUG-27): sistemul e cel din catalog al liniei salvate (150 / 100 ramane 150 / 100 si dupa
+  // redeschidere); piesele comune celor doua sisteme urmeaza grupul finisajului si culorii lor
+  const sistemul: Sistemul = (l, toate) => sistemulLiniei(l, toate, noi.find((n) => n.finisaj === l.culoare?.finisaj && n.ral === l.culoare?.ral)?.sistem);
+  const liniiPluvial = alePluvialului(stare.linii);
+  for (const l of liniiPluvial) {
+    const sistem = sistemul(l, liniiPluvial);
     const cheie = `${l.culoare!.finisaj}|${sistem}|${l.culoare!.ral}`;
     if (!dinLinii.has(cheie)) dinLinii.set(cheie, { cheie, finisaj: l.culoare!.finisaj, sistem, ral: l.culoare!.ral });
   }
@@ -48,6 +58,7 @@ export function Pluvial({ catalog, stare, set, poate }: Props) {
           s={s}
           idx={idx}
           finisaje={finisaje}
+          sistemul={sistemul}
           catalog={catalog}
           stare={stare}
           set={set}
@@ -56,12 +67,12 @@ export function Pluvial({ catalog, stare, set, poate }: Props) {
             // culoarea / finisajul / sistemul nou se aplica liniilor sectiunii
             set((st) => ({
               ...st,
-              linii: st.linii.map((l) => (l.rubrica === RUBRICI.pluvial && l.culoare && `${l.culoare.finisaj}|${s.sistem}|${l.culoare.ral}` === s.cheie && n.finisaj === s.finisaj && n.sistem === s.sistem ? { ...l, culoare: { ...l.culoare, ral: n.ral }, sectiune: sectiuneaLiniei(RUBRICI.pluvial, null, { ...l.culoare, ral: n.ral }) } : l)),
+              linii: st.linii.map((l) => (aSectiunii(l, s, alePluvialului(st.linii), sistemul) && n.finisaj === s.finisaj && n.sistem === s.sistem ? { ...l, culoare: { ...l.culoare!, ral: n.ral }, sectiune: sectiuneaLiniei(RUBRICI.pluvial, null, { ...l.culoare!, ral: n.ral }) } : l)),
             }));
             setNoi((p) => [...p.filter((x) => x.cheie !== s.cheie), { ...n, cheie: `${n.finisaj}|${n.sistem}|${n.ral}` }]);
           }}
           onScoate={() => {
-            set((st) => ({ ...st, linii: st.linii.filter((l) => !(l.rubrica === RUBRICI.pluvial && l.culoare && `${l.culoare.finisaj}|${s.sistem}|${l.culoare.ral}` === s.cheie)) }));
+            set((st) => ({ ...st, linii: st.linii.filter((l) => !aSectiunii(l, s, alePluvialului(st.linii), sistemul)) }));
             setNoi((p) => p.filter((x) => x.cheie !== s.cheie));
           }}
         />
@@ -75,7 +86,7 @@ export function Pluvial({ catalog, stare, set, poate }: Props) {
   );
 }
 
-function SectiunePluvial({ s, idx, finisaje, catalog, stare, set, poate, onSchimba, onScoate }: { s: SistemUI; idx: number; finisaje: string[]; catalog: Catalog; stare: StareEditor; set: (f: (st: StareEditor) => StareEditor) => void; poate: boolean; onSchimba: (n: SistemUI) => void; onScoate: () => void }) {
+function SectiunePluvial({ s, idx, finisaje, sistemul, catalog, stare, set, poate, onSchimba, onScoate }: { s: SistemUI; idx: number; finisaje: string[]; sistemul: Sistemul; catalog: Catalog; stare: StareEditor; set: (f: (st: StareEditor) => StareEditor) => void; poate: boolean; onSchimba: (n: SistemUI) => void; onScoate: () => void }) {
   const [implicite, setImplicite] = useState<(ProdusEditor & { numeLista: string })[]>([]);
   const [restul, setRestul] = useState<ProdusEditor[]>([]);
   const [nerezolvate, setNerezolvate] = useState<string[]>([]);
@@ -97,7 +108,7 @@ function SectiunePluvial({ s, idx, finisaje, catalog, stare, set, poate, onSchim
   const culori = culoriPentru(catalog.ref, implicite[0] ?? null, s.finisaj, "");
   const culoare = s.ral ? { ral: s.ral, finisaj: s.finisaj, grosime: null } : null;
   const sectiune = culoare ? sectiuneaLiniei(RUBRICI.pluvial, null, culoare) : "";
-  const linii = culoare ? stare.linii.filter((l) => l.rubrica === RUBRICI.pluvial && l.culoare && `${l.culoare.finisaj}|${s.sistem}|${l.culoare.ral}` === s.cheie) : [];
+  const linii = culoare ? stare.linii.filter((l) => aSectiunii(l, s, alePluvialului(stare.linii), sistemul)) : [];
 
   const seteazaCantitate = (produs: ProdusEditor, cantitate: string) => {
     if (!culoare) return;
@@ -135,11 +146,7 @@ function SectiunePluvial({ s, idx, finisaje, catalog, stare, set, poate, onSchim
     <div className="panou" style={{ borderStyle: "dashed" }}>
       <div className="antet-pagina" style={{ marginBottom: 8 }}>
         <strong>Sistem pluvial {String.fromCharCode(65 + idx)}</strong>
-        {poate && (
-          <button className="buton sterge mic" type="button" tabIndex={-1} onClick={onScoate}>
-            Scoate sistemul
-          </button>
-        )}
+        {poate && <ScoateBloc eticheta="Scoate sistemul" intrebare={`Ștergi sistemul pluvial ${String.fromCharCode(65 + idx)} (${s.sistem}) cu ${linii.length === 1 ? "piesa lui" : `cele ${linii.length} piese`}?`} cuConfirmare={linii.length > 0} onScoate={onScoate} />}
       </div>
       <div className="rand-campuri">
         <Camp eticheta="Finisaj">

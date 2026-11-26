@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import type { StructuraOferta } from "../../api";
 import { CasutaCantitate, numarDinText } from "../../components/CasutaCantitate";
+import { ScoateBloc } from "../../components/ScoateBloc";
 import { nr } from "../../lib/numere";
 import type { Catalog } from "./Produse";
 import {
@@ -20,6 +21,8 @@ import {
   type InvelitoareUI,
   type StareEditor,
 } from "./editor";
+import { MESAJ_RAND, stareaRandului } from "./probleme";
+import { useRandInLucru } from "./randInLucru";
 
 type Props = { catalog: Catalog; stare: StareEditor; set: (f: (s: StareEditor) => StareEditor) => void; poate: boolean; structura: StructuraOferta | null };
 
@@ -55,6 +58,7 @@ export function Invelitori({ catalog, stare, set, poate, structura }: Props) {
           calcul={calculPentru(inv)}
           onSchimba={(f) => seteaza(inv.cheie, f)}
           onSterge={idx > 0 ? () => set((s) => ({ ...s, invelitori: s.invelitori.filter((i) => i.cheie !== inv.cheie), linii: s.linii.filter((l) => l.invelitoare !== inv.cheie) })) : undefined}
+          produseLegate={stare.linii.filter((l) => l.invelitoare === inv.cheie).length}
         />
       ))}
       {poate && (
@@ -81,6 +85,7 @@ function BlocInvelitoare({
   calcul,
   onSchimba,
   onSterge,
+  produseLegate = 0,
 }: {
   inv: InvelitoareUI;
   idx: number;
@@ -89,7 +94,10 @@ function BlocInvelitoare({
   calcul: StructuraOferta["cantitati"]["invelitori"][number] | null;
   onSchimba: (f: (i: InvelitoareUI) => InvelitoareUI) => void;
   onSterge?: () => void;
+  produseLegate?: number;
 }) {
+  // S29b: randul de panotaj in care scrii nu se marcheaza; marcajul apare la iesirea din el
+  const inLucru = useRandInLucru();
   // furnizorul = compartimentul din catalog; cu un singur furnizor, ales de la sine
   const furnizori = [...new Set(catalog.invelitori.map((p) => p.compartiment))];
   const furnizor = inv.furnizor || (furnizori.length === 1 ? furnizori[0] : "");
@@ -160,11 +168,12 @@ function BlocInvelitoare({
   // fiecare tasta si casuta ar pierde focalizarea (cauza BUG-8)
   const pozitie = (k: number) => {
     const p = pozitii[k] ?? POZITIE_GOALA;
+    const st = inLucru.este(grup, k) ? "bun" : stareaRandului(p);
     return (
-      <div key={k} className={`bi-pozitie${completa(p) ? " completa" : ""}`} data-pozitie={k + 1}>
+      <div key={k} className={`bi-pozitie${completa(p) ? " completa" : ""}${MESAJ_RAND[st] ? " rand-cu-problema" : ""}`} data-pozitie={k + 1} title={MESAJ_RAND[st] ?? undefined}>
         <span className="bi-nr">{k + 1}</span>
-        <CasutaCantitate value={p.lungimeM} onChange={(v) => setPozitie(k, { lungimeM: v })} tip="zecimal" eticheta={`Lungime poziția ${k + 1}`} disabled={!poate} grup={grup} rand={k} camp="lungime" />
-        <CasutaCantitate value={p.bucati} onChange={(v) => setPozitie(k, { bucati: v })} tip="intreg" eticheta={`Bucăți poziția ${k + 1}`} disabled={!poate} grup={grup} rand={k} camp="bucati" />
+        <CasutaCantitate value={p.lungimeM} onChange={(v) => setPozitie(k, { lungimeM: v })} tip="zecimal" eticheta={`Lungime poziția ${k + 1}`} disabled={!poate} grup={grup} rand={k} camp="lungime" className={st === "lungimeGresita" || st === "faraLungime" ? "cu-problema" : undefined} />
+        <CasutaCantitate value={p.bucati} onChange={(v) => setPozitie(k, { bucati: v })} tip="intreg" eticheta={`Bucăți poziția ${k + 1}`} disabled={!poate} grup={grup} rand={k} camp="bucati" className={st === "faraBucati" ? "cu-problema" : undefined} />
       </div>
     );
   };
@@ -193,12 +202,17 @@ function BlocInvelitoare({
         {rezumat && <span className="text-secundar">{rezumat}</span>}
         {produs?.modulCm && <span className="text-secundar mic">modul {produs.modulCm} cm</span>}
         {onSterge && poate && (
-          <button className="buton sterge mic" type="button" tabIndex={-1} onClick={onSterge} style={{ marginLeft: "auto" }}>
-            Scoate învelitoarea
-          </button>
+          <span style={{ marginLeft: "auto" }}>
+            <ScoateBloc
+              eticheta="Scoate învelitoarea"
+              intrebare={`Ștergi învelitoarea secundară ${idx + 1}${inv.model ? ` (${inv.model})` : ""}${complete.length > 0 ? `, cu ${complete.length === 1 ? "poziția ei" : `cele ${complete.length} poziții`}` : ""}${produseLegate > 0 ? ` și ${produseLegate === 1 ? "produsul legat" : `cele ${produseLegate} produse legate`} de ea` : ""}?`}
+              cuConfirmare={Boolean(inv.produsId) || produseLegate > 0 || inv.mpDirect.trim() !== "" || pozitii.some((p) => p.lungimeM.trim() !== "" || p.bucati.trim() !== "")}
+              onScoate={onSterge}
+            />
+          </span>
         )}
       </div>
-      <div className="bi-grila">
+      <div className="bi-grila" {...inLucru.pe}>
         <div className="bi-selectie">
           <div className="bi-cap">Selecție</div>
           {rand("Furnizor", select(furnizor, (v) => alege({ furnizor: v, tip: "", model: "" }), false, ca(furnizori), furnizori.length !== 1))}
@@ -275,6 +289,15 @@ function BlocInvelitoare({
           </>
         )}
       </div>
+      {inv.mod !== "mp" &&
+        pozitii.map((p, k) => {
+          const mesaj = MESAJ_RAND[inLucru.este(grup, k) ? "bun" : stareaRandului(p)];
+          return mesaj ? (
+            <p key={k} className="mesaj-rand">
+              Poziția {k + 1}: {mesaj}
+            </p>
+          ) : null;
+        })}
       <div className="bi-totaluri">
         {inv.mod !== "mp" && (
           <>

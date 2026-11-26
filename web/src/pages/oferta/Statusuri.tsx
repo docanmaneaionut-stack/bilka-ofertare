@@ -21,6 +21,8 @@ import { lei } from "../../lib/numere";
 type Props = {
   oferta: OfertaDetaliu;
   onOferta: (o: OfertaDetaliu) => void;
+  // S29b: inaintea schimbarii statusului pagina trimite ce e nesalvat; false = s-a oprit (refuz / rand incomplet)
+  inainteDeActiune?: () => Promise<boolean>;
   mentiuni: string;
   onEroareClient?: (e: unknown) => void;
   // „Comandat” oprit de produse (panotaj necompletat): pagina trece in fila Produse
@@ -29,7 +31,7 @@ type Props = {
   slotComanda?: HTMLElement | null;
 };
 
-export function Statusuri({ oferta, onOferta, mentiuni, onEroareClient, onBlocajProduse, slotLivrare = null, slotComanda = null }: Props) {
+export function Statusuri({ oferta, onOferta, inainteDeActiune, mentiuni, onEroareClient, onBlocajProduse, slotLivrare = null, slotComanda = null }: Props) {
   const [eroare, setEroare] = useState<string | null>(null);
   const [eroareCerere, setEroareCerere] = useState<unknown>(null);
   const [motive, setMotive] = useState<string[]>([]);
@@ -45,6 +47,8 @@ export function Statusuri({ oferta, onOferta, mentiuni, onEroareClient, onBlocaj
     setEroare(null);
     setEroareCerere(null);
     setMotive([]);
+    // S29b: intai ce e nesalvat (cand statusul vine din dialogul livrarii, poarta a trecut deja)
+    if (!livrare && inainteDeActiune && !(await inainteDeActiune())) return;
     // fara alegerea livrarii de la Bilka: intai dialogul
     if ((status === "DE_COMANDAT" || status === "COMANDAT") && !oferta.livrareBilka && !livrare?.alegere && !livrare?.aleasa) {
       setDialogLivrare(status);

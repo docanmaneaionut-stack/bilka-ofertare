@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { OfertaDetaliu } from "../../api";
 import { stareGoala, type LinieUI, type StareEditor } from "./editor";
-import { ancoraFilei, FILE, filaDinAncora, filaDinTasta, rezumatFile, stareaSalvarii } from "./file";
+import { ancoraFilei, FILE, filaDinAncora, filaDinTasta, motivPlecare, rezumatFile, stareaSalvarii } from "./file";
 import { numarPeRubrici, rezumatRubrica, RUBRICI_BARA } from "./rubrici";
 
 // S29 (MODIFICAREA M12, docs/MODIFICARI-S29.md v1.3): pagina ofertei pe trei file - logica fara ecran:
@@ -77,7 +77,29 @@ describe("filele paginii ofertei (S29, M12)", () => {
     expect(stareaSalvarii({ produse: "salvat", antetModificat: true, seSalveaza: false })).toEqual({ text: "nesalvat", fel: "nesalvat" });
     expect(stareaSalvarii({ produse: "se-salveaza", antetModificat: false, seSalveaza: false }).text).toBe("se salvează…");
     expect(stareaSalvarii({ produse: "salvat", antetModificat: true, seSalveaza: true }).text).toBe("se salvează…");
-    expect(stareaSalvarii({ produse: "eroare", antetModificat: false, seSalveaza: false })).toEqual({ text: "eroare la salvare", fel: "eroare" });
+    // S29b: salvarea refuzata se spune limpede - oferta NU e salvata (nu "eroare la salvare")
+    expect(stareaSalvarii({ produse: "eroare", antetModificat: false, seSalveaza: false })).toEqual({ text: "NU e salvată", fel: "eroare" });
+    expect(stareaSalvarii({ produse: "eroare", antetModificat: true, seSalveaza: true })).toEqual({ text: "NU e salvată", fel: "eroare" });
+  });
+
+  it("S29b: cat salvarea produselor e refuzata, fila Produse are punctul rosu si spune „nesalvat”; pe o oferta comandata nu", () => {
+    expect(rezumatFile(oferta(), { produseNesalvate: true }).produse).toEqual({ text: "nesalvat", lipsa: "nesalvat" });
+    expect(rezumatFile(oferta(), { produseNesalvate: false }).produse).toEqual({ text: "1 învelitoare · 3 produse", lipsa: null });
+    expect(rezumatFile(oferta(), { produseNesalvate: true }).generale.lipsa).toBeNull();
+    expect(rezumatFile(oferta({ status: "COMANDAT" }), { produseNesalvate: true }).produse.lipsa).toBeNull();
+  });
+
+  it("S29b: la plecarea din pagina se intreaba doar cand ramane ceva nesalvat pe care pagina nu-l poate salva singura", () => {
+    const nimic = { produse: "salvat" as const, antetModificat: false, randIncomplet: false };
+    expect(motivPlecare(nimic)).toBeNull();
+    // ce asteapta salvarea automata pleaca singur spre server la plecare: nu se intreaba
+    expect(motivPlecare({ ...nimic, produse: "modificat" })).toBeNull();
+    expect(motivPlecare({ ...nimic, produse: "se-salveaza" })).toBeNull();
+    expect(motivPlecare({ ...nimic, produse: "eroare" })).toContain("NU e salvată");
+    expect(motivPlecare({ ...nimic, randIncomplet: true })).toContain("incomplet");
+    expect(motivPlecare({ ...nimic, antetModificat: true })).toContain("Date generale");
+    // refuzul e cel mai grav: el se spune primul
+    expect(motivPlecare({ produse: "eroare", antetModificat: true, randIncomplet: true })).toContain("NU e salvată");
   });
 });
 

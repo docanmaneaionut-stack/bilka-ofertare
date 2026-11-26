@@ -14,7 +14,7 @@ const CANALE = [
   { canal: "PRINT", eticheta: "print" },
 ] as const;
 
-export function Documente({ oferta, reincarca, mentiuni, onSchimbare }: { oferta: OfertaDetaliu; reincarca: number; mentiuni: string; onSchimbare?: () => void }) {
+export function Documente({ oferta, reincarca, mentiuni, onSchimbare, inainteDeActiune }: { oferta: OfertaDetaliu; reincarca: number; mentiuni: string; onSchimbare?: () => void; inainteDeActiune?: () => Promise<boolean> }) {
   const [documente, setDocumente] = useState<DocumentOferta[]>([]);
   const [tipuri, setTipuri] = useState<TipDocument[]>([]);
   const [eroare, setEroare] = useState<string | null>(null);
@@ -35,6 +35,8 @@ export function Documente({ oferta, reincarca, mentiuni, onSchimbare }: { oferta
   }, [oferta.id, reincarca]);
 
   async function genereaza(tip: TipDocument) {
+    // S29b: intai ce e nesalvat; refuz / rand incomplet = pagina se opreste si duce la rand
+    if (inainteDeActiune && !(await inainteDeActiune())) return;
     setEroare(null);
     setLucru(tip);
     try {

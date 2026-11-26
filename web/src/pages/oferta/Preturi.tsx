@@ -22,7 +22,7 @@ const TIPURI_FIX: { tip: TipPretFixIntrare; eticheta: string }[] = [
 // numarul formatat (fara unitate - ecranul scrie "lei" / "EUR" dupa caz)
 const lei = (v: string | undefined) => (v === undefined ? "—" : nr(v, 2));
 
-export function Preturi({ oferta, onOferta, mentiuni = "" }: { oferta: OfertaDetaliu; onOferta: (o: OfertaDetaliu) => void; mentiuni?: string }) {
+export function Preturi({ oferta, onOferta, mentiuni = "", inainteDeActiune }: { oferta: OfertaDetaliu; onOferta: (o: OfertaDetaliu) => void; mentiuni?: string; inainteDeActiune?: () => Promise<boolean> }) {
   const r = oferta.preturi?.rezultat ?? null;
   const poate = oferta.poateModifica;
   const [eroare, setEroare] = useState<string | null>(null);
@@ -176,7 +176,7 @@ export function Preturi({ oferta, onOferta, mentiuni = "" }: { oferta: OfertaDet
             <ul>
               {surse.map((s) => (
                 <li key={s.id}>
-                  <button className="buton secundar mic" type="button" disabled={lucru} onClick={() => void actiune(async () => (await apiPreturi.preia(oferta.id, s.id)).oferta)}>
+                  <button className="buton secundar mic" type="button" disabled={lucru} onClick={() => void (inainteDeActiune ? inainteDeActiune() : Promise.resolve(true)).then((ok) => (ok ? actiune(async () => (await apiPreturi.preia(oferta.id, s.id)).oferta) : undefined))}>
                     {s.numarComplet}
                     {s.versiune > 1 ? ` v${s.versiune}` : ""}
                   </button>{" "}

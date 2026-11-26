@@ -7,10 +7,11 @@ import { MeniuActiuni, type ActiuneMeniu } from "../components/MeniuActiuni";
 import { Ajutor, Camp, eroareCamp, Mesaj, textEroare } from "../components/ui";
 import { lei, nr } from "../lib/numere";
 import { Documente, ETICHETA_TIP } from "./oferta/Documente";
-import { ancoraFilei, FILA_IMPLICITA, FILE, filaDinAncora, filaDinTasta, rezumatFile, stareaSalvarii, type Fila, type StareSalvareProduse } from "./oferta/file";
+import { ancoraFilei, FILA_IMPLICITA, FILE, filaDinAncora, filaDinTasta, motivPlecare, rezumatFile, stareaSalvarii, type Fila, type StareSalvareProduse } from "./oferta/file";
 import { Istoric, NotiteAtasamente } from "./oferta/IstoricNotite";
 import { Montator } from "./oferta/Montator";
 import { Preturi } from "./oferta/Preturi";
+import type { Problema } from "./oferta/probleme";
 import { idRubricaPeEcran } from "./oferta/rubrici";
 import { Produse } from "./oferta/Produse";
 import { Statusuri } from "./oferta/Statusuri";
@@ -67,7 +68,7 @@ export function OfertaDetaliu() {
   const [fila, setFila] = useState<Fila>(() => filaDinAncora(window.location.hash) ?? FILA_IMPLICITA);
   // locul de derulare al fiecarei file; "tinta" = unde se merge dupa schimbarea filei (rubrica, camp)
   const pozitii = useRef<Record<Fila, number>>({ generale: 0, produse: 0, preturi: 0 });
-  const tinta = useRef<{ id?: string; focus?: string } | null>(null);
+  const tinta = useRef<{ id?: string; focus?: string; problema?: Problema } | null>(null);
   const refFix = useRef<HTMLDivElement>(null);
   // locurile din pagina in care alte componente isi pun bucatile (bara de rubrici; din Statusuri: livrarea, comanda)
   const [slotBara, setSlotBara] = useState<HTMLElement | null>(null);
@@ -75,7 +76,10 @@ export function OfertaDetaliu() {
   const [slotComanda, setSlotComanda] = useState<HTMLElement | null>(null);
   // starea salvarii produselor (salvare automata) si salvarea ei pe loc, la „Salvează”
   const [salvareProduse, setSalvareProduse] = useState<StareSalvareProduse>("salvat");
-  const salvareAcum = useRef<(() => Promise<void>) | null>(null);
+  // S29b: „Salvează” / poarta dinaintea actiunilor primesc inapoi ce opreste (refuzul salvarii, un rand incomplet)
+  const salvareAcum = useRef<(() => Promise<Problema | null>) | null>(null);
+  const duLaProblema = useRef<((p: Problema) => void) | null>(null);
+  const [problemeProduse, setProblemeProduse] = useState<{ refuz: Problema | null; incomplet: Problema | null }>({ refuz: null, incomplet: null });
 
   const laTinta = () => {
     const t = tinta.current;
@@ -84,10 +88,11 @@ export function OfertaDetaliu() {
     requestAnimationFrame(() => {
       if (t.id) document.getElementById(t.id)?.scrollIntoView({ block: "start" });
       if (t.focus) document.querySelector<HTMLElement>(t.focus)?.focus();
+      if (t.problema) duLaProblema.current?.(t.problema);
     });
   };
   // schimba fila (tinandu-i locul celei parasite) si, optional, merge la o rubrica / un camp din ea
-  const mergiLa = (noua: Fila, spre?: { id?: string; focus?: string }) => {
+  const mergiLa = (noua: Fila, spre?: { id?: string; focus?: string; problema?: Problema }) => {
     tinta.current = spre ?? null;
     if (noua === fila) {
       laTinta();
@@ -146,6 +151,7 @@ export function OfertaDetaliu() {
   }, [cereFormulare, oferta]);
   async function formulareBilka(livrareAleasa = false) {
     if (!oferta) return;
+    if (!(await inainteDeActiune())) return;
     setEroare(null);
     setAvertizariFormulare([]);
     if (oferta.status === "DE_COMANDAT" && !oferta.livrareBilka && !livrareAleasa) {
@@ -170,6 +176,7 @@ export function OfertaDetaliu() {
   // "PDF ▾": genereaza documentul si il deschide; ramane in lista documentelor ofertei
   async function pdf(tip: TipDocument) {
     if (!oferta) return;
+    if (!(await inainteDeActiune())) return;
     setEroare(null);
     setLucru(`pdf-${tip}`);
     try {
@@ -277,6 +284,59 @@ export function OfertaDetaliu() {
     }
   }
 
+  // antetul si clientul sunt singurele care nu se salveaza singure: modificate = "nesalvat"
+  function antetNesalvat(): boolean {
+    if (!oferta || !oferta.poateModifica) return false;
+    return data !== oferta.data || sursaClient !== (oferta.sursaClient ?? "") || note !== (oferta.note ?? "") || adresaLucrarii !== (oferta.adresaLucrarii ?? "") || localitate !== (oferta.localitate ?? "") || JSON.stringify(client) !== JSON.stringify(dinClient(oferta.client));
+  }
+
+  // S29b (decizia 2): inaintea schimbarii statusului, a oricarei generari de document si a actiunilor din „⋯”
+  // (copiere, varianta, completare, preluare de preturi), pagina trimite intai ce e nesalvat. Daca salvarea e
+  // refuzata sau exista un rand incomplet, se opreste si duce la rand. Regulile statusurilor de pe server
+  // raman neatinse: e doar ordinea in care pagina face lucrurile.
+  async function inainteDeActiune(): Promise<boolean> {
+    if (!oferta || !oferta.poateModifica) return true;
+    const p = (await salvareAcum.current?.()) ?? null;
+    if (p) {
+      setMesaj(null);
+      setEroare(p.fel === "refuz" ? `Oferta NU e salvată — ${p.text}. Corectează rândul, apoi reia acțiunea.` : `${p.text}. Completează rândul sau golește-l, apoi reia acțiunea.`);
+      mergiLa("produse", { problema: p });
+      return false;
+    }
+    if (antetNesalvat()) return salveaza(null);
+    return true;
+  }
+  const cuPoarta = (f: () => void) => () => void inainteDeActiune().then((ok) => (ok ? f() : undefined));
+
+  // S29b (decizia 1): avertizarea la plecarea din pagina cu ceva nesalvat pe care pagina nu-l poate salva singura
+  const motivDePlecare = oferta?.poateModifica ? motivPlecare({ produse: salvareProduse, antetModificat: antetNesalvat(), randIncomplet: problemeProduse.incomplet !== null }) : null;
+  const motivCurent = useRef<string | null>(null);
+  motivCurent.current = motivDePlecare;
+  useEffect(() => {
+    // inchiderea / reincarcarea filei de browser
+    const laInchidere = (e: BeforeUnloadEvent) => {
+      if (!motivCurent.current) return;
+      e.preventDefault();
+      e.returnValue = "";
+    };
+    // legaturile din aplicatie (meniul de sus, „← Oferte”, linkurile din pagina)
+    const laClic = (e: MouseEvent) => {
+      const a = (e.target as HTMLElement | null)?.closest?.("a[href]") as HTMLAnchorElement | null;
+      if (!a || a.target === "_blank" || a.origin !== window.location.origin || a.hasAttribute("download")) return;
+      if (a.pathname === window.location.pathname) return;
+      if (motivCurent.current && !window.confirm(motivCurent.current)) {
+        e.preventDefault();
+        e.stopPropagation();
+      }
+    };
+    window.addEventListener("beforeunload", laInchidere);
+    document.addEventListener("click", laClic, true);
+    return () => {
+      window.removeEventListener("beforeunload", laInchidere);
+      document.removeEventListener("click", laClic, true);
+    };
+  }, []);
+
   if (eroare && !oferta) return <Mesaj tip="eroare">{eroare}</Mesaj>;
   if (!oferta) return null;
   const c = oferta.curs;
@@ -288,18 +348,20 @@ export function OfertaDetaliu() {
     setDialog(d);
   };
 
-  // antetul si clientul sunt singurele care nu se salveaza singure: modificate = "nesalvat"
-  const antetModificat =
-    oferta.poateModifica &&
-    (data !== oferta.data || sursaClient !== (oferta.sursaClient ?? "") || note !== (oferta.note ?? "") || adresaLucrarii !== (oferta.adresaLucrarii ?? "") || localitate !== (oferta.localitate ?? "") || JSON.stringify(client) !== JSON.stringify(dinClient(oferta.client)));
+  const antetModificat = antetNesalvat();
   const stare = stareaSalvarii({ produse: salvareProduse, antetModificat, seSalveaza });
   // „Salvează” din randul ofertei: salveaza tot ce e nesalvat, din orice fila
   const salveazaTot = async () => {
     await salvareAcum.current?.();
     if (antetModificat) await salveaza(null);
   };
+  // plecarea din pagina din butoanele ei (pe telefon „← Oferte” e in „⋯”): aceeasi intrebare ca la legaturi
+  const pleaca = (cale: string) => {
+    if (!motivDePlecare || window.confirm(motivDePlecare)) navigate(cale);
+  };
 
-  const rezumate = rezumatFile(oferta);
+  const refuzProduse = salvareProduse === "eroare" ? problemeProduse.refuz : null;
+  const rezumate = rezumatFile(oferta, { produseNesalvate: salvareProduse === "eroare" });
   const total = oferta.preturi?.rezultat ? lei(oferta.preturi.rezultat.totaluri.documentTotalLei) : null;
   const pretAjustat = comandata && Boolean(oferta.comanda?.pretAjustat);
   const formulareLaVedere = oferta.status === "DE_COMANDAT" || comandata;
@@ -313,8 +375,8 @@ export function OfertaDetaliu() {
   }));
   // pe telefon randul ofertei tine doar numarul, totalul, „Salvează” si „⋯”: restul butoanelor paginii sunt in „⋯”
   const actiuniTelefon: ActiuneMeniu[] = [
-    { eticheta: "← Oferte", onClick: () => navigate("/oferte"), clasa: "doar-telefon" },
-    { eticheta: "Află preț", onClick: () => navigate("/oferte/afla-pret"), clasa: "doar-telefon" },
+    { eticheta: "← Oferte", onClick: () => pleaca("/oferte"), clasa: "doar-telefon" },
+    { eticheta: "Află preț", onClick: () => pleaca("/oferte/afla-pret"), clasa: "doar-telefon" },
     ...(formulareLaVedere ? [{ eticheta: etichetaFormulare, explicatie: "generează formularele de comandă Bilka (.xlsm)", onClick: () => void formulareBilka(), dezactivat: lucru ? "se generează alt document" : undefined, clasa: "doar-telefon" }] : []),
     ...actiuniPdf.map((a) => ({ ...a, clasa: "doar-telefon" })),
   ];
@@ -387,11 +449,11 @@ export function OfertaDetaliu() {
             <MeniuActiuni
               actiuni={[
                 ...actiuniTelefon,
-                { eticheta: "Copiază oferta", explicatie: "ofertă nouă cu aceleași produse și prețuri", onClick: () => setDialog("copie"), dezactivat: poateSume ? undefined : "doar cine a făcut oferta și Administratorul" },
-                { eticheta: "Creează variantă", explicatie: "versiune nouă sub același număr, cu adaosul real păstrat", onClick: () => void actiune("varianta", async () => (await apiPreturi.varianta(oferta.id)).oferta), dezactivat: comandata ? "oferta e comandată" : oferta.poateModifica ? undefined : "doar cine a făcut oferta și Administratorul" },
-                { eticheta: "Completare la această ofertă", explicatie: "ofertă nouă legată de aceasta, fără gardă", onClick: () => deschideMotiv("completare"), dezactivat: oferta.completareLa ? "oferta e ea însăși o completare" : poateSume ? undefined : "doar cine a făcut oferta și Administratorul" },
-                { eticheta: "Leagă ca completare la…", explicatie: "oferta aceasta devine completarea unei oferte inițiale", onClick: () => deschideMotiv("legare"), dezactivat: oferta.completareLa ? `e deja completare la ${oferta.completareLa.numarComplet}` : poateSume ? undefined : "doar cine a făcut oferta și Administratorul" },
-                { eticheta: "Preia prețurile în altă ofertă", explicatie: "aplică prețurile de aici pe o altă ofertă „În lucru”", onClick: () => setDialog("preia-in") },
+                { eticheta: "Copiază oferta", explicatie: "ofertă nouă cu aceleași produse și prețuri", onClick: cuPoarta(() => setDialog("copie")), dezactivat: poateSume ? undefined : "doar cine a făcut oferta și Administratorul" },
+                { eticheta: "Creează variantă", explicatie: "versiune nouă sub același număr, cu adaosul real păstrat", onClick: cuPoarta(() => void actiune("varianta", async () => (await apiPreturi.varianta(oferta.id)).oferta)), dezactivat: comandata ? "oferta e comandată" : oferta.poateModifica ? undefined : "doar cine a făcut oferta și Administratorul" },
+                { eticheta: "Completare la această ofertă", explicatie: "ofertă nouă legată de aceasta, fără gardă", onClick: cuPoarta(() => deschideMotiv("completare")), dezactivat: oferta.completareLa ? "oferta e ea însăși o completare" : poateSume ? undefined : "doar cine a făcut oferta și Administratorul" },
+                { eticheta: "Leagă ca completare la…", explicatie: "oferta aceasta devine completarea unei oferte inițiale", onClick: cuPoarta(() => deschideMotiv("legare")), dezactivat: oferta.completareLa ? `e deja completare la ${oferta.completareLa.numarComplet}` : poateSume ? undefined : "doar cine a făcut oferta și Administratorul" },
+                { eticheta: "Preia prețurile în altă ofertă", explicatie: "aplică prețurile de aici pe o altă ofertă „În lucru”", onClick: cuPoarta(() => setDialog("preia-in")) },
                 { eticheta: "Istoric", onClick: () => mergiLa("generale", { id: "istoric" }) },
                 { eticheta: "Notițe și atașamente", onClick: () => mergiLa("generale", { id: "notite" }) },
               ]}
@@ -402,9 +464,16 @@ export function OfertaDetaliu() {
           </div>
         </div>
 
+        {refuzProduse && (
+          <button type="button" className="banda-nesalvat" role="alert" onClick={() => mergiLa("produse", { problema: refuzProduse })} title="Du-mă la rândul de corectat">
+            <strong>Oferta NU e salvată.</strong> <span className="banda-nesalvat-text">{refuzProduse.text}</span> <span className="banda-nesalvat-salt">Du-mă la rând →</span>
+          </button>
+        )}
+
         <Statusuri
           oferta={oferta}
           onOferta={preia}
+          inainteDeActiune={inainteDeActiune}
           mentiuni={mentiuni}
           slotLivrare={slotLivrare}
           slotComanda={slotComanda}
@@ -709,7 +778,7 @@ export function OfertaDetaliu() {
       {/* ------------------------------------------------ fila 2: Produse */}
       <div className="fila" role="tabpanel" id="fila-produse" aria-labelledby="tab-produse" hidden={fila !== "produse"}>
         {campMentiuni}
-        <Produse oferta={oferta} onOferta={preia} mentiuni={mentiuni} activa={fila === "produse"} slotBara={slotBara} onStareSalvare={setSalvareProduse} salvareAcum={salvareAcum} onMergiLaPreturi={() => mergiLa("preturi")} />
+        <Produse oferta={oferta} onOferta={preia} mentiuni={mentiuni} activa={fila === "produse"} slotBara={slotBara} onStareSalvare={setSalvareProduse} salvareAcum={salvareAcum} onProbleme={setProblemeProduse} duLaProblema={duLaProblema} onMergiLaPreturi={() => mergiLa("preturi")} />
       </div>
 
       {/* ------------------------------------------------ fila 3: Preturi si documente */}
@@ -740,8 +809,8 @@ export function OfertaDetaliu() {
           </section>
         )}
 
-        <Preturi oferta={oferta} onOferta={preia} mentiuni={mentiuni} />
-        <Documente oferta={oferta} reincarca={reincarcaIstoric} mentiuni={mentiuni} onSchimbare={() => setReincarcaIstoric((n) => n + 1)} />
+        <Preturi oferta={oferta} onOferta={preia} mentiuni={mentiuni} inainteDeActiune={inainteDeActiune} />
+        <Documente oferta={oferta} reincarca={reincarcaIstoric} mentiuni={mentiuni} onSchimbare={() => setReincarcaIstoric((n) => n + 1)} inainteDeActiune={inainteDeActiune} />
 
         <Ajutor>
           <ul>

@@ -18,7 +18,7 @@ import { notiteRouter } from "./notite.js";
 import { documenteRouter } from "./documente/index.js";
 import { formulareBilkaRouter } from "./formularBilka/index.js";
 import { EroareStatus, schemaStatus, schimbaStatus } from "./statusuri.js";
-import { catalogEditorRouter } from "./catalog.js";
+import { catalogEditorRouter, selectProdusEditor, spreProdusEditor } from "./catalog.js";
 import {
   blocPreturi,
   copiazaOferta,
@@ -392,6 +392,11 @@ async function detaliu(id: string, u: Utilizator) {
   });
   const cuPreturi = vedePreturiDeBaza(u);
   const preturiVechi = await suntPreturiVechi([...o.invelitori, ...o.linii]);
+  // S29b (BUG-24 c, BUG-26, BUG-27): produsele din catalog ale liniilor si ale randurilor goale, in forma
+  // editorului (fara preturi) - de aici isi ia editorul treapta, sistemul pluvial si culorile fiecarei linii
+  // salvate, ca la redeschidere sa arate exact produsul salvat si sa nu-l schimbe pe tacute. Si cele inactive.
+  const idsProduse = [...new Set([...o.linii, ...o.randuriGoale].map((x) => x.produsId).filter((x): x is string => Boolean(x)))];
+  const produseCatalog = idsProduse.length > 0 ? (await prisma.produs.findMany({ where: { id: { in: idsProduse } }, select: selectProdusEditor })).map(spreProdusEditor) : [];
   const faraBaza = <T extends { pretBazaEur: unknown }>(x: T) => {
     if (cuPreturi) return x;
     const { pretBazaEur, ...rest } = x;
@@ -459,6 +464,7 @@ async function detaliu(id: string, u: Utilizator) {
     zonaB: o.zonaB.map((zb) => ({ ...zb, cantitate: zb.cantitate.toString(), sumaLei: zb.sumaLei.toString() })),
     // S29 (BUG-20): randurile adaugate cu "+" si lasate fara cantitate (editorul le arata goale, la locul lor)
     randuriGoale: o.randuriGoale,
+    produseCatalog,
     structura: await calculeazaStructura(o.id),
     preturi: await blocPreturi(o.id, u),
     // "Comandat" ingheata produsele, cantitatile si preturile (cap. 14); sumele,

@@ -33,6 +33,13 @@ export function textCantitateValid(text: string, tip: "zecimal" | "intreg"): boo
   return (tip === "intreg" ? INTREG : ZECIMAL).test(text);
 }
 
+// S29b: textul scris si neterminat („5,”, „,5”, „.”) - serverul l-ar refuza; casuta se marcheaza singura, dar
+// abia la iesirea din ea (stilul ".neterminata:not(:focus)"), nu la fiecare tasta
+const TERMINAT = /^\d+([.,]\d+)?$/;
+export function textNeterminat(text: string): boolean {
+  return text.trim() !== "" && !TERMINAT.test(text.trim());
+}
+
 // numarul din textul casutei (virgula sau punct), pentru calcule locale; NaN daca e gol / invalid
 export function numarDinText(text: string): number {
   const t = text.trim().replace(",", ".");
@@ -52,7 +59,7 @@ export function CasutaCantitate({ value, onChange, tip = "zecimal", eticheta, di
       disabled={disabled}
       placeholder={placeholder}
       aria-label={eticheta}
-      className={`casuta-cantitate${className ? ` ${className}` : ""}`}
+      className={`casuta-cantitate${textNeterminat(value) ? " neterminata" : ""}${className ? ` ${className}` : ""}`}
       style={latime !== undefined ? { width: latime, ...style } : style}
       data-grup={grup}
       data-rand={rand}

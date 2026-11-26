@@ -139,7 +139,8 @@ function SectiuneSpeciale({ catalog, stare, set, poate, tinta, titlu }: { catalo
   const randuri = chei
     .map((cheie) => {
       const linie = linii.find((l) => l.cheie === cheie);
-      if (linie) return { cheie, linie, treapta: linie.produs.treapta ?? "D01" };
+      // S29b (BUG-26): randul salvat arata treapta LUI (nu "D01"); necunoscuta = lista fara alegere
+      if (linie) return { cheie, linie, treapta: linie.produs.treapta ?? "" };
       const pre = presetate.find((p) => p.cheie === cheie);
       return pre ? { cheie, linie: null, treapta: pre.treapta } : null;
     })
@@ -171,6 +172,7 @@ function SectiuneSpeciale({ catalog, stare, set, poate, tinta, titlu }: { catalo
                     disabled={!poate}
                     aria-label={`Treapta rândul ${idx + 1}`}
                   >
+                    {!r.treapta && <option value="">alege…</option>}
                     {trepte.map((t) => (
                       <option key={t} value={t}>
                         {t}

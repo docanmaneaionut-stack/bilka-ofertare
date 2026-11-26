@@ -658,6 +658,8 @@ export type OfertaDetaliu = {
   zonaB: unknown[];
   // S29 (BUG-20)
   randuriGoale?: RandGolSalvat[];
+  // S29b: produsele din catalog ale liniilor si ale randurilor goale (treapta, sistemul, culorile lor)
+  produseCatalog?: ProdusEditor[];
   structura?: { rezultat: StructuraOferta | null; eroare: string | null } | null;
   // S14: preturile (filtrate pe rol pe server), versiunile, "preturi vechi", preluarea
   preturi?: { rezultat: RezultatPreturi | null; eroare: string | null } | null;
@@ -1102,6 +1104,8 @@ export type LinieSalvata = {
   culoareRal: string | null;
   culoareFinisaj: string | null;
   culoareGrosime: string | null;
+  // sistemul pluvial salvat pe linie (M2)
+  sistem?: string | null;
   pozitii: { id: string; ordine: number; lungimeM: string; bucati: number }[];
 };
 

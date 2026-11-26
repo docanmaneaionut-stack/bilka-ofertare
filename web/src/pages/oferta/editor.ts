@@ -52,6 +52,8 @@ export type LinieUI = {
   // sectiunea din ecran de care apartine (grupare)
   sectiune: string;
   dinLista: boolean;
+  // S29b: id-ul liniei salvate (din oferta deschisa) - dupa el se citesc metrii pozitiei din rezultatul motorului
+  idSalvat?: string;
 };
 
 export type SipcaUI = {
@@ -179,6 +181,17 @@ export function stareGoala(): StareEditor {
   return { grupaPct: "0", precizariZonaB: "", invelitori: [invelitoareGoala()], linii: [], sipci: [], zonaB: [] };
 }
 
+// S29b (BUG-24 c, BUG-26, BUG-27): produsul unei linii salvate e cel din catalog (vine odata cu oferta -
+// "produseCatalog"), cu tot ce nu se tine pe linie: treapta, sistemul, culorile lui. Doar cand produsul nu mai
+// e in catalog se reface din ce s-a salvat pe linie - treapta din denumire, sistemul din coloana liniei.
+export function treaptaDinDenumire(denumire: string): string | null {
+  return /\bD\d{2}\b/.exec(denumire)?.[0] ?? null;
+}
+
+export function catalogulLiniilor(o: OfertaDetaliu): Map<string, ProdusEditor> {
+  return new Map((o.produseCatalog ?? []).map((p) => [p.id, p]));
+}
+
 function produsDinSnapshot(l: LinieSalvata | InvelitoareSalvata, categorie: string | null, catalog: Map<string, ProdusEditor>): ProdusEditor {
   const dinCatalog = l.produsId ? catalog.get(l.produsId) : undefined;
   if (dinCatalog) return dinCatalog;
@@ -195,8 +208,8 @@ function produsDinSnapshot(l: LinieSalvata | InvelitoareSalvata, categorie: stri
     optiune: l.optiune,
     finisaj: l.finisaj,
     grosime: l.grosime,
-    sistem: null,
-    treapta: null,
+    sistem: (l as { sistem?: string | null }).sistem ?? null,
+    treapta: treaptaDinDenumire(l.denumire),
     desfasurata: null,
     latimeTotalaM: null,
     latimeTotalaMm: null,
@@ -252,6 +265,7 @@ export function stareDinOferta(o: OfertaDetaliu, invelitoriCatalog: ProdusEditor
         pozitii: l.pozitii.length ? l.pozitii.map((p) => ({ lungimeM: cuVirgula(Number(p.lungimeM).toFixed(2)), bucati: String(p.bucati) })) : null,
         sectiune: sectiuneaLiniei(l.rubrica, invelitoare, culoare),
         dinLista: false,
+        idSalvat: l.id,
       };
     });
   const sipci: SipcaUI[] = ((o.sipci ?? []) as SipcaSalvata[]).map((sipcaSalvata) => {
@@ -275,7 +289,7 @@ export function stareDinOferta(o: OfertaDetaliu, invelitoriCatalog: ProdusEditor
     const goala: LinieUI = {
       cheie: cheieNoua("lin"),
       rubrica: g.rubrica,
-      produs: { ...produsDinSnapshot(g as unknown as LinieSalvata, g.rubrica, catalogLinii), sistem: g.sistem },
+      produs: produsDinSnapshot(g as unknown as LinieSalvata, g.rubrica, catalogLinii),
       cantitate: "",
       invelitoare,
       culoare,
@@ -300,6 +314,36 @@ export function sectiuneaLiniei(rubrica: string, invelitoare: string | null, cul
   if (invelitoare) return `${rubrica}|inv:${invelitoare}`;
   if (culoare) return `${rubrica}|cheie:${culoare.finisaj}|${culoare.grosime ?? ""}|${culoare.ral}`;
   return `${rubrica}|`;
+}
+
+// S29b (BUG-27): sistemul pluvial al unei linii, asa cum e in catalog. Piesele comune ("125 / 90 si 150 / 100")
+// urmeaza grupul finisajului si culorii lor; singure, locul 125 / 90 (ARH §5.4).
+export const SISTEME_PLUVIAL = ["125 / 90", "150 / 100"] as const;
+const sistemPropriu = (sistem: string | null): string | null => {
+  const are125 = /125/.test(sistem ?? "");
+  const are150 = /150/.test(sistem ?? "");
+  return are150 && !are125 ? "150 / 100" : are125 && !are150 ? "125 / 90" : null;
+};
+// "deschis" = sistemul sectiunii abia deschise pe ecran pentru finisajul si culoarea liniei (doar pana la salvare)
+export function sistemulLiniei(l: LinieUI, linii: LinieUI[], deschis?: string | null): string {
+  const propriu = sistemPropriu(l.produs.sistem);
+  if (propriu) return propriu;
+  const grup = linii.filter((x) => x.rubrica === l.rubrica && x.culoare && l.culoare && x.culoare.finisaj === l.culoare.finisaj && x.culoare.ral === l.culoare.ral).map((x) => sistemPropriu(x.produs.sistem));
+  if (grup.includes("150 / 100") && !grup.includes("125 / 90")) return "150 / 100";
+  if (grup.includes("125 / 90")) return "125 / 90";
+  return deschis ?? "125 / 90";
+}
+
+// S29b (BUG-24 b): fiecare linie de pe ecran isi stie linia salvata. Serverul creeaza liniile in ordinea primita
+// (dupa liniile invelitorilor), deci a k-a linie trimisa e a k-a linie salvata din afara rubricii Invelitori.
+export function idurileLiniilor(cheiTrimise: string[], liniiSalvate: { id: string; rubrica: string }[]): Map<string, string> {
+  const salvate = liniiSalvate.filter((l) => l.rubrica !== RUBRICI.invelitori);
+  return new Map(cheiTrimise.flatMap((cheie, k) => (salvate[k] ? [[cheie, salvate[k].id] as [string, string]] : [])));
+}
+
+// cantitatea calculata de motor pentru o linie salvata (la accesoriile la lungimi: metrii pozitiei)
+export function cantitateaLiniei(rezultat: { linii: { id: string; cantitate: string }[] } | null | undefined, id: string | undefined): string | null {
+  return (id && rezultat?.linii.find((x) => x.id === id)?.cantitate) || null;
 }
 
 // invelitorile care pleaca spre server (cu produs), in ordine: pozitia lor e si

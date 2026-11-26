@@ -34,7 +34,8 @@ export type RezumatFila = { text: string; lipsa: string | null };
 
 // Sub numele fiecarei file: pe scurt ce e inauntru. "lipsa" (punctul rosu) = ceva din fila ar opri
 // "Comandat" sau e o eroare; atunci textul spune ce lipseste. Pe o oferta comandata punctul nu apare.
-export function rezumatFile(o: OfertaDetaliu): Record<Fila, RezumatFila> {
+// S29b: cat salvarea produselor e refuzata ("produseNesalvate"), fila Produse are punctul rosu si spune „nesalvat”.
+export function rezumatFile(o: OfertaDetaliu, extra: { produseNesalvate?: boolean } = {}): Record<Fila, RezumatFila> {
   const comandata = o.status === "COMANDAT";
   const cu = (text: string, lipsa: string | null): RezumatFila => (lipsa && !comandata ? { text: lipsa, lipsa } : { text, lipsa: null });
 
@@ -42,7 +43,7 @@ export function rezumatFile(o: OfertaDetaliu): Record<Fila, RezumatFila> {
   const produse = (o.linii as { rubrica: string }[]).filter((l) => l.rubrica !== "Învelitori").length;
   const bucati = [invelitori > 0 ? `${invelitori} ${invelitori === 1 ? "învelitoare" : "învelitori"}` : null, produse > 0 ? `${produse} ${produse === 1 ? "produs" : "produse"}` : null].filter(Boolean);
   const s = o.structura ?? null;
-  const lipsaProduse = s?.eroare ? "eroare de calcul" : s?.rezultat && !s.rezultat.comandabil.da ? "nu se poate comanda" : null;
+  const lipsaProduse = extra.produseNesalvate ? "nesalvat" : s?.eroare ? "eroare de calcul" : s?.rezultat && !s.rezultat.comandabil.da ? "nu se poate comanda" : null;
 
   const p = o.preturi ?? null;
   const total = p?.rezultat ? lei(p.rezultat.totaluri.documentTotalLei) : "fără prețuri încă";
@@ -59,8 +60,20 @@ export type StareSalvareProduse = "salvat" | "modificat" | "se-salveaza" | "eroa
 
 // starea din randul ofertei: produsele se salveaza singure; antetul si clientul - cu "Salvează"
 export function stareaSalvarii(s: { produse: StareSalvareProduse; antetModificat: boolean; seSalveaza: boolean }): { text: string; fel: "salvat" | "nesalvat" | "lucru" | "eroare" } {
-  if (s.produse === "eroare") return { text: "eroare la salvare", fel: "eroare" };
+  // S29b: salvarea refuzata se spune limpede - nimic din ce s-a scris de atunci nu e in oferta
+  if (s.produse === "eroare") return { text: "NU e salvată", fel: "eroare" };
   if (s.seSalveaza || s.produse === "se-salveaza") return { text: "se salvează…", fel: "lucru" };
   if (s.antetModificat || s.produse === "modificat") return { text: "nesalvat", fel: "nesalvat" };
   return { text: "salvat", fel: "salvat" };
+}
+
+// S29b (decizia 1): la plecarea din pagina se intreaba doar cand ramane ceva pe care pagina nu-l poate salva
+// singura: salvarea refuzata, un rand incomplet (nu e in oferta), datele generale nesalvate. Ce asteapta doar
+// salvarea automata pleaca singur spre server la plecare. Intoarce textul intrebarii sau null.
+export function motivPlecare(s: { produse: StareSalvareProduse; antetModificat: boolean; randIncomplet: boolean }): string | null {
+  const coada = " Pleci din pagină fără ele?";
+  if (s.produse === "eroare") return `Oferta NU e salvată: un rând din fila Produse trebuie corectat, iar ce ai scris de atunci nu e în ofertă.${coada.replace("ele", "aceste modificări")}`;
+  if (s.randIncomplet) return `Un rând incomplet din fila Produse (lungime fără bucăți sau invers) nu e în ofertă.${coada.replace("fără ele", "fără să-l completezi")}`;
+  if (s.antetModificat) return `Modificările din fila Date generale (antet, client) nu sunt salvate.${coada}`;
+  return null;
 }

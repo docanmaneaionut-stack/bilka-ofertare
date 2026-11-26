@@ -31,6 +31,7 @@ zero dacă a picat ceva. Capturile merg în folderul dat (de obicei `docs/verifi
 
 | Script | Ce verifică | Datele le lasă |
 |---|---|---|
+| `s29b-editor.cjs` | S29b — accesoriile la lungimi (rândurile adăugate ulterior, două poziții cu aceeași desfășurată, treapta salvată), salvarea refuzată la vedere (starea, banda cu clic spre rând, punctul roșu, oprirea la status / documente / „⋯”, avertizarea la plecare), rândul incomplet, coșul pe rând și eliminarea blocului cu confirmare (BUG-25), treapta la speciale 2 ML (BUG-26), sistemul pluvial (BUG-27) după redeschidere, formularul Bilka generat și citit înapoi (`citeste-formular.ts`), desktop și 390 px | `tests/ofe-s29b.test.ts` |
 | `s29-bug20-21.cjs` | BUG-20 (rândul adăugat cu „+” rămâne fără cantitate, la locul lui), BUG-21 (lista de prețuri și PDF-ul în ordinea de pe ecran) | `tests/ofe-s29.test.ts` |
 | `s29-m12.cjs` | M12 — pagina ofertei pe trei file: rândurile fixe, filele (poziția ținută, adresa, Alt + 1 / 2 / 3), benzile care se strâng, bara de rubrici, statusul dintr-un clic, saltul la filă și la câmp, „Salvează”, „Grupă %”, oferta comandată, telefonul | `tests/ofe-s29.test.ts` |
 | `s25-s27-pagina-ofertei.cjs` | scenariile de pagina ofertei din S25–S27 (căsuța de cantitate, Tab / Enter, coșul, căutarea fără diacritice, modurile de cantitate, „fără telefon”, montator și recomandare, sugestiile pe nume, speciale 2 ML de sine stătătoare, montatorul reținut) | `tests/ofe-s29.test.ts` |
