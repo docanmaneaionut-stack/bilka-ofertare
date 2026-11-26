@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { apiCatalogEditor, type ProdusEditor, type StructuraOferta } from "../../api";
 import { BtnSterge } from "../../components/BtnSterge";
 import { CasutaCantitate, numarDinText } from "../../components/CasutaCantitate";
+import { ordoneazaFinisaje } from "../../lib/finisaje";
 import { ScoateBloc } from "../../components/ScoateBloc";
 import { Mesaj, textEroare } from "../../components/ui";
 import type { Catalog } from "./Produse";
@@ -32,7 +33,7 @@ export function Lungimi({ catalog, stare, set, poate, structura, iduri, refuzata
 
   const linii = stare.linii.filter((l) => l.rubrica === RUBRICI.lungimi);
   const trepte = catalog.ref.trepte;
-  const finisaje = [...new Set(produse.map((p) => p.finisaj ?? ""))].filter(Boolean);
+  const finisaje = ordoneazaFinisaje([...new Set(produse.map((p) => p.finisaj ?? ""))].filter(Boolean), catalog.ref.ordineFinisaje ?? []);
   const grosimiPentru = (finisaj: string) => [...new Set(produse.filter((p) => p.finisaj === finisaj).map((p) => p.grosime ?? ""))].filter(Boolean);
   const produsPentru = (treapta: string, finisaj: string, grosime: string) => produse.find((p) => p.treapta === treapta && p.finisaj === finisaj && p.grosime === grosime) ?? null;
   const schimba = (cheie: string, c: Partial<LinieUI>) => set((st) => ({ ...st, linii: st.linii.map((l) => (l.cheie === cheie ? { ...l, ...c } : l)) }));

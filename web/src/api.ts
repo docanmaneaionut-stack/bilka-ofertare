@@ -792,7 +792,7 @@ export const apiPreturi = {
 };
 
 export const apiOptiuni = {
-  lista: (lista: "motiv_completare" | "sursa_client") => cerere<{ lista: string; optiuni: { valoare: string; ordine: number }[] }>(`/api/oferte/optiuni/${lista}`),
+  lista: (lista: "motiv_completare" | "sursa_client" | "ordine_finisaj") => cerere<{ lista: string; optiuni: { valoare: string; ordine: number }[] }>(`/api/oferte/optiuni/${lista}`),
 };
 
 export type PretRapid = {
@@ -975,6 +975,8 @@ export type ReferinteEditor = {
   variante: { model: string; variantaProfil: string; restrictii: string | null }[];
   categorii: { denumire: string; zona: string; ordine: number }[];
   categoriiListe: { rubrica: string; categorieInvelitoare: string }[];
+  // S29b (M14): ordinea finisajelor in listele de selectie - lista de referinta "ordine_finisaj"
+  ordineFinisaje?: string[];
 };
 
 export type CheieEditor = { finisaj?: string; grosime?: string; sistem?: string };

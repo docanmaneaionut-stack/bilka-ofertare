@@ -723,3 +723,48 @@ Fiecare intrare: data, obiectivul sesiunii, rezultatul, următorul pas propus.
 - Generarea clientului Prisma a dat din nou eroare la ultimul pas (serverul de lucru ținea ocupat un fișier); partea necesară s-a generat.
 
 **Următorul pas propus:** S29b — BUG-24, BUG-25 și M14 (`docs/MODIFICARI-S29B.md`), apoi S30.
+
+## 2026-11-26 — S29b: corecții la editorul ofertei (BUG-24, BUG-25, BUG-26, BUG-27) și ordinea finisajelor (M14)
+
+**Obiectiv:** PLAN v0.41 S29b — corecțiile **BUG-24**, **BUG-26**, **BUG-27**, **BUG-25** (`docs/CERERI-BUG-S25.md`) și **M14**, ordinea finisajelor în listele de selecție (`docs/MODIFICARI-S29B.md` v1.4). Planul aprobat de Ionuț cu patru decizii (secțiunea „Ce a găsit Code la planul S29b și ce s-a hotărât”, 8 puncte). Două commit-uri: corecțiile, apoi M14.
+
+**Rezultat:**
+- **BUG-24 — cauza era în editor, nu în calcul** (motorul neatins). Patru defecte, toate reproduse la plan și corectate:
+  - *(a) Salvarea refuzată bloca tot ce se scria după ea.* Rămâne „totul sau nimic”, dar la vedere: rândul neterminat e marcat pe loc, la ieșirea din el; cât ține refuzul, starea din rândul ofertei spune „NU e salvată”, o bandă de sub ea spune ce e de corectat și unde, un clic duce la rând, fila Produse are punctul roșu. Înainte de schimbarea statusului, de orice document (PDF-uri, formulare Bilka) și de copiere / variantă / completare / legare / preluare de prețuri, pagina trimite întâi ce e nesalvat și se oprește la rând dacă salvarea e refuzată. La plecarea din pagină apare avertizarea.
+  - *(b) Două poziții cu aceeași desfășurată și culoare arătau amândouă metrii primei.* Fiecare poziție își arată metrii ei.
+  - *(c) După redeschidere lista de trepte arăta „D01”, iar Finisajul sau Grosimea schimbau pe tăcute produsul în D01.* Oferta deschisă își aduce produsele din catalog ale liniilor; treapta salvată rămâne.
+  - *(d) Rândul cu lungime și fără bucăți era sărit fără semn.* E marcat „incomplet” și oprește statusul, documentele și acțiunile din „⋯”. Rândurile goale de produs (BUG-20) nu opresc nimic.
+  - La fel la panotajul învelitorii și la șipcă.
+- **BUG-26** — rândul salvat de speciale 2 ML arată treapta lui (D05, 201–250 mm), nu D01.
+- **BUG-27** — sistemul pluvial salvat apare cum e (150 / 100), iar o piesă adăugată după redeschidere intră în același sistem. Fiecare sistem își ține doar piesele lui.
+- **BUG-25** — coș pe fiecare rând la lungimi, la pozițiile de șipcă și la tronsoane; coșul scoate doar rândul (ultimul rămas se golește). Eliminarea blocului întreg e în antetul lui — „Scoate accesoriul / rubrica / sistemul / învelitoarea” — și cere confirmare când blocul are ceva completat. Butonul de rând se numește „+ Adaugă rând”. Panotajul învelitorii a rămas fără coș pe rând.
+- **M14** — ordinea finisajelor vine din lista de referință `ordine_finisaj` (lista de opțiuni din bază, fără migrare), schimbată din Zona tehnică → Referințe. O singură funcție o aplică în cascada învelitorii, secțiunile de sine stătătoare, accesoriile la lungimi, șipcă, sistemul pluvial și „Află preț”. Un finisaj care nu e în listă apare la sfârșit, alfabetic. **Lista nu e încă încărcată pe baza de lucru** — vezi „De știut”.
+
+**Verificare:** `npm test` verde — **45 de fișiere, 443 de teste** (9 noi: 5 pentru corecții, 4 pentru M14; înainte: 43 / 434, rulare curată la începutul sesiunii); **13 oferte-model la zero, 14 teste** în suita de etaloane; web `npm test` **55 de teste** (35 noi; înainte 20), `tsc` și build curate; `git diff v0.4-comenzi -- server/src/modules/mot` gol, fișierele etalon neatinse. Testele au fost scrise înaintea codului și rulate întâi roșii (cele de ecran: 8 din 9 roșii pe ecranele vechi). **Formularul Bilka generat și citit înapoi** are toate rândurile de lungime × bucăți — în testul de server (`tests/ofe-s29b.test.ts`) și în browser. **În browser, pe instanța de test**: corecțiile 45 din 45 (`s29b-editor.cjs`: rândurile adăugate fără reîncărcare și după redeschidere, două poziții cu aceeași desfășurată, treapta păstrată la schimbarea finisajului, salvarea refuzată — starea, banda, punctul roșu, clicul spre rând —, oprirea la status, la PDF, la „Creează variantă” și la „Copiază oferta”, avertizarea la plecare, rândul incomplet, poziția goală care nu oprește nimic, coșul și confirmările, șipca, speciale 2 ML și pluvialul după redeschidere, telefonul la 390 px); M14 12 din 12 (`s29b-m14-finisaje.cjs`: cascada unei țigle și a unei table cutate, pluvialul, lungimile, secțiunea de sine stătătoare, șipca, „Află preț”, ordinea schimbată de Admin general). Capturile sunt în `docs/verificari/S29b-capturi/`. Baza de lucru a fost doar citită (listele din raport); nimic scris în ea.
+
+**Listele de pe baza de lucru (doar citite, 26.11.2026):**
+- *Accesorii la lungimi:* 5 oferte (IDM-0018, IDM-0026, IDM-0032, IDM-0033, MGM-0004, toate „Comandat”) — metrii salvați egali cu suma rândurilor; formularele citite înapoi au toate rândurile; nicio poziție pe D01, nicio poziție fără lungimi.
+- *Sistem pluvial:* 31 de oferte; **niciun sistem cu piese de 125 și de 150 amestecate**; un singur sistem pe 150 / 100, curat.
+- *Accesorii speciale pe D01:* 5 linii, toate la speciale 2 ML — **MGM-0001** („Comandat”): `ASP01MAT050` × 2 buc și × 23 buc; TST-0001, TST-0002, TST-0003 (ofertele de probă, „În lucru”): câte 125 buc. La 2 ML, D01 e și treapta pe care pornesc rândurile presetate, deci liniile MGM-0001 pot fi corecte — le compară Ionuț cu comanda făcută clasic.
+
+**Pe ce alte căi s-ar fi putut schimba un produs pe tăcute până acum** (am căutat la toate rubricile unde selectoarele se refac la redeschidere):
+- *Accesorii la lungimi* — singura cale reală: Finisajul sau Grosimea atinse după redeschidere duceau produsul pe D01. Corectată.
+- *Sistem pluvial* — produsele salvate nu se schimbau, dar piesele adăugate după redeschidere intrau la 125 / 90. Corectată.
+- *Speciale 2 ML* — produsul nu se schimba singur; lista arăta însă „D01”, deci cine „corecta” treapta după ochi o putea schimba cu mâna lui. Corectată afișarea.
+- *Cascada învelitorii, învelitoarea secundară, secțiunile de sine stătătoare (standard, fixare), șipca* — selectoarele se refac din produsul din catalog sau din cheia salvată; **nu am găsit nicio schimbare tăcută**. La șipcă lipseau doar lățimea („? mm”) și culorile proprii ale produsului după redeschidere — vin acum din catalog.
+- *Rămân, cu bună știință:* o poziție nouă la lungimi și rândurile presetate de la speciale 2 ML **pornesc pe D01** — cine scrie cantitatea fără să aleagă treapta comandă D01. Și: când se schimbă finisajul învelitorii, accesoriile deja completate **rămân pe finisajul vechi** (apar sub lista nouă, cu numele lor). Niciuna nu e schimbare tăcută, dar amândouă pot duce la un produs nedorit; le-am semnalat, nu le-am atins.
+
+**De știut:**
+- **Primele probe de la plan au ieșit greșit de curate**: „redeschiderea” din scripturile mele deschidea aceeași adresă cu „#produse”, care nu reîncarcă pagina. Refăcute cu o reîncărcare adevărată, au arătat defectul (c) și au confirmat BUG-26 și BUG-27. Scriptul nou (`s29b-editor.cjs`) reîncarcă de fiecare dată.
+- **Un defect vechi al etichetei de stare**, găsit în verificare și corectat: dacă anulai o modificare (ecranul revenea exact la ce era salvat), starea rămânea „nesalvat”, deși oferta era salvată.
+- **Texte schimbate pe ecran**: „eroare la salvare” → „NU e salvată”; „+ poziție” → „+ Adaugă rând”; „Scoate rândul” (care scotea toată poziția) → „Scoate accesoriul”, în antetul poziției; coșul rândului — „Scoate rândul N”.
+- **Poarta salvează și Datele generale**: înainte de status / document / acțiune din „⋯”, pagina trimite și antetul și clientul, dacă erau modificate. Dacă salvarea lor se oprește (un câmp greșit, propunerea de legare a clientului), acțiunea se oprește și pagina trece în fila Date generale.
+- **Avertizarea la plecare nu prinde butonul „Înapoi” al browserului** (aplicația nu poate opri acel pas fără o schimbare mai mare a rutării); prinde legăturile din aplicație, „← Oferte” și închiderea / reîncărcarea filei.
+- **Secțiunile de sine stătătoare** (standard, fixare, speciale 2 ML) nu au buton de eliminare a blocului — dispar când nu mai au linii —, deci la ele n-a fost nimic de mutat sau de confirmat.
+- **Sistemul pluvial cu două sisteme în aceeași culoare**: până acum fiecare secțiune își lua toate piesele cu finisajul și culoarea ei, indiferent de sistem, iar „Scoate sistemul” le scotea pe toate. Acum fiecare ține doar piesele sistemului ei.
+- **Lista `ordine_finisaj` nu e încă pe baza de lucru** (26.11.2026): încărcarea celor 13 rânduri e o scriere în baza de lucru și nu mi-a fost permisă în sesiune, deci n-am făcut-o. Cât lista lipsește, finisajele apar în ordinea de până acum — nimic nu se strică, dar nici ordinea nouă nu se vede. Se încarcă de Ionuț (sau de Code, cu acordul lui) cu `npm run optiuni-liste` din `server/`: adaugă doar valorile care lipsesc din listele de opțiuni și nu atinge nimic altceva. Se poate și de mână, din Zona tehnică → Referințe → Liste de opțiuni.
+- **În Zona tehnică finisajul se scrie ca text** (filtrul listei de produse, formularul produsului), nu se alege dintr-o listă — acolo n-a fost nimic de ordonat, deși fișa M14 pomenește „filtrele din Zona tehnică”.
+- **După această sesiune, serverul de lucru trebuie repornit** ca să trimită ordinea finisajelor și produsele din catalog ale liniilor (dacă rulează cu `npm run dev`, se repornește singur).
+- **Documentele lui Claude chat** intrate în commit: `CERERI-BUG-S25.md`, `MODIFICARI-S29B.md`, `MODIFICARI-S30.md`, `MODIFICARI-S31.md` (nou), `OBSERVATII-ECRAN.md`, `PLAN.md`.
+
+**Următorul pas propus:** S30 (`docs/MODIFICARI-S30.md`), cu BUG-28 dacă Ionuț îl hotărăște.

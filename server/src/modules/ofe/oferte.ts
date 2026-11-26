@@ -10,7 +10,7 @@ import { cursulZilei, EroareCurs } from "../curs/serviciu.js";
 import { clientPublic, clientulOfertei, gasesteSauCreeazaClient, normalizeazaTelefon, numarComplet, schemaClient } from "./clienti.js";
 import { pretAjustat, selectAjustare } from "../com/pretAjustat.js";
 import { aceeasiLivrareBilka, descriereLivrareBilka, livrareBilkaPublic, schemaSchimbareLivrareBilka, valoriLivrareBilka } from "./livrareBilka.js";
-import { optiunileListei } from "../adm/optiuniListe.js";
+import { LISTE_OPTIUNI, optiunileListei } from "../adm/optiuniListe.js";
 import { finisajScurt, numarRal, numeModel } from "../mot/pachete.js";
 import { campuriCuIstoric, diferenteCampuri, diferenteProduse, istoricRouter, produsePentruIstoric, scrieIstoric } from "./istoric.js";
 import { EroareMontator, schemaMontatorOferta, seteazaMontatorOferta } from "./montatori.js";
@@ -62,10 +62,10 @@ oferteRouter.use("/:id/documente", documenteRouter);
 oferteRouter.use("/:id/formulare-bilka", formulareBilkaRouter);
 oferteRouter.use("/:id", notiteRouter);
 
-// listele de optiuni configurabile (S14): motivele completarii, sursa clientului
+// listele de optiuni configurabile (S14): motivele completarii, sursa clientului; (S29b, M14) ordinea finisajelor
 oferteRouter.get("/optiuni/:lista", async (req, res) => {
   const lista = String(req.params.lista);
-  if (!["motiv_completare", "sursa_client"].includes(lista)) {
+  if (!(LISTE_OPTIUNI as readonly string[]).includes(lista)) {
     res.status(404).json({ eroare: "Listă necunoscută" });
     return;
   }

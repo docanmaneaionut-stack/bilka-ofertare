@@ -4,6 +4,7 @@ import { z } from "zod";
 import { prisma } from "../../db/prisma.js";
 import { idsCuTextul } from "../../lib/normalizare.js";
 import { cereAutentificare } from "../accounts/middleware.js";
+import { optiunileListei } from "../adm/optiuniListe.js";
 import { ROLURI_CU_OFERTE } from "./vizibilitate.js";
 
 // Catalogul pentru editorul de oferta (FISA-OFERTARE cap. 3-10): produsele cu
@@ -248,6 +249,8 @@ catalogEditorRouter.get("/invelitori", async (_req, res) => {
 });
 
 catalogEditorRouter.get("/referinte", async (_req, res) => {
+  // S29b (M14): ordinea finisajelor in listele de selectie, din lista de referinta "ordine_finisaj"
+  const ordineFinisaje = (await optiunileListei(prisma, "ordine_finisaj")).map((o) => o.valoare);
   const [culori, trepte, variante, categorii, liste] = await Promise.all([
     prisma.culoareFinisajGrosime.findMany({ where: { activ: true }, orderBy: [{ finisaj: "asc" }, { grosime: "asc" }, { culoare: "asc" }], select: { furnizor: true, finisaj: true, grosime: true, culoare: true } }),
     prisma.treaptaDesfasurata.findMany({ where: { activ: true }, orderBy: { deLaMm: "asc" }, select: { treapta: true, deLaMm: true, panaLaMm: true } }),
@@ -255,7 +258,7 @@ catalogEditorRouter.get("/referinte", async (_req, res) => {
     prisma.categorieOferta.findMany({ orderBy: { ordine: "asc" }, select: { denumire: true, zona: true, ordine: true } }),
     prisma.listaImplicitaOferta.findMany({ where: { activ: true }, distinct: ["rubrica", "categorieInvelitoare"], select: { rubrica: true, categorieInvelitoare: true } }),
   ]);
-  res.json({ culori, trepte, variante, categorii, categoriiListe: liste });
+  res.json({ culori, trepte, variante, categorii, categoriiListe: liste, ordineFinisaje });
 });
 
 catalogEditorRouter.get("/liste-implicite", async (req, res) => {

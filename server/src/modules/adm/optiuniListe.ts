@@ -11,7 +11,9 @@ import type { Prisma, PrismaClient } from "@prisma/client";
 // Zona tehnica -> Referinte. Nu stau in migrari: restaurarea unui export cere o
 // baza goala dupa migrari.
 
-export const LISTE_OPTIUNI = ["motiv_completare", "sursa_client"] as const;
+// S29b (M14): "ordine_finisaj" - ordinea finisajelor in listele de selectie (valoarea = numele finisajului din
+// catalog, ordinea = locul lui); o lista de referinta, nu o lista derulanta a ofertei
+export const LISTE_OPTIUNI = ["motiv_completare", "sursa_client", "ordine_finisaj"] as const;
 export type ListaOptiuni = (typeof LISTE_OPTIUNI)[number];
 
 export const CALE_CSV_OPTIUNI = fileURLToPath(new URL("../../../../docs/import/configurare/optiuni-liste.csv", import.meta.url));

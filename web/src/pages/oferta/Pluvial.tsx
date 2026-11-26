@@ -4,6 +4,7 @@ import { BtnSterge } from "../../components/BtnSterge";
 import { ScoateBloc } from "../../components/ScoateBloc";
 import { CasutaCantitate } from "../../components/CasutaCantitate";
 import { Camp, Mesaj, textEroare } from "../../components/ui";
+import { ordoneazaFinisaje } from "../../lib/finisaje";
 import { potriveste } from "../../lib/text";
 import type { Catalog } from "./Produse";
 import { cheieNoua, culoriPentru, ral, RUBRICI, sectiuneaLiniei, SISTEME_PLUVIAL, sistemulLiniei, type LinieUI, type StareEditor } from "./editor";
@@ -57,7 +58,7 @@ export function Pluvial({ catalog, stare, set, poate }: Props) {
           key={s.cheie}
           s={s}
           idx={idx}
-          finisaje={finisaje}
+          finisaje={ordoneazaFinisaje(finisaje, catalog.ref.ordineFinisaje ?? [])}
           sistemul={sistemul}
           catalog={catalog}
           stare={stare}

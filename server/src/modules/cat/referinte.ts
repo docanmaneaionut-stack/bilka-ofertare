@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { prisma } from "../../db/prisma.js";
+import { LISTE_OPTIUNI } from "../adm/optiuniListe.js";
 import { creeazaRuterReferinta } from "./referintaFactory.js";
 
 const textOptional = z.string().trim().min(1).nullish();
@@ -97,7 +98,7 @@ export const optiuniListeRouter = creeazaRuterReferinta({
   orderBy: [{ lista: "asc" }, { ordine: "asc" }, { valoare: "asc" }],
   campuri: ["lista", "valoare", "ordine", "activ"],
   schema: z.object({
-    lista: z.enum(["motiv_completare", "sursa_client"]),
+    lista: z.enum(LISTE_OPTIUNI),
     valoare: z.string().trim().min(1),
     ordine: z.number().int().optional().default(0),
     activ: z.boolean().optional().default(true),

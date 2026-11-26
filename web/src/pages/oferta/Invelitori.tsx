@@ -107,7 +107,7 @@ function BlocInvelitoare({
   const aleModelului = inv.tip && inv.model ? deModel(produse, inv.tip, inv.model) : [];
   const variante = inv.model ? variantePentru(catalog.ref, inv.model) : [];
   const listaOptiuni = optiuni(aleModelului);
-  const listaFinisaje = finisaje(aleModelului, inv.optiune);
+  const listaFinisaje = finisaje(aleModelului, inv.optiune, catalog.ref.ordineFinisaje);
   const listaGrosimi = inv.finisaj ? grosimi(aleModelului, inv.optiune, inv.finisaj) : [];
   const produs = inv.produsId ? (catalog.invelitori.find((p) => p.id === inv.produsId) ?? null) : null;
   const culori = produs ? culoriPentru(catalog.ref, produs, inv.finisaj, inv.grosime) : [];

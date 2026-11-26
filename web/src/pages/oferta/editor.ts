@@ -1,4 +1,5 @@
 import type { InvelitoareSalvata, LinieSalvata, OfertaDetaliu, ProdusEditor, RandGolEditor, ReferinteEditor, SipcaSalvata, StareProduse, ZonaBSalvata } from "../../api";
+import { ordoneazaFinisaje } from "../../lib/finisaje";
 import { cuVirgula } from "../../lib/numere";
 
 // Logica editorului de produse (FISA-OFERTARE cap. 3-10), fara apeluri de retea:
@@ -114,8 +115,9 @@ export function optiuni(produse: ProdusEditor[]): string[] {
   return [...new Set(produse.map((p) => p.optiune ?? ""))];
 }
 
-export function finisaje(produse: ProdusEditor[], optiune: string): string[] {
-  return [...new Set(produse.filter((p) => (p.optiune ?? "") === optiune).map((p) => p.finisaj ?? ""))].filter(Boolean);
+// S29b (M14): in ordinea din lista de referinta ("ordine" = ReferinteEditor.ordineFinisaje)
+export function finisaje(produse: ProdusEditor[], optiune: string, ordine: readonly string[] = []): string[] {
+  return ordoneazaFinisaje([...new Set(produse.filter((p) => (p.optiune ?? "") === optiune).map((p) => p.finisaj ?? ""))].filter(Boolean), ordine);
 }
 
 export function grosimi(produse: ProdusEditor[], optiune: string, finisaj: string): string[] {

@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { apiPretRapid, type PretRapid, type ProdusEditor } from "../api";
+import { apiOptiuni, apiPretRapid, type PretRapid, type ProdusEditor } from "../api";
 import { Ajutor, Camp, Mesaj, textEroare } from "../components/ui";
+import { ordoneazaFinisaje } from "../lib/finisaje";
 import { nr } from "../lib/numere";
 
 // "Afla pret" (FISA-OFERTARE cap. 21): o casuta de cautare, produsele potrivite de la
@@ -16,6 +17,14 @@ export function AflaPret() {
   const [grosime, setGrosime] = useState("");
   const [varianta, setVarianta] = useState("");
   const [pret, setPret] = useState<PretRapid | null>(null);
+  // S29b (M14): ordinea finisajelor, din lista de referinta
+  const [ordineFinisaje, setOrdineFinisaje] = useState<string[]>([]);
+  useEffect(() => {
+    apiOptiuni
+      .lista("ordine_finisaj")
+      .then((r) => setOrdineFinisaje(r.optiuni.map((o) => o.valoare)))
+      .catch(() => setOrdineFinisaje([]));
+  }, []);
 
   useEffect(() => {
     if (q.trim().length < 2) {
@@ -44,7 +53,7 @@ export function AflaPret() {
     return m;
   }, [produse]);
   const aleFamiliei = familie ? (familii.get(familie) ?? []) : [];
-  const finisaje = [...new Set(aleFamiliei.map((p) => p.finisaj ?? ""))];
+  const finisaje = ordoneazaFinisaje([...new Set(aleFamiliei.map((p) => p.finisaj ?? ""))], ordineFinisaje);
   const grosimi = [...new Set(aleFamiliei.filter((p) => (p.finisaj ?? "") === finisaj).map((p) => p.grosime ?? ""))];
   const variante = [...new Set(aleFamiliei.filter((p) => (p.finisaj ?? "") === finisaj && (p.grosime ?? "") === grosime).map((p) => p.varianta ?? ""))];
   const ales = aleFamiliei.find((p) => (p.finisaj ?? "") === finisaj && (p.grosime ?? "") === grosime && (p.varianta ?? "") === varianta) ?? null;
@@ -60,7 +69,10 @@ export function AflaPret() {
 
   const alegeFamilia = (cheie: string) => {
     setFamilie(cheie);
-    const prima = familii.get(cheie)?.[0];
+    // S29b (M14): finisajul preselectat e primul din ordinea de referinta, nu primul venit din catalog
+    const ale = familii.get(cheie) ?? [];
+    const primul = ordoneazaFinisaje([...new Set(ale.map((p) => p.finisaj ?? ""))], ordineFinisaje)[0] ?? "";
+    const prima = ale.find((p) => (p.finisaj ?? "") === primul) ?? ale[0];
     setFinisaj(prima?.finisaj ?? "");
     setGrosime(prima?.grosime ?? "");
     setVarianta(prima?.varianta ?? "");

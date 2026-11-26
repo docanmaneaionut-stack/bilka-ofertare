@@ -3,6 +3,7 @@ import { apiCatalogEditor, type ProdusEditor, type StructuraOferta } from "../..
 import { BtnSterge } from "../../components/BtnSterge";
 import { CasutaCantitate } from "../../components/CasutaCantitate";
 import { Camp, Mesaj, textEroare } from "../../components/ui";
+import { ordoneazaFinisaje } from "../../lib/finisaje";
 import type { Catalog } from "./Produse";
 import { categorieInvelitoare, cheieInvelitoare, cheieNoua, culoriPentru, ral, sectiuneaLiniei, textCheie, type LinieUI, type StareEditor } from "./editor";
 
@@ -74,7 +75,7 @@ export function NouaSectiuneDeSine({ catalog, onAdauga, eticheta = "+ Secțiune 
   const [finisaj, setFinisaj] = useState("");
   const [grosime, setGrosime] = useState("");
   const [culoare, setCuloare] = useState("");
-  const finisaje = [...new Set(catalog.ref.culori.map((c) => c.finisaj))];
+  const finisaje = ordoneazaFinisaje([...new Set(catalog.ref.culori.map((c) => c.finisaj))], catalog.ref.ordineFinisaje ?? []);
   const grosimi = [...new Set(catalog.ref.culori.filter((c) => c.finisaj === finisaj).map((c) => c.grosime))];
   const culori = finisaj && grosime ? culoriPentru(catalog.ref, null, finisaj, grosime) : [];
   if (!deschis)

@@ -131,14 +131,15 @@ export const REFERINTE: ConfigReferinta[] = [
   },
 ];
 
-// (S14) listele de optiuni configurabile: motivele completarii (cap. 2b), sursa clientului (cap. 2)
+// (S14) listele de optiuni configurabile: motivele completarii (cap. 2b), sursa clientului (cap. 2);
+// (S29b, M14) si ordinea finisajelor din listele de selectie ("ordine_finisaj")
 REFERINTE.push({
   cheie: "optiuni-liste",
   cale: "optiuni-liste",
-  titlu: "Liste de opțiuni (motivele completării, sursa clientului)",
+  titlu: "Liste de opțiuni (motivele completării, sursa clientului, ordinea finisajelor)",
   titluScurt: "Liste de opțiuni",
   descriere:
-    "Valorile din listele derulante ale ofertei: „motiv_completare” (cap. 2b) și „sursa_client” (cap. 2). Valorile inițiale vin din docs/import/configurare/optiuni-liste.csv prin npm run seed; aici se adaugă, se reordonează sau se dezactivează — nimic nu se șterge.",
+    "Valorile din listele derulante ale ofertei: „motiv_completare” (cap. 2b) și „sursa_client” (cap. 2). Lista „ordine_finisaj” dă ordinea în care apar finisajele peste tot unde se alege unul (învelitori, secțiuni de sine stătătoare, accesorii la lungimi, șipcă, sistem pluvial, „Află preț”): valoarea e numele finisajului, exact ca în catalog, iar coloana Ordine îi dă locul; un finisaj care nu e în listă apare la sfârșit, alfabetic. Valorile inițiale vin din docs/import/configurare/optiuni-liste.csv prin npm run seed; aici se adaugă, se reordonează sau se dezactivează — nimic nu se șterge.",
   coloane: [
     {
       cheie: "lista",
@@ -150,6 +151,7 @@ REFERINTE.push({
       optiuni: [
         { valoare: "motiv_completare", eticheta: "motiv_completare" },
         { valoare: "sursa_client", eticheta: "sursa_client" },
+        { valoare: "ordine_finisaj", eticheta: "ordine_finisaj" },
       ],
     },
     { cheie: "valoare", eticheta: "Valoare", tip: "text", obligatoriu: true },

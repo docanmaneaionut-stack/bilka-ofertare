@@ -9,3 +9,16 @@ sursa_client;Reclamă;3;da
 sursa_client;Online;4;da
 sursa_client;Trecere pe la sediu;5;da
 sursa_client;Altele;9;da
+ordine_finisaj;lucios;1;da
+ordine_finisaj;colorat (lucios);2;da
+ordine_finisaj;mat;3;da
+ordine_finisaj;Grande Mat;4;da
+ordine_finisaj;Wood;5;da
+ordine_finisaj;RAL 8003;6;da
+ordine_finisaj;zincat;7;da
+ordine_finisaj;dubluvopsit lucios;8;da
+ordine_finisaj;dubluvopsit lucios SSAB;9;da
+ordine_finisaj;dubluvopsit mat;10;da
+ordine_finisaj;dubluvopsit mat SSAB;11;da
+ordine_finisaj;Magnelis;12;da
+ordine_finisaj;Aluzinc;13;da

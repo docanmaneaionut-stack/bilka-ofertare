@@ -4,6 +4,7 @@ import { BtnSterge } from "../../components/BtnSterge";
 import { ScoateBloc } from "../../components/ScoateBloc";
 import { CasutaCantitate } from "../../components/CasutaCantitate";
 import { Camp, Mesaj, textEroare } from "../../components/ui";
+import { ordoneazaFinisaje } from "../../lib/finisaje";
 import type { Catalog } from "./Produse";
 import { cheieNoua, culoriPentru, ral, RUBRICI, sectiuneaLiniei, sipciTrimise, type LinieUI, type SipcaUI, type StareEditor } from "./editor";
 import { locCuloare, MESAJ_RAND, MESAJ_TRONSON, stareaRandului, stareaTronsonului } from "./probleme";
@@ -92,7 +93,7 @@ function RubricaSipca({ idx, litera, s, produse, catalog, stare, set, poate, cal
   const linie = stare.linii.find((l) => l.cheie === s.linie) ?? null;
   const profile = [...new Set(produse.map((p) => p.familie ?? ""))].filter(Boolean);
   const aleProfilului = produse.filter((p) => p.familie === s.profil);
-  const finisaje = [...new Set(aleProfilului.map((p) => p.finisaj ?? ""))].filter(Boolean);
+  const finisaje = ordoneazaFinisaje([...new Set(aleProfilului.map((p) => p.finisaj ?? ""))].filter(Boolean), catalog.ref.ordineFinisaje ?? []);
   const finisaj = linie?.produs.finisaj ?? "";
   const grosimi = [...new Set(aleProfilului.filter((p) => p.finisaj === finisaj).map((p) => p.grosime ?? ""))].filter(Boolean);
   const grosime = linie?.produs.grosime ?? "";
