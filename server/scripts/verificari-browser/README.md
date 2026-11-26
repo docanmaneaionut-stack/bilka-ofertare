@@ -32,7 +32,17 @@ zero dacă a picat ceva. Capturile merg în folderul dat (de obicei `docs/verifi
 | Script | Ce verifică | Datele le lasă |
 |---|---|---|
 | `s29-bug20-21.cjs` | BUG-20 (rândul adăugat cu „+” rămâne fără cantitate, la locul lui), BUG-21 (lista de prețuri și PDF-ul în ordinea de pe ecran) | `tests/ofe-s29.test.ts` |
+| `s29-m12.cjs` | M12 — pagina ofertei pe trei file: rândurile fixe, filele (poziția ținută, adresa, Alt + 1 / 2 / 3), benzile care se strâng, bara de rubrici, statusul dintr-un clic, saltul la filă și la câmp, „Salvează”, „Grupă %”, oferta comandată, telefonul | `tests/ofe-s29.test.ts` |
+| `s25-s27-pagina-ofertei.cjs` | scenariile de pagina ofertei din S25–S27 (căsuța de cantitate, Tab / Enter, coșul, căutarea fără diacritice, modurile de cantitate, „fără telefon”, montator și recomandare, sugestiile pe nume, speciale 2 ML de sine stătătoare, montatorul reținut) | `tests/ofe-s29.test.ts` |
+| `s26a-comenzi-livrare.cjs` | S26a — livrarea de la Bilka pe comandă, „telefon dublat” în lista de oferte | `tests/ofe-s26a.test.ts` |
+| `s26b-ajustare-montator.cjs` | S26b — ajustarea prețului de vânzare pe comandă, montator și recomandare (ofertă și comandă) | `tests/ofe-s26b.test.ts` |
+| `s27-tabel-comenzi.cjs` | S27 — tabelul de comenzi (M10), desktop și 390 px | `tests/ofe-s27.test.ts` |
+| `s27b-comanda-manuala.cjs` | S27b — comanda manuală nu suprascrie fișa clientului (BUG-17), cu regulile din S28 | `tests/ofe-s27b.test.ts` |
+| `s28-comenzi-clienti.cjs` | S28 — agentul vede toate comenzile (M11), adresa lucrării pe comanda manuală (BUG-18), coșul de pe fișa clientului (BUG-19) | `tests/com-s28.test.ts` |
+| `inventar-oferta.cjs` | DOAR CITIRE: fotografia paginii ofertei (rubricile cu rândurile lor, în ordine, câmpurile, butoanele, mesajele) — se rulează înainte și după o schimbare de ecran | orice ofertă vizibilă contului |
+| `compara-inventar.cjs` | compară două fotografii făcute cu `inventar-oferta.cjs`: aceleași rânduri în fiecare rubrică, nimic dispărut de pe pagină | — |
+| `capturi-oferta.cjs` | DOAR CITIRE: capturile paginii ofertei pe fiecare filă, pe ecran lat și pe telefon | orice ofertă vizibilă contului |
 
-| `inventar-oferta.cjs` | DOAR CITIRE: fotografia paginii ofertei (rubricile cu rândurile lor, în ordine, câmpurile, butoanele, mesajele) — se rulează înainte și după o schimbare de ecran și se compară | orice ofertă vizibilă contului |
+Scripturile S26a–S28 primesc doar `<adresa> <parola> <folder-capturi>` (conturile lor de test sunt cele create de fișierul de test).
 
 `comun.cjs` — ajutoarele comune (conectare, așteptare, capturi, lista de verificări).

@@ -1502,3 +1502,433 @@ table.tabel.editabil tbody tr:focus-within td:last-child {
   flex: 1 1 240px;
   overflow-wrap: anywhere;
 }
+
+/* --- S29 (MODIFICAREA M12): pagina ofertei pe trei file ---------------------------------------------------
+   Trei randuri fixe (oferta, statusuri, file) + bara de rubrici in fila Produse; rubricile se strang / deschid
+   cu un clic pe banda lor. Aceleasi variabile ca stilul compact din S18. */
+
+.oferta-fix {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  background: var(--fundal);
+  margin: calc(-1 * var(--spatiu-zona)) -12px var(--spatiu-zona);
+  padding: 6px 12px 4px;
+  border-bottom: 1px solid var(--contur);
+  box-shadow: 0 2px 6px rgb(15 23 42 / 6%);
+}
+
+/* randul ofertei */
+.rand-oferta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px 12px;
+  flex-wrap: wrap;
+}
+.rand-oferta-stanga {
+  display: flex;
+  align-items: baseline;
+  gap: 2px 8px;
+  flex-wrap: wrap;
+  min-width: 0;
+}
+.rand-oferta-stanga h1 {
+  margin: 0;
+  font-size: 18px;
+  white-space: nowrap;
+}
+.client-oferta {
+  font-weight: 600;
+}
+.rand-oferta-detalii {
+  flex-basis: 100%;
+}
+.rand-oferta-dreapta {
+  align-items: center;
+  flex-wrap: wrap;
+}
+.total-oferta {
+  font-size: 16px;
+  white-space: nowrap;
+}
+.stare-salvare.salvat {
+  background: #dcfce7;
+  color: #166534;
+}
+.stare-salvare.nesalvat,
+.stare-salvare.lucru {
+  background: #fef3c7;
+  color: #92400e;
+}
+.stare-salvare.eroare {
+  background: #fee2e2;
+  color: #b91c1c;
+}
+.eticheta-pret-ajustat {
+  display: inline-block;
+  padding: 1px 8px;
+  border-radius: 999px;
+  font-size: var(--text-cap);
+  font-weight: 600;
+  line-height: 1.5;
+  white-space: nowrap;
+  background: #fef3c7;
+  color: #92400e;
+}
+.doar-telefon {
+  display: none;
+}
+
+/* randul statusurilor */
+.rand-statusuri {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 4px;
+  min-width: 0;
+}
+.eticheta-rand {
+  font-size: var(--text-cap);
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  color: var(--text-secundar);
+}
+.rand-statusuri .bara-statusuri {
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  scrollbar-width: thin;
+  min-width: 0;
+}
+.rand-statusuri .bara-statusuri button {
+  flex: 0 0 auto;
+}
+.rand-statusuri .bara-statusuri button.status-curent:disabled {
+  background: var(--antracit);
+  color: #fff;
+  opacity: 1;
+}
+.avans-oferta {
+  white-space: nowrap;
+}
+.sub-statusuri {
+  margin-top: 4px;
+  padding: 6px 8px;
+  background: var(--card);
+  border-radius: 6px;
+}
+.sub-statusuri > :last-child {
+  margin-bottom: 0;
+}
+
+/* randul filelor */
+.rand-file {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 4px;
+  margin-top: 6px;
+}
+.fila-buton {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 30px;
+  padding: 2px 10px;
+  border: 0;
+  border-radius: 6px 6px 0 0;
+  background: var(--banda-zona);
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  min-width: 0;
+}
+.fila-buton:hover {
+  background: var(--secundar-hover);
+}
+.fila-buton.activa {
+  background: var(--antracit);
+  color: #fff;
+}
+.fila-nr {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--card);
+  color: var(--antracit);
+  font-size: 11px;
+  font-weight: 700;
+}
+.fila-nume {
+  font-weight: 700;
+  white-space: nowrap;
+}
+.fila-nume .nume-scurt {
+  display: none;
+}
+/* sub 400 px fila a treia se numeste scurt („Prețuri”), iar filele isi impart latimea dupa cat au de scris */
+@media (max-width: 400px) {
+  .fila-nume .nume-lung {
+    display: none;
+  }
+  .fila-nume .nume-scurt {
+    display: inline;
+  }
+  .rand-file {
+    display: flex;
+  }
+  .rand-file .fila-buton {
+    flex: 1 1 auto;
+  }
+}
+.fila-rezumat {
+  margin-left: auto;
+  font-size: var(--text-cap);
+  opacity: 0.85;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+}
+.fila-rezumat.lipsa {
+  opacity: 1;
+  font-weight: 600;
+}
+.punct-rosu {
+  flex: 0 0 auto;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--rosu);
+}
+
+.fila[hidden] {
+  display: none;
+}
+.mentiuni-istoric {
+  margin-bottom: var(--spatiu-zona);
+  grid-template-columns: minmax(0, 1fr);
+  max-width: 720px;
+}
+.ascuns-vizual {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+  padding: 0;
+}
+
+/* fila "Date generale": doua coloane pe ecran lat */
+.coloane-generale {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 0 var(--spatiu-zona);
+  align-items: start;
+}
+@media (max-width: 1000px) {
+  .coloane-generale {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* fila "Produse": "Grupa %" sus, in dreapta, discreta */
+.cap-produse {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: var(--spatiu-categorie);
+}
+
+/* bara de rubrici (in randurile fixe) */
+.slot-bara-rubrici[hidden] {
+  display: none;
+}
+.bara-rubrici {
+  display: flex;
+  gap: 4px;
+  padding-top: 4px;
+  overflow-x: auto;
+  scrollbar-width: thin;
+}
+.salt-rubrica {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 22px;
+  padding: 0 8px;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  background: var(--banda-categorie);
+  color: inherit;
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+}
+.salt-rubrica:hover {
+  background: var(--secundar-hover);
+}
+.salt-rubrica .numar {
+  font-weight: 700;
+  color: #1d4ed8;
+}
+.salt-rubrica.goala {
+  background: transparent;
+  border: 1px dashed var(--contur);
+  color: var(--text-secundar);
+}
+.salt-rubrica.activa {
+  background: #1d4ed8;
+  border-color: transparent;
+  color: #fff;
+}
+.salt-rubrica.activa .numar {
+  color: #fff;
+}
+
+/* rubricile: banda cu sageata; stransa, rubrica ramane pe un rand */
+.rubrica {
+  scroll-margin-top: calc(var(--inaltime-fix, 150px) + 6px);
+}
+#client,
+#istoric,
+#notite,
+#documente,
+#livrare-bilka {
+  scroll-margin-top: calc(var(--inaltime-fix, 150px) + 6px);
+}
+.rubrica > section.panou > h2:first-child {
+  cursor: pointer;
+  user-select: none;
+}
+.rubrica > section.panou > h2:first-child::before {
+  content: "\25BE";
+  width: 10px;
+  flex: 0 0 auto;
+}
+.rubrica.stransa > section.panou > h2:first-child::before {
+  content: "\25B8";
+}
+.rubrica > section.panou > h2:first-child::after {
+  content: var(--rezumat, "");
+  margin-left: auto;
+  font-weight: 400;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--text-secundar);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+}
+.rubrica.stransa > section.panou > :not(h2:first-child) {
+  display: none;
+}
+.rubrica.stransa > section.panou {
+  padding-bottom: 0;
+}
+.rubrica.stransa > section.panou > h2:first-child {
+  margin-bottom: 0;
+  border-radius: 6px;
+}
+
+/* rezultatul pe scurt, in josul filei Produse */
+.rand-rezultat-scurt {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.text-rosu {
+  color: var(--rosu);
+}
+
+/* telefon: randul ofertei pe o singura linie (numar, total, meniul cu trei puncte, Salveaza), filele = trei
+   butoane, statusurile si bara de rubrici se deruleaza lateral */
+@media (max-width: 720px) {
+  .oferta-fix {
+    padding: 4px 12px 3px;
+  }
+  .doar-lat {
+    display: none !important;
+  }
+  .doar-telefon {
+    display: block;
+  }
+  .rand-oferta {
+    flex-wrap: nowrap;
+  }
+  .rand-oferta-stanga {
+    flex-wrap: nowrap;
+    overflow: hidden;
+  }
+  .rand-oferta-stanga h1 {
+    font-size: 15px;
+  }
+  .rand-oferta-stanga .client-oferta,
+  .rand-oferta-stanga .rand-oferta-detalii,
+  .rand-oferta-stanga .eticheta-fara-telefon,
+  .rand-oferta-stanga .eticheta-pret-ajustat {
+    display: none;
+  }
+  .rand-oferta-dreapta {
+    flex-wrap: nowrap;
+    gap: 4px;
+  }
+  .total-oferta {
+    font-size: 13px;
+  }
+  .stare-salvare {
+    padding: 1px 6px;
+  }
+  .rand-statusuri {
+    margin-top: 3px;
+  }
+  .rand-statusuri .eticheta-rand {
+    display: none;
+  }
+  .rand-statusuri .bara-statusuri {
+    scrollbar-width: none;
+  }
+  .rand-file {
+    margin-top: 3px;
+  }
+  .fila-buton {
+    min-height: 28px;
+    padding: 2px 6px;
+    gap: 4px;
+    justify-content: center;
+  }
+  .fila-nume {
+    font-size: 12px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .fila-rezumat {
+    margin-left: 0;
+    flex: 0 0 auto;
+  }
+  .fila-rezumat:not(.lipsa) {
+    display: none;
+  }
+  /* pe telefon, langa numele filei ramane doar punctul rosu (textul e in fila) */
+  .fila-rezumat.lipsa {
+    font-size: 0;
+    gap: 0;
+  }
+  .bara-rubrici {
+    padding-top: 3px;
+    scrollbar-width: none;
+  }
+}

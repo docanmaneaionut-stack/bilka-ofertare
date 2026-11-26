@@ -1,22 +1,33 @@
-import { useEffect, useState, type FormEvent } from "react";
+import { useEffect, useLayoutEffect, useRef, useState, type FormEvent } from "react";
 import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { apiDocumente, apiFormulareBilka, apiOferte, apiOptiuni, apiPreturi, apiStatus, dataRo, EroareCerere, ETICHETA_STATUS, type Client, type ClientDate, type OfertaDetaliu as Oferta, type SursaPreluare, type TipDocument } from "../api";
 import { DialogLivrareBilka } from "../components/DialogLivrareBilka";
 import { clientGol, dinClient, FormularClient } from "../components/FormularClient";
-import { MeniuActiuni } from "../components/MeniuActiuni";
+import { MeniuActiuni, type ActiuneMeniu } from "../components/MeniuActiuni";
 import { Ajutor, Camp, eroareCamp, Mesaj, textEroare } from "../components/ui";
-import { nr } from "../lib/numere";
+import { lei, nr } from "../lib/numere";
 import { Documente, ETICHETA_TIP } from "./oferta/Documente";
+import { ancoraFilei, FILA_IMPLICITA, FILE, filaDinAncora, filaDinTasta, rezumatFile, stareaSalvarii, type Fila, type StareSalvareProduse } from "./oferta/file";
 import { Istoric, NotiteAtasamente } from "./oferta/IstoricNotite";
 import { Montator } from "./oferta/Montator";
 import { Preturi } from "./oferta/Preturi";
+import { idRubricaPeEcran } from "./oferta/rubrici";
 import { Produse } from "./oferta/Produse";
 import { Statusuri } from "./oferta/Statusuri";
+import { Structura } from "./oferta/Structura";
 
 // Pagina ofertei: antetul si clientul, statusurile (cap. 14), zona produselor
 // (cap. 3-10), preturile (cap. 11), montatorul / recomandarea (cap. 12), istoricul,
 // notitele si atasamentele (cap. 14), varianta, completarea si legarea ulterioara
 // (cap. 2b), copierea (cap. 15). Documentele (PDF) vin in S16.
+//
+// S29 (MODIFICAREA M12, docs/MODIFICARI-S29.md v1.3): pagina e pe TREI FILE, sub trei randuri fixe -
+// randul ofertei (numar, client, total, starea salvarii, butoanele paginii, „Salvează”), randul statusurilor
+// (toate la vedere, un clic schimba statusul) si randul filelor: 1 Date generale (client, antet, recomandare,
+// montator, livrarea de la Bilka, notite, istoric) · 2 Produse (invelitori, rubrici, zona B) · 3 Preturi si
+// documente (rezultat, preturi, documente). Toate filele sunt incarcate si doar se arata / ascund: nimic nu
+// se pierde la schimbarea filei si fiecare isi tine locul de derulare. E doar asezarea ecranului - calculul,
+// datele, regulile statusurilor si drepturile sunt cele de pana acum.
 export function OfertaDetaliu() {
   const { id } = useParams<{ id: string }>();
   const [parametri, setParametri] = useSearchParams();
@@ -52,6 +63,77 @@ export function OfertaDetaliu() {
   // S26a (M7): generarea formularului fara alegerea livrarii deschide dialogul
   const [dialogLivrare, setDialogLivrare] = useState(false);
 
+  // ------------------------------------------------------------- S29 (M12): filele
+  const [fila, setFila] = useState<Fila>(() => filaDinAncora(window.location.hash) ?? FILA_IMPLICITA);
+  // locul de derulare al fiecarei file; "tinta" = unde se merge dupa schimbarea filei (rubrica, camp)
+  const pozitii = useRef<Record<Fila, number>>({ generale: 0, produse: 0, preturi: 0 });
+  const tinta = useRef<{ id?: string; focus?: string } | null>(null);
+  const refFix = useRef<HTMLDivElement>(null);
+  // locurile din pagina in care alte componente isi pun bucatile (bara de rubrici; din Statusuri: livrarea, comanda)
+  const [slotBara, setSlotBara] = useState<HTMLElement | null>(null);
+  const [slotLivrare, setSlotLivrare] = useState<HTMLElement | null>(null);
+  const [slotComanda, setSlotComanda] = useState<HTMLElement | null>(null);
+  // starea salvarii produselor (salvare automata) si salvarea ei pe loc, la „Salvează”
+  const [salvareProduse, setSalvareProduse] = useState<StareSalvareProduse>("salvat");
+  const salvareAcum = useRef<(() => Promise<void>) | null>(null);
+
+  const laTinta = () => {
+    const t = tinta.current;
+    tinta.current = null;
+    if (!t) return;
+    requestAnimationFrame(() => {
+      if (t.id) document.getElementById(t.id)?.scrollIntoView({ block: "start" });
+      if (t.focus) document.querySelector<HTMLElement>(t.focus)?.focus();
+    });
+  };
+  // schimba fila (tinandu-i locul celei parasite) si, optional, merge la o rubrica / un camp din ea
+  const mergiLa = (noua: Fila, spre?: { id?: string; focus?: string }) => {
+    tinta.current = spre ?? null;
+    if (noua === fila) {
+      laTinta();
+      return;
+    }
+    pozitii.current[fila] = window.scrollY;
+    setFila(noua);
+  };
+  const mergiLaCurent = useRef(mergiLa);
+  mergiLaCurent.current = mergiLa;
+
+  // dupa schimbarea filei: adresa tine fila (reincarcarea revine in ea), iar pagina revine la locul filei
+  useLayoutEffect(() => {
+    if (window.location.hash !== ancoraFilei(fila)) window.history.replaceState(window.history.state, "", `${window.location.pathname}${window.location.search}${ancoraFilei(fila)}`);
+    if (tinta.current) laTinta();
+    else window.scrollTo(0, pozitii.current[fila]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [fila, parametri]);
+
+  // Alt + 1 / 2 / 3 schimba fila
+  useEffect(() => {
+    const laTasta = (e: KeyboardEvent) => {
+      const noua = filaDinTasta(e);
+      if (!noua) return;
+      e.preventDefault();
+      mergiLaCurent.current(noua);
+    };
+    window.addEventListener("keydown", laTasta);
+    return () => window.removeEventListener("keydown", laTasta);
+  }, []);
+
+  // inaltimea randurilor fixe: saltul la o rubrica o aduce sub ele, nu dedesubtul lor
+  const incarcata = oferta !== null;
+  useEffect(() => {
+    const el = refFix.current;
+    if (!el) return;
+    const masoara = () => document.documentElement.style.setProperty("--inaltime-fix", `${Math.ceil(el.getBoundingClientRect().height)}px`);
+    const observator = new ResizeObserver(masoara);
+    observator.observe(el);
+    masoara();
+    return () => {
+      observator.disconnect();
+      document.documentElement.style.removeProperty("--inaltime-fix");
+    };
+  }, [incarcata]);
+
   // S16b: formularele de comanda Bilka - un .xlsm per formular, de la "De comandat" si la
   // "Comandat"; raman in panoul "Documente", avertizarile (produse fara loc) se arata aici
   const [avertizariFormulare, setAvertizariFormulare] = useState<string[]>([]);
@@ -76,7 +158,7 @@ export function OfertaDetaliu() {
       setMesaj(`Formulare Bilka generate: ${r.documente.map((d) => d.nume).join(", ")} — le găsești în panoul „Documente”. Deschide fișierul în Excel, verifică-l și salvează-l înainte de a-l trimite.`);
       setAvertizariFormulare(r.avertizari);
       setReincarcaIstoric((n) => n + 1);
-      document.getElementById("documente")?.scrollIntoView({ behavior: "smooth" });
+      mergiLa("preturi", { id: "documente" });
     } catch (err) {
       if (err instanceof EroareCerere && err.campuri.some((c) => c.camp === "livrareBilka")) setDialogLivrare(true);
       else setEroare(textEroare(err));
@@ -161,10 +243,12 @@ export function OfertaDetaliu() {
     }
   }
 
-  // "legare" = raspunsul la propunerea de legare (antetul e deja salvat atunci)
-  async function salveaza(e: FormEvent | null, legare?: "leaga" | "pastreaza") {
+  // "legare" = raspunsul la propunerea de legare (antetul e deja salvat atunci).
+  // S29 (M12): cand ceva opreste salvarea (un camp gresit, propunerea de legare), pagina trece in fila
+  // "Date generale", la client, cu cursorul pe primul camp cu problema (regula BUG-4)
+  async function salveaza(e: FormEvent | null, legare?: "leaga" | "pastreaza"): Promise<boolean> {
     e?.preventDefault();
-    if (!oferta) return;
+    if (!oferta) return false;
     setEroare(null);
     setEroareFormular(null);
     setMesaj(null);
@@ -177,13 +261,17 @@ export function OfertaDetaliu() {
       const { oferta: dupa } = await apiOferte.client(oferta.id, { ...client, mentiuni: m, ...(raspuns ? { legare: raspuns } : {}), ...(alesClient ? { clientExistentId: alesClient.id } : {}) });
       preia(dupa);
       setMesaj("Antetul și clientul au fost salvate.");
+      return true;
     } catch (err) {
       if (err instanceof EroareCerere && err.propunereLegare) {
         setPropunere(err.propunereLegare);
+        mergiLa("generale", { id: "client" });
       } else {
         setEroare(textEroare(err));
         setEroareFormular(err);
+        mergiLa("generale", { focus: "#fila-generale .camp.cu-eroare input, #fila-generale .camp.cu-eroare select" });
       }
+      return false;
     } finally {
       setSeSalveaza(false);
     }
@@ -200,67 +288,158 @@ export function OfertaDetaliu() {
     setDialog(d);
   };
 
+  // antetul si clientul sunt singurele care nu se salveaza singure: modificate = "nesalvat"
+  const antetModificat =
+    oferta.poateModifica &&
+    (data !== oferta.data || sursaClient !== (oferta.sursaClient ?? "") || note !== (oferta.note ?? "") || adresaLucrarii !== (oferta.adresaLucrarii ?? "") || localitate !== (oferta.localitate ?? "") || JSON.stringify(client) !== JSON.stringify(dinClient(oferta.client)));
+  const stare = stareaSalvarii({ produse: salvareProduse, antetModificat, seSalveaza });
+  // „Salvează” din randul ofertei: salveaza tot ce e nesalvat, din orice fila
+  const salveazaTot = async () => {
+    await salvareAcum.current?.();
+    if (antetModificat) await salveaza(null);
+  };
+
+  const rezumate = rezumatFile(oferta);
+  const total = oferta.preturi?.rezultat ? lei(oferta.preturi.rezultat.totaluri.documentTotalLei) : null;
+  const pretAjustat = comandata && Boolean(oferta.comanda?.pretAjustat);
+  const formulareLaVedere = oferta.status === "DE_COMANDAT" || comandata;
+  const etichetaFormulare = `Formulare Bilka${oferta.structura?.rezultat ? ` (${oferta.structura.rezultat.formulareBilka.length})` : ""}`;
+  const faraProduse = oferta.invelitori.length === 0 && oferta.linii.length === 0;
+  const actiuniPdf: ActiuneMeniu[] = (["OFERTA", "REZUMAT", "DETALIATA", "TABEL_FACTURARE"] as TipDocument[]).map((tip) => ({
+    eticheta: `${ETICHETA_TIP[tip]} (PDF)`,
+    explicatie: tip === "TABEL_FACTURARE" ? "intern, în lei" : undefined,
+    onClick: () => void pdf(tip),
+    dezactivat: faraProduse ? "oferta nu are încă produse" : lucru ? "se generează alt document" : undefined,
+  }));
+  // pe telefon randul ofertei tine doar numarul, totalul, „Salvează” si „⋯”: restul butoanelor paginii sunt in „⋯”
+  const actiuniTelefon: ActiuneMeniu[] = [
+    { eticheta: "← Oferte", onClick: () => navigate("/oferte"), clasa: "doar-telefon" },
+    { eticheta: "Află preț", onClick: () => navigate("/oferte/afla-pret"), clasa: "doar-telefon" },
+    ...(formulareLaVedere ? [{ eticheta: etichetaFormulare, explicatie: "generează formularele de comandă Bilka (.xlsm)", onClick: () => void formulareBilka(), dezactivat: lucru ? "se generează alt document" : undefined, clasa: "doar-telefon" }] : []),
+    ...actiuniPdf.map((a) => ({ ...a, clasa: "doar-telefon" })),
+  ];
+  const campMentiuni = oferta.areIstoric && poateSume && (
+    <div className="rand-campuri mentiuni-istoric">
+      <Camp eticheta="Mențiuni pentru istoric (se notează la fiecare modificare de acum încolo)">
+        <input type="text" value={mentiuni} onChange={(e) => setMentiuni(e.target.value)} placeholder="de ce se schimbă: cererea clientului, corectură…" />
+      </Camp>
+    </div>
+  );
+
   return (
     <>
-      <div className="antet-pagina">
-        <div>
-          <h1 style={{ marginBottom: 4 }}>
-            {oferta.numarComplet}
-            {oferta.versiune > 1 ? ` · varianta ${oferta.versiune}` : ""} <span className={`status-oferta ${oferta.status}`}>{ETICHETA_STATUS[oferta.status]}</span>
+      {/* ------------------------------------------------ cele trei randuri fixe (+ bara de rubrici, in fila Produse) */}
+      <div className="oferta-fix" ref={refFix}>
+        <div className="rand-oferta">
+          <div className="rand-oferta-stanga">
+            <h1>
+              {oferta.numarComplet}
+              {oferta.versiune > 1 ? ` · varianta ${oferta.versiune}` : ""}
+            </h1>
+            <span className="client-oferta">
+              {oferta.client.nume}
+              {(oferta.localitate ?? oferta.client.localitate) ? ` · ${oferta.localitate ?? oferta.client.localitate}` : ""}
+            </span>
             {!oferta.client.telefon && (
               <span className="eticheta-fara-telefon" title="clientul n-are telefon; se completează înainte de „Comandat”">
                 fără telefon
               </span>
             )}
-          </h1>
-          <span className="text-secundar">
-            {dataRo(oferta.data)} · {oferta.firma.denumire} · {oferta.cont.nume}
-            {oferta.completareLa ? (
-              <>
-                {" "}
-                · completare la <Link to={`/oferte/${oferta.completareLa.id}`}>{oferta.completareLa.numarComplet}</Link>
-                {oferta.motivCompletare ? ` · ${oferta.motivCompletare}` : ""}
-              </>
-            ) : null}
-          </span>
-        </div>
-        <div className="actiuni">
-          <Link className="buton secundar" to="/oferte">
-            ← Oferte
-          </Link>
-          <Link className="buton secundar" to="/oferte/afla-pret">
-            Află preț
-          </Link>
-          {(oferta.status === "DE_COMANDAT" || comandata) && (
-            <button className="buton" type="button" disabled={lucru !== null} onClick={() => void formulareBilka()} title="Generează formularele de comandă Bilka (.xlsm) din șablonul firmei; la „Comandat” din rezultatul salvat. Deschide fișierul în Excel, verifică-l și salvează-l înainte de a-l trimite.">
-              {lucru === "formulare" ? "se generează…" : `Formulare Bilka${oferta.structura?.rezultat ? ` (${oferta.structura.rezultat.formulareBilka.length})` : ""}`}
+            {pretAjustat && (
+              <span className="eticheta-pret-ajustat" title="prețul de vânzare a fost ajustat pe comandă — vezi caseta „Comandă” din Date generale">
+                preț ajustat
+              </span>
+            )}
+            <span className="rand-oferta-detalii text-secundar mic">
+              {dataRo(oferta.data)} · {oferta.firma.denumire} · {oferta.cont.nume}
+              {oferta.completareLa ? (
+                <>
+                  {" "}
+                  · completare la <Link to={`/oferte/${oferta.completareLa.id}`}>{oferta.completareLa.numarComplet}</Link>
+                  {oferta.motivCompletare ? ` · ${oferta.motivCompletare}` : ""}
+                </>
+              ) : null}
+            </span>
+          </div>
+          <div className="actiuni rand-oferta-dreapta">
+            {total && (
+              <strong className="total-oferta" title="totalul documentului, în lei">
+                {total}
+              </strong>
+            )}
+            <span className={`eticheta stare-salvare ${stare.fel}`} aria-live="polite">
+              {stare.text}
+            </span>
+            <Link className="buton secundar doar-lat" to="/oferte">
+              ← Oferte
+            </Link>
+            <Link className="buton secundar doar-lat" to="/oferte/afla-pret">
+              Află preț
+            </Link>
+            {formulareLaVedere && (
+              <button className="buton doar-lat" type="button" disabled={lucru !== null} onClick={() => void formulareBilka()} title="Generează formularele de comandă Bilka (.xlsm) din șablonul firmei; la „Comandat” din rezultatul salvat. Deschide fișierul în Excel, verifică-l și salvează-l înainte de a-l trimite.">
+                {lucru === "formulare" ? "se generează…" : etichetaFormulare}
+              </button>
+            )}
+            <span className="doar-lat">
+              <MeniuActiuni eticheta={lucru?.startsWith("pdf-") ? "se generează…" : "PDF ▾"} actiuni={actiuniPdf} />
+            </span>
+            <MeniuActiuni
+              actiuni={[
+                ...actiuniTelefon,
+                { eticheta: "Copiază oferta", explicatie: "ofertă nouă cu aceleași produse și prețuri", onClick: () => setDialog("copie"), dezactivat: poateSume ? undefined : "doar cine a făcut oferta și Administratorul" },
+                { eticheta: "Creează variantă", explicatie: "versiune nouă sub același număr, cu adaosul real păstrat", onClick: () => void actiune("varianta", async () => (await apiPreturi.varianta(oferta.id)).oferta), dezactivat: comandata ? "oferta e comandată" : oferta.poateModifica ? undefined : "doar cine a făcut oferta și Administratorul" },
+                { eticheta: "Completare la această ofertă", explicatie: "ofertă nouă legată de aceasta, fără gardă", onClick: () => deschideMotiv("completare"), dezactivat: oferta.completareLa ? "oferta e ea însăși o completare" : poateSume ? undefined : "doar cine a făcut oferta și Administratorul" },
+                { eticheta: "Leagă ca completare la…", explicatie: "oferta aceasta devine completarea unei oferte inițiale", onClick: () => deschideMotiv("legare"), dezactivat: oferta.completareLa ? `e deja completare la ${oferta.completareLa.numarComplet}` : poateSume ? undefined : "doar cine a făcut oferta și Administratorul" },
+                { eticheta: "Preia prețurile în altă ofertă", explicatie: "aplică prețurile de aici pe o altă ofertă „În lucru”", onClick: () => setDialog("preia-in") },
+                { eticheta: "Istoric", onClick: () => mergiLa("generale", { id: "istoric" }) },
+                { eticheta: "Notițe și atașamente", onClick: () => mergiLa("generale", { id: "notite" }) },
+              ]}
+            />
+            <button className="buton salveaza-oferta" type="button" disabled={!oferta.poateModifica || seSalveaza} onClick={() => void salveazaTot()} title={oferta.poateModifica ? "Salvează tot ce e nesalvat, din orice filă (produsele se salvează și singure)" : comandata ? "Oferta e comandată: nu mai e nimic de salvat aici" : "Oferta o modifică cine a făcut-o și Administratorul firmei"}>
+              {seSalveaza ? "Se salvează…" : "Salvează"}
             </button>
-          )}
-          <MeniuActiuni
-            eticheta={lucru?.startsWith("pdf-") ? "se generează…" : "PDF ▾"}
-            actiuni={(["OFERTA", "REZUMAT", "DETALIATA", "TABEL_FACTURARE"] as TipDocument[]).map((tip) => ({
-              eticheta: `${ETICHETA_TIP[tip]} (PDF)`,
-              explicatie: tip === "TABEL_FACTURARE" ? "intern, în lei" : undefined,
-              onClick: () => void pdf(tip),
-              dezactivat: oferta.invelitori.length === 0 && oferta.linii.length === 0 ? "oferta nu are încă produse" : lucru ? "se generează alt document" : undefined,
-            }))}
-          />
-          <MeniuActiuni
-            actiuni={[
-              { eticheta: "Copiază oferta", explicatie: "ofertă nouă cu aceleași produse și prețuri", onClick: () => setDialog("copie"), dezactivat: poateSume ? undefined : "doar cine a făcut oferta și Administratorul" },
-              { eticheta: "Creează variantă", explicatie: "versiune nouă sub același număr, cu adaosul real păstrat", onClick: () => void actiune("varianta", async () => (await apiPreturi.varianta(oferta.id)).oferta), dezactivat: comandata ? "oferta e comandată" : oferta.poateModifica ? undefined : "doar cine a făcut oferta și Administratorul" },
-              { eticheta: "Completare la această ofertă", explicatie: "ofertă nouă legată de aceasta, fără gardă", onClick: () => deschideMotiv("completare"), dezactivat: oferta.completareLa ? "oferta e ea însăși o completare" : poateSume ? undefined : "doar cine a făcut oferta și Administratorul" },
-              { eticheta: "Leagă ca completare la…", explicatie: "oferta aceasta devine completarea unei oferte inițiale", onClick: () => deschideMotiv("legare"), dezactivat: oferta.completareLa ? `e deja completare la ${oferta.completareLa.numarComplet}` : poateSume ? undefined : "doar cine a făcut oferta și Administratorul" },
-              { eticheta: "Preia prețurile în altă ofertă", explicatie: "aplică prețurile de aici pe o altă ofertă „În lucru”", onClick: () => setDialog("preia-in") },
-              { eticheta: "Istoric", onClick: () => document.getElementById("istoric")?.scrollIntoView({ behavior: "smooth" }) },
-              { eticheta: "Notițe și atașamente", onClick: () => document.getElementById("notite")?.scrollIntoView({ behavior: "smooth" }) },
-            ]}
-          />
+          </div>
         </div>
+
+        <Statusuri
+          oferta={oferta}
+          onOferta={preia}
+          mentiuni={mentiuni}
+          slotLivrare={slotLivrare}
+          slotComanda={slotComanda}
+          onEroareClient={(e) => {
+            setEroareFormular(e);
+            mergiLa("generale", { id: "client", focus: '#client input[type="tel"]' });
+          }}
+          onBlocajProduse={() => mergiLa("produse", { id: idRubricaPeEcran("invelitori") })}
+        />
+
+        <div className="rand-file" role="tablist" aria-label="Filele ofertei">
+          {FILE.map((f) => {
+            const r = rezumate[f.id];
+            return (
+              <button key={f.id} type="button" role="tab" id={`tab-${f.id}`} aria-selected={fila === f.id} aria-controls={`fila-${f.id}`} className={`fila-buton${fila === f.id ? " activa" : ""}`} onClick={() => mergiLa(f.id)} title={`${f.nume} (Alt + ${f.nr})`}>
+                <span className="fila-nr">{f.nr}</span>
+                <span className="fila-nume">
+                  <span className="nume-lung">{f.nume}</span>
+                  <span className="nume-scurt">{f.scurt}</span>
+                </span>
+                <span className={`fila-rezumat${r.lipsa ? " lipsa" : ""}`}>
+                  {r.lipsa && <span className="punct-rosu" aria-hidden="true" />}
+                  {r.text}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+        <div className="slot-bara-rubrici" ref={setSlotBara} hidden={fila !== "produse"} />
       </div>
 
+      {/* ------------------------------------------------ mesajele paginii si panourile din „⋯”, in orice fila */}
       {c.avertizareCurs && <Mesaj tip="avertizare">{c.avertizareCurs}</Mesaj>}
       {eroare && <Mesaj tip="eroare">{eroare}</Mesaj>}
+      {mesaj && <Mesaj tip="ok">{mesaj}</Mesaj>}
       {avertizariFormulare.length > 0 && (
         <Mesaj tip="avertizare">
           <strong>Formularele Bilka — de verificat în Excel:</strong>
@@ -271,24 +450,6 @@ export function OfertaDetaliu() {
           </ul>
         </Mesaj>
       )}
-
-      {oferta.areIstoric && poateSume && (
-        <div className="rand-campuri">
-          <Camp eticheta="Mențiuni pentru istoric (se notează la fiecare modificare de acum încolo)">
-            <input type="text" value={mentiuni} onChange={(e) => setMentiuni(e.target.value)} placeholder="de ce se schimbă: cererea clientului, corectură…" />
-          </Camp>
-        </div>
-      )}
-
-      <Statusuri
-        oferta={oferta}
-        onOferta={preia}
-        mentiuni={mentiuni}
-        onEroareClient={(e) => {
-          setEroareFormular(e);
-          document.getElementById("client")?.scrollIntoView({ behavior: "smooth", block: "center" });
-        }}
-      />
       {dialogLivrare && (
         <DialogLivrareBilka
           localitateImplicita={oferta.localitate ?? oferta.client.localitate}
@@ -303,29 +464,6 @@ export function OfertaDetaliu() {
           }}
           onRenunta={() => setDialogLivrare(false)}
         />
-      )}
-
-      {(oferta.versiuni?.length ?? 0) > 1 && (
-        <section className="panou">
-          <h2>Versiuni (variante de preț)</h2>
-          <ul>
-            {oferta.versiuni!.map((v) => (
-              <li key={v.id}>
-                {v.id === oferta.id ? <strong>varianta {v.versiune}</strong> : <Link to={`/oferte/${v.id}`}>varianta {v.versiune}</Link>} · {ETICHETA_STATUS[v.status]}
-                {v.curenta ? " · curentă" : ""}
-                {!v.curenta && oferta.poateModifica && (
-                  <>
-                    {" "}
-                    <button className="buton secundar mic" type="button" disabled={lucru !== null} onClick={() => void actiune("curenta", async () => (await apiPreturi.faCurenta(v.id)).oferta)}>
-                      Fă-o curentă
-                    </button>
-                  </>
-                )}
-              </li>
-            ))}
-          </ul>
-          <p className="mic text-secundar">Lista de oferte arată doar versiunea curentă; „Acceptată” o face curentă automat.</p>
-        </section>
       )}
 
       {(dialog === "completare" || dialog === "legare") && (
@@ -422,137 +560,197 @@ export function OfertaDetaliu() {
         </section>
       )}
 
-      <form className="formular" onSubmit={salveaza}>
-        <section className="panou">
-          <h2>Antet</h2>
-          <div className="rand-campuri">
-            <Camp eticheta="Data ofertei" obligatoriu eroare={eroareCamp(eroareFormular, "data")}>
-              <input type="date" value={data} onChange={(e) => setData(e.target.value)} required disabled={!oferta.poateModifica} />
-            </Camp>
-            <Camp eticheta="Curs BNR (documentul)">
-              <input type="text" value={`${nr(c.cursBnr, 4)} · ${dataRo(c.dataCurs)} · ${c.sursaCurs}`} readOnly />
-            </Camp>
-            <Camp eticheta="Curs de achiziție (BNR × 1,01)">
-              <input type="text" value={nr(c.cursAchizitie, 4)} readOnly />
-            </Camp>
-            <Camp eticheta="Adresa lucrării" eroare={eroareCamp(eroareFormular, "adresaLucrarii")}>
-              <input type="text" value={adresaLucrarii} onChange={(e) => setAdresaLucrarii(e.target.value)} disabled={!oferta.poateModifica} />
-            </Camp>
-            <Camp eticheta="Localitatea lucrării" eroare={eroareCamp(eroareFormular, "localitate")}>
-              <input type="text" value={localitate} onChange={(e) => setLocalitate(e.target.value)} disabled={!oferta.poateModifica} />
-            </Camp>
-            <Camp eticheta="Sursa clientului" eroare={eroareCamp(eroareFormular, "sursaClient")}>
-              <input type="text" list="surse-client" value={sursaClient} onChange={(e) => setSursaClient(e.target.value)} disabled={!oferta.poateModifica} />
-              <datalist id="surse-client">
-                {surseClient.map((s) => (
-                  <option key={s} value={s} />
-                ))}
-              </datalist>
-            </Camp>
-            <Camp eticheta="Note" eroare={eroareCamp(eroareFormular, "note")}>
-              <input type="text" value={note} onChange={(e) => setNote(e.target.value)} disabled={!oferta.poateModifica} />
-            </Camp>
-            <Camp eticheta="Lista de preț">
-              <input type="text" value={oferta.listaPret?.denumire ?? "—"} readOnly />
-            </Camp>
+      {/* ------------------------------------------------ fila 1: Date generale */}
+      <div className="fila" role="tabpanel" id="fila-generale" aria-labelledby="tab-generale" hidden={fila !== "generale"}>
+        {campMentiuni}
+        <div className="coloane-generale">
+          <div>
+            {/* caseta "Comandă" (doar la „Comandat”) - o pune randul statusurilor aici */}
+            <div ref={setSlotComanda} />
+            <form className="formular" onSubmit={(e) => void salveaza(e)}>
+              <section className="panou" id="client">
+                <h2>
+                  Client{" "}
+                  <Link className="mic" to={`/clienti/${oferta.client.id}`} style={{ fontWeight: 400 }}>
+                    fișa clientului
+                  </Link>
+                </h2>
+                {oferta.poateModifica ? (
+                  <FormularClient
+                    client={client}
+                    onSchimba={(cl) => {
+                      setClient(cl);
+                      setAlesExistent(false);
+                      if (alesClient && cl.nume.trim() !== alesClient.nume.trim()) setAlesClient(null);
+                    }}
+                    onAlegeExistent={(cl) => {
+                      setClient(dinClient(cl));
+                      setAlesExistent(true);
+                      setAlesClient(cl);
+                    }}
+                    eroare={eroareFormular}
+                    prefix=""
+                    clientLegatId={oferta.client.id}
+                  />
+                ) : (
+                  <p>
+                    <strong>{oferta.client.nume}</strong> · {oferta.client.telefon ?? "fără telefon"} · {oferta.client.adresa === "-" ? "fără adresă" : oferta.client.adresa}
+                    {oferta.client.localitate ? `, ${oferta.client.localitate}` : ""}
+                  </p>
+                )}
+                {propunere && (
+                  <Mesaj tip="avertizare">
+                    <strong>Este același client?</strong> Telefonul e deja al clientului <Link to={`/clienti/${propunere.id}`}>{propunere.nume}</Link>
+                    {propunere.localitate ? ` (${propunere.localitate})` : ""} · {propunere.telefon}.
+                    <div className="actiuni" style={{ justifyContent: "flex-start", marginTop: 6, flexWrap: "wrap" }}>
+                      <button className="buton mic" type="button" disabled={seSalveaza} onClick={() => void salveaza(null, "leaga")}>
+                        Da — leagă oferta de clientul existent
+                      </button>
+                      <button className="buton secundar mic" type="button" disabled={seSalveaza} onClick={() => void salveaza(null, "pastreaza")}>
+                        Nu — e alt client, păstrează-l pe cel nou
+                      </button>
+                      <button className="buton secundar mic" type="button" onClick={() => setPropunere(null)}>
+                        Renunță
+                      </button>
+                    </div>
+                  </Mesaj>
+                )}
+              </section>
+
+              <section className="panou" id="antet">
+                <h2>Antet</h2>
+                <div className="rand-campuri">
+                  <Camp eticheta="Data ofertei" obligatoriu eroare={eroareCamp(eroareFormular, "data")}>
+                    <input type="date" value={data} onChange={(e) => setData(e.target.value)} required disabled={!oferta.poateModifica} />
+                  </Camp>
+                  <Camp eticheta="Curs BNR (documentul)">
+                    <input type="text" value={`${nr(c.cursBnr, 4)} · ${dataRo(c.dataCurs)} · ${c.sursaCurs}`} readOnly />
+                  </Camp>
+                  <Camp eticheta="Curs de achiziție (BNR × 1,01)">
+                    <input type="text" value={nr(c.cursAchizitie, 4)} readOnly />
+                  </Camp>
+                  <Camp eticheta="Adresa lucrării" eroare={eroareCamp(eroareFormular, "adresaLucrarii")}>
+                    <input type="text" value={adresaLucrarii} onChange={(e) => setAdresaLucrarii(e.target.value)} disabled={!oferta.poateModifica} />
+                  </Camp>
+                  <Camp eticheta="Localitatea lucrării" eroare={eroareCamp(eroareFormular, "localitate")}>
+                    <input type="text" value={localitate} onChange={(e) => setLocalitate(e.target.value)} disabled={!oferta.poateModifica} />
+                  </Camp>
+                  <Camp eticheta="Sursa clientului" eroare={eroareCamp(eroareFormular, "sursaClient")}>
+                    <input type="text" list="surse-client" value={sursaClient} onChange={(e) => setSursaClient(e.target.value)} disabled={!oferta.poateModifica} />
+                    <datalist id="surse-client">
+                      {surseClient.map((s) => (
+                        <option key={s} value={s} />
+                      ))}
+                    </datalist>
+                  </Camp>
+                  <Camp eticheta="Note" eroare={eroareCamp(eroareFormular, "note")}>
+                    <input type="text" value={note} onChange={(e) => setNote(e.target.value)} disabled={!oferta.poateModifica} />
+                  </Camp>
+                  <Camp eticheta="Lista de preț">
+                    <input type="text" value={oferta.listaPret?.denumire ?? "—"} readOnly />
+                  </Camp>
+                </div>
+              </section>
+
+              {oferta.poateModifica ? (
+                <>
+                  {/* Enter intr-un camp salveaza antetul si clientul, ca pana acum; butonul e „Salvează” din randul ofertei */}
+                  <button type="submit" className="ascuns-vizual" tabIndex={-1} aria-hidden="true">
+                    Salvează antetul și clientul
+                  </button>
+                  <p className="explicatie-buton" style={{ marginBottom: 16 }}>
+                    Antetul și clientul se salvează cu „Salvează” din rândul de sus (sau cu Enter într-un câmp).
+                  </p>
+                </>
+              ) : (
+                <p className="explicatie-buton" style={{ marginBottom: 16 }}>
+                  {comandata ? "Oferta e comandată: antetul și clientul sunt înghețate." : "Antetul și clientul le modifică cine a făcut oferta și Administratorul firmei."}
+                </p>
+              )}
+            </form>
           </div>
-        </section>
 
-        <section className="panou" id="client">
-          <h2>
-            Client{" "}
-            <Link className="mic" to={`/clienti/${oferta.client.id}`} style={{ fontWeight: 400 }}>
-              fișa clientului
-            </Link>
-          </h2>
-          {oferta.poateModifica ? (
-            <FormularClient
-              client={client}
-              onSchimba={(cl) => {
-                setClient(cl);
-                setAlesExistent(false);
-                if (alesClient && cl.nume.trim() !== alesClient.nume.trim()) setAlesClient(null);
-              }}
-              onAlegeExistent={(cl) => {
-                setClient(dinClient(cl));
-                setAlesExistent(true);
-                setAlesClient(cl);
-              }}
-              eroare={eroareFormular}
-              prefix=""
-            />
-          ) : (
-            <p>
-              <strong>{oferta.client.nume}</strong> · {oferta.client.telefon ?? "fără telefon"} · {oferta.client.adresa === "-" ? "fără adresă" : oferta.client.adresa}
-              {oferta.client.localitate ? `, ${oferta.client.localitate}` : ""}
-            </p>
-          )}
-          {propunere && (
-            <Mesaj tip="avertizare">
-              <strong>Este același client?</strong> Telefonul e deja al clientului <Link to={`/clienti/${propunere.id}`}>{propunere.nume}</Link>
-              {propunere.localitate ? ` (${propunere.localitate})` : ""} · {propunere.telefon}.
-              <div className="actiuni" style={{ justifyContent: "flex-start", marginTop: 6, flexWrap: "wrap" }}>
-                <button className="buton mic" type="button" disabled={seSalveaza} onClick={() => void salveaza(null, "leaga")}>
-                  Da — leagă oferta de clientul existent
-                </button>
-                <button className="buton secundar mic" type="button" disabled={seSalveaza} onClick={() => void salveaza(null, "pastreaza")}>
-                  Nu — e alt client, păstrează-l pe cel nou
-                </button>
-                <button className="buton secundar mic" type="button" onClick={() => setPropunere(null)}>
-                  Renunță
-                </button>
-              </div>
-            </Mesaj>
-          )}
-        </section>
-
-        {oferta.poateModifica ? (
-          <div className="actiuni" style={{ marginBottom: 24 }}>
-            <button className="buton" type="submit" disabled={seSalveaza}>
-              {seSalveaza ? "Se salvează…" : "Salvează antetul și clientul"}
-            </button>
+          <div>
+            <Montator oferta={oferta} onOferta={preia} mentiuni={mentiuni} />
+            {/* "Livrarea de la Bilka" (cu „Schimbă”) - o pune randul statusurilor aici */}
+            <div ref={setSlotLivrare} />
+            {oferta.completari.length > 0 && (
+              <section className="panou" id="completari">
+                <h2>Completări</h2>
+                <ul>
+                  {oferta.completari.map((cp) => (
+                    <li key={cp.id}>
+                      <Link to={`/oferte/${cp.id}`}>{cp.numarComplet}</Link> · {ETICHETA_STATUS[cp.status]}
+                      {cp.motiv ? ` · ${cp.motiv}` : ""}
+                    </li>
+                  ))}
+                </ul>
+              </section>
+            )}
+            <NotiteAtasamente oferta={oferta} />
+            <Istoric oferta={oferta} reincarca={reincarcaIstoric} />
           </div>
-        ) : (
-          <p className="explicatie-buton" style={{ marginBottom: 16 }}>
-            {comandata ? "Oferta e comandată: antetul și clientul sunt înghețate." : "Antetul și clientul le modifică cine a făcut oferta și Administratorul firmei."}
-          </p>
-        )}
-        {mesaj && <Mesaj tip="ok">{mesaj}</Mesaj>}
-      </form>
+        </div>
 
-      <Produse oferta={oferta} onOferta={preia} mentiuni={mentiuni} />
-      <Preturi oferta={oferta} onOferta={preia} mentiuni={mentiuni} />
-      <Montator oferta={oferta} onOferta={preia} mentiuni={mentiuni} />
-
-      {oferta.completari.length > 0 && (
-        <section className="panou">
-          <h2>Completări</h2>
+        <Ajutor>
           <ul>
-            {oferta.completari.map((cp) => (
-              <li key={cp.id}>
-                <Link to={`/oferte/${cp.id}`}>{cp.numarComplet}</Link> · {ETICHETA_STATUS[cp.status]}
-                {cp.motiv ? ` · ${cp.motiv}` : ""}
-              </li>
-            ))}
+            <li>Pagina ofertei are trei file — Date generale, Produse, Prețuri și documente — sub trei rânduri care rămân la vedere: rândul ofertei, rândul statusurilor și rândul filelor. Fiecare filă își ține locul; Alt + 1 / 2 / 3 schimbă fila. Punctul roșu de pe o filă arată că ceva de acolo ar opri „Comandat”.</li>
+            <li>„Salvează” din rândul ofertei salvează tot ce e nesalvat, din orice filă: antetul și clientul (singurele care nu se salvează singure) și produsele aflate în așteptare. Lângă el scrie „salvat” sau „nesalvat”.</li>
+            <li>Statusurile se pun în orice ordine, cu revenire, toate cu istoric; doar „Comandat” e ireversibil și îngheață produsele, cantitățile și prețurile. „Avans luat” cere suma; „Acceptată” face varianta curentă.</li>
+            <li>Istoricul pornește la „Transmisă”: fiecare modificare (status, produs, cantitate, preț, sumă, client, antet) se notează cu cine, când, înainte / după și mențiunile scrise sus. Sumele modificate poartă asteriscul roșu.</li>
+            <li>Telefonul clientului e opțional la ofertă și obligatoriu la „Comandat”. Când completezi un telefon care e deja al altui client, softul întreabă dacă e același client: „Da” leagă oferta de el și îi actualizează fișa; „Nu” păstrează clientul nou.</li>
+            <li>La „De comandat” alegi livrarea de la Bilka: la depozitul nostru (formularul pleacă fără localitate și telefon) sau direct în șantier (cu localitatea și telefonul de contact). Alegerea se poate schimba până la „Comandat”; după aceea, de pe comandă.</li>
+            <li>Numărul, firma, agentul și cursurile sunt fixate la salvare; cât e „În lucru”, cursurile se reîmprospătează din zona de prețuri.</li>
+            <li>Meniul ⋯: copiază oferta, creează variantă, completare, legare ca completare, preia prețurile în altă ofertă, istoric, notițe și atașamente.</li>
           </ul>
-        </section>
-      )}
+        </Ajutor>
+      </div>
 
-      <Documente oferta={oferta} reincarca={reincarcaIstoric} mentiuni={mentiuni} onSchimbare={() => setReincarcaIstoric((n) => n + 1)} />
-      <NotiteAtasamente oferta={oferta} />
-      <Istoric oferta={oferta} reincarca={reincarcaIstoric} />
+      {/* ------------------------------------------------ fila 2: Produse */}
+      <div className="fila" role="tabpanel" id="fila-produse" aria-labelledby="tab-produse" hidden={fila !== "produse"}>
+        {campMentiuni}
+        <Produse oferta={oferta} onOferta={preia} mentiuni={mentiuni} activa={fila === "produse"} slotBara={slotBara} onStareSalvare={setSalvareProduse} salvareAcum={salvareAcum} onMergiLaPreturi={() => mergiLa("preturi")} />
+      </div>
 
-      <Ajutor>
-        <ul>
-          <li>Statusurile se pun în orice ordine, cu revenire, toate cu istoric; doar „Comandat” e ireversibil și îngheață produsele, cantitățile și prețurile. „Avans luat” cere suma; „Acceptată” face varianta curentă.</li>
-          <li>Istoricul pornește la „Transmisă”: fiecare modificare (status, produs, cantitate, preț, sumă, client, antet) se notează cu cine, când, înainte / după și mențiunile scrise sus. Sumele modificate poartă asteriscul roșu.</li>
-          <li>Telefonul clientului e opțional la ofertă și obligatoriu la „Comandat”. Când completezi un telefon care e deja al altui client, softul întreabă dacă e același client: „Da” leagă oferta de el și îi actualizează fișa; „Nu” păstrează clientul nou.</li>
-          <li>La „De comandat” alegi livrarea de la Bilka: la depozitul nostru (formularul pleacă fără localitate și telefon) sau direct în șantier (cu localitatea și telefonul de contact). Alegerea se poate schimba până la „Comandat”; după aceea, de pe comandă.</li>
-          <li>Numărul, firma, agentul și cursurile sunt fixate la salvare; cât e „În lucru”, cursurile se reîmprospătează din zona de prețuri.</li>
-          <li>Meniul ⋯: copiază oferta, creează variantă, completare, legare ca completare, preia prețurile în altă ofertă, istoric, notițe și atașamente.</li>
-          <li>„PDF ▾” generează documentul (ofertă, rezumat, ofertă detaliată, tabel de facturare) și îl deschide; fiecare generare rămâne în panoul „Documente”, de unde se marchează ca transmis.</li>
-        </ul>
-      </Ajutor>
+      {/* ------------------------------------------------ fila 3: Preturi si documente */}
+      <div className="fila" role="tabpanel" id="fila-preturi" aria-labelledby="tab-preturi" hidden={fila !== "preturi"}>
+        {campMentiuni}
+        <Structura structura={oferta.structura ?? null} />
+
+        {(oferta.versiuni?.length ?? 0) > 1 && (
+          <section className="panou" id="versiuni">
+            <h2>Versiuni (variante de preț)</h2>
+            <ul>
+              {oferta.versiuni!.map((v) => (
+                <li key={v.id}>
+                  {v.id === oferta.id ? <strong>varianta {v.versiune}</strong> : <Link to={`/oferte/${v.id}`}>varianta {v.versiune}</Link>} · {ETICHETA_STATUS[v.status]}
+                  {v.curenta ? " · curentă" : ""}
+                  {!v.curenta && oferta.poateModifica && (
+                    <>
+                      {" "}
+                      <button className="buton secundar mic" type="button" disabled={lucru !== null} onClick={() => void actiune("curenta", async () => (await apiPreturi.faCurenta(v.id)).oferta)}>
+                        Fă-o curentă
+                      </button>
+                    </>
+                  )}
+                </li>
+              ))}
+            </ul>
+            <p className="mic text-secundar">Lista de oferte arată doar versiunea curentă; „Acceptată” o face curentă automat.</p>
+          </section>
+        )}
+
+        <Preturi oferta={oferta} onOferta={preia} mentiuni={mentiuni} />
+        <Documente oferta={oferta} reincarca={reincarcaIstoric} mentiuni={mentiuni} onSchimbare={() => setReincarcaIstoric((n) => n + 1)} />
+
+        <Ajutor>
+          <ul>
+            <li>Sus e rezultatul motorului: dacă oferta se poate comanda, mp și coli pe învelitoare, pachetele și formularele Bilka. Pe scurt apare și în josul filei Produse.</li>
+            <li>„PDF ▾” din rândul ofertei generează documentul (ofertă, rezumat, ofertă detaliată, tabel de facturare) și îl deschide; fiecare generare rămâne în panoul „Documente”, de unde se marchează ca transmis.</li>
+            <li>Pe documente și în lista de prețuri produsele apar în ordinea de pe ecranul ofertei — rubricile în ordinea lor, în fiecare rubrică lista implicită, apoi produsele adăugate cu „+” —, nu în ordinea în care au fost completate.</li>
+          </ul>
+        </Ajutor>
+      </div>
     </>
   );
 }

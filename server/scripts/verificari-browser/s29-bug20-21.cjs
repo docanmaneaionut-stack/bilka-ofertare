@@ -15,7 +15,11 @@ const randuriRubrica = (page, titlu) =>
 const element = async (page, f, ...args) => (await page.evaluateHandle(f, ...args)).asElement();
 const cautare = (page, titlu) => element(page, (t) => [...document.querySelectorAll(".zona-produse section.panou")].find((x) => (x.querySelector("h2")?.textContent || "").trim().startsWith(t))?.querySelector("input[type=search]") ?? null, titlu);
 const casutaRand = (page, titlu, idx) => element(page, (t, i) => [...document.querySelectorAll(".zona-produse section.panou")].find((x) => (x.querySelector("h2")?.textContent || "").trim().startsWith(t))?.querySelectorAll("tbody tr")[i]?.querySelector("input.casuta-cantitate") ?? null, titlu, idx);
-const salvat = (page) => asteapta(async () => page.evaluate(() => /(^|\s)salvat(\s|$)/.test(document.querySelector('[aria-live="polite"]')?.innerText ?? "")), 15000);
+// starea salvarii e in randul ofertei; dupa o modificare trece intai pe „nesalvat” (salvarea automata porneste dupa o clipa)
+const salvat = async (page) => {
+  await pauza(350);
+  return asteapta(async () => page.evaluate(() => (document.querySelector(".stare-salvare")?.textContent ?? "").trim() === "salvat"), 15000);
+};
 
 // adauga din "+ Adaugă…" primul produs gasit care nu e deja pe ecran; intoarce numele lui
 async function adaugaCuPlus(page, titlu, text) {

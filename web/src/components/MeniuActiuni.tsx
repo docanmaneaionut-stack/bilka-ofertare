@@ -2,7 +2,8 @@ import { useEffect, useRef, useState, type ReactNode } from "react";
 
 // meniul ⋯ (FISA-OFERTARE cap. 15): o lista de actiuni; fiecare actiune
 // dezactivata spune de ce (Capitolul 0 - niciun buton gri fara explicatie)
-export type ActiuneMeniu = { eticheta: string; onClick?: () => void; dezactivat?: string; explicatie?: string };
+// "clasa" (S29, M12): pentru actiunile care apar in meniu doar pe telefon (pe ecran lat au butonul lor)
+export type ActiuneMeniu = { eticheta: string; onClick?: () => void; dezactivat?: string; explicatie?: string; clasa?: string };
 
 export function MeniuActiuni({ actiuni, eticheta = "⋯", copii }: { actiuni: ActiuneMeniu[]; eticheta?: ReactNode; copii?: ReactNode }) {
   const [deschis, setDeschis] = useState(false);
@@ -24,7 +25,7 @@ export function MeniuActiuni({ actiuni, eticheta = "⋯", copii }: { actiuni: Ac
         <ul role="menu">
           {copii}
           {actiuni.map((a) => (
-            <li key={a.eticheta} role="none">
+            <li key={a.eticheta} role="none" className={a.clasa}>
               <button
                 role="menuitem"
                 type="button"

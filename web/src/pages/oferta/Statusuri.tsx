@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { apiStatus, EroareCerere, ETICHETA_STATUS, STATUSURI_OFERTA, type AlegereLivrareBilka, type OfertaDetaliu, type StatusOferta } from "../../api";
+import { createPortal } from "react-dom";
+import { apiStatus, dataRo, EroareCerere, ETICHETA_STATUS, STATUSURI_OFERTA, type AlegereLivrareBilka, type OfertaDetaliu, type StatusOferta } from "../../api";
 import { DialogLivrareBilka, textAlegereLivrare } from "../../components/DialogLivrareBilka";
 import { Camp, eroareCamp, Mesaj, textEroare } from "../../components/ui";
 import { lei } from "../../lib/numere";
@@ -10,7 +11,25 @@ import { lei } from "../../lib/numere";
 // ingheata oferta si creeaza randul de comanda (cap. 16).
 // S26a: la „De comandat” (si la „Comandat” fara alegere) se deschide dialogul „Livrarea de la
 // Bilka” (M7); „Comandat” fara telefonul clientului e refuzat, cu mesajul dus sub campul Telefon (M6).
-export function Statusuri({ oferta, onOferta, mentiuni, onEroareClient }: { oferta: OfertaDetaliu; onOferta: (o: OfertaDetaliu) => void; mentiuni: string; onEroareClient?: (e: unknown) => void }) {
+//
+// S29 (MODIFICAREA M12): statusurile stau pe RANDUL LOR FIX, intre randul ofertei si file - toate cele opt
+// la vedere, cel curent inchis la culoare, un clic schimba statusul; regulile, dialogurile si blocarile sunt
+// cele de pana acum. Ce se deschide de la un clic (suma avansului, mesajele) apare imediat sub rand. La
+// „Comandat” toate opt raman la vedere, stinse. Doua bucati din vechea caseta "Status" s-au mutat in fila
+// "Date generale", prin sloturile primite: "Livrarea de la Bilka" (cu „Schimbă”) si caseta "Comandă" (textul
+// „Oferta e comandată din…”, rezumatul comenzii, total · avans · rest, nota de pret ajustat).
+type Props = {
+  oferta: OfertaDetaliu;
+  onOferta: (o: OfertaDetaliu) => void;
+  mentiuni: string;
+  onEroareClient?: (e: unknown) => void;
+  // „Comandat” oprit de produse (panotaj necompletat): pagina trece in fila Produse
+  onBlocajProduse?: () => void;
+  slotLivrare?: HTMLElement | null;
+  slotComanda?: HTMLElement | null;
+};
+
+export function Statusuri({ oferta, onOferta, mentiuni, onEroareClient, onBlocajProduse, slotLivrare = null, slotComanda = null }: Props) {
   const [eroare, setEroare] = useState<string | null>(null);
   const [eroareCerere, setEroareCerere] = useState<unknown>(null);
   const [motive, setMotive] = useState<string[]>([]);
@@ -50,7 +69,11 @@ export function Statusuri({ oferta, onOferta, mentiuni, onEroareClient }: { ofer
       const err = e as Error & { motive?: string[] };
       setEroare(textEroare(e));
       setEroareCerere(e);
-      if (Array.isArray(err.motive)) setMotive(err.motive);
+      if (Array.isArray(err.motive)) {
+        setMotive(err.motive);
+        // panotajul necompletat se rezolva in fila Produse
+        if (err.motive.length > 0) onBlocajProduse?.();
+      }
     } finally {
       setLucru(false);
     }
@@ -70,39 +93,43 @@ export function Statusuri({ oferta, onOferta, mentiuni, onEroareClient }: { ofer
     if (urmeaza === "COMANDAT") await schimba("COMANDAT", undefined, { aleasa: true });
   }
 
+  const subRand = (!poate && !comandata) || avansPentru !== null || eroare !== null || motive.length > 0;
+
   return (
-    <section className="panou">
-      <h2>
-        Status: <span className={`status-oferta ${oferta.status}`}>{ETICHETA_STATUS[oferta.status]}</span>
+    <>
+      <div className="rand-statusuri" role="group" aria-label="Statusul ofertei">
+        <span className="eticheta-rand">Status</span>
+        <div className="bara-statusuri">
+          {STATUSURI_OFERTA.map((s) => (
+            <button
+              key={s}
+              type="button"
+              className={`buton secundar mic ${s === oferta.status ? "status-curent" : ""}`}
+              aria-pressed={s === oferta.status}
+              disabled={comandata || !poate || lucru || s === oferta.status}
+              title={comandata ? "Oferta e comandată: statusul nu se mai schimbă („Comandat” e ireversibil)" : undefined}
+              onClick={() => (s === "AVANS_LUAT" ? setAvansPentru(s) : void schimba(s))}
+            >
+              {ETICHETA_STATUS[s]}
+            </button>
+          ))}
+        </div>
         {oferta.avansLei !== null && oferta.avansLei !== undefined && (
-          <span className="mic text-secundar">
-            {" "}
-            · avans {lei(oferta.avansLei)}{oferta.sumeModificate?.includes("avansLei") ? <span className="asterisc-rosu" title="sumă modificată — vezi istoricul">*</span> : null}
+          <span className="mic text-secundar avans-oferta">
+            avans {lei(oferta.avansLei)}
+            {oferta.sumeModificate?.includes("avansLei") ? (
+              <span className="asterisc-rosu" title="sumă modificată — vezi istoricul">
+                *
+              </span>
+            ) : null}
           </span>
         )}
-      </h2>
-      {comandata ? (
-        <p>
-          Oferta e comandată din {oferta.comanda?.data ?? ""}: produsele, cantitățile și prețurile sunt înghețate. Avansul, montatorul, notițele și atașamentele se mai pot completa.
-        </p>
-      ) : (
-        <>
-          <div className="bara-statusuri">
-            {STATUSURI_OFERTA.map((s) => (
-              <button
-                key={s}
-                type="button"
-                className={`buton secundar mic ${s === oferta.status ? "status-curent" : ""}`}
-                disabled={!poate || lucru || s === oferta.status}
-                onClick={() => (s === "AVANS_LUAT" ? setAvansPentru(s) : void schimba(s))}
-              >
-                {ETICHETA_STATUS[s]}
-              </button>
-            ))}
-          </div>
-          {!poate && <p className="explicatie-buton">Statusul îl schimbă cine a făcut oferta și Administratorul firmei.</p>}
+      </div>
+      {subRand && (
+        <div className="sub-statusuri">
+          {!poate && !comandata && <p className="explicatie-buton">Statusul îl schimbă cine a făcut oferta și Administratorul firmei.</p>}
           {avansPentru && (
-            <div className="rand-campuri" style={{ marginTop: 8 }}>
+            <div className="rand-campuri">
               <Camp eticheta="Suma avansului (lei, poate fi 0)" obligatoriu eroare={eroareCamp(eroareCerere, "avansLei")}>
                 <input type="text" inputMode="decimal" value={avans} onChange={(e) => setAvans(e.target.value)} autoFocus />
               </Camp>
@@ -116,23 +143,68 @@ export function Statusuri({ oferta, onOferta, mentiuni, onEroareClient }: { ofer
               </div>
             </div>
           )}
-        </>
+          {eroare && <Mesaj tip="eroare">{eroare}</Mesaj>}
+          {motive.length > 0 && <Mesaj tip="avertizare">Nu se poate comanda până nu completezi panotajul: {motive.join("; ")}</Mesaj>}
+        </div>
       )}
-      {!comandata && oferta.livrareBilka && (
-        <p className="mic" style={{ marginTop: 8 }}>
-          <strong>Livrarea de la Bilka:</strong> {textAlegereLivrare(oferta.livrareBilka)}{" "}
-          {poate && (
-            <button className="buton secundar mic" type="button" disabled={lucru} onClick={() => setDialogLivrare("schimbare")}>
-              Schimbă
-            </button>
-          )}
-        </p>
-      )}
-      {comandata && oferta.comanda?.livrareBilka && (
-        <p className="mic">
-          <strong>Livrarea de la Bilka:</strong> {textAlegereLivrare(oferta.comanda.livrareBilka)} <span className="text-secundar">— se schimbă de pe comandă</span>
-        </p>
-      )}
+
+      {slotLivrare &&
+        createPortal(
+          <section className="panou" id="livrare-bilka">
+            <h2>Livrarea de la Bilka</h2>
+            {!comandata && oferta.livrareBilka && (
+              <p>
+                {textAlegereLivrare(oferta.livrareBilka)}{" "}
+                {poate && (
+                  <button className="buton secundar mic" type="button" disabled={lucru} onClick={() => setDialogLivrare("schimbare")}>
+                    Schimbă
+                  </button>
+                )}
+              </p>
+            )}
+            {!comandata && !oferta.livrareBilka && <p className="text-secundar">Se alege la „De comandat”: la depozitul nostru sau direct în șantier.</p>}
+            {comandata && oferta.comanda?.livrareBilka && (
+              <p>
+                {textAlegereLivrare(oferta.comanda.livrareBilka)} <span className="text-secundar">— se schimbă de pe comandă</span>
+              </p>
+            )}
+            {comandata && !oferta.comanda?.livrareBilka && <p className="text-secundar">Fără alegere pe comandă.</p>}
+          </section>,
+          slotLivrare,
+        )}
+
+      {slotComanda &&
+        comandata &&
+        createPortal(
+          <section className="panou" id="comanda-ofertei">
+            <h2>Comandă</h2>
+            <p>
+              Oferta e comandată din {oferta.comanda?.data ? dataRo(oferta.comanda.data) : ""}: produsele, cantitățile și prețurile sunt înghețate. Avansul, montatorul, notițele și atașamentele se mai pot completa.
+            </p>
+            {oferta.comanda?.pretAjustat && (
+              <p className="mic">
+                <span className="asterisc">*</span> <strong>Preț ajustat pe comandă</strong> la {lei(oferta.comanda.totalLei)} ({oferta.comanda.pretAjustat.motiv}), de {oferta.comanda.pretAjustat.de}, la {new Date(oferta.comanda.pretAjustat.la).toLocaleDateString("ro-RO")} — oferta rămâne la {lei(oferta.comanda.pretAjustat.totalInitialLei)}.
+              </p>
+            )}
+            {oferta.comanda && (
+              <div className="grila-totaluri">
+                <div>
+                  <span className="text-secundar mic">Rezumatul comenzii</span>
+                  <span>{oferta.comanda.rezumat}</span>
+                </div>
+                <div>
+                  <span className="text-secundar mic">Total · avans · rest (lei)</span>
+                  <span className="numar-mare">{lei(oferta.comanda.totalLei)}</span>
+                  <span className="mic text-secundar">
+                    avans {lei(oferta.comanda.avansLei)} · rest {lei(oferta.comanda.restLei)} · trimisă de {oferta.comanda.responsabil}
+                  </span>
+                </div>
+              </div>
+            )}
+          </section>,
+          slotComanda,
+        )}
+
       {dialogLivrare && (
         <DialogLivrareBilka
           initial={oferta.livrareBilka}
@@ -144,32 +216,6 @@ export function Statusuri({ oferta, onOferta, mentiuni, onEroareClient }: { ofer
           onRenunta={() => setDialogLivrare(null)}
         />
       )}
-      {eroare && <Mesaj tip="eroare">{eroare}</Mesaj>}
-      {motive.length > 0 && (
-        <Mesaj tip="avertizare">
-          Nu se poate comanda până nu completezi panotajul: {motive.join("; ")}
-        </Mesaj>
-      )}
-      {comandata && oferta.comanda?.pretAjustat && (
-        <p className="mic">
-          <span className="asterisc">*</span> <strong>Preț ajustat pe comandă</strong> la {lei(oferta.comanda.totalLei)} ({oferta.comanda.pretAjustat.motiv}), de {oferta.comanda.pretAjustat.de}, la {new Date(oferta.comanda.pretAjustat.la).toLocaleDateString("ro-RO")} — oferta rămâne la {lei(oferta.comanda.pretAjustat.totalInitialLei)}.
-        </p>
-      )}
-      {comandata && oferta.comanda && (
-        <div className="grila-totaluri">
-          <div>
-            <span className="text-secundar mic">Rezumatul comenzii</span>
-            <span>{oferta.comanda.rezumat}</span>
-          </div>
-          <div>
-            <span className="text-secundar mic">Total · avans · rest (lei)</span>
-            <span className="numar-mare">{lei(oferta.comanda.totalLei)}</span>
-            <span className="mic text-secundar">
-              avans {lei(oferta.comanda.avansLei)} · rest {lei(oferta.comanda.restLei)} · trimisă de {oferta.comanda.responsabil}
-            </span>
-          </div>
-        </div>
-      )}
-    </section>
+    </>
   );
 }

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, type FocusEvent } from "react";
 import { Link } from "react-router-dom";
 import { apiClienti, type Client, type ClientDate } from "../api";
 import { Camp, eroareCamp } from "./ui";
@@ -24,14 +24,18 @@ function cifreTelefon(t: string): string {
 
 // `eroare`: eroarea cererii de salvare (BUG-4) - motivele apar sub campurile lor;
 // `prefix`: calea campurilor clientului in corpul cererii ("client." la "Oferta noua")
-export function FormularClient({ client, onSchimba, onAlegeExistent, eroare, prefix = "client." }: { client: ClientDate; onSchimba: (c: ClientDate) => void; onAlegeExistent: (c: Client) => void; eroare?: unknown; prefix?: string }) {
+// `clientLegatId` (S29): clientul de care oferta e deja legata - nu se propune in sugestiile pe nume
+export function FormularClient({ client, onSchimba, onAlegeExistent, eroare, prefix = "client.", clientLegatId }: { client: ClientDate; onSchimba: (c: ClientDate) => void; onAlegeExistent: (c: Client) => void; eroare?: unknown; prefix?: string; clientLegatId?: string }) {
   const [sugestii, setSugestii] = useState<Client[]>([]);
   // sugestiile pe nume; dupa o alegere nu mai apar pana cand numele se schimba
   const [sugestiiNume, setSugestiiNume] = useState<Client[]>([]);
   const [numeAles, setNumeAles] = useState<string | null>(null);
+  // S29: lista de sugestii pe nume se deschide DOAR cat scrii in campul Nume (de la 3 litere) - nu la
+  // intrarea pe pagina, cand numele vine din oferta salvata; se inchide cand iesi din camp sau alegi
+  const [scrieNume, setScrieNume] = useState(false);
   const numeCautat = client.nume.trim();
   useEffect(() => {
-    if (numeCautat.length < 3 || numeCautat === numeAles) return;
+    if (!scrieNume || numeCautat.length < 3 || numeCautat === numeAles) return;
     const t = setTimeout(() => {
       apiClienti
         .cauta({ nume: numeCautat })
@@ -39,8 +43,13 @@ export function FormularClient({ client, onSchimba, onAlegeExistent, eroare, pre
         .catch(() => setSugestiiNume([]));
     }, 250);
     return () => clearTimeout(t);
-  }, [numeCautat, numeAles]);
-  const vizibileNume = numeCautat.length >= 3 && numeCautat !== numeAles ? sugestiiNume : [];
+  }, [numeCautat, numeAles, scrieNume]);
+  const vizibileNume = scrieNume && numeCautat.length >= 3 && numeCautat !== numeAles ? sugestiiNume.filter((s) => s.id !== clientLegatId) : [];
+  // iesirea din campul Nume (si din lista lui) inchide sugestiile; trecerea cu Tab pe o sugestie nu
+  const laIesireaDinNume = (e: FocusEvent<HTMLElement>) => {
+    const camp = e.currentTarget.closest("label");
+    if (!camp || !camp.contains(e.relatedTarget as Node | null)) setScrieNume(false);
+  };
   const set = (k: keyof ClientDate, v: string) => onSchimba({ ...client, [k]: v });
   const cifre = cifreTelefon(client.telefon);
   const la = (camp: keyof ClientDate) => eroareCamp(eroare, `${prefix}${camp}`, camp);
@@ -63,6 +72,7 @@ export function FormularClient({ client, onSchimba, onAlegeExistent, eroare, pre
     setSugestii([]);
     setSugestiiNume([]);
     setNumeAles(s.nume.trim());
+    setScrieNume(false);
   };
 
   return (
@@ -82,9 +92,19 @@ export function FormularClient({ client, onSchimba, onAlegeExistent, eroare, pre
           )}
         </Camp>
         <Camp eticheta="Nume" obligatoriu eroare={la("nume")}>
-          <input type="text" value={client.nume} onChange={(e) => set("nume", e.target.value)} required autoComplete="off" />
+          <input
+            type="text"
+            value={client.nume}
+            onChange={(e) => {
+              set("nume", e.target.value);
+              setScrieNume(true);
+            }}
+            onBlur={laIesireaDinNume}
+            required
+            autoComplete="off"
+          />
           {vizibileNume.length > 0 && (
-            <ul className="lista-sugestii" aria-label="Clienți cu acest nume">
+            <ul className="lista-sugestii" aria-label="Clienți cu acest nume" onBlur={laIesireaDinNume}>
               {vizibileNume.map((s) => (
                 <li key={s.id} tabIndex={0} onClick={() => alege(s)} onKeyDown={(e) => e.key === "Enter" && alege(s)}>
                   <strong>{s.nume}</strong> · {s.telefon ?? "fără telefon"}
